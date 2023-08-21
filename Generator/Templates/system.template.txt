@@ -1,0 +1,20 @@
+        public static class SystemGlobalInstaller
+        {
+            private static bool _isNoInstalled = true;
+
+            public static void Install()
+            {
+                if (_isNoInstalled)
+                {
+                    _isNoInstalled = false;
+                    InstallInternal();
+                }
+            }
+
+            private static void InstallInternal()
+            {
+<#ARRAY [0..SYSTEM_COUNT]#>
+                SystemGlobalRegister.Install<<#SYSTEM_NAME#>>(<#INDEX#>);
+<#END#>
+            }
+        }

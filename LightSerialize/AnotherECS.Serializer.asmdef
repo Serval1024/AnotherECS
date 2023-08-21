@@ -1,0 +1,17 @@
+{
+    "name": "AnotherECS.Serializer",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e2058c9141da95a40bb662cb34bc2a38",
+        "GUID:fd6dffc656ceabb4b93f4bc02b8c0000"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

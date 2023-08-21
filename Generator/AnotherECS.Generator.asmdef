@@ -1,0 +1,19 @@
+{
+    "name": "AnotherECS.Generator",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e95cae816c3572d4f860aff8b4579eb0",
+        "GUID:e2058c9141da95a40bb662cb34bc2a38"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
