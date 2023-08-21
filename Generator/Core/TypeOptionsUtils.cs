@@ -103,6 +103,10 @@ namespace AnotherECS.Generator
             {
                 result.Append("Dir");
             }
+            if (option.isReferencePool)
+            {
+                result.Append("Ref");
+            }
             return result;
         }
 
@@ -201,6 +205,7 @@ namespace AnotherECS.Generator
         public bool isInject;
         public ComponentUtils.InjectData[] injectMembers;
         public bool isForceUseISerialize;
+        public bool isReferencePool;
 
         public TypeOptions(Type type)
         {
@@ -233,6 +238,7 @@ namespace AnotherECS.Generator
             isInject = isInjectComponent | isInjectMembers;
             injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
             isForceUseISerialize = !isEmpty && ComponentUtils.IsForceUseISerialize(type);
+            isReferencePool = ComponentUtils.IsReferencePool(type);
 
             isDispose = false;
 

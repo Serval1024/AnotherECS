@@ -175,7 +175,7 @@ namespace AnotherECS.Gen.Common
 <#IF !EMPTY#>
 ---<#IF HISTORY:BYCHANGE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(ref T component, <#SPARSE:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(ref T component, <#POOLDATA_INDEX:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
             PushDense(ref component, denseIndex);
@@ -193,7 +193,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushDense(ref T component, int denseIndex)
+        public void PushDense(ref T component, <#POOLDATA_INDEX:TYPE_NAME#> denseIndex)
         {
             ref var element = ref _componentBuffer[_componentIndex];
 ------<#IF COPYABLE#>
@@ -213,7 +213,7 @@ namespace AnotherECS.Gen.Common
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(ushort denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(<#POOLDATA_INDEX:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
 ------<#IF SPARSE:BOOL#>
@@ -723,7 +723,7 @@ namespace AnotherECS.Gen.Common
 
             public uint tick;
             public T component;
-            public int denseIndex;
+            public <#POOLDATA_INDEX:TYPE_NAME#> denseIndex;
 
 ------<#IF COPYABLE#>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -744,7 +744,7 @@ namespace AnotherECS.Gen.Common
             {
                 tick = reader.ReadUInt32();
                 component = reader.ReadStruct<T>();
-                denseIndex = reader.ReadInt32();
+                denseIndex = reader.Read<#POOLDATA_INDEX:TYPE_UNPACK_NAME#>();
             }
         }
 ---<#END#>

@@ -35,5 +35,6 @@ namespace AnotherECS.Core
         CompileSortAtLast = 1 << 12,
         Capacity = 1 << 13,
         ForceUseISerialize = 1 << 14,
+        ReferencePool = 1 << 15,
     }
 }

@@ -670,7 +670,6 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected T CGInitAdapter<T>(T data)
-          where T : struct
         {
             var adapter = data as IAdapter;
 

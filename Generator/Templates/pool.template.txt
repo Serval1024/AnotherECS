@@ -688,7 +688,7 @@ namespace AnotherECS.Gen.Common
         }
 
 <#IF !EMPTY#>
----<#IF DIRECTACCESS#>
+---<#IF DIRECTACCESS || REFERNCE_POOL#>
         private struct PoolData : ISerialize
 ---<#ELSE#>
         private class PoolData : ISerialize
@@ -702,13 +702,13 @@ namespace AnotherECS.Gen.Common
             public void Pack(ref WriterContextSerializer writer)
             {
                 writer.Write(recycle);
-                writer.Pack(index);
+                writer.WriteStruct(index);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
                 recycle = reader.ReadUInt16();
-                index = reader.Unpack<<#POOLDATA_INDEX:TYPE_NAME#>>();
+                index = reader.ReadStruct<<#POOLDATA_INDEX:TYPE_NAME#>>();
             }
         }
 <#END#>

@@ -110,7 +110,10 @@ namespace AnotherECS.Core
         public static bool IsInjectMembers(Type type)
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
-        
+
+        public static bool IsReferencePool(Type type)
+            => IsOption(type, ComponentOptions.ReferencePool);
+
         public static int GetTypeSize(Type type)            
             => System.Runtime.InteropServices.Marshal.SizeOf(type);
 

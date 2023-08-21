@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Gen.Common
 {
-    public struct Adapter<#ADAPTER_TYPE#><T> : ISingleAdapter<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public <#IF REFERNCE_POOL#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : ISingleAdapter<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private Pool<#POOL_TYPE#><T> _pool;

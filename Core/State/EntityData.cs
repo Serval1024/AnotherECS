@@ -1,6 +1,6 @@
 namespace AnotherECS.Core
 {
-    [ComponentOption(ComponentOptions.NoCompileDirectAccess | ComponentOptions.CompileSortAtLast)]
+    [ComponentOption(ComponentOptions.NoCompileDirectAccess | ComponentOptions.ExceptSparseDirectDense | ComponentOptions.CompileSortAtLast | ComponentOptions.ReferencePool)]
     public unsafe struct EntityData : IComponent
     {
         public ushort generation;

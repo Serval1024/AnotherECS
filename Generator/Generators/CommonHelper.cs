@@ -25,11 +25,13 @@ namespace AnotherECS.Generator
                 { "SPARSE:BOOL", p => (option.isEmpty || option.isExceptSparseDirectDense).ToString() },
                 { "SPARSE:TYPE_NAME", p => (option.isEmpty || option.isExceptSparseDirectDense) ? "bool" : (option.isLimit255 ? "byte" : "ushort") },
                 { "POOLDATA_INDEX:TYPE_NAME", p => option.isLimit255 ? "byte" : "ushort" },
+                { "POOLDATA_INDEX:TYPE_UNPACK_NAME", p => option.isLimit255 ? "Byte" : "UInt16" },
                 { "EMPTY", p => option.isEmpty.ToString() },
                 { "DIRECTACCESS", p => option.isCompileDirectAccess.ToString() },
                 { "POOLCAPACITY", p => option.isOverrideCapacity ? option.capacity.ToString() : "componentCapacity" },
                 { "INJECT", p => option.isInject.ToString() },
                 { "FORCE:ISerialize", p => option.isForceUseISerialize.ToString() },
+                { "REFERNCE_POOL", p => option.isReferencePool.ToString() },
             };
     }
 }
