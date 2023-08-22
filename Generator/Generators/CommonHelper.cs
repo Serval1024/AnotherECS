@@ -5,8 +5,8 @@ namespace AnotherECS.Generator
         public static TemplateParser.Variables DefaultVariables(TypeOptions option, GeneratorContext.ComponentFilterData componentFilterData = default)
             => new()
             {
-                { "GENERIC_CONSTRAINTS", p => TypeOptionsUtils.GetPoolInterfaces(option) },
-                { "POOL_TYPE", p => TypeOptionsUtils.GetPoolFlags(option) },
+                { "GENERIC_CONSTRAINTS", p => TypeOptionsUtils.GetStorageInterfaces(option) },
+                { "STORAGE_TYPE", p => TypeOptionsUtils.GetStorageFlags(option) },
                 { "ADAPTER_TYPE", p => TypeOptionsUtils.GetAdapterFlags(option, componentFilterData) },
                 { "HISTORY_TYPE", p => TypeOptionsUtils.GetHistoryFlags(option) },
 
@@ -24,14 +24,14 @@ namespace AnotherECS.Generator
                 { "SPARSE:BYTE", p => option.isLimit255.ToString() },
                 { "SPARSE:BOOL", p => (option.isEmpty || option.isExceptSparseDirectDense).ToString() },
                 { "SPARSE:TYPE_NAME", p => (option.isEmpty || option.isExceptSparseDirectDense) ? "bool" : (option.isLimit255 ? "byte" : "ushort") },
-                { "POOLDATA_INDEX:TYPE_NAME", p => option.isLimit255 ? "byte" : "ushort" },
-                { "POOLDATA_INDEX:TYPE_UNPACK_NAME", p => option.isLimit255 ? "Byte" : "UInt16" },
+                { "STORAGE:INDEX_DATA:TYPE_NAME", p => option.isLimit255 ? "byte" : "ushort" },
+                { "STORAGE:INDEX_DATA:TYPE_UNPACK_NAME", p => option.isLimit255 ? "Byte" : "UInt16" },
                 { "EMPTY", p => option.isEmpty.ToString() },
                 { "DIRECTACCESS", p => option.isCompileDirectAccess.ToString() },
-                { "POOLCAPACITY", p => option.isOverrideCapacity ? option.capacity.ToString() : "componentCapacity" },
+                { "STORAGECAPACITY", p => option.isOverrideCapacity ? option.capacity.ToString() : "componentCapacity" },
                 { "INJECT", p => option.isInject.ToString() },
                 { "FORCE:ISerialize", p => option.isForceUseISerialize.ToString() },
-                { "REFERNCE_POOL", p => option.isReferencePool.ToString() },
+                { "STORAGE_REFERNCE", p => option.isReferenceStorage.ToString() },
             };
     }
 }

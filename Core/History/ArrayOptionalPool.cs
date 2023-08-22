@@ -3,14 +3,14 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    internal struct OptionalArrayPool<T>
+    internal struct ArrayOptionalPool<T>
     {
         public int Size => _size;
 
         private int _size;
         private readonly List<T[]> _insts;
 
-        public OptionalArrayPool(int size)
+        public ArrayOptionalPool(int size)
         {
             _insts = new List<T[]>();
             _size = size;

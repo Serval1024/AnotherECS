@@ -28,19 +28,19 @@ namespace AnotherECS.Core
             => _adapters[typeId];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IPool[] GetPools()
+        public IStorage[] GetStorages()
         {
-            var pools = new IPool[_adapters.Length];
+            var storages = new IStorage[_adapters.Length];
             for (int i = 0; i < _adapters.Length; ++i)
             {
-                pools[i] = _adapters[i].GetPool();
+                storages[i] = _adapters[i].GetStorage();
             }
-            return pools;
+            return storages;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IPool GetPool(ushort typeId)
-          => _adapters[typeId].GetPool();
+        public IStorage GetStorage(ushort typeId)
+          => _adapters[typeId].GetStorage();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsCanAsEntity(ushort typeId)
@@ -104,9 +104,9 @@ namespace AnotherECS.Core
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Rebind(ushort typeId, IEntityPool pool)
+        public void Rebind(ushort typeId, IEntityStorage storage)
         {
-            _adapters[typeId].Rebind(pool);
+            _adapters[typeId].Rebind(storage);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

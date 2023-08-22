@@ -94,7 +94,7 @@ namespace AnotherECS.Core
 
             if (newSize != -1)
             {
-                PoolResize(newSize);
+                ResizeStorages(newSize);
                 RefreshAdapters();
                 _filters.ResizeSparseIndex(newSize);
             }
@@ -534,7 +534,7 @@ namespace AnotherECS.Core
 
                 if (adapter is IHistoryBindExternalInternal historyBindExternalInternal)
                 {
-                    historyBindExternalInternal.BindExternal(_history.GetChild<PoolHistory>(r => r.SubjectId == i));
+                    historyBindExternalInternal.BindExternal(_history.GetChild<StorageHistory>(r => r.SubjectId == i));
                 }
 
                 if (adapter is IStateBindExternalInternal stateBindExternalInternal)
@@ -739,7 +739,7 @@ namespace AnotherECS.Core
             => PutAdapters(_adapters.Gets());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void PoolResize(int capacity)
+        private void ResizeStorages(int capacity)
         {
             _adapters.Resize(capacity);
             RefreshOriginal();

@@ -10,8 +10,6 @@
 
         public uint componentCapacity;
 
-        public uint componentPerEntityCapacity;
-
         public uint markerCapacity;
         public uint markerBacketSize;
 
@@ -29,8 +27,6 @@
                 filterCapacity = 256,
 
                 componentCapacity = 64,
-
-                componentPerEntityCapacity = 16,
 
                 markerCapacity = 64,
                 markerBacketSize = 16,

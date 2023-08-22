@@ -18,7 +18,7 @@ namespace AnotherECS.Unity.Editor.Generator
             _generators = new IFileGenerator[]
             {
                 new StateGenerator(),
-                new PoolGenerator(),
+                new StorageGenerator(),
                 new AdapterGenerator(),
                 new HistoryGenerator(),
             };

@@ -13,43 +13,43 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfInvalide(IDebugException state, ISinglePool pool, bool isComponentExists = true)
+        public static void ThrowIfInvalide(IDebugException state, ISingleStorage storage, bool isComponentExists = true)
         {
             ThrowIfDisposed(state);
 
             if (isComponentExists)
             {
-                if (!pool.IsHas())
+                if (!storage.IsHas())
                 {
-                    throw new Exceptions.ComponentNotFoundedException(pool.GetElementType());
+                    throw new Exceptions.ComponentNotFoundedException(storage.GetElementType());
                 }
             }
             else
             {
-                if (pool.IsHas())
+                if (storage.IsHas())
                 {
-                    throw new Exceptions.ComponentExistsException(pool.GetElementType());
+                    throw new Exceptions.ComponentExistsException(storage.GetElementType());
                 }
             }
         }
 
-        public static void ThrowIfInvalide(IDebugException state, EntityId id, IEntityPool pool, bool isComponentExists = true)
+        public static void ThrowIfInvalide(IDebugException state, EntityId id, IEntityStorage storage, bool isComponentExists = true)
         {
             ThrowIfDisposed(state);
             ThrowIfInvalide(state, id);
 
             if (isComponentExists)
             {
-                if (!pool.IsHas(id))
+                if (!storage.IsHas(id))
                 {
-                    throw new Exceptions.ComponentNotFoundedException(pool.GetElementType());
+                    throw new Exceptions.ComponentNotFoundedException(storage.GetElementType());
                 }
             }
             else
             {
-                if (pool.IsHas(id))
+                if (storage.IsHas(id))
                 {
-                    throw new Exceptions.ComponentExistsException(pool.GetElementType());
+                    throw new Exceptions.ComponentExistsException(storage.GetElementType());
                 }
             }
         }

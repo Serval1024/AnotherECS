@@ -87,6 +87,11 @@ namespace AnotherECS.Views
 
             public Config(IEnumerable<IView> registredViews)
             {
+                if (registredViews.Any(p => p == null))
+                {
+                    throw new NullReferenceException();
+                }
+
                 _byIds = registredViews.OrderBy(p => p.GetGUID()).ToArray();
                 _byGUIDs = registredViews.ToDictionary(k => k.GetGUID(), v => v);
                 _byTypes = registredViews.ToDictionary(k => k.GetType(), v => v);

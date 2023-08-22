@@ -5,14 +5,14 @@ using System.Linq;
 
 namespace AnotherECS.Generator
 {
-    public class PoolGenerator : IFileGenerator
+    public class StorageGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "_Pool.gen.cs";
-        public string TemplateFileName0 => "pool.template.txt";
-        public string TemplateFileName1 => "poolS.template.txt";
+        public string SaveFilePostfixName => "_Storage.gen.cs";
+        public string TemplateFileName0 => "storage.template.txt";
+        public string TemplateFileName1 => "storageS.template.txt";
 
 
-        private const string CONSTRUCT_HISTORY = ", Pool<#HISTORY_TYPE#>History<T> history";
+        private const string CONSTRUCT_HISTORY = ", Storage<#HISTORY_TYPE#>History<T> history";
         private const string CONSTRUCT_VERSION = ", TickProvider tickProvider";
         private const string CONSTRUCT_INJECT = ", ref InjectContainer injectContainer, IInjectMethodsReference injectMethods";
 
@@ -65,6 +65,6 @@ namespace AnotherECS.Generator
             => typeOptions.isShared ? TemplateFileName1 : TemplateFileName0;
 
         private string GetPathByOptions(GeneratorContext context, TypeOptions typeOptions)
-            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsUtils.GetPoolFlags(typeOptions) + SaveFilePostfixName);
+            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsUtils.GetStorageFlags(typeOptions) + SaveFilePostfixName);
     }
 }

@@ -9,7 +9,7 @@ using EntityId = System.Int32;
 
 namespace AnotherECS.Gen.Common
 {
-    public <#IF REFERNCE_POOL#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : IEntityAdapter<#IF !EMPTY#><T><#END#>, IEntityAdapterAdd<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public <#IF STORAGE_REFERNCE#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : IEntityAdapter<#IF !EMPTY#><T><#END#>, IEntityAdapterAdd<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
 <#IF !MARKER#>
@@ -26,13 +26,13 @@ namespace AnotherECS.Gen.Common
 <#IF EMPTY#>
         private DefaultContainer _empty;
 <#END#>
-        private Pool<#POOL_TYPE#><T> _pool;
+        private Storage<#STORAGE_TYPE#><T> _storage;
         private ushort _id;
 
-        public Adapter<#ADAPTER_TYPE#>(ref Pool<#POOL_TYPE#><T> pool)
+        public Adapter<#ADAPTER_TYPE#>(ref Storage<#STORAGE_TYPE#><T> storage)
         {
-            _pool = pool;
-            _id = _pool.GetTypeId();
+            _storage = storage;
+            _id = _storage.GetTypeId();
 <#IF !MARKER#>
             _entities = default;
 <#END#>
@@ -54,16 +54,16 @@ namespace AnotherECS.Gen.Common
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas(EntityId id)
-            => _pool.IsHas(id);
+            => _storage.IsHas(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent GetCopy(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
 <#IF !EMPTY#>
-            return _pool.Read(id);
+            return _storage.Read(id);
 <#ELSE#>
             return default(T);
 <#END#>
@@ -74,14 +74,14 @@ namespace AnotherECS.Gen.Common
         {
 <#IF !EMPTY#>
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
             if (component.GetType() != typeof(T))
             {
                 throw new Exceptions.ComponentCastException(component.GetType(), typeof(T));
             }
 #endif
             var concrete = (T)component;
-            _pool.Set(id, ref concrete);
+            _storage.Set(id, ref concrete);
 <#END#>
         }
 
@@ -90,36 +90,36 @@ namespace AnotherECS.Gen.Common
         public ref readonly T Read(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
-            return ref _pool.Read(id);
+            return ref _storage.Read(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
-            return ref _pool.Get(id);
+            return ref _storage.Get(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
-            _pool.Set(id, ref data);
+            _storage.Set(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, ref T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
-            _pool.Set(id, ref data);
+            _storage.Set(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -130,19 +130,19 @@ namespace AnotherECS.Gen.Common
         public void Add(EntityId id, ref T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 ---<#IF !EMPTY || VERSION#>
 ------<#IF DIRECTACCESS#>
-            if (_pool.TryDenseResized())
+            if (_storage.TryDenseResized())
             {
-                _adapters.Rebind(_id, _pool);
+                _adapters.Rebind(_id, _storage);
             }
 ------<#ELSE#>
-            _pool.TryDenseResized();
+            _storage.TryDenseResized();
 ------<#END#>
 ---<#END#>
-            _pool.Add(id, ref data);
+            _storage.Add(id, ref data);
             AddInternal(id);
         }
 <#END#>
@@ -151,24 +151,24 @@ namespace AnotherECS.Gen.Common
         unsafe ref T IEntityAdapterAdd<T>.AddSync(int id, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_pool.TryDenseResized())
+            if (_storage.TryDenseResized())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _pool.TryDenseResized();
+            _storage.TryDenseResized();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
-            ref var ret = ref _pool.Add(id);
+            ref var ret = ref _storage.Add(id);
             AddInternal(id);
             return ref ret;
 <#ELSE#>
-            _pool.Add(id);
+            _storage.Add(id);
             AddInternal(id);
             return ref _empty.value;
 <#END#>
@@ -178,22 +178,22 @@ namespace AnotherECS.Gen.Common
         unsafe void IEntityAdapterAdd<T>.AddSyncVoid(int id, ref T data, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_pool.TryDenseResized())
+            if (_storage.TryDenseResized())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _pool.TryDenseResized();
+            _storage.TryDenseResized();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
-            _pool.Add(id, ref data);
+            _storage.Add(id, ref data);
 <#ELSE#>
-            _pool.Add(id);
+            _storage.Add(id);
 <#END#>
             AddInternal(id);
         }
@@ -206,24 +206,24 @@ namespace AnotherECS.Gen.Common
 <#END#>
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_pool.TryDenseResized())
+            if (_storage.TryDenseResized())
             {
-                _adapters.Rebind(_id, _pool);
+                _adapters.Rebind(_id, _storage);
             }
 ---<#ELSE#>
-            _pool.TryDenseResized();
+            _storage.TryDenseResized();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
-            ref var ret = ref _pool.Add(id);
+            ref var ret = ref _storage.Add(id);
             AddInternal(id);
             return ref ret;
 <#ELSE#>
-            _pool.Add(id);
+            _storage.Add(id);
             AddInternal(id);
 <#END#>
         }
@@ -232,19 +232,19 @@ namespace AnotherECS.Gen.Common
         unsafe void IEntityAdapter.AddSyncVoid(int id, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_pool.TryDenseResized())
+            if (_storage.TryDenseResized())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _pool.TryDenseResized();
+            _storage.TryDenseResized();
 ---<#END#>
 <#END#>
-            _pool.Add(id);
+            _storage.Add(id);
             AddInternal(id);
         }
 
@@ -252,20 +252,20 @@ namespace AnotherECS.Gen.Common
         public void Remove(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
             RemoveInternal(id);
 <#IF !MARKER && !EMPTY#>
 ---<#IF DIRECTACCESS#>
-            if (_pool.TryRecycledResized())
+            if (_storage.TryRecycledResized())
             {
-                _adapters.Rebind(_id, _pool);
+                _adapters.Rebind(_id, _storage);
             }
 ---<#ELSE#>
-            _pool.TryRecycledResized();
+            _storage.TryRecycledResized();
 ---<#END#>
 <#END#>
-            _pool.Remove(id);
+            _storage.Remove(id);
 <#IF !MARKER#>
             _entities.Remove(id, _id);
 <#END#>
@@ -276,28 +276,28 @@ namespace AnotherECS.Gen.Common
         public void TickFinished()
         {
 ---<#IF HISTORY:BYTICK#>
-            _pool.PushChanges();
+            _storage.PushChanges();
 ---<#END#>
 ---<#IF MARKER#>
-            _pool.Clear();
+            _storage.Clear();
 ---<#END#>
         }
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Create()
-            => _pool.Create();
+            => _storage.Create();
 
 <#IF DISPOSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IDisposableInternal.Dispose()
-            => _pool.Dispose();
+            => _storage.Dispose();
 <#END#>
 
 <#IF COPYABLE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRecycleInternal.Recycle()
-            => _pool.Recycle();
+            => _storage.Recycle();
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -337,12 +337,12 @@ namespace AnotherECS.Gen.Common
             RemoveInternal(id);
 <#IF !MARKER && !EMPTY#>
 ---<#IF DIRECTACCESS#>
-            var isResized = _pool.TryRecycledResized();
+            var isResized = _storage.TryRecycledResized();
 ---<#ELSE#>
-            _pool.TryRecycledResized();
+            _storage.TryRecycledResized();
 ---<#END#>
 <#END#>
-            _pool.Remove(id);
+            _storage.Remove(id);
 <#IF !MARKER && !EMPTY && DIRECTACCESS#>
             return isResized;
 <#ELSE#>
@@ -354,17 +354,17 @@ namespace AnotherECS.Gen.Common
         bool IEntityAdapter.RemoveSync(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, id, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, id, _storage);
 #endif
             RemoveInternal(id);
 <#IF !MARKER && !EMPTY#>
 ---<#IF DIRECTACCESS#>
-            var isResized = _pool.TryRecycledResized();
+            var isResized = _storage.TryRecycledResized();
 ---<#ELSE#>
-            _pool.TryRecycledResized();
+            _storage.TryRecycledResized();
 ---<#END#>
 <#END#>
-            _pool.Remove(id);
+            _storage.Remove(id);
 <#IF !MARKER#>
             _entities.Remove(id, _id);
 <#END#>
@@ -376,35 +376,35 @@ namespace AnotherECS.Gen.Common
         }
 <#IF ATTACH#>
         void IAttachInternal.Attach()
-            => _pool.Attach();
+            => _storage.Attach();
 <#END#>
 <#IF DETACH#>
         void IDetachInternal.Detach()
-            => _pool.Detach();
+            => _storage.Detach();
 <#END#>
 
 <#IF HISTORY#>
         void IHistoryBindExternalInternal.BindExternal(IHistory history)
-            => _pool.BindExternal(history);
+            => _storage.BindExternal(history);
 <#END#>
 
 <#IF ATTACH || DETACH#>
         void IStateBindExternalInternal.BindExternal(State state)
-            => _pool.BindExternal(state);
+            => _storage.BindExternal(state);
 <#END#>
 
 <#IF INJECT#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInjectSupportInternal.BindInject(ref InjectContainer injectContainer, IInjectMethodsReference[] injectMethods)
-            => _pool.BindInject(ref injectContainer, injectMethods);
+            => _storage.BindInject(ref injectContainer, injectMethods);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInjectSupportInternal.ReInject()
-            => _pool.ReInject();
+            => _storage.ReInject();
 <#END#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IEntityAdapter.Resize(int capacity)
-            => _pool.Resize(capacity);
+            => _storage.Resize(capacity);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IEntityAdapter.BindExternal(Entities entities, Filters filters, ref Adapters adapters)
@@ -424,29 +424,29 @@ namespace AnotherECS.Gen.Common
 <#IF HISTORY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRevert.RevertTo(uint tick)
-            => _pool.RevertTo(tick);
+            => _storage.RevertTo(tick);
 <#END#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IAdapter.Rebind(IPool pool)
-            => _pool = (Pool<#POOL_TYPE#><T>)pool;
+        void IAdapter.Rebind(IStorage storage)
+            => _storage = (Storage<#STORAGE_TYPE#><T>)storage;
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IAdapter.Clear()
-            => _pool.Clear();
+            => _storage.Clear();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IPool IAdapter.GetPool()
-            => _pool;
+        IStorage IAdapter.GetStorage()
+            => _storage;
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            _pool.Pack(ref writer);
+            _storage.Pack(ref writer);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _pool.Unpack(ref reader);
-            _id = _pool.GetTypeId();
+            _storage.Unpack(ref reader);
+            _id = _storage.GetTypeId();
 <#IF EMPTY#>
             _empty = new DefaultContainer();
 <#END#>

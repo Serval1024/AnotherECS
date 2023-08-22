@@ -111,8 +111,8 @@ namespace AnotherECS.Core
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
 
-        public static bool IsReferencePool(Type type)
-            => IsOption(type, ComponentOptions.ReferencePool);
+        public static bool IsReferenceStorage(Type type)
+            => IsOption(type, ComponentOptions.ReferenceStorage);
 
         public static int GetTypeSize(Type type)            
             => System.Runtime.InteropServices.Marshal.SizeOf(type);

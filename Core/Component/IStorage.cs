@@ -3,20 +3,20 @@ using EntityId = System.Int32;
 
 namespace AnotherECS.Core
 {
-    public interface IPool
+    public interface IStorage
     {
         public Type GetElementType();
         void Clear();
     }
 
-    public interface IEntityPool : IPool
+    public interface IEntityStorage : IStorage
     {
         public bool IsHas(EntityId id);
         void Resize(int capacity);
         void Remove(EntityId id);
     }
 
-    public interface ISinglePool : IPool
+    public interface ISingleStorage : IStorage
     {
         public bool IsHas();
         void Remove();

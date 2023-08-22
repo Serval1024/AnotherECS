@@ -46,7 +46,7 @@ namespace AnotherECS.Unsafe
             where T : unmanaged
             => ref *(((T*)source) + index);
 
-        public static string ToString<T>(void* ptr, int count)
+        public static string AsArrayToString<T>(void* ptr, int count)
             where T : unmanaged
         {
             if ((IntPtr)ptr != IntPtr.Zero)

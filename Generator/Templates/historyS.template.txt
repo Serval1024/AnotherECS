@@ -15,7 +15,7 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public class Pool<#HISTORY_TYPE#>History<T> : PoolHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public class Storage<#HISTORY_TYPE#>History<T> : StorageHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private int _isValueIndex;
@@ -29,11 +29,11 @@ namespace AnotherECS.Gen.Common
         private Op _ops;
 <#END#>
 
-        internal Pool<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
+        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
              : base(ref reader, tickProvider)
         { }
 
-        public Pool<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
             : base(config, tickProvider, subjectId)
         {
             _isValueBuffer = new TickBoolData[config.buffersAddRemoveCapacity];
@@ -47,7 +47,7 @@ namespace AnotherECS.Gen.Common
         }
 <#END#>
 
-        public void RevertTo(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        public void RevertTo(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             RevertToIsValueBuffer(tick, ref subject);
 <#IF DETACH#>
@@ -121,7 +121,7 @@ namespace AnotherECS.Gen.Common
         #region Revert methods
         <#IF ATTACH || DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToIsValueBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToIsValueBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var sparse = subject.GetIsValueRaw();
             _ops = 0;
@@ -191,7 +191,7 @@ namespace AnotherECS.Gen.Common
             
         }
 <#ELSE#>
-        private void RevertToIsValueBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToIsValueBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var isNeedContinueSearch = true;
 
@@ -236,7 +236,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 <#IF DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void DetachComponentRevert(ref Pool<#POOL_TYPE#><T> subject)
+        private void DetachComponentRevert(ref Storage<#STORAGE_TYPE#><T> subject)
         {
             if ((_ops & Op.REMOVE) != 0)
             {
@@ -247,7 +247,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 <#IF ATTACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AttachComponentRevert(ref Pool<#POOL_TYPE#><T> subject)
+        private void AttachComponentRevert(ref Storage<#STORAGE_TYPE#><T> subject)
         {
             if ((_ops & Op.ADD) != 0)
             {
@@ -257,7 +257,7 @@ namespace AnotherECS.Gen.Common
         }
 <#END#>
 
-        private void RevertToComponentBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToComponentBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var isNeedContinueSearch = true;
 

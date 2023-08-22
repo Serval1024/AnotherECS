@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     {
         private Container[] _dense;
         private ushort[] _recycled;
-        private PoolData _data;
+        private IndexData _data;
 
 #if ANOTHERECS_HISTORY_DISABLE
         internal DArrayStorage(ref ReaderContextSerializer reader)
@@ -40,7 +40,7 @@ namespace AnotherECS.Collections
             _dense = new Container[capacity + 1];
             _recycled = new ushort[32];
 
-            _data = new PoolData()
+            _data = new IndexData()
             {
                 index = 1
             };
@@ -371,10 +371,10 @@ namespace AnotherECS.Collections
         {
             _dense = reader.Unpack<Container[]>();
             _recycled = reader.Unpack<ushort[]>();
-            _data = reader.Unpack<PoolData>();
+            _data = reader.Unpack<IndexData>();
         }
 
-        private struct PoolData : ISerialize
+        private struct IndexData : ISerialize
         {
             public ushort recycle;
             public ushort index;

@@ -15,7 +15,7 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public class Pool<#HISTORY_TYPE#>History<T> : PoolHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public class Storage<#HISTORY_TYPE#>History<T> : StorageHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private int _sparseIndex = 0;
@@ -26,7 +26,7 @@ namespace AnotherECS.Gen.Common
         private TickData<ushort>[] _recycledCountBuffer;
 
         private int _denseCountIndex = 0;
-        private TickData<<#POOLDATA_INDEX:TYPE_NAME#>>[] _denseCountBuffer;
+        private TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>[] _denseCountBuffer;
 
 
         private int _recycledIndex = 0;
@@ -38,7 +38,7 @@ namespace AnotherECS.Gen.Common
 ---<#IF HISTORY:BYTICK#>
         private int _componentsIndex = 0;
         private ComponentsData[] _componentsBuffer;
-        private OptionalArrayPool<T> _arrayPool;
+        private ArrayOptionalPool<T> _arrayPool;
         private int _byTickArrayExtraSize;
 ---<#END#>
 <#END#>
@@ -49,28 +49,28 @@ namespace AnotherECS.Gen.Common
         private <#SPARSE:TYPE_NAME#>[] _sparseCopy = System.Array.Empty<<#SPARSE:TYPE_NAME#>>();
 <#END#>
 
-        internal Pool<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
+        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
              : base(ref reader, tickProvider)
         { }
 
 <#IF HISTORY:BYTICK#>
-        public Pool<#HISTORY_TYPE#>History(in HistoryConfig config, uint componentCapacity, TickProvider tickProvider, uint subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, uint componentCapacity, TickProvider tickProvider, uint subjectId)
 <#ELSE#>
-        public Pool<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
 <#END#>
             : base(config, tickProvider, subjectId)
         {
             _sparseBuffer = new SparseData<<#SPARSE:TYPE_NAME#>>[config.buffersAddRemoveCapacity];
 <#IF !EMPTY#>
             _recycledCountBuffer = new TickData<ushort>[config.buffersAddRemoveCapacity];
-            _denseCountBuffer = new TickData<<#POOLDATA_INDEX:TYPE_NAME#>>[config.buffersAddRemoveCapacity];
+            _denseCountBuffer = new TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>[config.buffersAddRemoveCapacity];
             _recycledBuffer = new RecycledData[config.buffersAddRemoveCapacity];
 ---<#IF HISTORY:BYCHANGE#>
             _componentBuffer = new ComponentData[config.buffersChangeCapacity];
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
             _componentsBuffer = new ComponentsData[config.buffersFullCopyCapacity];
-            _arrayPool = new OptionalArrayPool<T>((int)componentCapacity);
+            _arrayPool = new ArrayOptionalPool<T>((int)componentCapacity);
             _byTickArrayExtraSize = (int)config.byTickArrayExtraSize;
 ---<#END#>
 <#END#>
@@ -83,7 +83,7 @@ namespace AnotherECS.Gen.Common
         }
 <#END#>
 
-        public void RevertTo(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        public void RevertTo(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             RevertToSparseBuffer(tick, ref subject);
 <#IF !EMPTY#>
@@ -153,7 +153,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushCount(<#POOLDATA_INDEX:TYPE_NAME#> denseCount)
+        public void PushCount(<#STORAGE:INDEX_DATA:TYPE_NAME#> denseCount)
         {
             ref var element = ref _denseCountBuffer[_denseCountIndex++];
             element.tick = Tick;
@@ -175,7 +175,7 @@ namespace AnotherECS.Gen.Common
 <#IF !EMPTY#>
 ---<#IF HISTORY:BYCHANGE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(ref T component, <#POOLDATA_INDEX:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(ref T component, <#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
             PushDense(ref component, denseIndex);
@@ -193,7 +193,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushDense(ref T component, <#POOLDATA_INDEX:TYPE_NAME#> denseIndex)
+        public void PushDense(ref T component, <#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex)
         {
             ref var element = ref _componentBuffer[_componentIndex];
 ------<#IF COPYABLE#>
@@ -213,7 +213,7 @@ namespace AnotherECS.Gen.Common
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(<#POOLDATA_INDEX:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(<#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
 ------<#IF SPARSE:BOOL#>
@@ -257,7 +257,7 @@ namespace AnotherECS.Gen.Common
 
 <#IF DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void DetachComponentRevert(ref Pool<#POOL_TYPE#><T> subject)
+        private void DetachComponentRevert(ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var sparse = _sparseCopy;
             var dense = subject.GetDenseRaw();
@@ -277,7 +277,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 <#IF ATTACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AttachComponentReverted(ref Pool<#POOL_TYPE#><T> subject)
+        private void AttachComponentReverted(ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var sparse = subject.GetSparseRaw();
             var dense = subject.GetDenseRaw();
@@ -297,7 +297,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 <#IF ATTACH || DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToSparseBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToSparseBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var sparse = subject.GetSparseRaw();
 
@@ -410,7 +410,7 @@ namespace AnotherECS.Gen.Common
         }
 <#ELSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToSparseBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToSparseBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var sparse = subject.GetSparseRaw();
 
@@ -447,7 +447,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 <#IF !EMPTY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledCountBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToRecycledCountBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             for (int i = _recycledCountIndex - 1; i >= 0; --i)
             {
@@ -481,7 +481,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToDenseCountBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToDenseCountBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             for (int i = _denseCountIndex - 1; i >= 0; --i)
             {
@@ -515,7 +515,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToRecycledBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var recycled = subject.GetRecycledRaw();
 
@@ -551,7 +551,7 @@ namespace AnotherECS.Gen.Common
         }
 ---<#IF HISTORY:BYCHANGE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToComponentBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        private void RevertToComponentBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             var dense = subject.GetDenseRaw();
 
@@ -590,7 +590,7 @@ namespace AnotherECS.Gen.Common
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void RevertToComponentBuffer(uint tick, ref Pool<#POOL_TYPE#><T> subject)
+        protected void RevertToComponentBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
             for (int i = _componentsIndex - 1; i >= 0; --i)
             {
@@ -692,7 +692,7 @@ namespace AnotherECS.Gen.Common
             _recycledCountBuffer = reader.ReadUnmanagedArray<TickData<ushort>>();
 
             _denseCountIndex = reader.ReadInt32();
-            _denseCountBuffer = reader.ReadUnmanagedArray<TickData<<#POOLDATA_INDEX:TYPE_NAME#>>>();
+            _denseCountBuffer = reader.ReadUnmanagedArray<TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>>();
 
             _recycledIndex = reader.ReadInt32();
             _recycledBuffer = reader.ReadUnmanagedArray<RecycledData>();
@@ -707,7 +707,7 @@ namespace AnotherECS.Gen.Common
 
             _byTickArrayExtraSize = reader.ReadInt32();
             var componentCapacity = reader.ReadInt32();
-            _arrayPool = new OptionalArrayPool<T>(componentCapacity);
+            _arrayPool = new ArrayOptionalPool<T>(componentCapacity);
 ---<#END#>
 <#END#>
         }
@@ -723,7 +723,7 @@ namespace AnotherECS.Gen.Common
 
             public uint tick;
             public T component;
-            public <#POOLDATA_INDEX:TYPE_NAME#> denseIndex;
+            public <#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex;
 
 ------<#IF COPYABLE#>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -744,7 +744,7 @@ namespace AnotherECS.Gen.Common
             {
                 tick = reader.ReadUInt32();
                 component = reader.ReadStruct<T>();
-                denseIndex = reader.Read<#POOLDATA_INDEX:TYPE_UNPACK_NAME#>();
+                denseIndex = reader.Read<#STORAGE:INDEX_DATA:TYPE_UNPACK_NAME#>();
             }
         }
 ---<#END#>
@@ -758,7 +758,7 @@ namespace AnotherECS.Gen.Common
             public T[] components;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ComponentsData(uint tick, T[] components, int length, ref OptionalArrayPool<T> arrayPool)
+            public ComponentsData(uint tick, T[] components, int length, ref ArrayOptionalPool<T> arrayPool)
             {
                 var newComponents = arrayPool.Rent();
 ------<#IF COPYABLE#>

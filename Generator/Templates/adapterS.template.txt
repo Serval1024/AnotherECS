@@ -8,14 +8,14 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Gen.Common
 {
-    public <#IF REFERNCE_POOL#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : ISingleAdapter<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public <#IF STORAGE_REFERNCE#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : ISingleAdapter<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
-        private Pool<#POOL_TYPE#><T> _pool;
+        private Storage<#STORAGE_TYPE#><T> _storage;
 
-        public Adapter<#ADAPTER_TYPE#>(ref Pool<#POOL_TYPE#><T> pool)
+        public Adapter<#ADAPTER_TYPE#>(ref Storage<#STORAGE_TYPE#><T> storage)
         {
-            _pool = pool;
+            _storage = storage;
 #if ANOTHERECS_DEBUG
             _state = null;
 #endif
@@ -23,42 +23,42 @@ namespace AnotherECS.Gen.Common
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas()
-            => _pool.IsHas();
+            => _storage.IsHas();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage);
 #endif
-            return ref _pool.Read();
+            return ref _storage.Read();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage);
 #endif
-            return ref _pool.Get();
+            return ref _storage.Get();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage);
 #endif
-            _pool.Set(ref data);
+            _storage.Set(ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(ref T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage);
 #endif
-            _pool.Set(ref data);
+            _storage.Set(ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,9 +82,9 @@ namespace AnotherECS.Gen.Common
         public ref T Add()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage, false);
 #endif
-            return ref _pool.Add();
+            return ref _storage.Add();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -95,16 +95,16 @@ namespace AnotherECS.Gen.Common
         public void Add(ref T data)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage, false);
 #endif
-            _pool.Add(ref data);
+            _storage.Add(ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ref T ISingleAdapter<T>.AddSync()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage, false);
 #endif
             return ref Add();
         }
@@ -113,7 +113,7 @@ namespace AnotherECS.Gen.Common
         void ISingleAdapter.AddSyncVoid()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool, false);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage, false);
 #endif
             Add();
         }
@@ -122,7 +122,7 @@ namespace AnotherECS.Gen.Common
         public void Remove()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(_state, _pool);
+            ExceptionHelper.ThrowIfInvalide(_state, _storage);
 #endif
             RemoveInternal();
         }
@@ -135,81 +135,81 @@ namespace AnotherECS.Gen.Common
 <#IF HISTORY:BYTICK#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
-            => _pool.PushChanges();
+            => _storage.PushChanges();
 <#END#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Create()
-            => _pool.Create();
+            => _storage.Create();
 
 <#IF DISPOSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IDisposableInternal.Dispose()
-            => _pool.Dispose();
+            => _storage.Dispose();
 <#END#>
 
 <#IF COPYABLE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRecycleInternal.Recycle()
-            => _pool.Recycle();
+            => _storage.Recycle();
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RemoveInternal()
-            => _pool.Remove();        
+            => _storage.Remove();        
 <#IF ATTACH#>
         void IAttachInternal.Attach()
-            => _pool.Attach();
+            => _storage.Attach();
 <#END#>
 <#IF DETACH#>
         void IDetachInternal.Detach()
-            => _pool.Detach();
+            => _storage.Detach();
 <#END#>
 
 <#IF HISTORY#>
         void IHistoryBindExternalInternal.BindExternal(IHistory history)
-            => _pool.BindExternal(history);
+            => _storage.BindExternal(history);
 <#END#>
 
 <#IF ATTACH || DETACH#>
         void IStateBindExternalInternal.BindExternal(State state)
-            => _pool.BindExternal(state);
+            => _storage.BindExternal(state);
 <#END#>
 
 <#IF INJECT#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInjectSupportInternal.BindInject(ref InjectContainer injectContainer, IInjectMethodsReference[] injectMethods)
-            => _pool.BindInject(ref injectContainer, injectMethods);
+            => _storage.BindInject(ref injectContainer, injectMethods);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInjectSupportInternal.ReInject()
-            => _pool.ReInject();
+            => _storage.ReInject();
 <#END#>
 
 <#IF HISTORY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRevert.RevertTo(uint tick)
-            => _pool.RevertTo(tick);
+            => _storage.RevertTo(tick);
 <#END#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IAdapter.Rebind(IPool pool)
-            => _pool = (Pool<#POOL_TYPE#><T>)pool;
+        void IAdapter.Rebind(IStorage storage)
+            => _storage = (Storage<#STORAGE_TYPE#><T>)storage;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IAdapter.Clear()
-            => _pool.Clear();
+            => _storage.Clear();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IPool IAdapter.GetPool()
-            => _pool;
+        IStorage IAdapter.GetStorage()
+            => _storage;
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            _pool.Pack(ref writer);
+            _storage.Pack(ref writer);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _pool.Unpack(ref reader);
+            _storage.Unpack(ref reader);
         }
 
 #if ANOTHERECS_DEBUG

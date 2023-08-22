@@ -14,7 +14,6 @@ namespace AnotherECS.Serializer
             writer.Write(generalConfig.recycledCapacity);
             writer.Write(generalConfig.filterCapacity);
             writer.Write(generalConfig.componentCapacity);
-            writer.Write(generalConfig.componentPerEntityCapacity);
             writer.Write(generalConfig.markerCapacity);
             writer.Write(generalConfig.markerBacketSize);
             writer.Write(generalConfig.dArrayCapacity);
@@ -29,7 +28,6 @@ namespace AnotherECS.Serializer
                 recycledCapacity = reader.ReadUInt32(),
                 filterCapacity = reader.ReadUInt32(),
                 componentCapacity = reader.ReadUInt32(),
-                componentPerEntityCapacity = reader.ReadUInt32(),
                 markerCapacity = reader.ReadUInt32(),
                 markerBacketSize = reader.ReadUInt32(),
                 dArrayCapacity = reader.ReadUInt32(),

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace AnotherECS.Core
 {
-
     public class World<TState> : IWorld, IDisposable
         where TState : State, new()
     {

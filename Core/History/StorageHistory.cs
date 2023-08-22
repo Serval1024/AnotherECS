@@ -2,18 +2,18 @@
 
 namespace AnotherECS.Core
 {
-    public abstract class PoolHistory : History
+    public abstract class StorageHistory : History
     {
         private uint _subjectId;
 
         public uint SubjectId
             => _subjectId;
 
-        internal PoolHistory(ref ReaderContextSerializer reader, TickProvider tickProvider) 
+        internal StorageHistory(ref ReaderContextSerializer reader, TickProvider tickProvider) 
             : base(ref reader, tickProvider) { }
 
 
-        public PoolHistory(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
+        public StorageHistory(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
             : base(config, tickProvider)
         {
             _subjectId = subjectId;

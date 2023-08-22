@@ -13,8 +13,8 @@ namespace AnotherECS.Core
     [Serialize]
     internal interface IAdapter : IAdapterReference, ISerialize
     {
-        void Rebind(IPool pool);
-        IPool GetPool();
+        void Rebind(IStorage storage);
+        IStorage GetStorage();
         void Clear();
 #if ANOTHERECS_DEBUG
         void SetState(IDebugException state);

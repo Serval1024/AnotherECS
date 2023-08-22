@@ -17,7 +17,7 @@ namespace AnotherECS.Generator
             "Data";
 
         private const string COMPONENT_HISTORY_DECLARE =
-            ", CGInitHistory(new Pool<#HISTORY_TYPE#>History<<#COMPONENT_FULL_NAME#>>(general.history, <#DECLARE:componentCapacity#>tickProvider, <#INDEX#>))";
+            ", CGInitHistory(new Storage<#HISTORY_TYPE#>History<<#COMPONENT_FULL_NAME#>>(general.history, <#DECLARE:componentCapacity#>tickProvider, <#INDEX#>))";
 
         private const string COMPONENT_VERISON_DECLARE = 
             ", CGGetTickProvider()";
@@ -80,7 +80,7 @@ namespace AnotherECS.Generator
                 {
                     { "STATE_NAME", p => stateType.Name },
                     { "STATE_NAME_GEN", p => GetStateNameGen(stateType) },
-                    { "POOL_TYPE", p => TypeOptionsUtils.GetPoolFlags(new TypeOptions(componentTypes.IdToType(p))) },
+                    { "STORAGE_TYPE", p => TypeOptionsUtils.GetStorageFlags(new TypeOptions(componentTypes.IdToType(p))) },
                     { "ADAPTER_TYPE", p => TypeOptionsUtils.GetAdapterFlags(new TypeOptions(componentTypes.IdToType(p)), context.GetComponentBindWithFilter()) },
                     { "HISTORY_TYPE", p => TypeOptionsUtils.GetHistoryFlags(new TypeOptions(componentTypes.IdToType(p))) },
 
@@ -121,7 +121,7 @@ namespace AnotherECS.Generator
 
                     { "DECLARE:componentCapacity", p => new TypeOptions(componentTypes.IdToType(p)).isHistoryByTick ? "componentCapacity, " : string.Empty },
 
-                    { "POOLCAPACITY", p => { var option = new TypeOptions(componentTypes.IdToType(p)); return option.isOverrideCapacity ? option.capacity.ToString() : "componentCapacity"; } },
+                    { "STORAGE_CAPACITY", p => { var option = new TypeOptions(componentTypes.IdToType(p)); return option.isOverrideCapacity ? option.capacity.ToString() : "componentCapacity"; } },
 
                     { "COMPONENT_INJECT_COUNT", p => componentInject.Length.ToString() },
                     { "INJECT_SELF", p => new TypeOptions(componentInject[p]).isInjectComponent.ToString() },

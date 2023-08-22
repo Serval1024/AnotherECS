@@ -12,7 +12,7 @@ namespace AnotherECS.Generator
         {
             var (includes, excludes) = componentFilterData;
 
-            var result = GetDefaultPoolFlags(option);
+            var result = GetDefaultStorageFlags(option);
 
             if (includes.Contains(option.type))
             {
@@ -29,9 +29,9 @@ namespace AnotherECS.Generator
             return result.ToString();
         }
 
-        public static string GetPoolFlags(in TypeOptions option)
+        public static string GetStorageFlags(in TypeOptions option)
         {
-            var result = GetDefaultPoolFlags(option);
+            var result = GetDefaultStorageFlags(option);
 
             if (result.Length == 0)
             {
@@ -40,7 +40,7 @@ namespace AnotherECS.Generator
             return result.ToString();
         }
 
-        private static StringBuilder GetDefaultPoolFlags(in TypeOptions option)
+        private static StringBuilder GetDefaultStorageFlags(in TypeOptions option)
         {
             var result = new StringBuilder();
             if (option.isHistoryByChange)
@@ -103,14 +103,14 @@ namespace AnotherECS.Generator
             {
                 result.Append("Dir");
             }
-            if (option.isReferencePool)
+            if (option.isReferenceStorage)
             {
                 result.Append("Ref");
             }
             return result;
         }
 
-        public static string GetPoolInterfaces(in TypeOptions option)
+        public static string GetStorageInterfaces(in TypeOptions option)
         {
             var result = new StringBuilder();
             if (option.isCopyable)
@@ -176,7 +176,7 @@ namespace AnotherECS.Generator
         }
 
         public static string GetHistoryFlags(in TypeOptions option)
-            => GetPoolFlags(option);
+            => GetStorageFlags(option);
     }
 
     internal struct TypeOptions
@@ -205,7 +205,7 @@ namespace AnotherECS.Generator
         public bool isInject;
         public ComponentUtils.InjectData[] injectMembers;
         public bool isForceUseISerialize;
-        public bool isReferencePool;
+        public bool isReferenceStorage;
 
         public TypeOptions(Type type)
         {
@@ -238,7 +238,7 @@ namespace AnotherECS.Generator
             isInject = isInjectComponent | isInjectMembers;
             injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
             isForceUseISerialize = !isEmpty && ComponentUtils.IsForceUseISerialize(type);
-            isReferencePool = ComponentUtils.IsReferencePool(type);
+            isReferenceStorage = ComponentUtils.IsReferenceStorage(type);
 
             isDispose = false;
 
