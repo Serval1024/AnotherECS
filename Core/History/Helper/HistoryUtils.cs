@@ -31,7 +31,7 @@ namespace AnotherECS.Core
             where U : struct, IFrameData
         {
 #if ANOTHERECS_DEBUG
-            var isResized = CheckAndResizeLoopBufferInternal<U>(ref index, ref buffer, recordHistoryLength);
+            var isResized = CheckAndResizeLoopBufferInternal(ref index, ref buffer, recordHistoryLength);
             if (isResized)
             {
                 Logger.HistoryBufferResized(debugBufferName, buffer.Length);

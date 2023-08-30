@@ -5,11 +5,11 @@
 using AnotherECS.Core;
 using AnotherECS.Serializer;
 using System.Runtime.CompilerServices;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Gen.Common
 {
-    public <#IF STORAGE_REFERNCE#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : IEntityAdapter<#IF !EMPTY#><T><#END#>, IEntityAdapterAdd<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF HISTORY#>, IHistoryBindExternalInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public <#IF STORAGE_REFERNCE#>class<#ELSE#>struct<#END#> Adapter<#ADAPTER_TYPE#><T> : IEntityAdapter<#IF !EMPTY#><T><#END#>, IEntityAdapterAdd<T>, IAdapterReference<#IF DISPOSE#>, IDisposableInternal<#END#><#IF HISTORY#>, IRevert<#END#>, IComponentFactory<T><#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF INJECT#>, IInjectSupportInternal<#END#><#IF ATTACH#>, IAttachInternal<#END#><#IF DETACH#>, IDetachInternal<#END#><#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
 <#IF !MARKER#>
@@ -134,12 +134,12 @@ namespace AnotherECS.Gen.Common
 #endif
 ---<#IF !EMPTY || VERSION#>
 ------<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResized())
+            if (_storage.TryDenseResize())
             {
                 _adapters.Rebind(_id, _storage);
             }
 ------<#ELSE#>
-            _storage.TryDenseResized();
+            _storage.TryDenseResize();
 ------<#END#>
 ---<#END#>
             _storage.Add(id, ref data);
@@ -148,19 +148,19 @@ namespace AnotherECS.Gen.Common
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe ref T IEntityAdapterAdd<T>.AddSync(int id, State state, delegate*<State, int, void> sync)
+        unsafe ref T IEntityAdapterAdd<T>.AddSync(EntityId id, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResized())
+            if (_storage.TryDenseResize())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResized();
+            _storage.TryDenseResize();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -175,19 +175,19 @@ namespace AnotherECS.Gen.Common
         }
 
          [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe void IEntityAdapterAdd<T>.AddSyncVoid(int id, ref T data, State state, delegate*<State, int, void> sync)
+        unsafe void IEntityAdapterAdd<T>.AddSyncVoid(EntityId id, ref T data, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResized())
+            if (_storage.TryDenseResize())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResized();
+            _storage.TryDenseResize();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -210,12 +210,12 @@ namespace AnotherECS.Gen.Common
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResized())
+            if (_storage.TryDenseResize())
             {
                 _adapters.Rebind(_id, _storage);
             }
 ---<#ELSE#>
-            _storage.TryDenseResized();
+            _storage.TryDenseResize();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -229,19 +229,19 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe void IEntityAdapter.AddSyncVoid(int id, State state, delegate*<State, int, void> sync)
+        unsafe void IEntityAdapter.AddSyncVoid(EntityId id, State state, delegate*<State, int, void> sync)
         {
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(_state, id, _storage, false);
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResized())
+            if (_storage.TryDenseResize())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResized();
+            _storage.TryDenseResize();
 ---<#END#>
 <#END#>
             _storage.Add(id);
@@ -381,11 +381,6 @@ namespace AnotherECS.Gen.Common
 <#IF DETACH#>
         void IDetachInternal.Detach()
             => _storage.Detach();
-<#END#>
-
-<#IF HISTORY#>
-        void IHistoryBindExternalInternal.BindExternal(IHistory history)
-            => _storage.BindExternal(history);
 <#END#>
 
 <#IF ATTACH || DETACH#>

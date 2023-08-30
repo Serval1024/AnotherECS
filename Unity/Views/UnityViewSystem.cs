@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
-using UnityEngine.Rendering;
-using EntityId = System.Int32;
+using AnotherECS.Views.Core;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Views
 {

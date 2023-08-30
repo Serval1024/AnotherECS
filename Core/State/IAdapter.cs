@@ -1,6 +1,6 @@
 ﻿using AnotherECS.Serializer;
 using System.Runtime.CompilerServices;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
 [assembly: InternalsVisibleTo("AnotherECS.Views")]
@@ -83,12 +83,7 @@ namespace AnotherECS.Core
     internal interface IDetachInternal
     {
         void Detach();
-    }
-
-    internal interface IHistoryBindExternalInternal
-    {
-        void BindExternal(IHistory history);
-    }
+    }    
 
     internal interface IStateBindExternalInternal
     {

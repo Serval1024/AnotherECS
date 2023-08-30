@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using AnotherECS.Serializer.Exceptions;
 
 namespace AnotherECS.Serializer
 {
@@ -150,7 +151,7 @@ namespace AnotherECS.Serializer
             => _writer.WriteUTF8(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Write(void* value, int length)
+        public unsafe void Write(void* value, uint length)
             => _writer.Write((byte*)value, length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

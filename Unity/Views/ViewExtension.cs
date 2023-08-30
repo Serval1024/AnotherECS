@@ -1,6 +1,7 @@
-using AnotherECS.Core;
 using System.Runtime.CompilerServices;
-using EntityId = System.Int32;
+using AnotherECS.Core;
+using AnotherECS.Views.Core;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Views
 {

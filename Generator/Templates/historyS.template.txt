@@ -15,29 +15,29 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public class Storage<#HISTORY_TYPE#>History<T> : StorageHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public class Storage<#HISTORY_TYPE#>History<T> : History<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private int _isValueIndex;
-        private TickBoolData[] _isValueBuffer;
+        private TickData<bool>[] _isValueBuffer;
 
         private int _componentIndex;
-        private ComponentData[] _componentBuffer;
+        private ComponentData<T>[] _componentBuffer;
 
 <#IF ATTACH || DETACH#>
         private State _state;
         private Op _ops;
 <#END#>
 
-        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
-             : base(ref reader, tickProvider)
+        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, HistoryArgs args)
+             : base(ref reader, args.tickProvider)
         { }
 
-        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
-            : base(config, tickProvider, subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryByChangeArgs args)
+            : base(new HistoryArgs(args))
         {
-            _isValueBuffer = new TickBoolData[config.buffersAddRemoveCapacity];
-            _componentBuffer = new ComponentData[config.buffersChangeCapacity];
+            _isValueBuffer = new TickData<bool>[args.buffersAddRemoveCapacity];
+            _componentBuffer = new ComponentData<T>[args.buffersChangeCapacity];
         }
 
 <#IF ATTACH || DETACH#>
@@ -106,7 +106,7 @@ namespace AnotherECS.Gen.Common
 <#IF COPYABLE#>
             if (element.tick != 0)
             {
-                element.OnRecycle();
+                element.component.OnRecycle();
             }
 <#END#>
             element.tick = Tick;
@@ -119,128 +119,22 @@ namespace AnotherECS.Gen.Common
         #endregion
 
         #region Revert methods
-        <#IF ATTACH || DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RevertToIsValueBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
-            var sparse = subject.GetIsValueRaw();
-            _ops = 0;
-
-            for (int i = _isValueIndex - 1; i >= 0; --i)
-            {
-                var frame = _isValueBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    if (_ops != Op.BOTH)
-                    {
-                        if (sparse != frame.value)
-                        {
-                            _ops |= Op.BOTH;
-                        }
-                        else if (!sparse && frame.value)
-                        {
-                            _ops |= Op.ADD;
-                        }
-                        else if (sparse && !frame.value)
-                        {
-                            _ops = Op.REMOVE;
-                        }
-                    }
-
-                    subject.SetIsValueRaw(frame.value);
-                }
-                else
-                {
-                    _isValueIndex = i + 1;
-                    return;
-                }
-            }
-
-           
-            for (int i = _isValueBuffer.Length - 1; i >= _isValueIndex; --i)
-            {
-                var frame = _isValueBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    if (_ops != Op.BOTH)
-                    {
-                        if (sparse != frame.value)
-                        {
-                            _ops |= Op.BOTH;
-                        }
-                        else if (!sparse && frame.value)
-                        {
-                            _ops |= Op.ADD;
-                        }
-                        else if (sparse && !frame.value)
-                        {
-                            _ops = Op.REMOVE;
-                        }
-                    }
-
-                    subject.SetIsValueRaw(frame.value);
-                }
-                else
-                {
-                    _isValueIndex = (i + 1) % _isValueBuffer.Length;
-                    return;
-                }
-            }
-            
-        }
+<#IF ATTACH || DETACH#>
+            RevertHelper.RevertToSingleSparseBuffer(ref subject, tick, _isValueBuffer, ref _isValueIndex, out _ops); 
 <#ELSE#>
-        private void RevertToIsValueBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
-        {
-            var isNeedContinueSearch = true;
-
-            for (int i = _isValueIndex - 1; i >= 0; --i)
-            {
-                if (_isValueBuffer[i].tick <= tick)
-                {
-                    var lastIndex = i + 1;
-                    if (i < _isValueIndex)
-                    {
-                        subject.SetIsValueRaw(_isValueBuffer[lastIndex].value);
-                        _isValueIndex = lastIndex;
-                        isNeedContinueSearch = false;
-                    }
-                    break;
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                for (int i = _isValueBuffer.Length - 1; i >= _isValueIndex; --i)
-                {
-                    if (_isValueBuffer[i].tick <= tick)
-                    {
-                        var lastIndex = i + 1;
-                        if (lastIndex < _isValueBuffer.Length)
-                        {
-                            subject.SetIsValueRaw(_isValueBuffer[lastIndex].value);
-                            _isValueIndex = lastIndex;
-                            isNeedContinueSearch = false;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                subject.SetIsValueRaw(_isValueBuffer[_isValueIndex].value);
-            }
-        }
+            RevertHelper.RevertToSingleSparseBuffer(ref subject, tick, _isValueBuffer, ref _isValueIndex); 
 <#END#>
+        }
 <#IF DETACH#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DetachComponentRevert(ref Storage<#STORAGE_TYPE#><T> subject)
         {
             if ((_ops & Op.REMOVE) != 0)
             {
-                ref var value = ref subject.GetValueRaw();
+                ref var value = ref subject.GetSingleDenseRaw();
                 value.OnDetach(_state);
             }
         }
@@ -251,7 +145,7 @@ namespace AnotherECS.Gen.Common
         {
             if ((_ops & Op.ADD) != 0)
             {
-                ref var value = ref subject.GetValueRaw();
+                ref var value = ref subject.GetSingleDenseRaw();
                 value.OnAttach(_state);
             }
         }
@@ -259,45 +153,7 @@ namespace AnotherECS.Gen.Common
 
         private void RevertToComponentBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
-            var isNeedContinueSearch = true;
-
-            for (int i = _componentIndex - 1; i >= 0; --i)
-            {
-                if (_componentBuffer[i].tick <= tick)
-                {
-                    var lastIndex = i + 1;
-                    if (i < _componentIndex)
-                    {
-                        subject.SetValueRaw(ref _componentBuffer[lastIndex].component);
-                        _componentIndex = lastIndex;
-                        isNeedContinueSearch = false;
-                    }
-                    break;
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                for (int i = _componentBuffer.Length - 1; i >= _componentIndex; --i)
-                {
-                    if (_componentBuffer[i].tick <= tick)
-                    {
-                        var lastIndex = i + 1;
-                        if (lastIndex < _componentBuffer.Length)
-                        {
-                            subject.SetValueRaw(ref _componentBuffer[lastIndex].component);
-                            _componentIndex = lastIndex;
-                            isNeedContinueSearch = false;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                subject.SetValueRaw(ref _componentBuffer[_componentIndex].component);
-            }
+            RevertHelper.RevertToSingleComponentBuffer(ref subject, tick, _componentBuffer, ref _componentIndex); 
         }
 
         #endregion
@@ -324,7 +180,6 @@ namespace AnotherECS.Gen.Common
             writer.WriteUnmanagedArray(_isValueBuffer);
 
             writer.Write(_componentIndex);
-            writer.Pack(_componentBuffer);
 <#IF BLITTABLE#>
             writer.WriteUnmanagedArray(_componentBuffer);
 <#ELSE#>
@@ -337,46 +192,14 @@ namespace AnotherECS.Gen.Common
             base.Unpack(ref reader);
 
             _isValueIndex = reader.ReadInt32();
-            _isValueBuffer = reader.ReadUnmanagedArray<TickBoolData>();
+            _isValueBuffer = reader.ReadUnmanagedArray<TickData<bool>>();
 
             _componentIndex = reader.ReadInt32();
-            _componentBuffer = reader.Unpack<ComponentData[]>();
 <#IF BLITTABLE#>
-            _componentBuffer = reader.ReadUnmanagedArray<ComponentData>();
+            _componentBuffer = reader.ReadUnmanagedArray<ComponentData<T>>();
 <#ELSE#>
             _componentBuffer = reader.Unpack<ComponentData[]>();
 <#END#>
         }
-
-        #region Data declarations
-
-        private struct ComponentData : IFrameData, ISerialize
-        {
-            public uint Tick
-                => tick;
-
-            public uint tick;
-            public T component;
-
-<#IF COPYABLE#>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void OnRecycle()
-            {
-                component.OnRecycle();
-            }
-<#END#>
-            public void Pack(ref WriterContextSerializer writer)
-            {
-                writer.Write(tick);
-                writer.WriteStruct(component);
-            }
-
-            public void Unpack(ref ReaderContextSerializer reader)
-            {
-                tick = reader.ReadUInt32();
-                component = reader.ReadStruct<T>();
-            }
-        }
-        #endregion
     }
 }

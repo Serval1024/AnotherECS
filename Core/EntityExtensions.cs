@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -9,7 +10,7 @@ namespace AnotherECS.Core
     public static class EntityExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Pack(this State state, int id)
+        public static Entity Pack(this State state, EntityId id)
             => new()
             {
                 id = id,
@@ -18,16 +19,16 @@ namespace AnotherECS.Core
             };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Unpack(this in Entity packed, out int id)
+        public static bool Unpack(this in Entity packed, out EntityId id)
             => packed.Unpack(out var _, out id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Unpack(this in Entity packed, out State state, out int id)
+        public static bool Unpack(this in Entity packed, out State state, out EntityId id)
         {
             if (packed.state == null || !packed.state.IsHas(packed.id, packed.generation))
             {
                 state = null;
-                id = -1;
+                id = 0;
                 return false;
             }
 

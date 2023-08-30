@@ -10,34 +10,24 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe class DArrayStorage : IDisposable, ISerializeConstructor
+    public unsafe class DArrayStorage : IDisposable, ISerializeConstructor, IRevertSetRecycledCountRaw<ushort>, IRevertGetRecycledRaw<ushort>, IRevertSetCountRaw<ushort>
     {
         private Container[] _dense;
         private ushort[] _recycled;
         private IndexData _data;
 
-#if ANOTHERECS_HISTORY_DISABLE
-        internal DArrayStorage(ref ReaderContextSerializer reader)
-        {
-            Unpack(ref reader);
-        }
-#else
-        private readonly DArrayHistory _history;
-
-        internal DArrayStorage(ref ReaderContextSerializer reader, DArrayHistory history)
-        {
-            _history = history;
-            Unpack(ref reader);
-        }
+#if !ANOTHERECS_HISTORY_DISABLE
+        private DArrayHistory _history;
 #endif
-
-#if ANOTHERECS_HISTORY_DISABLE
-        internal DArrayStorage(uint capacity)
-#else
-        internal DArrayStorage(uint capacity, DArrayHistory history)
-#endif
+        
+        internal DArrayStorage(ref ReaderContextSerializer reader, in DArrayArgs args)
         {
-            _dense = new Container[capacity + 1];
+            Unpack(ref reader, args);
+        }
+
+        internal DArrayStorage(in DArrayArgs args)
+        {
+            _dense = new Container[args.dArrayCapacity + 1];
             _recycled = new ushort[32];
 
             _data = new IndexData()
@@ -45,7 +35,7 @@ namespace AnotherECS.Collections
                 index = 1
             };
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = history;
+            _history = new DArrayHistory(args.history, args.dArrayBuffersCapacity);
 #endif
             Init();
         }
@@ -75,7 +65,7 @@ namespace AnotherECS.Collections
             }
             else
             {
-                TryDenseResized();
+                TryDenseResize();
 
                 ref var currentIndex = ref _data.index;
 
@@ -283,7 +273,7 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryDenseResized()
+        private void TryDenseResize()
         {
             if (_data.index == _dense.Length)
             {
@@ -335,16 +325,16 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetRecycledCountRaw(ushort value)
+        void IRevertSetRecycledCountRaw<ushort>.SetRecycledCountRaw(ushort value)
         {
             _data.recycle = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ushort[] GetRecycledRaw()
+        ushort[] IRevertGetRecycledRaw<ushort>.GetRecycledRaw()
             => _recycled;
 
-        internal void SetCountRaw(ushort value)
+        void IRevertSetCountRaw<ushort>.SetCountRaw(ushort value)
         {
             _data.index = value;
         }
@@ -365,31 +355,24 @@ namespace AnotherECS.Collections
             writer.Pack(_dense);
             writer.Pack(_recycled);
             writer.Pack(_data);
+#if !ANOTHERECS_HISTORY_DISABLE
+            writer.Pack(_history);
+#endif
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
+            Unpack(ref reader, default);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader, in DArrayArgs args)
+        {
             _dense = reader.Unpack<Container[]>();
             _recycled = reader.Unpack<ushort[]>();
             _data = reader.Unpack<IndexData>();
-        }
-
-        private struct IndexData : ISerialize
-        {
-            public ushort recycle;
-            public ushort index;
-
-            public void Pack(ref WriterContextSerializer writer)
-            {
-                writer.Write(recycle);
-                writer.Write(index);
-            }
-
-            public void Unpack(ref ReaderContextSerializer reader)
-            {
-                recycle = reader.ReadUInt16();
-                index = reader.ReadUInt16();
-            }
+#if !ANOTHERECS_HISTORY_DISABLE
+            _history = reader.Unpack<DArrayHistory>(args);
+#endif
         }
 
         internal unsafe struct Container : ISerialize
@@ -466,7 +449,7 @@ namespace AnotherECS.Collections
                     count = size;
                     if (size > 0)
                     {
-                        array = MallocAndClear(size, elementSize);
+                        array = AllocateInternal(size, elementSize);
 
                         IncVersion();
                     }
@@ -482,7 +465,7 @@ namespace AnotherECS.Collections
                     Deallocate();
                     count = sizeMin;
                     elementSize = sizeof(T);
-                    array = MallocAndClear(sizeMin, elementSize);
+                    array = AllocateInternal(sizeMin, elementSize);
                 }
                 else
                 {
@@ -502,7 +485,7 @@ namespace AnotherECS.Collections
             {
                 if (IsValide())
                 {
-                    UnsafeMemory.Free(array);
+                    UnsafeMemory.Deallocate(array);
                     count = 0;
                     elementSize = 0;
 
@@ -540,19 +523,14 @@ namespace AnotherECS.Collections
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void* MallocAndClear(int size, int sizeElement)
-            {
-                var byteSize = size * sizeElement;
-                var memory = UnsafeMemory.Malloc(byteSize);
-                UnsafeMemory.MemClear(memory, byteSize);
-                return memory;
-            }
+            private void* AllocateInternal(int size, int sizeElement)
+                => UnsafeMemory.Allocate(size * sizeElement);
 
             public void Pack(ref WriterContextSerializer writer)
             {
                 writer.Write(count);
                 writer.Write(elementSize);
-                writer.Pack(new ArrayPtr(array, ByteLength));
+                writer.WriteStruct(new ArrayPtr(array, (uint)ByteLength));
                 writer.Write(lastVersion);
                 writer.Write(version);
             }
@@ -561,9 +539,28 @@ namespace AnotherECS.Collections
             {
                 count = reader.ReadInt32();
                 elementSize = reader.ReadInt32();
-                array = reader.Unpack<ArrayPtr>().data;
+                array = reader.ReadStruct<ArrayPtr>().data;
                 lastVersion = reader.ReadInt32();
                 version = reader.ReadInt32();
+            }
+        }
+
+
+        private struct IndexData : ISerialize
+        {
+            public ushort recycle;
+            public ushort index;
+
+            public void Pack(ref WriterContextSerializer writer)
+            {
+                writer.Write(recycle);
+                writer.Write(index);
+            }
+
+            public void Unpack(ref ReaderContextSerializer reader)
+            {
+                recycle = reader.ReadUInt16();
+                index = reader.ReadUInt16();
             }
         }
     }

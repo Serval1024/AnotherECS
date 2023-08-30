@@ -1,6 +1,4 @@
-using EntityId = System.Int32;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Serializer;
 
@@ -10,8 +8,415 @@ namespace AnotherECS.Core
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class Filters : ISerialize
+    public unsafe sealed class Archetypes : ISerialize //TODO internal
     {
+        private const int FIND_DEEP = 1024;
+        private const int ARCHETYPE_COUNT = 1024;
+
+        private int _archetypeCount;
+        private Node[] _archetypes;
+
+        private BacketCollection _items;
+
+        public Archetypes(uint rootItemCount, uint totalItemCapacity)
+        {
+            _archetypeCount = (int)rootItemCount + 1;
+            _archetypes = new Node[_archetypeCount << 1];
+            for (uint i = 0, iMax = (uint)_archetypeCount; i < iMax; i++)
+            {
+                ref var archetype = ref _archetypes[i];
+                archetype.archetypeId = i;
+                archetype.itemId = (ushort)i;
+            }
+
+            _items = new BacketCollection((uint)_archetypeCount, totalItemCapacity);
+        }
+
+        public uint Add(uint archetypeId, uint id, ushort itemId)
+            => (archetypeId == 0)
+                ? AddInternal(id, itemId)
+                : AddInternal(archetypeId, id, itemId);
+        
+        public uint Remove(uint archetypeId, uint id, ushort itemId)
+            => (archetypeId == 0)
+                ? RemoveInternal(id, itemId)
+                : RemoveInternal(archetypeId, id, itemId);
+
+        public void Remove(uint archetypeId, uint id)
+        {
+            _items.Remove(_archetypes[archetypeId].itemsCollectionId, id);
+        }
+
+        public uint[] Filter(ushort[] items)
+        {
+            var archetypeIds = stackalloc uint[ARCHETYPE_COUNT];
+            var count = Filter(items, items.Length, archetypeIds);
+            var result = new uint[count];
+            for (int i = 0; i < count; ++i)
+            {
+                result[i] = archetypeIds[i];
+            }
+            return result;
+        }
+
+        public int Filter(ushort[] items, int itemCount, uint* result)
+        {
+            int resultCount = 0;
+            var items0 = (int)items[0];
+            for(int i = 1; i <= items0; ++i)
+            {
+                FindPattern(ref _archetypes[i], 0, items, itemCount, result, ref resultCount);
+            }
+
+            PatternExtend(result, ref resultCount);
+
+            return resultCount;
+        }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        private void PatternExtend(uint* result, ref int resultCount)
+        {
+            var count = resultCount;
+            for (int i = 0; i < count; ++i)
+            {
+                ref var node = ref _archetypes[result[i]];
+                int jMax = node.childenCount;
+                for (int j = 0; j < jMax; ++j)
+                {
+                    PatternExtend(ref _archetypes[node.childen[j]], result, ref resultCount);
+                }
+            }
+        }
+
+        private void PatternExtend(ref Node node, uint* result, ref int resultCount)
+        {
+            result[resultCount++] = node.archetypeId;
+            int iMax = node.childenCount;
+            for (int i = 0; i < iMax; ++i)
+            {
+                PatternExtend(ref _archetypes[node.childen[i]], result, ref resultCount);
+            }
+        }
+
+
+        private void FindPattern(ref Node node, int itemIndex, ushort[] items, int itemCount, uint* result, ref int resultCount)
+        {            
+            var itemId = items[itemIndex];
+            if (node.itemId <= itemId)
+            {
+                if (node.itemId == itemId)
+                {
+                    if (itemIndex == itemCount - 1)
+                    {
+                        result[resultCount++] = node.archetypeId;
+                        return;
+                    }
+
+                    int iMax = node.childenCount;
+                    for (int i = 0; i < iMax; ++i)
+                    {
+                        FindPattern(ref _archetypes[node.childen[i]], itemIndex + 1, items, itemCount, result, ref resultCount);
+                    }
+                }
+                else
+                {
+                    int iMax = node.childenCount;
+                    for (int i = 0; i < iMax; ++i)
+                    {
+                        FindPattern(ref _archetypes[node.childen[i]], itemIndex, items, itemCount, result, ref resultCount);
+                    }
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint RemoveInternal(uint archetypeId, uint id, ushort itemId)
+        {
+            ref var node = ref _archetypes[archetypeId];
+            _items.Remove(node.itemsCollectionId, id);
+
+            ref var parent = ref _archetypes[node.parent];
+            if (node.itemId == itemId)
+            {
+                _items.Add(parent.itemsCollectionId, id);
+                return parent.archetypeId;
+            }
+            else
+            {
+                int deep = 0;
+                ushort* itemDeep = stackalloc ushort[FIND_DEEP];
+
+                var itemNode = MoveUpToItemId(ref node, itemId, itemDeep, ref deep);
+                if (itemNode.parent == 0)
+                {
+                    ref var rootNode = ref _archetypes[itemDeep[deep - 1]];
+                    ref var childNode = ref DeepAttachNewNode(ref rootNode, itemDeep, deep - 1);
+                    _items.Add(childNode.itemsCollectionId, id);
+                    return childNode.archetypeId;
+                }
+                else
+                {
+                    ref var rootNode = ref _archetypes[itemNode.parent];
+                    ref var childNode = ref DeepAttachNewNode(ref rootNode, itemDeep, deep);
+                    _items.Add(childNode.itemsCollectionId, id);
+                    return childNode.archetypeId;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint RemoveInternal(uint id, ushort itemId)
+        {
+            _items.Remove(itemId, id);
+            return 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint AddInternal(uint archetypeId, uint id, ushort itemId)
+        {
+#if ANOTHERECS_DEBUG
+            if (itemId == _archetypes[archetypeId].itemId)
+            {
+                throw new ArgumentException($"Item already added to {nameof(Archetypes)} '{itemId}'.");
+            }
+#endif
+            ref var node = ref _archetypes[archetypeId];
+            _items.Remove(node.itemsCollectionId, id);
+
+            if (itemId > node.itemId)     //Add as node child
+            {
+                ref var childNode = ref GetChildNode(ref node, itemId);
+                _items.Add(childNode.itemsCollectionId, id);
+                return childNode.archetypeId;
+            }
+            else     //Finding right node
+            {
+                int deep = 0;
+                ushort* itemDeep = stackalloc ushort[FIND_DEEP];
+
+                ref var rootNode = ref MoveUpToLocalRoot(ref node, itemId, itemDeep, ref deep);
+                ref var childNode = ref DeepAttachNewNode(ref rootNode, itemDeep, deep);
+
+                _items.Add(childNode.itemsCollectionId, id);
+                return childNode.archetypeId;
+            }
+        }
+
+        private ref Node MoveUpToItemId(ref Node startNode, ushort itemId, ushort* itemDeep, ref int deep)
+        {
+            ref var node = ref startNode;
+
+            do
+            {
+                if (deep == FIND_DEEP)
+                {
+                    throw new Exception();
+                }
+
+                itemDeep[deep++] = node.itemId;
+
+                node = ref _archetypes[node.parent];
+            }
+            while (node.itemId != itemId);
+
+            return ref node;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref Node MoveUpToLocalRoot(ref Node startNode, ushort itemId, ushort* itemDeep, ref int deep)
+        {
+            ref var node = ref startNode;
+            
+            do
+            {
+                if (deep == FIND_DEEP)
+                {
+                    throw new Exception();
+                }
+
+                itemDeep[deep++] = node.itemId;
+
+                if (node.parent == 0)
+                {
+                    return ref _archetypes[itemId];
+                }
+
+                node = ref _archetypes[node.parent];
+            }
+            while (node.itemId > itemId);
+
+            itemDeep[deep++] = itemId;
+
+            return ref node;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref Node DeepAttachNewNode(ref Node startNode, ushort* itemIds, int itemCount)
+        {
+            ref Node node = ref startNode;
+            for (int i = itemCount - 1; i >= 0; --i)
+            {
+                node = ref GetChildNode(ref node, itemIds[i]);
+            }
+            return ref node;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint AddInternal(uint id, ushort itemId)
+        {
+            _items.Add(_archetypes[itemId].itemsCollectionId, id);
+            
+            return itemId;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref Node GetChildNode(ref Node node, ushort itemId)
+        {
+            ref var childNode = ref FindChildNode(ref node, itemId);
+            if (childNode.archetypeId != 0)
+            {
+                return ref childNode;
+            }
+
+            return ref AttachNewNode(ref node, itemId);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref Node FindChildNode(ref Node node, ushort itemId)
+        {
+            for (int i = 0; i < node.childenCount; ++i)       //TODO SER OPTIMIZATE
+            {
+                ref var childNode = ref _archetypes[node.childen[i]];
+                if (childNode.itemId == itemId)
+                {
+                    return ref childNode;
+                }
+            }
+            
+            return ref _archetypes[0];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref Node AttachNewNode(ref Node parent, ushort itemId)
+        {
+#if ANOTHERECS_DEBUG
+            if (parent.childenCount == Node.ChildenMax)
+            {
+                throw new InvalidOperationException();       //TODO SER
+            }
+#endif
+            if (_archetypeCount == _archetypes.Length)
+            {
+                Array.Resize(ref _archetypes, _archetypeCount << 1);
+            }
+
+            var id = (uint)_archetypeCount;
+            ref var newNode = ref _archetypes[id];
+            newNode.archetypeId = id;
+            newNode.itemId = itemId;
+            newNode.parent = parent.archetypeId;
+            newNode.itemsCollectionId = _items.Allocate();
+
+            parent.childen[parent.childenCount++] = id;
+            ++_archetypeCount;
+
+            return ref newNode;
+        }
+
+
+        private unsafe struct Node
+        {
+            public const int ChildenMax = 16;
+
+            public uint parent;
+            public uint archetypeId;
+            public ushort itemId;
+            public byte childenCount;
+            public fixed uint childen[Node.ChildenMax];
+            public uint itemsCollectionId;
+        }
+
+        
+
+        private struct BacketCollection
+        {
+            private int _backetCount;
+            private Backet[] _backets;
+            private uint[] _items;
+
+            public BacketCollection(uint backetCapacity, uint itemCapacity)
+            {
+                if (itemCapacity < backetCapacity)
+                {
+                    itemCapacity = backetCapacity;
+                }
+
+                _backetCount = 1;
+                _backets = new Backet[backetCapacity];
+                _items = new uint[itemCapacity];
+
+
+            }
+
+            public void Add(uint backetId, uint item)
+            {
+
+            }
+
+            public void Remove(uint backetId, uint item)
+            {
+
+            }
+
+            public uint Allocate()
+            {
+                if (_backets.Length == _backetCount)
+                {
+                    Array.Resize(ref _backets, _backetCount << 1);
+                }
+
+                return (uint)_backetCount++;
+            }
+
+
+            private struct Backet
+            {
+                public uint id;
+                public uint count;
+            }
+        }
+    }
+
+
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+#endif
+    internal sealed class Filters //: ISerialize
+    {
+
+    }
+
+
+
+    /*
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+#endif
+        internal sealed class Filters //: ISerialize
+    {*/
+        /*
 
         private readonly State _state;
         private readonly Entities _entities;
@@ -269,8 +674,8 @@ namespace AnotherECS.Core
                     filter.Add(i);
                 }
             }
-        }
+        }*/
 
-    }
+    //}
 
 }

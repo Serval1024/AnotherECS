@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AnotherECS.Serializer
+namespace AnotherECS.Serializer.Exceptions
 {
     [Serializable]
     internal class UnknowTypeException : Exception

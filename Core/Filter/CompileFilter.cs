@@ -1,5 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
+    /*
     public unsafe class CompileFilter<T0> : Filter, ICompileFilter, IInclude<T0>
         where T0 : struct, IComponent
     { }
@@ -37,5 +38,5 @@
         where T3 : struct, IComponent
         where T4 : struct, IComponent
         where T5 : struct, IComponent
-    { }
+    { }*/
 }

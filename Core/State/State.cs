@@ -4,27 +4,30 @@ using System.Runtime.CompilerServices;
 using AnotherECS.Collections;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
+
 
 namespace AnotherECS.Core
 {
-    public unsafe abstract class State : IState, IDisposable, ISerializeConstructor, IDebugException
+    public unsafe abstract class State : IState, ISerializeConstructor, IDisposable, IDebugException
     {
         public bool IsDisposed { get; private set; }
 
-        private static readonly delegate*<State, int, void> _syncCache = UnsafeUtils.ConvertToPointer(Sync);
+        private static readonly delegate*<State, int, void> _syncCacheMethod = UnsafeUtils.ConvertToPointer(Sync);
 
-        private Histories _history;
-        private Entities _entities;
-        private Filters _filters;
-        private TickProvider _tickProvider;
-        private DArrayStorage _dArrayStorage;
-        private Adapters _adapters;
-        private Events _events;
-        protected InjectContainer _injectContainer;
-#if !ANOTHERECS_HISTORY_DISABLE
         private GeneralConfig _generalConfig;
-#endif
+        private TickProvider _tickProvider;
+        private Events _events;
+        private Entities _entities;
+        private DArrayStorage _dArrayStorage;
+        //private Filters _filters;
+        private Adapters _adapters;
+
+        protected InjectContainer _injectContainer;
+        private RevertAdapters _revertAdapters;
+        private readonly ushort[] _componentsBufferTemp = new ushort[32];
+
+
         internal State(ref ReaderContextSerializer reader)
             => Unpack(ref reader);
 
@@ -33,46 +36,34 @@ namespace AnotherECS.Core
 
         public State(in GeneralConfig general)
         {
+            _generalConfig = general;
             _tickProvider = new TickProvider();
-            _history = new Histories(general.history, _tickProvider);
             _events = new Events(general.history.recordTickLength);
 
-#if ANOTHERECS_HISTORY_DISABLE
-            _entities = new Entities(general);
-#else
-            _generalConfig = general;
-            var entitiesHistory = new EntitiesHistory(general.history, _tickProvider);
-            _entities = new Entities(general, entitiesHistory);
-            entitiesHistory.SetSubject(_entities);
-#endif
-
+            _entities = new Entities(new EntitiesArgs(general, _tickProvider));
+            _dArrayStorage = new DArrayStorage(new DArrayArgs(general, _tickProvider));
+/*
 #if ANOTHERECS_HISTORY_DISABLE
             _filters = new Filters(general, this, _entities);
 #else
             _filters = new Filters(general, this, _entities, new FilterHistoryFactory(general.history, _history));
 #endif
-            _adapters = new Adapters(new IAdapter[GetComponentCount()]);
             _filters.Init(_adapters.Length);
-
-#if ANOTHERECS_HISTORY_DISABLE
-            _dArrayStorage = new DArrayStorage(general.flexArrayCapacity);
-#else
-            var dArrayHistory = new DArrayHistory(general.history, _tickProvider);
-            _dArrayStorage = new DArrayStorage(general.dArrayCapacity, dArrayHistory);
-            dArrayHistory.SetSubject(_dArrayStorage);
-#endif
+*/
+            _adapters = new Adapters(new IAdapter[GetComponentCount()]);
 
             _injectContainer = new InjectContainer(this, _dArrayStorage);
-#if !ANOTHERECS_HISTORY_DISABLE
-            _history.RegisterChild(entitiesHistory);
-            _history.RegisterChild(dArrayHistory);
-#endif
+
             CodeGenerationStage(general, _tickProvider);
             CodeGenerationStageNonSync(general, _tickProvider, _adapters.Gets());
             RefreshAdapters();
+            ResolveDepenciesAdapters();
+            RefreshOriginal();
+
+            _revertAdapters = new RevertAdapters(_adapters.Gets());
         }
 
-        public int EntityCount
+        public uint EntityCount
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -90,16 +81,12 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            var id = _entities.Allocate(out int newSize);
-
-            if (newSize != -1)
+            if (_entities.TryResize())
             {
-                ResizeStorages(newSize);
-                RefreshAdapters();
-                _filters.ResizeSparseIndex(newSize);
+                ResizeStorages((int)_entities.GetCapacity());
             }
 
-            return id;
+            return _entities.Allocate();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -112,22 +99,18 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
-            var offset = _entities.GetOffsetSegment(id);
-            var componentCount = _entities.GetRef(offset + Entities.IndexOffset.ComponentCount);
+            var count = _entities.GetComponents(id, _componentsBufferTemp);
 
-            _entities.Deallocate(id, offset);
-
-            if (componentCount > 0)
+            for(int i = 0; i < count; ++i)
             {
-                for (int i = offset + Entities.IndexOffset.BeginComponent, iMax = offset + Entities.IndexOffset.BeginComponent + componentCount; i < iMax; ++i)
+                var adapter = _adapters.GetAsEntity(_componentsBufferTemp[i]);
+                if (adapter.RemoveRaw(id))
                 {
-                    var adapter = _adapters.GetAsEntity(_entities[i]);
-                    if (adapter.RemoveRaw(id))
-                    {
-                        PutAdapter(adapter, i);
-                    }
+                    PutAdapter(adapter, i);
                 }
-            }            
+            }
+
+            _entities.Deallocate(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -245,7 +228,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
-            _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSyncVoid(id, ref data, this, _syncCache);
+            _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSyncVoid(id, ref data, this, _syncCacheMethod);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -255,7 +238,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
-            return ref _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSync(id, this, _syncCache);
+            return ref _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSync(id, this, _syncCacheMethod);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -266,7 +249,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
-            _adapters.GetAsEntity<T>(GetIndex<T>()).AddSyncVoid(id, this, _syncCache);
+            _adapters.GetAsEntity<T>(GetIndex<T>()).AddSyncVoid(id, this, _syncCacheMethod);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -459,7 +442,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick)
         {
-            _history.RevertTo(tick, _adapters.Gets());
+            _revertAdapters.RevertTo(_adapters.Gets(), tick);
             RefreshOriginal();
         }
 
@@ -472,94 +455,36 @@ namespace AnotherECS.Core
 
         public virtual void Pack(ref WriterContextSerializer writer)
         {
-            _events.Pack(ref writer);
-            
 #if !ANOTHERECS_HISTORY_DISABLE
             writer.WriteStruct(_generalConfig);
 #endif
             writer.Pack(_tickProvider);
-            writer.Pack(_history);
+            _events.Pack(ref writer);
             writer.Pack(_entities);
             writer.Pack(_dArrayStorage);
+            
             _adapters.Pack(ref writer);
-            writer.Pack(_filters);
+            //writer.Pack(_filters);
         }
 
         public virtual void Unpack(ref ReaderContextSerializer reader)
         {
-            _events.Unpack(ref reader);
-            
 #if !ANOTHERECS_HISTORY_DISABLE
             _generalConfig = reader.ReadStruct<GeneralConfig>();
 #endif
             _tickProvider = reader.Unpack<TickProvider>();
-            _history = reader.Unpack<Histories>(_tickProvider);
-            
-#if ANOTHERECS_HISTORY_DISABLE
-            _entities = reader.Unpack<Entities>();
+            _events.Unpack(ref reader);
+            _entities = reader.Unpack<Entities>(new EntitiesArgs(_generalConfig, _tickProvider));
             _dArrayStorage = reader.Unpack<DArrayStorage>();
-#else
-            _entities = reader.Unpack<Entities>(_history.GetChild<EntitiesHistory>());
-            _history.GetChild<EntitiesHistory>().SetSubject(_entities);
-
-            _dArrayStorage = reader.Unpack<DArrayStorage>(_history.GetChild<DArrayHistory>());
-            _history.GetChild<DArrayHistory>().SetSubject(_dArrayStorage);
-#endif
-            _history.BindExternal(this);
-
-
+            
             _injectContainer = new InjectContainer(this, _dArrayStorage);
             
             _adapters.Unpack(ref reader);
-#if ANOTHERECS_HISTORY_DISABLE
-            _filters = reader.Unpack<Filters>(this, _entities);
-#else
-            _filters = reader.Unpack<Filters>(this, _entities, new FilterHistoryFactory(_generalConfig.history, _history));
-#endif
-            _filters.AllFilterRebind(this, GetMask, p => _history.GetChild<FilterHistory>(r => r.SubjectId == p.Id));
-            _filters.Init(_adapters.Length);
 
-            var adapters = _adapters.Gets();
-            for (int i = 0; i < adapters.Length; ++i)
-            {
-                var adapter = adapters[i];
-
-                if (adapter is IEntityAdapter entityAdapter)
-                {
-                    entityAdapter.BindExternal(_entities, _filters, ref _adapters);
-#if ANOTHERECS_DEBUG
-                    entityAdapter.SetState(this);
-#endif
-                }
-
-                if (adapter is IHistoryBindExternalInternal historyBindExternalInternal)
-                {
-                    historyBindExternalInternal.BindExternal(_history.GetChild<StorageHistory>(r => r.SubjectId == i));
-                }
-
-                if (adapter is IStateBindExternalInternal stateBindExternalInternal)
-                {
-                    stateBindExternalInternal.BindExternal(this);
-                }
-
-                var injects = GetInjects();
-                if (adapter is IInjectSupportInternal injectSupportInternal)
-                {
-                    injectSupportInternal.BindInject(ref _injectContainer, injects);
-                }
-            }
-
-            for (int i = 0; i < adapters.Length; ++i)
-            {
-                if (adapters[i] is IAttachInternal attachInternal)
-                {
-                    attachInternal.Attach();
-                }
-            }
-
+            ResolveDepenciesAdapters();
             RefreshOriginal();
         }
-
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetFilter<T>()
             where T : Filter, new()
@@ -571,22 +496,23 @@ namespace AnotherECS.Core
             }
             throw new Exception();
         }
-
+        */
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Send(BaseEvent @event)
         {
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            Send(new EventContainer(_history.CurrentTick + 1, @event));
+            //Send(new EventContainer(_history.CurrentTick + 1, @event));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void FirstStartup()
         {
-            foreach(var adapter in _adapters.Gets())
+            var adapters = _adapters.Gets();
+            for(int i = 1; i < adapters.Length; ++i)
             {
-                if (adapter is IAttachInternal attachInternal)
+                if (adapters[i] is IAttachInternal attachInternal)
                 {
                     attachInternal.Attach();
                 }
@@ -641,7 +567,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
         {
-            _history.TickStarted();
+            //_history.TickStarted();
             _events.TickStarted(GetTick());
         }
         
@@ -663,42 +589,12 @@ namespace AnotherECS.Core
         {
             _entities.TickFinished();
             _dArrayStorage.TickFinished();
-            _filters.TickFinished();
+            //_filters.TickFinished();
             OnTickFinished();
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected T CGInitAdapter<T>(T data)
-        {
-            var adapter = data as IAdapter;
-
-            if (adapter is IEntityAdapter entityAdapter)
-            {
-                entityAdapter.BindExternal(_entities, _filters, ref _adapters);
-            }
-            if (adapter is IStateBindExternalInternal stateBindExternalInternal)
-            {
-                stateBindExternalInternal.BindExternal(this);
-            }
-#if ANOTHERECS_DEBUG
-            adapter.SetState(this);
-#endif
-            return (T)adapter;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected T CGInitHistory<T>(T history)
-            where T : IHistory
-        {
-            _history.RegisterChild(history);
-            if (history is IStateBindExternalInternal stateBindExternalInternal)
-            {
-                stateBindExternalInternal.BindExternal(this);
-            }
-            return history;
-        }
-
+      
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected TickProvider CGGetTickProvider()
             => _tickProvider;
@@ -724,19 +620,27 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Sync(State state, int index)
-         => state.Sync(index);
+        {
+            state.Sync(index);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Sync(int index)
-            => PutAdapter(_adapters.Get(index), index);
+        {
+            PutAdapter(_adapters.Get(index), index);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RefreshAdapters()
-            => GetAdapters(_adapters.Gets());
+        {
+            GetAdapters(_adapters.Gets());
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RefreshOriginal()
-            => PutAdapters(_adapters.Gets());
+        {
+            PutAdapters(_adapters.Gets());
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeStorages(int capacity)
@@ -745,15 +649,49 @@ namespace AnotherECS.Core
             RefreshOriginal();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ResolveDepenciesAdapters()
+        {
+            var injects = GetInjects();
+            var adapters = _adapters.Gets();
+            for (int i = 1; i < adapters.Length; ++i)
+            {
+                ResolveDepenciesAdapter(adapters[i], injects);
+            }
+        }
+
+        private void ResolveDepenciesAdapter<T>(T adapter, IInjectMethodsReference[] injects)
+            where T : IAdapter
+        {
+#if ANOTHERECS_DEBUG
+            adapter.SetState(this);
+#endif
+            if (adapter is IEntityAdapter entityAdapter)
+            {
+                //entityAdapter.BindExternal(_entities, _filters, ref _adapters);
+                entityAdapter.BindExternal(_entities, null, ref _adapters);
+            }
+
+            if (adapter is IStateBindExternalInternal stateBindExternalInternal)
+            {
+                stateBindExternalInternal.BindExternal(this);
+            }
+
+            if (adapter is IInjectSupportInternal injectSupportInternal)
+            {
+                injectSupportInternal.BindInject(ref _injectContainer, injects);
+            }
+        }
+
         private void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
                 _adapters.Recycle();
-                _history.Recycle();
+                //_history.Recycle();
 
                 _adapters.Dispose();
-                _history.Dispose();
+                //_history.Dispose();
                 _dArrayStorage.Dispose();
 
                 IsDisposed = true;

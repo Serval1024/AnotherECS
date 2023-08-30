@@ -12,7 +12,6 @@ using AnotherECS.Gen.Common;
 using Unity.Collections.LowLevel.Unsafe;
 #endif
 using ReflectionUtils = AnotherECS.Core.ReflectionUtils;
-using EntityId = System.Int32;
 
 namespace AnotherECS.Gen.States
 {
@@ -46,11 +45,13 @@ namespace AnotherECS.Gen.States
 
             var entityCapacity = general.entityCapacity;
             var componentCapacity = general.componentCapacity;
+            var historyByChangeArgs = new HistoryByChangeArgs(general.history, CGGetTickProvider());
+            var historyByTickArgs = new HistoryByTickArgs(general.history, CGGetTickProvider());
 
 <#ARRAY [1..COMPONENT_COUNT+1]#>
 ---<#IF DIRECTACCESS#>
             var <#COMPONENT_NAME_LOW#> = new Storage<#STORAGE_TYPE#><<#COMPONENT_FULL_NAME#>>(<#INDEX#><#IF !SHARED#>, entityCapacity, <#STORAGE_CAPACITY#><#END#><#COMPONENT_HISTORY_DECLARE#><#COMPONENT_VERISON_DECLARE#><#COMPONENT_INJECT_DECLARE#>);
-            _<#COMPONENT_NAME_LOW#>Adapter = CGInitAdapter(new Adapter<#ADAPTER_TYPE#><<#COMPONENT_FULL_NAME#>>(ref <#COMPONENT_NAME_LOW#>));
+            _<#COMPONENT_NAME_LOW#>Adapter = new Adapter<#ADAPTER_TYPE#><<#COMPONENT_FULL_NAME#>>(ref <#COMPONENT_NAME_LOW#>);
 ---<#END#>
 <#END#>
             _putFunctions = new(<#COMPONENT_DIRECTACCESS_COUNT#> + 1);
@@ -63,11 +64,13 @@ namespace AnotherECS.Gen.States
         {
             var entityCapacity = general.entityCapacity;
             var componentCapacity = general.componentCapacity;
+            var historyByChangeArgs = new HistoryByChangeArgs(general.history, CGGetTickProvider());
+            var historyByTickArgs = new HistoryByTickArgs(general.history, CGGetTickProvider());
 
 <#ARRAY [1..COMPONENT_COUNT+1]#>
 ---<#IF !DIRECTACCESS#>
             var <#COMPONENT_NAME_LOW#> = new Storage<#STORAGE_TYPE#><<#COMPONENT_FULL_NAME#>>(<#INDEX#><#IF !SHARED#>, entityCapacity, <#STORAGE_CAPACITY#><#END#><#COMPONENT_HISTORY_DECLARE#><#COMPONENT_VERISON_DECLARE#><#COMPONENT_INJECT_DECLARE#>);
-            adapters[<#INDEX#>] = CGInitAdapter(new Adapter<#ADAPTER_TYPE#><<#COMPONENT_FULL_NAME#>>(ref <#COMPONENT_NAME_LOW#>));
+            adapters[<#INDEX#>] = new Adapter<#ADAPTER_TYPE#><<#COMPONENT_FULL_NAME#>>(ref <#COMPONENT_NAME_LOW#>);
 ---<#END#>
 <#END#>
         }

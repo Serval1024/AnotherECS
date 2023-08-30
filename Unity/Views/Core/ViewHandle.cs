@@ -1,7 +1,8 @@
 using AnotherECS.Core;
 using AnotherECS.Serializer;
+using EntityId = System.UInt32;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Views.Core
 {
     [ComponentOption(ComponentOptions.HistoryNonSync | ComponentOptions.NoCompileDirectAccess | ComponentOptions.CompileSortAtLast)]
     public struct ViewSystemReference : IShared
@@ -12,7 +13,7 @@ namespace AnotherECS.Views
     [ComponentOption(ComponentOptions.NoCompileDirectAccess | ComponentOptions.CompileSortAtLast)]
     public struct ViewHandle : IComponent, IAttach, IDetach, ISerialize
     {
-        internal int ownerId;
+        internal EntityId ownerId;
         internal uint viewId;
 
         public void OnAttach(State state)
@@ -33,7 +34,7 @@ namespace AnotherECS.Views
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            ownerId = reader.ReadInt32();
+            ownerId = reader.ReadUInt32();
             viewId = reader.ReadUInt32();
         }
     }

@@ -1,6 +1,7 @@
 using AnotherECS.Core;
 using System;
 using System.Reflection.Emit;
+using System.Text;
 
 namespace AnotherECS.Unsafe
 {
@@ -37,6 +38,22 @@ namespace AnotherECS.Unsafe
         {
             ValidateConvertToPointer(function);
             return (delegate*<State, int, void>)function.Method.MethodHandle.GetFunctionPointer();
+        }
+
+        public static string AsArrayToString<T>(T* ptr, int count)
+            where T : unmanaged
+        {
+            if ((IntPtr)ptr != IntPtr.Zero)
+            {
+                var result = new StringBuilder();
+                for (int i = 0; i < count; ++i)
+                {
+                    result.Append(UnsafeMemory.GetElementArray<T>(ptr, i).ToString());
+                    result.Append(" ,");
+                }
+                return result.ToString();
+            }
+            return "null";
         }
     }
 }

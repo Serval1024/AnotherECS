@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using System;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -156,7 +156,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
-            => id ^ generation ^ state.GetHashCode();
+            => (int)id ^ generation ^ state.GetHashCode();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other)

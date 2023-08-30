@@ -15,7 +15,7 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public class Storage<#HISTORY_TYPE#>History<T> : StorageHistory<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
+    public class Storage<#HISTORY_TYPE#>History<T> : History<#IF COPYABLE#>, IRecycleInternal<#END#>, ISerialize<#IF ATTACH || DETACH#>, IStateBindExternalInternal<#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private int _sparseIndex = 0;
@@ -30,7 +30,7 @@ namespace AnotherECS.Gen.Common
 
 
         private int _recycledIndex = 0;
-        private RecycledData[] _recycledBuffer;
+        private RecycledData<ushort>[] _recycledBuffer;
 ---<#IF HISTORY:BYCHANGE#>
         private int _componentIndex = 0;
         private ComponentData[] _componentBuffer;
@@ -49,29 +49,29 @@ namespace AnotherECS.Gen.Common
         private <#SPARSE:TYPE_NAME#>[] _sparseCopy = System.Array.Empty<<#SPARSE:TYPE_NAME#>>();
 <#END#>
 
-        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, TickProvider tickProvider)
-             : base(ref reader, tickProvider)
+        internal Storage<#HISTORY_TYPE#>History(ref ReaderContextSerializer reader, HistoryArgs args)
+             : base(ref reader, args.tickProvider)
         { }
 
 <#IF HISTORY:BYTICK#>
-        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, uint componentCapacity, TickProvider tickProvider, uint subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryByTickArgs args, uint componentCapacity)
 <#ELSE#>
-        public Storage<#HISTORY_TYPE#>History(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
+        public Storage<#HISTORY_TYPE#>History(in HistoryByChangeArgs args)
 <#END#>
-            : base(config, tickProvider, subjectId)
+            : base(new HistoryArgs(args))
         {
-            _sparseBuffer = new SparseData<<#SPARSE:TYPE_NAME#>>[config.buffersAddRemoveCapacity];
+            _sparseBuffer = new SparseData<<#SPARSE:TYPE_NAME#>>[args.buffersAddRemoveCapacity];
 <#IF !EMPTY#>
-            _recycledCountBuffer = new TickData<ushort>[config.buffersAddRemoveCapacity];
-            _denseCountBuffer = new TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>[config.buffersAddRemoveCapacity];
-            _recycledBuffer = new RecycledData[config.buffersAddRemoveCapacity];
+            _recycledCountBuffer = new TickData<ushort>[args.buffersAddRemoveCapacity];
+            _denseCountBuffer = new TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>[args.buffersAddRemoveCapacity];
+            _recycledBuffer = new RecycledData<ushort>[args.buffersAddRemoveCapacity];
 ---<#IF HISTORY:BYCHANGE#>
-            _componentBuffer = new ComponentData[config.buffersChangeCapacity];
+            _componentBuffer = new ComponentData[args.buffersChangeCapacity];
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
-            _componentsBuffer = new ComponentsData[config.buffersFullCopyCapacity];
+            _componentsBuffer = new ComponentsData[args.buffersFullCopyCapacity];
             _arrayPool = new ArrayOptionalPool<T>((int)componentCapacity);
-            _byTickArrayExtraSize = (int)config.byTickArrayExtraSize;
+            _byTickArrayExtraSize = (int)args.byTickArrayExtraSize;
 ---<#END#>
 <#END#>
         }
@@ -163,7 +163,7 @@ namespace AnotherECS.Gen.Common
         }
 <#END#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushSparse(<#SPARSE:TYPE_NAME#> sparseValue, int sparseIndex)
+        public void PushSparse(<#SPARSE:TYPE_NAME#> sparseValue, uint sparseIndex)
         {
             ref var element = ref _sparseBuffer[_sparseIndex++];
             element.tick = Tick;
@@ -175,7 +175,7 @@ namespace AnotherECS.Gen.Common
 <#IF !EMPTY#>
 ---<#IF HISTORY:BYCHANGE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(ref T component, <#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(ref T component, <#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, uint sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
             PushDense(ref component, denseIndex);
@@ -213,7 +213,7 @@ namespace AnotherECS.Gen.Common
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushRemove(<#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, int sparseIndex, ushort recycled, ushort recycledCount)
+        public void PushRemove(<#STORAGE:INDEX_DATA:TYPE_NAME#> denseIndex, uint sparseIndex, ushort recycled, ushort recycledCount)
         {
             PushRecycledCount(recycledCount);
 ------<#IF SPARSE:BOOL#>
@@ -295,259 +295,32 @@ namespace AnotherECS.Gen.Common
             }
         }
 <#END#>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RevertToSparseBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
+        {
 <#IF ATTACH || DETACH#>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToSparseBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
-        {
-            var sparse = subject.GetSparseRaw();
-
-            if (_sparseCopy.Length != sparse.Length)
-            {
-                _sparseCopy = new <#SPARSE:TYPE_NAME#>[sparse.Length];
-            }
-            System.Array.Copy(sparse, _sparseCopy, sparse.Length);
-
-            if (_bufferOps.Length != sparse.Length)
-            {
-                _bufferOps = new Op[sparse.Length];
-            }
-            else
-            {
-                System.Array.Clear(_bufferOps, 0, _bufferOps.Length);
-            }
-
-            for (int i = _sparseIndex - 1; i >= 0; --i)
-            {
-                var frame = _sparseBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    ref var copy = ref _sparseCopy[frame.sparseIndex];
-                    ref var op = ref _bufferOps[frame.sparseIndex];
-
-                    if (op != Op.BOTH)
-                    {
-                        if (copy != frame.sparseValue)
-                        {
-                            op |= Op.BOTH;
-                        }
----<#IF SPARSE:BOOL#>
-                        else if (!copy && frame.sparseValue)
-                        {
-                            op |= Op.ADD;
-                        }
-                        else if (copy && !frame.sparseValue)
-                        {
-                            op = Op.REMOVE;
-                        }
----<#ELSE#>
-                        else if (copy == 0 && frame.sparseValue != 0)
-                        {
-                            op |= Op.ADD;
-                        }
-                        else if (copy != 0 && frame.sparseValue == 0)
-                        {
-                            op = Op.REMOVE;
-                        }
----<#END#>
-                    }
-
-                    sparse[frame.sparseIndex] = frame.sparseValue;
-                }
-                else
-                {
-                    _sparseIndex = i + 1;
-                    return;
-                }
-            }
-
-            
-            for (int i = _sparseBuffer.Length - 1; i >= _sparseIndex; --i)
-            {
-                var frame = _sparseBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    ref var copy = ref _sparseCopy[frame.sparseIndex];
-                    ref var op = ref _bufferOps[frame.sparseIndex];
-
-                    if (op != Op.BOTH)
-                    {
-                        if (copy != frame.sparseValue)
-                        {
-                            op |= Op.BOTH;
-                        }
----<#IF SPARSE:BOOL#>
-                        else if (!copy && frame.sparseValue)
-                        {
-                            op |= Op.ADD;
-                        }
-                        else if (copy && !frame.sparseValue)
-                        {
-                            op = Op.REMOVE;
-                        }
----<#ELSE#>
-                        else if (copy == 0 && frame.sparseValue != 0)
-                        {
-                            op |= Op.ADD;
-                        }
-                        else if (copy != 0 && frame.sparseValue == 0)
-                        {
-                            op = Op.REMOVE;
-                        }
----<#END#>
-                    }
-
-                    sparse[frame.sparseIndex] = frame.sparseValue;
-                }
-                else
-                {
-                    _sparseIndex = (i + 1) % _sparseBuffer.Length;
-                    break;
-                }
-            }
-            
-        }
+            RevertHelper.RevertToSparseBuffer(ref subject, tick, _sparseBuffer, ref _sparseIndex, ref _sparseCopy, ref _bufferOps);
 <#ELSE#>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToSparseBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
-        {
-            var sparse = subject.GetSparseRaw();
-
-            for (int i = _sparseIndex - 1; i >= 0; --i)
-            {
-                var frame = _sparseBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    sparse[frame.sparseIndex] = frame.sparseValue;
-                }
-                else
-                {
-                    _sparseIndex = i + 1;
-                    return;
-                }
-            }
-
-            for (int i = _sparseBuffer.Length - 1; i >= _sparseIndex; --i)
-            {
-                var frame = _sparseBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    sparse[frame.sparseIndex] = frame.sparseValue;
-                }
-                else
-                {
-                    _sparseIndex = (i + 1) % _sparseBuffer.Length;
-                    return;
-                }
-            }
-        }
+            RevertHelper.RevertToSparseBuffer(ref subject, tick, _sparseBuffer, ref _sparseIndex);
 <#END#>
+        }
 <#IF !EMPTY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RevertToRecycledCountBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
-            for (int i = _recycledCountIndex - 1; i >= 0; --i)
-            {
-                var frame = _recycledCountBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    subject.SetRecycledCountRaw(frame.value);
-                }
-                else
-                {
-                    _recycledCountIndex = i + 1;
-                    return;
-                }
-            }
-
-            for (int i = _recycledCountBuffer.Length - 1; i >= _recycledCountIndex; --i)
-            {
-                var frame = _recycledCountBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    subject.SetRecycledCountRaw(frame.value);
-                }
-                else
-                {
-                    _recycledCountIndex = (i + 1) % _recycledCountBuffer.Length;
-                    return;
-                }
-            }
+            RevertHelper.RevertToRecycledCountBuffer(ref subject, tick, _recycledCountBuffer, ref _recycledCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RevertToDenseCountBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
-            for (int i = _denseCountIndex - 1; i >= 0; --i)
-            {
-                var frame = _denseCountBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    subject.SetDenseCountRaw(frame.value);
-                }
-                else
-                {
-                    _denseCountIndex = i + 1;
-                    return;
-                }
-            }
-
-            for (int i = _denseCountBuffer.Length - 1; i >= _denseCountIndex; --i)
-            {
-                var frame = _denseCountBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    subject.SetDenseCountRaw(frame.value);
-                }
-                else
-                {
-                    _denseCountIndex = (i + 1) % _denseCountBuffer.Length;
-                    break;
-                }
-            }
+            RevertHelper.RevertToCountBuffer(ref subject, tick, _denseCountBuffer, ref _denseCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RevertToRecycledBuffer(uint tick, ref Storage<#STORAGE_TYPE#><T> subject)
         {
-            var recycled = subject.GetRecycledRaw();
-
-            for (int i = _recycledIndex - 1; i >= 0; --i)
-            {
-                var frame = _recycledBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    recycled[frame.recycledIndex] = frame.recycled;
-                }
-                else
-                {
-                    _recycledIndex = i + 1;
-                    return;
-                }
-            }
-
-            for (int i = _recycledBuffer.Length - 1; i >= _recycledIndex; --i)
-            {
-                var frame = _recycledBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    recycled[frame.recycledIndex] = frame.recycled;
-                }
-                else
-                {
-                    _recycledIndex = (i + 1) % _recycledBuffer.Length;
-                    return;
-                }
-            }
+            RevertHelper.RevertToRecycledBuffer(ref subject, tick, _recycledBuffer, ref _recycledIndex);
         }
 ---<#IF HISTORY:BYCHANGE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -695,7 +468,7 @@ namespace AnotherECS.Gen.Common
             _denseCountBuffer = reader.ReadUnmanagedArray<TickData<<#STORAGE:INDEX_DATA:TYPE_NAME#>>>();
 
             _recycledIndex = reader.ReadInt32();
-            _recycledBuffer = reader.ReadUnmanagedArray<RecycledData>();
+            _recycledBuffer = reader.ReadUnmanagedArray<RecycledData<ushort>>();
 ---<#IF HISTORY:BYCHANGE#>
             _componentIndex = reader.ReadInt32();
             _componentBuffer = reader.Unpack<ComponentData[]>();

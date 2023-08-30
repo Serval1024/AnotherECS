@@ -11,7 +11,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe class Filter : IFilter, ISerialize
+    public unsafe class Filter //: IFilter, ISerialize
     {
         protected State _state;
 
@@ -29,9 +29,9 @@ namespace AnotherECS.Core
         private int _entityCount;
 
         private int _lockForeach;
-        private DelayedOp[] _delayedOps;
+        //private DelayedOp[] _delayedOps;
         private int _delayedOpsCount;
-
+        /*
 
 #if ANOTHERECS_HISTORY_DISABLE
         internal void Init(State state, in Mask mask, int denseCapacity, int sparseCapacity)
@@ -327,6 +327,6 @@ namespace AnotherECS.Core
             {
                 _current = -1;
             }
-        }
+        }*/
     }
 }

@@ -41,7 +41,7 @@ namespace AnotherECS.Generator
                 {
                     if (skipCompileRule == null || skipCompileRule(option, componentFilterData))
                     {
-                        var variables = CommonHelper.DefaultVariables(option, componentFilterData);
+                        var variables = GeneratorHelper.DefaultVariables(option, componentFilterData);
                         variables.Add("FILTER", p => (includes.Contains(option.type) || excludes.Contains(option.type)).ToString());
                         variables.Add("INCLUDE", p => includes.Contains(option.type).ToString());
                         variables.Add("EXCLUDE", p => excludes.Contains(option.type).ToString());

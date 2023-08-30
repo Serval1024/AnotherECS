@@ -12,7 +12,7 @@ namespace AnotherECS.Generator
         public string TemplateFileName1 => "storageS.template.txt";
 
 
-        private const string CONSTRUCT_HISTORY = ", Storage<#HISTORY_TYPE#>History<T> history";
+        private const string CONSTRUCT_HISTORY = ", <#IF HISTORY:BYCHANGE#>HistoryByChangeArgs<#ELSE#>HistoryByTickArgs<#END#> historyArgs";
         private const string CONSTRUCT_VERSION = ", TickProvider tickProvider";
         private const string CONSTRUCT_INJECT = ", ref InjectContainer injectContainer, IInjectMethodsReference injectMethods";
 
@@ -43,7 +43,7 @@ namespace AnotherECS.Generator
             {
                 if (skipCompileRule(option))
                 {
-                    var variables = CommonHelper.DefaultVariables(option);
+                    var variables = GeneratorHelper.DefaultVariables(option);
                     variables.Add("CONSTRUCT_HISTORY", p => option.isHistory ? CONSTRUCT_HISTORY : string.Empty);
                     variables.Add("CONSTRUCT_VERSION", p => option.isVersion ? CONSTRUCT_VERSION : string.Empty);
                     variables.Add("CONSTRUCT_INJECT", p => option.isInject ? CONSTRUCT_INJECT : string.Empty);

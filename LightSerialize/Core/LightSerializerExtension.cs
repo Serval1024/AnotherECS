@@ -37,7 +37,7 @@ namespace AnotherECS.Serializer
             return System.Text.Encoding.UTF8.GetString(bytes);
         }
 
-        public static unsafe void Write(this BinaryWriter stream, byte* value, int length)
+        public static unsafe void Write(this BinaryWriter stream, byte* value, uint length)
         {
             for (int i = 0; i < length; ++i)
             {
@@ -45,7 +45,7 @@ namespace AnotherECS.Serializer
             }
         }
 
-        public static unsafe void ReadBytePtr(this BinaryReader stream, byte* buffer, int length)
+        public static unsafe void ReadBytePtr(this BinaryReader stream, byte* buffer, uint length)
         {
             for (int i = 0; i < length; ++i)
             {

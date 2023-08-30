@@ -1,12 +1,43 @@
-﻿using AnotherECS.Serializer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System.Collections.Generic;
 
 namespace AnotherECS.Core
 {
-    internal class Histories : IDisposable, ISerializeConstructor, IStateBindExternalInternal
+    internal struct RevertAdapters
+    {
+        private readonly uint[] _revertToIds;
+
+        public RevertAdapters(IAdapter[] adapters) 
+        {
+            _revertToIds = GetIds(adapters);
+        }
+
+        private static uint[] GetIds(IAdapter[] adapters)
+        {
+            var result = new List<uint>();
+            for (uint i = 1; i < adapters.Length; ++i)
+            {
+                if (adapters[i] is IRevert)
+                {
+                    result.Add(i);
+                }
+            }
+            return result.ToArray();
+        }
+
+        public void RevertTo(IAdapter[] adapters, uint tick)
+        {
+            for (uint i = 1; i < _revertToIds.Length; ++i)
+            {
+                if (adapters[i] is IRevert revert)
+                {
+                    revert.RevertTo(tick);
+                }
+            }
+        }
+    }
+
+    /*
+    internal class Histories : IDisposable, ISerializeConstructor, IStateBindExternalInternal //TODO SER REMOVE
     {
         public uint CurrentTick
         {
@@ -147,5 +178,5 @@ namespace AnotherECS.Core
             }
         }
 
-    }
+    }*/
 }

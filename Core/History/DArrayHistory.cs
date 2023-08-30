@@ -13,41 +13,35 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe sealed class DArrayHistory : History, IHistory, IRevert, IDisposable, ISerialize
+    internal unsafe sealed class DArrayHistory : History, IHistory, IDisposable, ISerialize
     {
-        private DArrayStorage _subject;
-
-        private int _buffersCapacity;
+        private uint _buffersCapacity;
 
         private int _recycledCountIndex = 0;
-        private TickUshortData[] _recycledCountBuffer;
+        private TickData<ushort>[] _recycledCountBuffer;
 
         private int _recycledIndex = 0;
-        private RecycledData[] _recycledBuffer;
+        private RecycledData<ushort>[] _recycledBuffer;
 
         private int _countIndex = 0;
-        private TickUshortData[] _countBuffer;
+        private TickData<ushort>[] _countBuffer;
 
         private ElementBufferData[] _elementBuffer;
 
 
-        internal DArrayHistory(ref ReaderContextSerializer reader, TickProvider tickProvider)
-            : base(ref reader, tickProvider)
+        internal DArrayHistory(ref ReaderContextSerializer reader, in HistoryArgs args)
+            : base(ref reader, args.tickProvider)
         { }
 
-        public DArrayHistory(in HistoryConfig config, TickProvider tickProvider)
-            : base(config, tickProvider)
+        public DArrayHistory(in HistoryByChangeArgs args, uint dArrayBuffersCapacity)
+            : base(new HistoryArgs(args))
         {
-            _recycledCountBuffer = new TickUshortData[config.buffersAddRemoveCapacity];
-            _recycledBuffer = new RecycledData[config.buffersAddRemoveCapacity];
-            _countBuffer = new TickUshortData[config.buffersAddRemoveCapacity];
+            _recycledCountBuffer = new TickData<ushort>[args.buffersAddRemoveCapacity];
+            _recycledBuffer = new RecycledData<ushort>[args.buffersAddRemoveCapacity];
+            _countBuffer = new TickData<ushort>[args.buffersAddRemoveCapacity];
             _elementBuffer = new ElementBufferData[1];
-            _buffersCapacity = (int)config.dArrayBuffersCapacity;
+            _buffersCapacity = dArrayBuffersCapacity;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSubject(DArrayStorage subject)
-            => _subject = subject;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SubjectResized(int size)
@@ -112,14 +106,14 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick)
+        public void RevertTo(uint tick, DArrayStorage subject)
         {
-            RevertToRecycledCountBuffer(tick);
-            RevertToRecycledBuffer(tick);
-            RevertToCountBuffer(tick);
-            RevertToElementBuffer(tick);
+            RevertToRecycledCountBuffer(tick, subject);
+            RevertToRecycledBuffer(tick, subject);
+            RevertToCountBuffer(tick, subject);
+            RevertToElementBuffer(tick, subject);
 
-            _subject.RevertFinished();
+            subject.RevertFinished();
         }
 
         public void Dispose()
@@ -131,136 +125,38 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledCountBuffer(uint tick)
+        private void RevertToRecycledCountBuffer(uint tick, DArrayStorage subject)
         {
-            var isNeedContinueSearch = true;
-
-            for (int i = _recycledCountIndex - 1; i >= 0; --i)
-            {
-                var frame = _recycledCountBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    _subject.SetRecycledCountRaw(frame.value);
-                }
-                else
-                {
-                    _recycledCountIndex = i + 1;
-                    isNeedContinueSearch = false;
-                    break;
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                for (int i = _recycledCountBuffer.Length - 1; i >= _recycledCountIndex; --i)
-                {
-                    var frame = _recycledCountBuffer[i];
-
-                    if (frame.tick > tick)
-                    {
-                        _subject.SetRecycledCountRaw(frame.value);
-                    }
-                    else
-                    {
-                        _recycledCountIndex = (i + 1) % _recycledCountBuffer.Length;
-                        break;
-                    }
-                }
-            }
+            RevertHelper.RevertToRecycledCountBufferClass(subject, tick, _recycledCountBuffer, ref _recycledCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledBuffer(uint tick)
+        private void RevertToRecycledBuffer(uint tick, DArrayStorage subject)
         {
-            var isNeedContinueSearch = true;
-
-            var recycled = _subject.GetRecycledRaw();
-
-            for (int i = _recycledIndex - 1; i >= 0; --i)
-            {
-                var frame = _recycledBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    recycled[frame.recycledIndex] = frame.recycled;
-                }
-                else
-                {
-                    _recycledIndex = i + 1;
-                    isNeedContinueSearch = false;
-                    break;
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                for (int i = _recycledBuffer.Length - 1; i >= _recycledIndex; --i)
-                {
-                    var frame = _recycledBuffer[i];
-
-                    if (frame.tick > tick)
-                    {
-                        recycled[frame.recycledIndex] = frame.recycled;
-                    }
-                    else
-                    {
-                        _recycledIndex = (i + 1) % _recycledBuffer.Length;
-                        break;
-                    }
-                }
-            }
+            RevertHelper.RevertToRecycledBufferClass(subject, tick, _recycledBuffer, ref _recycledIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToCountBuffer(uint tick)
+        private void RevertToCountBuffer(uint tick, DArrayStorage subject)
         {
-            var isNeedContinueSearch = true;
-
-            for (int i = _countIndex - 1; i >= 0; --i)
-            {
-                var frame = _countBuffer[i];
-
-                if (frame.tick > tick)
-                {
-                    _subject.SetCountRaw(frame.value);
-                }
-                else
-                {
-                    _countIndex = i + 1;
-                    isNeedContinueSearch = false;
-                    break;
-                }
-            }
-
-            if (isNeedContinueSearch)
-            {
-                for (int i = _countBuffer.Length - 1; i >= _countIndex; --i)
-                {
-                    var frame = _countBuffer[i];
-
-                    if (frame.tick > tick)
-                    {
-                        _subject.SetCountRaw(frame.value);
-                    }
-                    else
-                    {
-                        _countIndex = (i + 1) % _countBuffer.Length;
-                        break;
-                    }
-                }
-            }
+            RevertHelper.RevertToCountBufferClass(subject, tick, _countBuffer, ref _countIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToElementBuffer(uint tick)
+        private void RevertToElementBuffer(uint tick, DArrayStorage subject)
         {
-            var elements = _subject.GetDenseRaw();
+            RevertToElementBufferClass(subject, tick, _elementBuffer);
+        }
 
-            for (int k = 1; k < _elementBuffer.Length; ++k)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void RevertToElementBufferClass(DArrayStorage subject, uint tick, ElementBufferData[] elementBuffer)
+        {
+            var elements = subject.GetDenseRaw();
+
+            for (int k = 1; k < elementBuffer.Length; ++k)
             {
                 var isNeedContinueSearch = true;
-                ref var buffer = ref _elementBuffer[k];
+                ref var buffer = ref elementBuffer[k];
 
                 for (int i = buffer.index - 1; i >= 0; --i)
                 {
@@ -294,7 +190,6 @@ namespace AnotherECS.Core
                     }
                 }
             }
-
         }
 
         public override void Pack(ref WriterContextSerializer writer)
@@ -319,64 +214,21 @@ namespace AnotherECS.Core
         {
             base.Unpack(ref reader);
 
-            _buffersCapacity = reader.ReadInt32();
+            _buffersCapacity = reader.ReadUInt32();
 
             _recycledCountIndex = reader.ReadInt32();
-            _recycledCountBuffer = reader.ReadUnmanagedArray<TickUshortData>();
+            _recycledCountBuffer = reader.ReadUnmanagedArray<TickData<ushort>>();
 
             _recycledIndex = reader.ReadInt32();
-            _recycledBuffer = reader.ReadUnmanagedArray<RecycledData>();
+            _recycledBuffer = reader.ReadUnmanagedArray<RecycledData<ushort>>();
 
             _countIndex = reader.ReadInt32();
-            _countBuffer = reader.ReadUnmanagedArray<TickUshortData>();
+            _countBuffer = reader.ReadUnmanagedArray<TickData<ushort>>();
 
             _elementBuffer = reader.Unpack<ElementBufferData[]>();
         }
 
-        private struct TickUshortData : IFrameData, ISerialize
-        {
-            public uint Tick
-                => tick;
-
-            public uint tick;
-            public ushort value;
-
-            public void Pack(ref WriterContextSerializer writer)
-            {
-                writer.Write(tick);
-                writer.Write(value);
-            }
-
-            public void Unpack(ref ReaderContextSerializer reader)
-            {
-                tick = reader.ReadUInt32();
-                value = reader.ReadUInt16();
-            }
-        }
-
-        private struct RecycledData : IFrameData, ISerialize
-        {
-            public uint Tick
-                => tick;
-
-            public uint tick;
-            public ushort recycled;
-            public ushort recycledIndex;
-
-            public void Pack(ref WriterContextSerializer writer)
-            {
-                writer.Write(tick);
-                writer.Write(recycled);
-                writer.Write(recycledIndex);
-            }
-
-            public void Unpack(ref ReaderContextSerializer reader)
-            {
-                tick = reader.ReadUInt32();
-                recycled = reader.ReadUInt16();
-                recycledIndex = reader.ReadUInt16();
-            }
-        }
+       
 
         private struct ElementBufferData : ISerialize
         {
@@ -440,7 +292,7 @@ namespace AnotherECS.Core
                 writer.Write(tick);
                 writer.Write(count);
                 writer.Write(elementSize);
-                writer.Pack(new ArrayPtr(data, ByteLength));
+                writer.WriteStruct(new ArrayPtr(data, (uint)ByteLength));
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
@@ -448,7 +300,7 @@ namespace AnotherECS.Core
                 tick = reader.ReadUInt32();
                 count = reader.ReadInt32();
                 elementSize = reader.ReadInt32();
-                data = reader.Unpack<ArrayPtr>().data;
+                data = reader.ReadStruct<ArrayPtr>().data;
             }
         }
     }

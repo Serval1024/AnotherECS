@@ -1,10 +1,11 @@
-using EntityId = System.Int32;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
+using AnotherECS.Views.Core;
+using UnityEngine;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Views
 {
@@ -13,7 +14,7 @@ namespace AnotherECS.Views
         public List<MonoBehaviourView> views;
 
         private Config _config;
-        private readonly Dictionary<int, IView> _byIdInstances = new();
+        private readonly Dictionary<EntityId, IView> _byIdInstances = new();
 
         private void Awake()
         {
@@ -106,7 +107,7 @@ namespace AnotherECS.Views
 #if ANOTHERECS_DEBUG
                 if (!_byTypes.ContainsKey(id))
                 {
-                    throw new Exceptions.ViewNotFoundedException(id.Name);
+                    throw new Exceptions.ViewNotFoundException(id.Name);
                 }
 #endif
                 return _byTypes[id];
@@ -118,7 +119,7 @@ namespace AnotherECS.Views
 #if ANOTHERECS_DEBUG
                 if (!_byGUIDs.ContainsKey(id))
                 {
-                    throw new Exceptions.ViewNotFoundedException(id);
+                    throw new Exceptions.ViewNotFoundException(id);
                 }
 #endif
                 return _byGUIDs[id];
@@ -130,7 +131,7 @@ namespace AnotherECS.Views
 #if ANOTHERECS_DEBUG
                 if (id >= _byIds.Length)
                 {
-                    throw new Exceptions.ViewNotFoundedException(id.ToString());
+                    throw new Exceptions.ViewNotFoundException(id.ToString());
                 }
 #endif
                 return _byIds[id];
@@ -144,7 +145,7 @@ namespace AnotherECS.Views
 #if ANOTHERECS_DEBUG
                 if (!_byTypeToIds.ContainsKey(id))
                 {
-                    throw new Exceptions.ViewNotFoundedException(id.Name);
+                    throw new Exceptions.ViewNotFoundException(id.Name);
                 }
 #endif
                 return _byTypeToIds[id];

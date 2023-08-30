@@ -8,14 +8,14 @@ namespace AnotherECS.Core
     }
 
     internal struct SparseData<U> : IFrameData, ISerialize
-           where U : unmanaged
+        where U : unmanaged
     {
         public uint Tick
             => tick;
 
         public uint tick;
         public U sparseValue;
-        public int sparseIndex;
+        public uint sparseIndex;
 
         public void Pack(ref WriterContextSerializer writer)
         {
@@ -28,11 +28,11 @@ namespace AnotherECS.Core
         {
             tick = reader.ReadUInt32();
             sparseValue = reader.ReadStruct<U>();
-            sparseIndex = reader.ReadInt32();
+            sparseIndex = reader.ReadUInt32();
         }
     }
     internal struct TickData<U> : IFrameData, ISerialize
-            where U : unmanaged
+        where U : unmanaged
     {
         public uint Tick
             => tick;
@@ -53,48 +53,73 @@ namespace AnotherECS.Core
         }
     }
 
-    internal struct RecycledData : IFrameData, ISerialize
+    internal struct RecycledData<U> : IFrameData, ISerialize
+        where U : unmanaged
     {
         public uint Tick
             => tick;
 
         public uint tick;
-        public ushort recycled;
-        public ushort recycledIndex;
+        public U recycled;
+        public U recycledIndex;
 
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(tick);
-            writer.Write(recycled);
-            writer.Write(recycledIndex);
+            writer.WriteStruct(recycled);
+            writer.WriteStruct(recycledIndex);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
             tick = reader.ReadUInt32();
-            recycled = reader.ReadUInt16();
-            recycledIndex = reader.ReadUInt16();
+            recycled = reader.ReadStruct<U>();
+            recycledIndex = reader.ReadStruct<U>();
         }
     }
 
-    internal struct TickBoolData : IFrameData, ISerialize
+    internal struct ElementOffsetData<U> : IFrameData, ISerialize
     {
         public uint Tick
             => tick;
 
         public uint tick;
-        public bool value;
+        public uint offset;
+        public U data;
 
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(tick);
-            writer.Write(value);
+            writer.Write(offset);
+            writer.WriteStruct(data);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
             tick = reader.ReadUInt32();
-            value = reader.ReadBoolean();
+            offset = reader.ReadUInt32();
+            data = reader.ReadStruct<U>();
+        }
+    }
+
+    internal struct ComponentData<T> : IFrameData, ISerialize
+    {
+        public uint Tick
+            => tick;
+
+        public uint tick;
+        public T component;
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            writer.Write(tick);
+            writer.WriteStruct(component);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            tick = reader.ReadUInt32();
+            component = reader.ReadStruct<T>();
         }
     }
 

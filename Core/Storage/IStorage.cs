@@ -1,5 +1,5 @@
 ﻿using System;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {

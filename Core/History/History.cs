@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    public abstract class History : IHistory, ISerializeConstructor
+    public abstract class History : IHistory
     {
         protected uint _recordHistoryLength = 0;
         private readonly TickProvider _tickProvider;
@@ -20,10 +20,10 @@ namespace AnotherECS.Core
             Unpack(ref reader);
         }
         
-        public History(in HistoryConfig config, TickProvider tickProvider)
+        public History(in HistoryArgs args)
         {
-            _tickProvider = tickProvider;
-            _recordHistoryLength = config.recordTickLength;
+            _tickProvider = args.tickProvider;
+            _recordHistoryLength = args.recordTickLength;
         }
 
         public virtual void Pack(ref WriterContextSerializer writer)

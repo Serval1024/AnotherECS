@@ -17,7 +17,7 @@ namespace AnotherECS.Generator
             "Data";
 
         private const string COMPONENT_HISTORY_DECLARE =
-            ", CGInitHistory(new Storage<#HISTORY_TYPE#>History<<#COMPONENT_FULL_NAME#>>(general.history, <#DECLARE:componentCapacity#>tickProvider, <#INDEX#>))";
+            ", <#IF HISTORY:BYCHANGE#>historyByChangeArgs<#ELSE#>historyByTickArgs<#END#>";
 
         private const string COMPONENT_VERISON_DECLARE = 
             ", CGGetTickProvider()";
@@ -75,6 +75,7 @@ namespace AnotherECS.Generator
                 var tempCounter = 0;
                 var componentInjectByType = componentInject.ToDictionary(k => k, v => tempCounter++);
 
+                
                 TemplateParser.Variables variables = null;
                 variables = new()
                 {
@@ -85,6 +86,7 @@ namespace AnotherECS.Generator
                     { "HISTORY_TYPE", p => TypeOptionsUtils.GetHistoryFlags(new TypeOptions(componentTypes.IdToType(p))) },
 
                     { "DIRECTACCESS", p => new TypeOptions(componentTypes.IdToType(p)).isCompileDirectAccess.ToString() },
+                    { "HISTORY:BYCHANGE", p => new TypeOptions(componentTypes.IdToType(p)).isHistoryByChange.ToString() },
 
                     { "SHARED", p => new TypeOptions(componentTypes.IdToType(p)).isShared.ToString() },
                     { "COMPONENT_NAME", p => componentTypes.IdToType(p).Name },

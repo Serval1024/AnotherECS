@@ -29,7 +29,7 @@ namespace AnotherECS.Generator
                    var path = GetPathByOptions(context, option);
                    if (isForceOverride || !File.Exists(path))
                    {
-                       var variables = CommonHelper.DefaultVariables(option);
+                       var variables = GeneratorHelper.DefaultVariables(option);
 
                        return new ContentGenerator(path, TemplateParser.Transform(context.GetTemplate(GetTemplate(option)), variables));
                    }

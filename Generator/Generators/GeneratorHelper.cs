@@ -1,6 +1,6 @@
 namespace AnotherECS.Generator
 {
-    internal static class CommonHelper
+    internal static class GeneratorHelper
     {
         public static TemplateParser.Variables DefaultVariables(TypeOptions option, GeneratorContext.ComponentFilterData componentFilterData = default)
             => new()

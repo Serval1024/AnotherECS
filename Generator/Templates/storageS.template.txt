@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Gen.Common
 {
-    public struct Storage<#STORAGE_TYPE#><T> : ISingleStorage, IComponentFactory<T>, ISerialize<#IF INJECT#>, IInjectSupport<#END#>
+    public struct Storage<#STORAGE_TYPE#><T> : ISingleStorage, IComponentFactory<T>, ISerialize<#IF INJECT#>, IInjectSupport<#END#><#IF HISTORY#>, IRevertGetSparseRaw<bool>, IRevertSetSparseRaw<bool>, IRevertSetSingleDenseRaw<T><#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private Container _container;
@@ -42,7 +42,7 @@ namespace AnotherECS.Gen.Common
 <#END#>
 
 <#IF HISTORY#>
-            _history = history;
+            _history = new Storage<#HISTORY_TYPE#>History<T>(historyArgs);
 <#END#>
 <#IF ATTACH || DETACH#>
             _state = null;
@@ -55,13 +55,6 @@ namespace AnotherECS.Gen.Common
             _deconstruct = UnsafeUtils.ConvertToPointer(methods.deconstruct);
 <#END#>
         }
-
-<#IF HISTORY#>
-        public void BindExternal(IHistory history)
-        {
-            _history = (Storage<#HISTORY_TYPE#>History<T>)history;
-        }
-<#END#>
 
 <#IF ATTACH || DETACH#>
         public void BindExternal(State state)
@@ -277,19 +270,24 @@ namespace AnotherECS.Gen.Common
         }
 <#END#>
 
-        public bool GetIsValueRaw()
-            => _container.isValue;
-        
-        public void SetIsValueRaw(bool value)
-            => _container.isValue = value;
-
-        public ref T GetValueRaw()
-            => ref _container.value;
-
-        public void SetValueRaw(ref T value)
-            => _container.value = value;
 
 <#IF HISTORY#>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool GetSparseRaw()
+            => _container.isValue;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]        
+        public void SetSparseRaw(bool value)
+            => _container.isValue = value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetSingleDenseRaw(ref T value)
+            => _container.value = value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetSingleDenseRaw()
+            => ref _container.value;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick)
             => _history.RevertTo(tick, ref this);

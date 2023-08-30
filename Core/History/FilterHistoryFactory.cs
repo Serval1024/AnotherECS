@@ -1,5 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
+    /*
     internal struct FilterHistoryFactory
     {
         private HistoryConfig _config;
@@ -19,5 +20,5 @@
             return inst;
         }
     }
-
+    */
 }

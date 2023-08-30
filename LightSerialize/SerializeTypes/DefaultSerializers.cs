@@ -313,14 +313,14 @@ namespace AnotherECS.Serializer
         public void Pack(ref WriterContextSerializer writer, object @value)
         {
             var arrayPtr = (ArrayPtr)@value;
-            _сount.Pack(ref writer, (uint)arrayPtr.length);
+            _сount.Pack(ref writer, arrayPtr.length);
             writer.Write(arrayPtr.data, arrayPtr.length);
         }
 
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
         {
-            int length = (int)_сount.Unpack(ref reader);
+            uint length = _сount.Unpack(ref reader);
             var buffer = UnsafeMemory.Malloc(length);
             reader.Read(buffer, length);
             
@@ -331,9 +331,9 @@ namespace AnotherECS.Serializer
     public unsafe struct ArrayPtr
     {
         public void* data;
-        public int length;
+        public uint length;
 
-        public ArrayPtr(void* data, int length)
+        public ArrayPtr(void* data, uint length)
         {
             this.data = data;
             this.length = length;

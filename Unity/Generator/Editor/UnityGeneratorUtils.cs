@@ -23,7 +23,7 @@ namespace AnotherECS.Unity.Editor.Generator
                 return File.ReadAllText(pathTemplate);
             }
 
-            throw new Exception($"Template for auto generation code not founded '{pathTemplate}'.");
+            throw new Exception($"Template for auto generation code not found '{pathTemplate}'.");
         }
 
         public static string FindRootTemplateDirectory()
@@ -34,7 +34,7 @@ namespace AnotherECS.Unity.Editor.Generator
             {
                 return result;
             }
-            throw new Exception($"Directory for templates code not founded '{result}'.");
+            throw new Exception($"Directory for templates code not found '{result}'.");
         }
 
         public static string FindRootGenCommonDirectory()
@@ -47,7 +47,7 @@ namespace AnotherECS.Unity.Editor.Generator
             {
                 return result;
             }
-            throw new Exception($"Directory for auto generation code not founded '{result}'.");
+            throw new Exception($"Directory for auto generation code not found '{result}'.");
         }
 
         public static string FindRootDirectory()
@@ -62,7 +62,7 @@ namespace AnotherECS.Unity.Editor.Generator
                 }
             }
 
-            throw new Exception($"Assembly '{GeneratorSettings.EcsRoot}' not founded.");
+            throw new Exception($"Assembly '{GeneratorSettings.EcsRoot}' not found.");
         }
 
         public static void SaveFile(string path, string content)

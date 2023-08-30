@@ -1,7 +1,7 @@
 ﻿using AnotherECS.Core;
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Views.Core
 {
     public interface IViewSystem : ISystem
     {

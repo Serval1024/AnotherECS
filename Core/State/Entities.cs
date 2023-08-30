@@ -1,7 +1,7 @@
-using EntityId = System.Int32;
 using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Serializer;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -9,276 +9,257 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    internal class Entities : ISerializeConstructor
+    internal unsafe class Entities : ISerializeConstructor, IDisposable
     {
         internal const ushort AllocateGeneration = 32768;
 
-        private ushort[] _data;
-        private int _count;
-        private int _segmentSize;
-        private int _gcEntityCheckPerTick;
+        private BlockMemoryStorage _storage;
 
-        private int[] _recycled;
-        private int _recycledCount;
+        private int _gcEntityCheckPerTick;
         private int _currentIndexGC;
 
+
+        internal Entities(ref ReaderContextSerializer reader, in EntitiesArgs args)
+        {
+            Unpack(ref reader, args);
+        }
+
+        public Entities(in EntitiesArgs args)
+        {
+            var size = (uint)sizeof(EntityHead);
 #if ANOTHERECS_HISTORY_DISABLE
-        internal Entities(ref ReaderContextSerializer reader)
-        {
-            Unpack(ref reader);
-        }
+            _storage = new BlockMemoryStorage(size * args.entityCapacity, size, args.recycledCapacity);
 #else
-        private readonly EntitiesHistory _history;
-
-        internal Entities(ref ReaderContextSerializer reader, EntitiesHistory history)
-        {
-            _history = history;
-            Unpack(ref reader);
-        }
+            _storage = new BlockMemoryStorage(size * args.entityCapacity, size, args.recycledCapacity, args.history);
 #endif
-
-#if ANOTHERECS_HISTORY_DISABLE
-        public Entities(in GeneralConfig config)
-#else
-        public Entities(in GeneralConfig config, EntitiesHistory history)
-#endif
-        {
-            _segmentSize = IndexOffset.BeginComponent + (int)config.componentPerEntityCapacity;
-            _data = new ushort[config.entityCapacity * _segmentSize];
-            _count = 1;
-
-            _recycled = new int[config.recycledCapacity];
-            _recycledCount = 0;
-
-            _gcEntityCheckPerTick = (int)config.gcEntityCheckPerTick * _segmentSize;
-            _currentIndexGC = IndexOffset.ComponentCount;
-#if !ANOTHERECS_HISTORY_DISABLE
-            _history = history;
-#endif
+            _gcEntityCheckPerTick = (int)args.gcEntityCheckPerTick;
         }
-
-        public ushort this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data[index];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref ushort GetRef(int index)
-            => ref _data[index];
-
+      
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas(EntityId id)
-            => id >= 1 && id < _count && IsHasRaw(id);
-
+            => id >= 1 && id <= GetCount() && IsHasRaw(id);
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHasRaw(EntityId id)
             => GetGeneration(id) >= AllocateGeneration;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetComponentCount(EntityId id)
-            => _data[GetOffsetSegment(id) + IndexOffset.ComponentCount];
+        public ushort GetComponentCount(EntityId id)
+            => _storage.Read<EntityHead>(id)->count;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort GetComponent(EntityId id, int index)
-            => _data[GetOffsetSegment(id) + IndexOffset.BeginComponent + index];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ArraySegment<ushort> GetComponents(EntityId id)
+        public ushort GetComponents(EntityId id, ushort[] buffer)
         {
-            var offset = GetOffsetSegment(id);
-            var count = _data[offset + IndexOffset.ComponentCount];
-            return new ArraySegment<ushort>(_data, offset + IndexOffset.BeginComponent, count);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort GetGeneration(EntityId id)
-            => _data[GetOffsetSegment(id) + IndexOffset.Generation];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetEntityCapacity()
-            => _data.Length / _segmentSize;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetRawCount()
-            => _count;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetAllocatedCount()
-            => GetRawCount() - _recycledCount;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetCount()
-            => GetAllocatedCount() - 1;
-
-        public int GetAlives(ref EntityId[] entities)
-        {
-            var count = GetCount();
-            if (entities == null || entities.Length < count)
+            var head = _storage.Read<EntityHead>(id);
+            var count = head->count;
+#if ANOTHERECS_DEBUG
+            if (buffer.Length < count)
             {
-                entities = new int[count];
+                throw new ArgumentException($"There is not enough space in {nameof(buffer)} to copy.");
+            }
+#endif
+            var components = head->components;
+
+            var index = -1;
+            for (int i = 0, iMax = Math.Min(count, EntityHead.ComponentMax); i < iMax; ++i)
+            {
+                buffer[++index] = components[i];
             }
 
-            var id = 0;
-            for (int i = 1, offset = _segmentSize; i < _count; ++i, offset += _segmentSize)
+            if (count > EntityHead.ComponentMax)
             {
-                if (_data[offset + IndexOffset.Generation] >= AllocateGeneration)
+                var next = head->next;
+                EntityTail* tail = null;
+                while (next != 0)
                 {
-                    entities[id++] = i;
+                    tail = _storage.Read<EntityTail>(next);
+                    components = tail->components;
+
+                    for (int i = 0; i < EntityTail.ComponentMax; ++i)
+                    {
+                        buffer[++index] = components[i];
+                    }
+
+                    next = tail->next;
                 }
             }
             return count;
         }
 
+        public ushort GetComponent(EntityId id, int index)
+        {
+            if (index < EntityHead.ComponentMax)
+            {
+                return _storage.Read<EntityHead>(id)->components[index];
+            }
+            else
+            {
+                var next = _storage.Read<EntityHead>(id)->next;
+                index -= EntityHead.ComponentMax;
+                while(next != 0)
+                {
+                    if (index < EntityTail.ComponentMax)
+                    {
+                        return _storage.Read<EntityTail>(next)->components[index];
+                    }    
+
+                    next = _storage.Read<EntityTail>(next)->next;
+                    index -= EntityTail.ComponentMax;
+                }
+            }
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetOffsetSegment(EntityId id)
-            => id * _segmentSize;
+        public ushort GetGeneration(EntityId id)
+            => _storage.Read<EntityHead>(id)->generation;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetCount()
+            => _storage.GetCount();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetCapacity()
+            => _storage.GetCountCapacity();
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(EntityId id, ushort componentType)
         {
-            var offset = GetOffsetSegment(id);
-            var offsetComponentCount = offset + IndexOffset.ComponentCount;
-            ref var count = ref _data[offsetComponentCount];
-            var saveIndex = offset + count + IndexOffset.BeginComponent;
-            if (saveIndex == _segmentSize)
+            var head = _storage.Read<EntityHead>(id);
+            if (head->count < EntityHead.ComponentMax)
             {
-                /*
-                _segmentSize = SegmentUtils.Resize(GetEntityCapacity(), _segmentSize, _segmentSize + 4, _count * _segmentSize, ref _data);
-#if ANOTHERECS_DEBUG
-                Logger.SegmentResized(_segmentSize - 4, _segmentSize);
-#endif
-                */
-                throw new Exceptions.ReachedLimitEntityException(_segmentSize);
+                ref var component = ref head->components[head->count];
+                component = componentType;
+            }
+            else
+            {
+                var next = head->next;
+                EntityTail* tail = null;
+
+                if (next == 0)
+                {
+                    _storage.TryDenseIncSize();
+                    head->next = _storage.UnsafeAdd();
+                    tail = _storage.Read<EntityTail>(next);
+                    tail->components[0] = componentType;
+                }
+                else
+                {
+                    var index = head->count - EntityHead.ComponentMax + EntityTail.ComponentMax;
+                    while (next != 0)
+                    {
+                        tail = _storage.Read<EntityTail>(next);
+                        next = tail->next;
+                        index -= EntityTail.ComponentMax;
+                    }
+
+                    if (index < EntityTail.ComponentMax)
+                    {
+                        tail->components[index] = componentType;
+                    }
+                    else
+                    {
+                        _storage.TryDenseIncSize();
+                        tail->next = _storage.UnsafeAdd();
+                        tail = _storage.Read<EntityTail>(next);
+                        tail->components[0] = componentType;
+                    }
+                }
             }
 
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history.PushArrayElement(offsetComponentCount, count);
-            _history.PushArrayElement(saveIndex, 0);
+            _storage.Change2Byte(&head->count);
 #endif
-            _data[saveIndex] = componentType;
-            ++count;
+            ++head->count;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(EntityId id, ushort componentType)
         {
-            var offset = GetOffsetSegment(id);
-            var offsetComponentCount = offset + IndexOffset.ComponentCount;
+            var head = _storage.Read<EntityHead>(id);
 
-            ref var dataCount = ref _data[offsetComponentCount];
-#if !ANOTHERECS_HISTORY_DISABLE
-            _history.PushArrayElement(offsetComponentCount, dataCount);
-#endif
-            --dataCount;
-
-            var dataOffset = offset + IndexOffset.BeginComponent;
-            for (var i = 0; i <= dataCount; i++)
+            var componentPtr = FindComponentPtr(id, componentType);
+            if (componentPtr != null)
             {
-                if (_data[dataOffset + i] == componentType)
+                var lastPtr = FindComponentLastPtr(id);
+
+                if (componentPtr != lastPtr)
                 {
-                    if (i < dataCount)
-                    {
-                        _data[dataOffset + i] = _data[dataOffset + dataCount];
-                    }
 #if !ANOTHERECS_HISTORY_DISABLE
-                    _history.PushArrayElement(dataOffset + i, _data[dataOffset + i]);
+                    _storage.Change2Byte(componentPtr);
 #endif
-                    return;
+                    *componentPtr = *lastPtr;
                 }
+#if !ANOTHERECS_HISTORY_DISABLE
+                _storage.Change2Byte(&head->count);
+#endif
+                --head->count;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntityId Allocate(out int newSize)
+        public bool TryResize()
+            => _storage.TryDenseResize();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EntityId Allocate()
         {
-            newSize = -1;
-            int id;
-            if (_recycledCount > 0)
+            var id = _storage.UnsafeAdd();
+            var head = _storage.Read<EntityHead>(id);
+
+            _storage.Change2Byte(&head->generation);
+
+            head->generation += AllocateGeneration + 1;
+            if (head->generation == ushort.MaxValue)
             {
-#if !ANOTHERECS_HISTORY_DISABLE
-                _history.PushRecycledCount(_recycledCount);
-#endif
-                id = _recycled[--_recycledCount];
-                var offset = GetOffsetSegment(id);
-
-                ref var generation = ref _data[offset + IndexOffset.Generation];
-                generation += AllocateGeneration + 1;
-                if (generation == ushort.MaxValue)
-                {
-                    generation = AllocateGeneration;
-                }
-
-                _data[offset + IndexOffset.ComponentCount] = 0;
+                head->generation = AllocateGeneration;
             }
-            else
-            {
-                if (_count * _segmentSize == _data.Length)
-                {
-                    newSize = _count << 1;
-                    Array.Resize(ref _data, newSize * _segmentSize);
-                }
 
-                id = _count++;
-                var offset = GetOffsetSegment(id);
-                var offsetGeneration = offset + IndexOffset.Generation;
-                ref var generation = ref _data[offsetGeneration];
-#if !ANOTHERECS_HISTORY_DISABLE
-                _history.PushArrayElement(offsetGeneration, generation);
-#endif
-                generation = AllocateGeneration;
-            }
+            head->count = 0;
 
             return id;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate(EntityId id)
-            => Deallocate(id, GetOffsetSegment(id));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deallocate(EntityId id, int offset)
         {
-            if (_recycledCount == _recycled.Length)
-            {
-                Array.Resize(ref _recycled, _recycledCount << 1);
-            }
+            var head = _storage.Read<EntityHead>(id);
 
-            var offsetGeneration = offset + IndexOffset.Generation;
-            ref var generation = ref _data[offsetGeneration];
+            _storage.Change2Byte(&head->generation);
+            head->generation -= AllocateGeneration;
 
+            var next = head->next;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history.PushArrayElement(offsetGeneration, generation);
-            _history.PushRecycled(_recycled[_recycledCount], _recycledCount);
-
-            var count = _data[offset + IndexOffset.ComponentCount];
-            if (count != 0)
+            var components = head->components;
+            var count = head->count;
+            var iMax = Math.Min(count, EntityHead.ComponentMax);
+            for (int i = 0; i < iMax; ++i)
             {
-                var offsetBeginComponent = _data[offset + IndexOffset.BeginComponent];
-
-                for (int i = offsetBeginComponent, iMax = offsetBeginComponent + count; i < iMax; ++i)
-                {
-                    _history.PushArrayElement(i, _data[i]);
-                }
+                _storage.Change2Byte(components + i);
             }
+
+            count -= iMax;
 #endif
-            _data[offsetGeneration] -= AllocateGeneration;
-            _recycled[_recycledCount++] = id;
+            _storage.Remove(id);
+
+
+            if (next != 0)
+            {
+                var idTail = next;
+                var tail = _storage.Read<EntityTail>(idTail);
+                next = tail->next;
+
+#if !ANOTHERECS_HISTORY_DISABLE
+                iMax = Math.Min(count, EntityTail.ComponentMax);
+                for (int i = 0; i < iMax; ++i)
+                {
+                    _storage.Change2Byte(components + i);
+                }
+                count -= EntityTail.ComponentMax;   //TODO SER CHECK ushort < 0
+#endif
+                _storage.Remove(idTail);
+            }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetRecycledCountRaw(int value)
-         => _recycledCount = value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] GetRecycledRaw()
-            => _recycled;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort[] GetArrayRaw()
-            => _data;
 
         public void TickFinished()
         {
@@ -288,44 +269,90 @@ namespace AnotherECS.Core
             }
         }
 
-        public void GarbageCollect()
-        {
-            var offset = IndexOffset.Generation - IndexOffset.ComponentCount;
-            for (int i = IndexOffset.ComponentCount; i < _data.Length; i += _segmentSize)
-            {
-                if (_data[i] == 0 && _data[i + offset] >= AllocateGeneration)
-                {
-                    Deallocate((i - IndexOffset.ComponentCount) / _segmentSize);
-                }
-            }
-        }
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Pack(_data);
-            writer.Write(_count);
-            writer.Write(_segmentSize);
+            _storage.Pack(ref writer);
             writer.Write(_gcEntityCheckPerTick);
-
-            writer.Pack(_recycled);
-            writer.Write(_recycledCount);
             writer.Write(_currentIndexGC);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _data = reader.Unpack<ushort[]>();
-            _count = reader.ReadInt32();
-            _segmentSize = reader.ReadInt32();
-            _gcEntityCheckPerTick = reader.ReadInt32();
+            Unpack(ref reader, default);
+        }
 
-            _recycled = reader.Unpack<EntityId[]>();
-            _recycledCount = reader.ReadInt32();
+        public void Unpack(ref ReaderContextSerializer reader, in EntitiesArgs args)
+        {
+            _storage.Unpack(ref reader, args.history);
+            _gcEntityCheckPerTick = reader.ReadInt32();
             _currentIndexGC = reader.ReadInt32();
         }
 
-
-        private void InterationGarbageCollect(int offsetIndex)
+        public void Dispose()
         {
+            _storage.Dispose();
+        }
+
+
+        private ushort* FindComponentPtr(EntityId id, ushort componentType)
+        {
+            var head = _storage.Read<EntityHead>(id);
+            var components = head->components;
+
+            for (int i = 0, iMax = Math.Min(head->count, EntityHead.ComponentMax); i < iMax; ++i)
+            {
+                if (components[i] == componentType)
+                {
+                    return components + i;
+                }
+            }
+
+            var next = head->next;
+            EntityTail* tail = null;
+            while (next != 0)
+            {
+                tail = _storage.Read<EntityTail>(next);
+                components = tail->components;
+
+                for (int i = 0; i < EntityTail.ComponentMax; ++i)
+                {
+                    if (components[i] == componentType)
+                    {
+                        return components + i;
+                    }
+                }
+
+                next = tail->next;
+            }
+            return null;
+        }
+
+        private ushort* FindComponentLastPtr(EntityId id)
+        {
+            var head = _storage.Read<EntityHead>(id);
+
+            if (head->count <= EntityHead.ComponentMax)
+            {
+                return head->components + head->count - 1;
+            }
+            else
+            {
+                var index = head->count - EntityHead.ComponentMax + EntityTail.ComponentMax;
+                var next = head->next;
+                EntityTail* tail = null;
+                while (next != 0)
+                {
+                    tail = _storage.Read<EntityTail>(next);
+                    next = tail->next;
+                }
+                return tail->components + index;
+            }
+        }
+
+        private void InterationGarbageCollect(int count)
+        {
+
+            /*
             var iMax = _currentIndexGC + offsetIndex;
             if (iMax > _data.Length)
             {
@@ -342,15 +369,7 @@ namespace AnotherECS.Core
             }
 
             _currentIndexGC = (_currentIndexGC + offsetIndex) % _data.Length;
-        }
-
-
-
-        public static class IndexOffset
-        {
-            public const int ComponentCount = 0;
-            public const int Generation = 1;
-            public const int BeginComponent = 2;
+            */
         }
     }
 }

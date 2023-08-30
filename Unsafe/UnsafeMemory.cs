@@ -8,6 +8,23 @@ namespace AnotherECS.Unsafe
     public unsafe static class UnsafeMemory
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void* Allocate(long size)
+        {
+            var ptr = Malloc(size);
+            MemClear(ptr, size);
+            return ptr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Deallocate(void* ptr)
+        {
+            if ((IntPtr)ptr != IntPtr.Zero)
+            {
+                Free(ptr);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void* Malloc(long size)
            => Malloc(size, 16);
 
@@ -45,21 +62,5 @@ namespace AnotherECS.Unsafe
         public static ref T GetElementArray<T>(void* source, int index)
             where T : unmanaged
             => ref *(((T*)source) + index);
-
-        public static string AsArrayToString<T>(void* ptr, int count)
-            where T : unmanaged
-        {
-            if ((IntPtr)ptr != IntPtr.Zero)
-            {
-                var result = new StringBuilder();
-                for (int i = 0; i < count; ++i)
-                {
-                    result.Append(GetElementArray<T>(ptr, i).ToString());
-                    result.Append(" ,");
-                }
-                return result.ToString();
-            }
-            return "null";
-        }
     }
 }

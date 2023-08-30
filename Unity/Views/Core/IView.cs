@@ -1,6 +1,6 @@
 ﻿using AnotherECS.Core;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Views.Core
 {
     public interface IView
     {

@@ -2,7 +2,6 @@
 {
     public struct HistoryConfig
     {
-        
         public uint dArrayBuffersCapacity;
         public uint buffersAddRemoveCapacity;
         public uint buffersChangeCapacity;

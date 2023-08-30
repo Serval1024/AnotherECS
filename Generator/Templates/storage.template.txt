@@ -7,7 +7,7 @@ using System;
 using AnotherECS.Core;
 using AnotherECS.Serializer;
 <#IF INJECT#>using AnotherECS.Unsafe;<#END#>
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Gen.Common
 {
@@ -15,7 +15,7 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public <#IF INJECT#>unsafe <#END#>struct Storage<#STORAGE_TYPE#><T> : IEntityStorage, IComponentFactory<T>, ISerialize<#IF INJECT#>, IInjectSupport<#END#>
+    public <#IF INJECT#>unsafe <#END#>struct Storage<#STORAGE_TYPE#><T> : IEntityStorage, IComponentFactory<T>, ISerialize<#IF INJECT#>, IInjectSupport<#END#><#IF HISTORY#>, IRevertGetSparseRaw<<#SPARSE:TYPE_NAME#>[]>, IRevertSetRecycledCountRaw<<#STORAGE:INDEX_DATA:TYPE_NAME#>>, IRevertSetCountRaw<<#STORAGE:INDEX_DATA:TYPE_NAME#>>, IRevertGetRecycledRaw<<#STORAGE:INDEX_DATA:TYPE_NAME#>><#END#>
         where T : <#IF BLITTABLE#>unmanaged<#ELSE#>struct<#END#>, IComponent<#GENERIC_CONSTRAINTS#>
     {
         private <#SPARSE:TYPE_NAME#>[] _sparse;
@@ -76,7 +76,7 @@ namespace AnotherECS.Gen.Common
             _tickProvider = tickProvider;
 <#END#>
 <#IF HISTORY#>
-            _history = history;
+            _history = new Storage<#HISTORY_TYPE#>History<T>(historyArgs<#IF HISTORY:BYTICK#>, componentCapacity<#END#>);
 <#END#>
 <#IF ATTACH || DETACH#>
             _state = null;
@@ -89,13 +89,6 @@ namespace AnotherECS.Gen.Common
             _deconstruct = UnsafeUtils.ConvertToPointer(methods.deconstruct);
 <#END#>
         }
-
-<#IF HISTORY#>
-        public void BindExternal(IHistory history)
-        {
-            _history = (Storage<#HISTORY_TYPE#>History<T>)history;
-        }
-<#END#>
 
 <#IF ATTACH || DETACH#>
         public void BindExternal(State state)
@@ -217,7 +210,7 @@ namespace AnotherECS.Gen.Common
 
 <#IF !EMPTY || VERSION#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryDenseResized()
+        public bool TryDenseResize()
         {
 ---<#IF SPARSE:BOOL#>
             return false;
@@ -582,41 +575,44 @@ namespace AnotherECS.Gen.Common
 
         }
 <#END#>
-        public void SetRecycledCountRaw(ushort count)
-<#IF !MARKER && !EMPTY#>
-            => _data.recycle = count;
-<#ELSE#>
-            => throw new NotSupportedException();
-<#END#>        
 
-        public void SetDenseCountRaw(<#STORAGE:INDEX_DATA:TYPE_NAME#> count)
-<#IF !EMPTY#>
-            => _data.index = count;
-<#ELSE#>
+<#IF HISTORY#>
+        public void SetRecycledCountRaw(ushort count)
+---<#IF !MARKER && !EMPTY#>
+            => _data.recycle = count;
+---<#ELSE#>
             => throw new NotSupportedException();
-<#END#>        
+---<#END#>        
+
+        public void SetCountRaw(<#STORAGE:INDEX_DATA:TYPE_NAME#> count)
+---<#IF !EMPTY#>
+            => _data.index = count;
+---<#ELSE#>
+            => throw new NotSupportedException();
+---<#END#>        
 
         public <#STORAGE:INDEX_DATA:TYPE_NAME#>[] GetRecycledRaw()
-<#IF !MARKER && !EMPTY#>
+---<#IF !MARKER && !EMPTY#>
             => _recycled;
-<#ELSE#>
+---<#ELSE#>
             => throw new NotSupportedException();
-<#END#>
+---<#END#>
 
         public void SetDenseRaw(T[] data)
-<#IF !MARKER && !EMPTY#>
+---<#IF !MARKER && !EMPTY#>
             => _dense = data;
-<#ELSE#>    
+---<#ELSE#>    
             => throw new NotSupportedException();
-<#END#>
+---<#END#>
         public <#SPARSE:TYPE_NAME#>[] GetSparseRaw()
             => _sparse;
 
         public T[] GetDenseRaw()
-<#IF !MARKER && !EMPTY#>
+---<#IF !MARKER && !EMPTY#>
             => _dense;
-<#ELSE#>    
+---<#ELSE#>    
             => throw new NotSupportedException();
+---<#END#>
 <#END#>
 
         public T Create()
@@ -689,9 +685,9 @@ namespace AnotherECS.Gen.Common
 
 <#IF !EMPTY#>
 ---<#IF DIRECTACCESS || STORAGE_REFERNCE#>
-        private struct IndexData : ISerialize
----<#ELSE#>
         private class IndexData : ISerialize
+---<#ELSE#>
+        private struct IndexData : ISerialize
 ---<#END#>
         {
 ---<#IF !MARKER#>

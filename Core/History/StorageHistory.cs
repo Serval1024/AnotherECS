@@ -2,21 +2,17 @@
 
 namespace AnotherECS.Core
 {
+    /*
     public abstract class StorageHistory : History
     {
-        private uint _subjectId;
-
-        public uint SubjectId
-            => _subjectId;
-
+        
         internal StorageHistory(ref ReaderContextSerializer reader, TickProvider tickProvider) 
             : base(ref reader, tickProvider) { }
 
 
-        public StorageHistory(in HistoryConfig config, TickProvider tickProvider, uint subjectId)
-            : base(config, tickProvider)
+        public StorageHistory(in HistoryConfig args, TickProvider tickProvider)
+            : base(new HistoryArgs(args))
         {
-            _subjectId = subjectId;
         }
 
         public override void Pack(ref WriterContextSerializer writer)
@@ -29,4 +25,5 @@ namespace AnotherECS.Core
             _subjectId = reader.ReadUInt32();
         }
     }
+    */
 }

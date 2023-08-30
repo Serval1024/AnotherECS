@@ -1,4 +1,4 @@
-using EntityId = System.Int32;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -21,7 +21,7 @@ namespace AnotherECS.Core
             {
                 if (!storage.IsHas())
                 {
-                    throw new Exceptions.ComponentNotFoundedException(storage.GetElementType());
+                    throw new Exceptions.ComponentNotFoundException(storage.GetElementType());
                 }
             }
             else
@@ -42,7 +42,7 @@ namespace AnotherECS.Core
             {
                 if (!storage.IsHas(id))
                 {
-                    throw new Exceptions.ComponentNotFoundedException(storage.GetElementType());
+                    throw new Exceptions.ComponentNotFoundException(storage.GetElementType());
                 }
             }
             else

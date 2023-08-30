@@ -598,7 +598,7 @@ namespace AnotherECS.Generator
                         return new Range(start + 1, i);
                     }
                 }
-                throw new Exception($"End tag not founded.");
+                throw new Exception($"End tag not found.");
             }
 
             public static List<Statement> CutBlock(List<Statement> statements, Range slice)

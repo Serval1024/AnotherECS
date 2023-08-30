@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using AnotherECS.Serializer.Exceptions;
 
 namespace AnotherECS.Serializer
 {
@@ -159,7 +160,7 @@ namespace AnotherECS.Serializer
            => _reader.ReadUTF8();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Read(void* buffer, int length)
+        public unsafe void Read(void* buffer, uint length)
            => _reader.ReadBytePtr((byte*)buffer, length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

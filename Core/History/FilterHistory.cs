@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
+    /*
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
@@ -22,7 +23,7 @@ namespace AnotherECS.Core
            : base(ref reader, tickProvider)
         { }
 
-        public FilterHistory(in HistoryConfig config, TickProvider tickProvider)
+        public FilterHistory(in HistoryArgs config, TickProvider tickProvider)
             : base(config, tickProvider)
         {
             _buffer = new ElementData[config.buffersChangeCapacity];
@@ -133,5 +134,5 @@ namespace AnotherECS.Core
                 id = reader.ReadInt32();
             }
         }
-    }
+    }*/
 }
