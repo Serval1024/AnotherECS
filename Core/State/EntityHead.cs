@@ -16,9 +16,10 @@ namespace AnotherECS.Core
     [StructLayout(LayoutKind.Sequential, Size = 32)]
     internal unsafe struct EntityTail
     {
-        public const ushort ComponentMax = 14;
+        public const ushort ComponentMax = 13;
 
         public uint next;
+        private ushort GENERATION_ZERO_SPACE;
         public fixed ushort components[ComponentMax];
     }
 }

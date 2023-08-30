@@ -54,6 +54,10 @@ namespace AnotherECS.Core
             => _data.index - _data.recycle - 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetUpperBoundId()
+            => _data.index;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetByteCapacity()
             => _length;
 

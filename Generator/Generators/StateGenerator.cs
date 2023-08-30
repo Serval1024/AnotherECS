@@ -111,7 +111,7 @@ namespace AnotherECS.Generator
                     { "FILTER_ISAUTOCLEAR", p => IsAutoClear<IInclude>(filterTypes.IdToType(p)).ToString().ToLower() },
                     { "FILTER_INCLUDES", p => GetMask<IInclude>(filterTypes.IdToType(p), componentTypes) },
                     { "FILTER_EXCLUDES", p => GetMask<IExclude>(filterTypes.IdToType(p), componentTypes) },
-                    { "FILTER_RULE", p => GetRule(filterTypes.IdToType(p)) },
+                    { "FILTER_RULE", p => "" },
                     { "FILTER_COUNT", p => filterTypes.GetAssociationTable().Count.ToString() },
                     { "FILTER_COUNT+1", p => (filterTypes.GetAssociationTable().Count + 1).ToString() },
 
@@ -189,30 +189,6 @@ namespace AnotherECS.Generator
                 .Aggregate((s, p) => s + ", " + p);
 
             return "new ushort[] { " + body + " }";
-        }
-
-        private static string GetRule(Type type)
-        {
-            var includes = ReflectionUtils.ExtractGenericFromInterface<IInclude>(type);
-            var excludes = ReflectionUtils.ExtractGenericFromInterface<IExclude>(type);
-
-            var rule0 = GetRuleString(includes, true);
-            var rule1 = GetRuleString(excludes, false);
-
-            if (rule0 != null && rule1 != null)
-            {
-                return rule0 + " && " + rule1;
-            }
-            else if (rule0 != null)
-            {
-                return rule0;
-            }
-            else if (rule1 != null)
-            {
-                return rule1;
-            }
-
-            throw new Exceptions.FilterHasNoConditionException(type.Name);
         }
 
         private static string GetRuleString(Type[] filterTypes, bool isInclude)

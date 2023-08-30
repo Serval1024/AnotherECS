@@ -16,7 +16,7 @@ namespace AnotherECS.Core
         private BlockMemoryStorage _storage;
 
         private int _gcEntityCheckPerTick;
-        private int _currentIndexGC;
+        private uint _currentIndexGC;
 
 
         internal Entities(ref ReaderContextSerializer reader, in EntitiesArgs args)
@@ -285,7 +285,7 @@ namespace AnotherECS.Core
         {
             _storage.Unpack(ref reader, args.history);
             _gcEntityCheckPerTick = reader.ReadInt32();
-            _currentIndexGC = reader.ReadInt32();
+            _currentIndexGC = reader.ReadUInt32();
         }
 
         public void Dispose()
@@ -349,27 +349,33 @@ namespace AnotherECS.Core
             }
         }
 
-        private void InterationGarbageCollect(int count)
+        private void InterationGarbageCollect(int checkCount)
         {
-
-            /*
-            var iMax = _currentIndexGC + offsetIndex;
-            if (iMax > _data.Length)
+            var count = _storage.GetUpperBoundId();
+            
+            while (--checkCount > 0)
             {
-                iMax = _data.Length;
-            }
-
-            var offset = IndexOffset.Generation - IndexOffset.ComponentCount;
-            for (int i = _currentIndexGC; i < iMax; i += _segmentSize)
-            {
-                if (_data[i] == 0 && _data[i + offset] >= AllocateGeneration)
+                if (++_currentIndexGC == count)
                 {
-                    Deallocate((i - IndexOffset.ComponentCount) / _segmentSize);
+                    _currentIndexGC = 0;
+                }
+
+                var entity = _storage.Read<EntityHead>(_currentIndexGC);
+                if (entity->generation >= AllocateGeneration && entity->count == 0)
+                {
+                    DeallocateZero(_currentIndexGC);
                 }
             }
+        }
 
-            _currentIndexGC = (_currentIndexGC + offsetIndex) % _data.Length;
-            */
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DeallocateZero(EntityId id)
+        {
+            var head = _storage.Read<EntityHead>(id);
+
+            _storage.Change2Byte(&head->generation);
+            head->generation -= AllocateGeneration;
+            _storage.Remove(id);
         }
     }
 }
