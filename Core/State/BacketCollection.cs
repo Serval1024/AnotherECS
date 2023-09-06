@@ -1,14 +1,89 @@
+﻿using System;
+using AnotherECS.Serializer;
+
 namespace AnotherECS.Core
 {
-
-
 #if ENABLE_IL2CPP
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class Filters //: ISerialize
+    public unsafe partial struct ArchetypeCollection
     {
+#if ENABLE_IL2CPP
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+#endif
+        private struct BacketCollection : ISerialize
+        {
+            private readonly IdUnitAllocator _allocator;
+            private UintSet[] _items;
 
+#if ANOTHERECS_HISTORY_DISABLE
+            public BacketCollection(uint itemCapacity, uint backetCapacity)
+#else
+            public BacketCollection(uint itemCapacity, uint backetCapacity, in HistoryByChangeArgs args)
+#endif
+            {
+                _allocator = new IdUnitAllocator(32);
+
+#if ANOTHERECS_HISTORY_DISABLE
+                _backets = new ChunkMemory(backetCapacity * backetSize, backetSize, 32);
+                _items = new LinkedMemory(itemCapacity * headSize, headSize, 32);
+#else
+                //_backets = new ChunkMemory(backetCapacity * backetSize, backetSize, 32, args);        //TODO SER
+#endif
+                _items = new UintSet[backetCapacity];
+                for(int i = 0; i < _items.Length; ++i)
+                {
+                    _items[i] = new UintSet(itemCapacity);
+                }
+            }
+
+            public void Add(uint backetId, uint item)
+            {
+                _items[backetId].Add(item);
+            }
+
+            public void Remove(uint backetId, uint item)
+            {
+                _items[backetId].Remove(item);
+            }
+
+            public uint Allocate()
+            {
+                var backetId = _allocator.Allocate();
+                if (backetId == _items.Length)
+                {
+                    Array.Resize(ref _items, _items.Length << 1);
+                }
+
+                return backetId;
+            }
+
+            public void Deallocate(uint backetId)
+            {
+                _items[backetId].Clear();
+                _allocator.Deallocate(backetId);
+            }
+
+
+            public void Pack(ref WriterContextSerializer writer)
+            {
+                _allocator.Pack(ref writer);
+                writer.WriteArray(_items, (int)_allocator.GetAllocatedUpperBoundId());
+            }
+
+            public void Unpack(ref ReaderContextSerializer reader)
+            {
+                Unpack(ref reader, default);
+            }
+
+            public void Unpack(ref ReaderContextSerializer reader, in HistoryByChangeArgs args)
+            {
+                _allocator.Unpack(ref reader, args);
+                _items = reader.ReadArray<UintSet>();
+            }
+        }
     }
 
 

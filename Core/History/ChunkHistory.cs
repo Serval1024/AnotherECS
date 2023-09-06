@@ -4,10 +4,11 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class BlockHistory : History, IHistory, ISerialize
+    internal sealed class ChunkHistory<TChunkUnit> : History, IHistory, ISerialize
+        where TChunkUnit : unmanaged
     {
         private int _recycledCountIndex = 0;
         private TickData<uint>[] _recycledCountBuffer;
@@ -19,20 +20,20 @@ namespace AnotherECS.Core
         private TickData<uint>[] _countBuffer;
 
         private int _elementUshortIndex = 0;
-        private ElementOffsetData<ushort>[] _elementUshortBuffer;
+        private ElementOffsetData<TChunkUnit>[] _elementUshortBuffer;
 
 
-        internal BlockHistory(ref ReaderContextSerializer reader, HistoryArgs args)
+        internal ChunkHistory(ref ReaderContextSerializer reader, HistoryArgs args)
             : base(ref reader, args.tickProvider)
         { }
 
-        public BlockHistory(in HistoryByChangeArgs args)
+        public ChunkHistory(in HistoryByChangeArgs args)
             : base(new HistoryArgs(args))
         {
             _recycledCountBuffer = new TickData<uint>[args.buffersAddRemoveCapacity];
             _recycledBuffer = new RecycledData<uint>[args.buffersAddRemoveCapacity];
             _countBuffer = new TickData<uint>[args.buffersAddRemoveCapacity];
-            _elementUshortBuffer = new ElementOffsetData<ushort>[args.buffersChangeCapacity];    
+            _elementUshortBuffer = new ElementOffsetData<TChunkUnit>[args.buffersChangeCapacity];    
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -57,7 +58,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Push(uint offset, ushort data)
+        public void Push(uint offset, TChunkUnit data)
         {
             ref var element = ref _elementUshortBuffer[_elementUshortIndex++];
             element.tick = Tick;
@@ -78,7 +79,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick, ref BlockMemoryStorage subject)
+        public void RevertTo(uint tick, ref ChunkMemory<TChunkUnit> subject)
         {
             RevertToRecycledCountBuffer(tick, ref subject);
             RevertToRecycledBuffer(tick, ref subject);
@@ -87,25 +88,25 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledCountBuffer(uint tick, ref BlockMemoryStorage subject)
+        private void RevertToRecycledCountBuffer(uint tick, ref ChunkMemory<TChunkUnit> subject)
         {
             RevertHelper.RevertToRecycledCountBuffer(ref subject, tick, _recycledCountBuffer, ref _recycledCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledBuffer(uint tick, ref BlockMemoryStorage subject)
+        private void RevertToRecycledBuffer(uint tick, ref ChunkMemory<TChunkUnit> subject)
         {
             RevertHelper.RevertToRecycledBuffer(ref subject, tick, _recycledBuffer, ref _recycledCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToCountBuffer(uint tick, ref BlockMemoryStorage subject)
+        private void RevertToCountBuffer(uint tick, ref ChunkMemory<TChunkUnit> subject)
         {
             RevertHelper.RevertToCountBuffer(ref subject, tick, _countBuffer, ref _countIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void RevertToElementBuffer(uint tick, ref BlockMemoryStorage subject)
+        private unsafe void RevertToElementBuffer(uint tick, ref ChunkMemory<TChunkUnit> subject)
         {
             RevertHelper.RevertToElementBuffer(ref subject, tick, _elementUshortBuffer, ref _elementUshortIndex);
         }
@@ -135,7 +136,7 @@ namespace AnotherECS.Core
             _recycledBuffer = reader.ReadUnmanagedArray<RecycledData<uint>>();
 
             _elementUshortIndex = reader.ReadInt32();
-            _elementUshortBuffer = reader.ReadUnmanagedArray<ElementOffsetData<ushort>>();
+            _elementUshortBuffer = reader.ReadUnmanagedArray<ElementOffsetData<TChunkUnit>>();
         }
     }
 }

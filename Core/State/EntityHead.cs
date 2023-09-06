@@ -19,7 +19,7 @@ namespace AnotherECS.Core
         public const ushort ComponentMax = 13;
 
         public uint next;
-        private ushort GENERATION_ZERO_SPACE;
+        private readonly ushort GENERATION_ZERO_SPACE;
         public fixed ushort components[ComponentMax];
     }
 }

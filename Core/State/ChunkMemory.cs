@@ -6,10 +6,11 @@ using AnotherECS.Unsafe;
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct BlockMemoryStorage : IDisposable, ISerialize, IRevertSetRecycledCountRaw<uint>, IRevertGetRecycledRaw<uint>, IRevertSetCountRaw<uint>, IRevertPtrDenseRaw
+    public unsafe struct ChunkMemory<TChunkUnit> : IDisposable, ISerialize, IRevertSetRecycledCountRaw<uint>, IRevertGetRecycledRaw<uint>, IRevertSetCountRaw<uint>, IRevertPtrDenseRaw
+        where TChunkUnit : unmanaged
     {
         private byte* _dense;
         private uint _segmentSize;
@@ -19,13 +20,13 @@ namespace AnotherECS.Core
         private IndexData _data;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-        private BlockHistory _history;
+        private ChunkHistory<TChunkUnit> _history;
 #endif
 
 #if ANOTHERECS_HISTORY_DISABLE
-        public BlockMemoryStorage(uint bufferSize, uint segmentSize, uint recycledCapacity)
+        public ChunkMemory(uint bufferSize, uint segmentSize, uint recycledCapacity)
 #else
-        public BlockMemoryStorage(uint bufferSize, uint segmentSize, uint recycledCapacity, in HistoryByChangeArgs args)
+        public ChunkMemory(uint bufferSize, uint segmentSize, uint recycledCapacity, in HistoryByChangeArgs args)
 #endif
         {
             if (bufferSize % segmentSize != 0)
@@ -45,7 +46,7 @@ namespace AnotherECS.Core
                 index = 1,
             };
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = new BlockHistory(args);
+            _history = new ChunkHistory<TChunkUnit>(args);
 #endif
         }
 
@@ -68,7 +69,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Add()
         {
-            TryDenseResize();
+            TryResizeDense();
             return UnsafeAdd();
         }
 
@@ -99,7 +100,7 @@ namespace AnotherECS.Core
             => (T*)(_dense + id * _segmentSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Change2Byte(ushort* ptr)
+        public void Change(TChunkUnit* ptr)
         {
 #if !ANOTHERECS_HISTORY_DISABLE
             _history.Push((uint)(((byte*)ptr) - _dense), *ptr);
@@ -120,15 +121,15 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryDenseIncSize()
-            => TryDenseResize(_count + 1);
+        public bool TryIncSizeDense()
+            => TryResizeDense(_count + 1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryDenseResize()
-            => TryDenseResize(_count << 1);
+        public bool TryResizeDense()
+            => TryResizeDense(_count << 1);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryDenseResize(uint size)
+        public bool TryResizeDense(uint size)
         {
             if (_data.index == _count)
             {
@@ -156,21 +157,13 @@ namespace AnotherECS.Core
             => _recycled;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetDenseCountRaw(uint count)
+        public void SetCountRaw(uint count)
         {
             _data.index = count;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetCountRaw(uint value)
-        {
-            _data.index = value;
-        }
-
         public byte* GetDenseRaw()
            => _dense;
-
-
 
         public void Dispose()
         {
@@ -202,7 +195,7 @@ namespace AnotherECS.Core
             _recycled = reader.ReadUnmanagedArray<uint>();
             _data.Unpack(ref reader);
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = reader.Unpack<BlockHistory>(args);
+            _history = reader.Unpack<ChunkHistory<TChunkUnit>>(args);
 #endif
         }
 

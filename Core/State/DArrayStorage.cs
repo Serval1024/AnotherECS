@@ -7,8 +7,8 @@ using System.Runtime.CompilerServices;
 namespace AnotherECS.Collections
 {
 #if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     public unsafe class DArrayStorage : IDisposable, ISerializeConstructor, IRevertSetRecycledCountRaw<ushort>, IRevertGetRecycledRaw<ushort>, IRevertSetCountRaw<ushort>
     {
@@ -65,7 +65,7 @@ namespace AnotherECS.Collections
             }
             else
             {
-                TryDenseResize();
+                TryResizeDense();
 
                 ref var currentIndex = ref _data.index;
 
@@ -273,7 +273,7 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryDenseResize()
+        private void TryResizeDense()
         {
             if (_data.index == _dense.Length)
             {

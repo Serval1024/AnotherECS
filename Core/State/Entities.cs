@@ -6,14 +6,14 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
+    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     internal unsafe class Entities : ISerializeConstructor, IDisposable
     {
         internal const ushort AllocateGeneration = 32768;
 
-        private BlockMemoryStorage _storage;
+        private ChunkMemory<ushort> _storage;
 
         private int _gcEntityCheckPerTick;
         private uint _currentIndexGC;
@@ -28,9 +28,9 @@ namespace AnotherECS.Core
         {
             var size = (uint)sizeof(EntityHead);
 #if ANOTHERECS_HISTORY_DISABLE
-            _storage = new BlockMemoryStorage(size * args.entityCapacity, size, args.recycledCapacity);
+            _storage = new ChunkMemory<ushort>(size * args.entityCapacity, size, args.recycledCapacity);
 #else
-            _storage = new BlockMemoryStorage(size * args.entityCapacity, size, args.recycledCapacity, args.history);
+            _storage = new ChunkMemory<ushort>(size * args.entityCapacity, size, args.recycledCapacity, args.history);
 #endif
             _gcEntityCheckPerTick = (int)args.gcEntityCheckPerTick;
         }
@@ -137,7 +137,7 @@ namespace AnotherECS.Core
 
                 if (next == 0)
                 {
-                    _storage.TryDenseIncSize();
+                    _storage.TryIncSizeDense();
                     head->next = _storage.UnsafeAdd();
                     tail = _storage.Read<EntityTail>(next);
                     tail->components[0] = componentType;
@@ -158,7 +158,7 @@ namespace AnotherECS.Core
                     }
                     else
                     {
-                        _storage.TryDenseIncSize();
+                        _storage.TryIncSizeDense();
                         tail->next = _storage.UnsafeAdd();
                         tail = _storage.Read<EntityTail>(next);
                         tail->components[0] = componentType;
@@ -167,7 +167,7 @@ namespace AnotherECS.Core
             }
 
 #if !ANOTHERECS_HISTORY_DISABLE
-            _storage.Change2Byte(&head->count);
+            _storage.Change(&head->count);
 #endif
             ++head->count;
         }
@@ -185,12 +185,12 @@ namespace AnotherECS.Core
                 if (componentPtr != lastPtr)
                 {
 #if !ANOTHERECS_HISTORY_DISABLE
-                    _storage.Change2Byte(componentPtr);
+                    _storage.Change(componentPtr);
 #endif
                     *componentPtr = *lastPtr;
                 }
 #if !ANOTHERECS_HISTORY_DISABLE
-                _storage.Change2Byte(&head->count);
+                _storage.Change(&head->count);
 #endif
                 --head->count;
             }
@@ -198,7 +198,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryResize()
-            => _storage.TryDenseResize();
+            => _storage.TryResizeDense();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityId Allocate()
@@ -206,7 +206,7 @@ namespace AnotherECS.Core
             var id = _storage.UnsafeAdd();
             var head = _storage.Read<EntityHead>(id);
 
-            _storage.Change2Byte(&head->generation);
+            _storage.Change(&head->generation);
 
             head->generation += AllocateGeneration + 1;
             if (head->generation == ushort.MaxValue)
@@ -224,7 +224,7 @@ namespace AnotherECS.Core
         {
             var head = _storage.Read<EntityHead>(id);
 
-            _storage.Change2Byte(&head->generation);
+            _storage.Change(&head->generation);
             head->generation -= AllocateGeneration;
 
             var next = head->next;
@@ -235,7 +235,7 @@ namespace AnotherECS.Core
             var iMax = Math.Min(count, EntityHead.ComponentMax);
             for (int i = 0; i < iMax; ++i)
             {
-                _storage.Change2Byte(components + i);
+                _storage.Change(components + i);
             }
 
             count -= iMax;
@@ -253,7 +253,7 @@ namespace AnotherECS.Core
                 iMax = Math.Min(count, EntityTail.ComponentMax);
                 for (int i = 0; i < iMax; ++i)
                 {
-                    _storage.Change2Byte(components + i);
+                    _storage.Change(components + i);
                 }
                 count -= EntityTail.ComponentMax;   //TODO SER CHECK ushort < 0
 #endif
@@ -373,7 +373,7 @@ namespace AnotherECS.Core
         {
             var head = _storage.Read<EntityHead>(id);
 
-            _storage.Change2Byte(&head->generation);
+            _storage.Change(&head->generation);
             head->generation -= AllocateGeneration;
             _storage.Remove(id);
         }

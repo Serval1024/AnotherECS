@@ -134,12 +134,12 @@ namespace AnotherECS.Gen.Common
 #endif
 ---<#IF !EMPTY || VERSION#>
 ------<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResize())
+            if (_storage.TryResizeDense())
             {
                 _adapters.Rebind(_id, _storage);
             }
 ------<#ELSE#>
-            _storage.TryDenseResize();
+            _storage.TryResizeDense();
 ------<#END#>
 ---<#END#>
             _storage.Add(id, ref data);
@@ -155,12 +155,12 @@ namespace AnotherECS.Gen.Common
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResize())
+            if (_storage.TryResizeDense())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResize();
+            _storage.TryResizeDense();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -182,12 +182,12 @@ namespace AnotherECS.Gen.Common
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResize())
+            if (_storage.TryResizeDense())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResize();
+            _storage.TryResizeDense();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -210,12 +210,12 @@ namespace AnotherECS.Gen.Common
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResize())
+            if (_storage.TryResizeDense())
             {
                 _adapters.Rebind(_id, _storage);
             }
 ---<#ELSE#>
-            _storage.TryDenseResize();
+            _storage.TryResizeDense();
 ---<#END#>
 <#END#>
 <#IF !EMPTY#>
@@ -236,12 +236,12 @@ namespace AnotherECS.Gen.Common
 #endif
 <#IF !EMPTY || VERSION#>
 ---<#IF DIRECTACCESS#>
-            if (_storage.TryDenseResize())
+            if (_storage.TryResizeDense())
             {
                 sync(state, _id);
             }
 ---<#ELSE#>
-            _storage.TryDenseResize();
+            _storage.TryResizeDense();
 ---<#END#>
 <#END#>
             _storage.Add(id);

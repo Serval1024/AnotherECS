@@ -572,7 +572,7 @@ namespace AnotherECS.Gen.Common
             {
                 writer.Write(tick);
 
-------<#IF BLITTABLE#>
+------<#IF BLITTABLE && !FORCE:ISerialize#>
                 writer.WriteUnmanagedArray(components);
 ------<#ELSE#>
                 writer.Pack(components);
@@ -583,7 +583,7 @@ namespace AnotherECS.Gen.Common
             {
                 tick = reader.ReadUInt32();
 
-------<#IF BLITTABLE#>
+------<#IF BLITTABLE && !FORCE:ISerialize#>
                 components = reader.ReadUnmanagedArray<T>();
 ------<#ELSE#>
                 components = reader.Unpack<T[]>();

@@ -16,10 +16,11 @@ namespace AnotherECS.Core
     internal static partial class RevertHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToElementBuffer<T>(ref T subject, uint tick, ElementOffsetData<ushort>[] elementUshortBuffer, ref int elementUshortIndex)
-        where T : struct, IRevertPtrDenseRaw
+        public static unsafe void RevertToElementBuffer<T, U>(ref T subject, uint tick, ElementOffsetData<U>[] elementUshortBuffer, ref int elementUshortIndex)
+            where T : struct, IRevertPtrDenseRaw
+            where U : unmanaged
         {
-            var elements = (ushort*)subject.GetDenseRaw();
+            var elements = (U*)subject.GetDenseRaw();
 
             for (int i = elementUshortIndex - 1; i >= 0; --i)
             {
