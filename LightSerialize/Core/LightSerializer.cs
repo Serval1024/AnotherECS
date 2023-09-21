@@ -188,16 +188,16 @@ namespace AnotherECS.Serializer
         }
 
         public void WriteArray<T>(ref WriterContextSerializer writer, T[] data, int count)
-         where T : struct
+            where T : struct
             => _arrayMeta.Pack(ref writer, data, count);
 
         public T[] ReadArray<T>(ref ReaderContextSerializer reader)
-         where T : struct
+            where T : struct
             => (T[])_arrayMeta.Unpack(ref reader);
 
 
         public unsafe void WriteUnmanaged<T>(ref WriterContextSerializer writer, T[] data, int count)
-         where T : unmanaged
+            where T : unmanaged
         {
             if (data == null)
             {

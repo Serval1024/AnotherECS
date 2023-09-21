@@ -20,7 +20,7 @@ namespace AnotherECS.Views
 
         public void Construct(State state)
         {
-            state.SetOrAdd(new ViewSystemReference() { system = this });
+            //state.SetOrAdd(new ViewSystemReference() { system = this });
         }
 
         public void TickFinishied(State state)

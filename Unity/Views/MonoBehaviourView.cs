@@ -19,12 +19,12 @@ namespace AnotherECS.Views
         public string GetGUID()
             => GetType().Name;
 
-        public void Send(BaseEvent @event)
-            => _state.Send(@event);
+        //public void Send(BaseEvent @event)
+            //=> _state.Send(@event);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read<T>()
-            where T : struct, IShared
+            where T : unmanaged, IShared
             => _state.Read<T>();
 
         public void Destroyed()

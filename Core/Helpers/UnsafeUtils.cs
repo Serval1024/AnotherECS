@@ -23,7 +23,7 @@ namespace AnotherECS.Unsafe
 
         public unsafe static delegate*<State, int, bool> ConvertToPointer(Func<State, int, bool> function)
         {
-            UnsafeUtils.ValidateConvertToPointer(function);
+            ValidateConvertToPointer(function);
             return (delegate*<State, int, bool>)function.Method.MethodHandle.GetFunctionPointer();
         }
 
@@ -32,12 +32,6 @@ namespace AnotherECS.Unsafe
         {
             ValidateConvertToPointer(function);
             return (delegate*<ref T, ref InjectContainer, void>)function.Method.MethodHandle.GetFunctionPointer();
-        }
-
-        public static delegate*<State, int, void> ConvertToPointer(Action<State, int> function)
-        {
-            ValidateConvertToPointer(function);
-            return (delegate*<State, int, void>)function.Method.MethodHandle.GetFunctionPointer();
         }
 
         public static string AsArrayToString<T>(T* ptr, int count)

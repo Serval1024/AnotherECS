@@ -1,3 +1,4 @@
+using AnotherECS.Core.Collection;
 using AnotherECS.Debug;
 using System;
 using System.Runtime.CompilerServices;
@@ -7,14 +8,14 @@ namespace AnotherECS.Core
     internal static class HistoryUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool CheckAndResizeLoopBufferInternal<U>(ref int index, ref U[] buffer, uint recordHistoryLength)
-           where U : struct, IFrameData
+        private static bool CheckAndResizeLoopBufferInternal<U>(ref uint index, ref ArrayPtr buffer, uint recordHistoryLength)
+           where U : unmanaged, ITick
         {
-            if (index == buffer.Length)
+            if (index == buffer.ElementCount)
             {
-                if (buffer[^1].Tick - buffer[0].Tick < recordHistoryLength)
+                if (buffer.GetRef<U>(buffer.ElementCount - 1).Tick - buffer.GetRef<U>(0).Tick < recordHistoryLength)
                 {
-                    Array.Resize(ref buffer, buffer.Length << 1);
+                    buffer.Resize<U>(buffer.ElementCount << 1);
                     return true;
                 }
                 else
@@ -27,17 +28,17 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CheckAndResizeLoopBuffer<U>(ref int index, ref U[] buffer, uint recordHistoryLength, string debugBufferName)
-            where U : struct, IFrameData
+        public static void CheckAndResizeLoopBuffer<U>(ref uint index, ref ArrayPtr buffer, uint recordHistoryLength, string debugBufferName)
+            where U : unmanaged, ITick
         {
 #if ANOTHERECS_DEBUG
-            var isResized = CheckAndResizeLoopBufferInternal(ref index, ref buffer, recordHistoryLength);
+            var isResized = CheckAndResizeLoopBufferInternal<U>(ref index, ref buffer, recordHistoryLength);
             if (isResized)
             {
-                Logger.HistoryBufferResized(debugBufferName, buffer.Length);
+                Logger.HistoryBufferResized(debugBufferName, buffer.ElementCount);
             }
 #else
-            CheckAndResizeLoopBufferInternal(ref index, ref buffer, recordHistoryLength);
+            CheckAndResizeLoopBufferInternal<U>(ref index, ref buffer, recordHistoryLength);
 #endif
         }
     }

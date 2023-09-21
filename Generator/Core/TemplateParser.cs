@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Mono.Cecil.Cil;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using static AnotherECS.Generator.TemplateParser;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Editor.Generator")]
 namespace AnotherECS.Generator
@@ -222,7 +224,7 @@ namespace AnotherECS.Generator
             public override bool IsTrue(Variables variables)
             {
                 ushort index = (ushort)variables.GetIndex();
-                return variables.TryGetValue(Value, out Func<ushort, string> function) && function(index).ToLower() == "true";
+                return variables.TryGetValue(Value, out Func<ushort, object> function) && (bool)function(index);
             }
         }
 
@@ -306,7 +308,7 @@ namespace AnotherECS.Generator
             public override string ToText(Variables variables)
             {
                 ushort index = (ushort)variables.GetIndex();
-                return TemplateParser.Transform(variables[Head](index), variables);
+                return Transform((string)variables[Head](index), variables);
             }
         }
 
@@ -469,7 +471,7 @@ namespace AnotherECS.Generator
                 => "//" + Head;
         }
 
-        public class Variables : Dictionary<string, Func<ushort, string>> 
+        public class Variables : Dictionary<string, Func<ushort, object>> 
         {
             private readonly string _INDEX_TAG = "INDEX";
             private readonly string _LEN_TAG = "LEN";
@@ -758,6 +760,12 @@ namespace AnotherECS.Generator
 
             public abstract Expression CutToExpression(List<Statement> statements);
         }
+    }
+
+    internal static class VariablesExtension
+    {
+        public static ushort GetIndexAsId(this Variables variables, int deep)
+            => (ushort)(variables.GetIndex(deep) + 1);
     }
 }    
 

@@ -9,7 +9,7 @@ namespace AnotherECS.Core
         public static readonly Entity Null = new();
 
         internal EntityId id;
-        internal int generation;
+        internal ushort generation;
         internal State state;
 
 
@@ -18,7 +18,7 @@ namespace AnotherECS.Core
             => state.IsHas(id, generation);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Count()
+        public uint Count()
             => state.Count(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,7 +50,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read<T>()
-          where T : struct, IComponent
+          where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -60,7 +60,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>()
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -70,7 +70,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set<T>(T data)
-          where T : struct, IComponent
+          where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -80,7 +80,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set<T>(ref T data)
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -90,7 +90,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Add<T>()
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -100,7 +100,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(T data)
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -110,7 +110,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(ref T data)
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -120,7 +120,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVoid<T>()
-          where T : struct, IComponent
+          where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();
@@ -130,7 +130,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove<T>()
-            where T : struct, IComponent
+            where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
             ThrowIfInvalide();

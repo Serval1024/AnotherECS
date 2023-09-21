@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("AnotherECS.Collections")]
 namespace AnotherECS.Core
 {
     internal interface IInject

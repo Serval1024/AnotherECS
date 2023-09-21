@@ -3,6 +3,7 @@ using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Collections;
 using AnotherECS.Unsafe;
+using AnotherECS.Core.Collection;
 #if ANOTHERECS_DEBUG
 using AnotherECS.Debug;
 #endif
@@ -21,7 +22,7 @@ namespace AnotherECS.Core
         private TickData<ushort>[] _recycledCountBuffer;
 
         private int _recycledIndex = 0;
-        private RecycledData<ushort>[] _recycledBuffer;
+        private TickOffsetData<ushort>[] _recycledBuffer;
 
         private int _countIndex = 0;
         private TickData<ushort>[] _countBuffer;
@@ -37,7 +38,7 @@ namespace AnotherECS.Core
             : base(new HistoryArgs(args))
         {
             _recycledCountBuffer = new TickData<ushort>[args.buffersAddRemoveCapacity];
-            _recycledBuffer = new RecycledData<ushort>[args.buffersAddRemoveCapacity];
+            _recycledBuffer = new TickOffsetData<ushort>[args.buffersAddRemoveCapacity];
             _countBuffer = new TickData<ushort>[args.buffersAddRemoveCapacity];
             _elementBuffer = new ElementBufferData[1];
             _buffersCapacity = dArrayBuffersCapacity;
@@ -61,7 +62,7 @@ namespace AnotherECS.Core
             element.tick = Tick;
             element.value = recycledCount;
 
-            HistoryUtils.CheckAndResizeLoopBuffer(ref _recycledCountIndex, ref _recycledCountBuffer, _recordHistoryLength, nameof(_recycledCountBuffer));
+            //HistoryUtils.CheckAndResizeLoopBuffer(ref _recycledCountIndex, ref _recycledCountBuffer, _recordHistoryLength, nameof(_recycledCountBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -69,10 +70,10 @@ namespace AnotherECS.Core
         {
             ref var element = ref _recycledBuffer[_recycledIndex++];
             element.tick = Tick;
-            element.recycled = recycled;
-            element.recycledIndex = recycledCount;
+            element.value = recycled;
+            element.offset = recycledCount;
 
-            HistoryUtils.CheckAndResizeLoopBuffer(ref _recycledIndex, ref _recycledBuffer, _recordHistoryLength, nameof(_recycledBuffer));
+            //HistoryUtils.CheckAndResizeLoopBuffer(ref _recycledIndex, ref _recycledBuffer, _recordHistoryLength, nameof(_recycledBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,7 +83,7 @@ namespace AnotherECS.Core
             element.tick = Tick;
             element.value = count;
 
-            HistoryUtils.CheckAndResizeLoopBuffer(ref _countIndex, ref _countBuffer, _recordHistoryLength, nameof(_countBuffer));
+            //HistoryUtils.CheckAndResizeLoopBuffer(ref _countIndex, ref _countBuffer, _recordHistoryLength, nameof(_countBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -102,7 +103,7 @@ namespace AnotherECS.Core
                 ? UnsafeMemory.Copy(source, count * elementSize) 
                 : IntPtr.Zero.ToPointer();
 
-            HistoryUtils.CheckAndResizeLoopBuffer(ref buffer.index, ref buffer.elements, _recordHistoryLength, nameof(_elementBuffer));
+            //HistoryUtils.CheckAndResizeLoopBuffer(ref buffer.index, ref buffer.elements, _recordHistoryLength, nameof(_elementBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -133,7 +134,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RevertToRecycledBuffer(uint tick, DArrayStorage subject)
         {
-            RevertHelper.RevertToRecycledBufferClass(subject, tick, _recycledBuffer, ref _recycledIndex);
+            //RevertHelper.RevertToRecycledBufferClass(subject, tick, _recycledBuffer, ref _recycledIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -220,7 +221,7 @@ namespace AnotherECS.Core
             _recycledCountBuffer = reader.ReadUnmanagedArray<TickData<ushort>>();
 
             _recycledIndex = reader.ReadInt32();
-            _recycledBuffer = reader.ReadUnmanagedArray<RecycledData<ushort>>();
+            //_recycledBuffer = reader.ReadUnmanagedArray<RecycleData<ushort>>();
 
             _countIndex = reader.ReadInt32();
             _countBuffer = reader.ReadUnmanagedArray<TickData<ushort>>();
@@ -260,7 +261,7 @@ namespace AnotherECS.Core
             }
         }
 
-        private struct ElementData : IFrameData, ISerialize
+        private struct ElementData : ITick, ISerialize
         {
             public uint Tick
                 => tick;
@@ -292,7 +293,7 @@ namespace AnotherECS.Core
                 writer.Write(tick);
                 writer.Write(count);
                 writer.Write(elementSize);
-                writer.WriteStruct(new ArrayPtr(data, (uint)ByteLength));
+                //writer.WriteStruct(new ArrayPtr(data, (uint)ByteLength));
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
@@ -300,7 +301,7 @@ namespace AnotherECS.Core
                 tick = reader.ReadUInt32();
                 count = reader.ReadInt32();
                 elementSize = reader.ReadInt32();
-                data = reader.ReadStruct<ArrayPtr>().data;
+                data = reader.ReadStruct<ArrayPtr>().GetPtr();
             }
         }
     }

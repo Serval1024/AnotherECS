@@ -73,7 +73,7 @@ namespace AnotherECS.Unity.Editor.Generator
             => SessionState.SetString($"{nameof(UnityListenerGenerator)}.{nameof(IsNewElements)}", GetHashAllElements());
 
         private static string GetHashAllElements()
-            => new UnityGeneratorContext().GetAllTypesExceptDublicates()
+            => new UnityGeneratorContext().GetAllTypes()
                 .Select(p => p.Name)
                 .OrderBy(p => p)
                 .Aggregate((s, p) => s + ":" + p).GetHashCode().ToString();
@@ -155,7 +155,7 @@ namespace AnotherECS.Unity.Editor.Generator
         private static void AssemblyCompilationFinishedEventHandler(string output, CompilerMessage[] messages)
         {
             var generatorContext = new UnityGeneratorContext();
-            var deletes = UnityGeneratorUtils.GetDeletedObjectsHack(messages, generatorContext.GetAllTypesExceptDublicates(), _generators.GetSaveFileNames(generatorContext));
+            var deletes = UnityGeneratorUtils.GetDeletedObjectsHack(messages, generatorContext.GetAllTypes(), _generators.GetSaveFileNames(generatorContext));
 
             SaveIngoreTypes(deletes);
             if (IsAutoCompile())

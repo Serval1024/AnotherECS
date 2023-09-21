@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
@@ -20,7 +21,7 @@ namespace AnotherECS.Core
         private IndexData _data;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-        private ChunkHistory<TChunkUnit> _history;
+        //private ChunkHistory<TChunkUnit> _history;
 #endif
 
 #if ANOTHERECS_HISTORY_DISABLE
@@ -46,7 +47,7 @@ namespace AnotherECS.Core
                 index = 1,
             };
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = new ChunkHistory<TChunkUnit>(args);
+            //_history = new ChunkHistory<TChunkUnit>(args);
 #endif
         }
 
@@ -80,7 +81,7 @@ namespace AnotherECS.Core
             if (recycledCount > 0)
             {
 #if !ANOTHERECS_HISTORY_DISABLE
-                _history.PushRecycledCount(recycledCount);
+                //_history.PushRecycledCount(recycledCount);
 #endif
                 return _recycled[--recycledCount];
             }
@@ -88,7 +89,7 @@ namespace AnotherECS.Core
             {
                 ref var denseIndex = ref _data.index;
 #if !ANOTHERECS_HISTORY_DISABLE
-                _history.PushCount(denseIndex);
+                //_history.PushCount(denseIndex);
 #endif
                 return denseIndex++;
             }
@@ -103,7 +104,7 @@ namespace AnotherECS.Core
         public void Change(TChunkUnit* ptr)
         {
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history.Push((uint)(((byte*)ptr) - _dense), *ptr);
+            //_history.Push((uint)(((byte*)ptr) - _dense), *ptr);
 #endif
         }
 
@@ -114,8 +115,8 @@ namespace AnotherECS.Core
             ref var component = ref _dense[offsetPtr];
             ref var recycle = ref _data.recycle;
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history.PushRecycledCount(recycle);
-            _history.PushRecycled(_recycled[recycle], recycle);
+            //_history.PushRecycledCount(recycle);
+            //_history.PushRecycled(_recycled[recycle], recycle);
 #endif
             _recycled[recycle++] = id;
         }
@@ -135,8 +136,8 @@ namespace AnotherECS.Core
             {
                 var newCount = size;
                 var newDensePtr = UnsafeMemory.Allocate(newCount * _segmentSize);
-                UnsafeMemory.MemCpy(newDensePtr, _dense, _length);
-                UnsafeMemory.Deallocate(_dense);
+                UnsafeMemory.MemCopy(newDensePtr, _dense, _length);
+                UnsafeMemory.Deallocate(ref _dense);
                 _dense = (byte*)newDensePtr;
                 _length = newCount * _segmentSize;
                 _count = newCount;
@@ -167,17 +168,17 @@ namespace AnotherECS.Core
 
         public void Dispose()
         {
-            UnsafeMemory.Deallocate(_dense);
+            UnsafeMemory.Deallocate(ref _dense);
         }
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.WriteStruct(new ArrayPtr(_dense, _length));
+            //writer.WriteStruct(new ArrayPtr(_dense, _length));
             writer.Write(_segmentSize);
             writer.WriteUnmanagedArray(_recycled, (int)_data.recycle);
             _data.Pack(ref writer);
 #if !ANOTHERECS_HISTORY_DISABLE
-            writer.Pack(_history);
+            //writer.Pack(_history);
 #endif
         }
 
@@ -189,13 +190,13 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader, in HistoryByChangeArgs args)
         {
             var arrayPtr = reader.ReadStruct<ArrayPtr>();
-            _dense = (byte*)arrayPtr.data;
-            _length = arrayPtr.length;
+            _dense = arrayPtr.GetPtr<byte>();
+            _length = arrayPtr.ByteLength;
             _segmentSize = reader.ReadUInt32();
             _recycled = reader.ReadUnmanagedArray<uint>();
             _data.Unpack(ref reader);
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = reader.Unpack<ChunkHistory<TChunkUnit>>(args);
+            //_history = reader.Unpack<ChunkHistory<TChunkUnit>>(args);
 #endif
         }
 

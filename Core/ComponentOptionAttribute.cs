@@ -12,12 +12,6 @@ namespace AnotherECS.Core
         {
             Options = options;
         }
-
-        public ComponentOptionAttribute(ComponentOptions options, int capacity)
-        {
-            Options = options;
-            Capacity = capacity;
-        }
     }
 
     [Flags]
@@ -27,14 +21,12 @@ namespace AnotherECS.Core
         HistoryByChange = 1 << 1,
         HistoryByTick = 1 << 2,
         DataFree = 1 << 3,
-        DataNotFree = 1 << 4,
-        Blittable = 1 << 5,
-        StorageLimit255 = 1 << 6,
-        ExceptSparseDirectDense = 1 << 10,
-        NoCompileDirectAccess = 1 << 11,
-        CompileSortAtLast = 1 << 12,
-        Capacity = 1 << 13,
-        ForceUseISerialize = 1 << 14,
-        ReferenceStorage = 1 << 15,
+        NotDataFree = 1 << 4,
+        StorageLimit255 = 1 << 5,
+        StorageLimit65535 = 1 << 6,
+        WithoutSparseDirectDense = 1 << 7,
+        NoCompileFastAccess = 1 << 8,
+        CompileSortAtLast = 1 << 9,
+        UseISerialize = 1 << 10,
     }
 }

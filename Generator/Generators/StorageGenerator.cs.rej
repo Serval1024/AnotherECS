@@ -1,9 +1,0 @@
-diff a/Generator/Generators/StorageGenerator.cs b/Generator/Generators/StorageGenerator.cs	(rejected hunks)
-@@ -13,6 +13,7 @@
-         public string TemplateFileName1 => "storageS.template.txt";
- 
- 
-+        private const string CONSTRUCT_HISTORY = ", Storage<#HISTORY_TYPE#>History<T> history";
-         private const string CONSTRUCT_VERSION = ", TickProvider tickProvider";
-         private const string CONSTRUCT_INJECT = ", ref InjectContainer injectContainer, IInjectMethodsReference injectMethods";
- 

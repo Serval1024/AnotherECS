@@ -11,7 +11,7 @@ namespace AnotherECS.Core
         protected uint Tick
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _tickProvider.Tick;
+            get => _tickProvider.tick;
         }
         
         internal History(ref ReaderContextSerializer reader, TickProvider tickProvider)

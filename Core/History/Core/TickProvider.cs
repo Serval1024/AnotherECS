@@ -2,18 +2,18 @@
 
 namespace AnotherECS.Core
 {
-    public class TickProvider : ISerialize
+    public struct TickProvider : ISerialize
     {
-        public uint Tick;
+        public uint tick;
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Write(Tick);
+            writer.Write(tick);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            Tick = reader.ReadUInt32();
+            tick = reader.ReadUInt32();
         }
     }
 }

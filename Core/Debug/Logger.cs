@@ -14,7 +14,7 @@ namespace AnotherECS.Debug
         public static void CompileFailed()
             => Send($"{DebugConst.TAG}Compile failed.");
 
-        public static void HistoryBufferResized(string name, int newSize)
+        public static void HistoryBufferResized(string name, uint newSize)
             => Send($"{DebugConst.TAG}History {name} buffer size has been resized to {newSize}.");
     }
 }

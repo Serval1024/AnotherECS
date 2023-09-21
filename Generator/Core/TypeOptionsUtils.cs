@@ -3,28 +3,19 @@ using System.Linq;
 using System.Text;
 using AnotherECS.Collections;
 using AnotherECS.Core;
+using AnotherECS.Serializer;
 
 namespace AnotherECS.Generator
 {
     internal static class TypeOptionsUtils
     {
-        public static string GetAdapterFlags(in TypeOptions option, GeneratorContext.ComponentFilterData componentFilterData)
+        public static string GetCallerFlags(in TypeOptions option)
         {
-            var (includes, excludes) = componentFilterData;
-
             var result = GetDefaultStorageFlags(option);
 
-            if (includes.Contains(option.type))
-            {
-                result.Append("I");
-            }
-            if (excludes.Contains(option.type))
-            {
-                result.Append("E");
-            }
             if (result.Length == 0)
             {
-                result.Append("F");
+                result.Append("Simple");
             }
             return result.ToString();
         }
@@ -35,7 +26,7 @@ namespace AnotherECS.Generator
 
             if (result.Length == 0)
             {
-                result.Append("F");
+                result.Append("Simple");
             }
             return result.ToString();
         }
@@ -55,7 +46,7 @@ namespace AnotherECS.Generator
             {
                 result.Append("C");
             }
-            if (option.isBlittable)
+            if (option.isUnmanaged)
             {
                 result.Append("B");
             }
@@ -71,7 +62,7 @@ namespace AnotherECS.Generator
             {
                 result.Append("D");
             }
-            if (option.isShared)
+            if (option.isSingle)
             {
                 result.Append("S");
             }
@@ -79,19 +70,23 @@ namespace AnotherECS.Generator
             {
                 result.Append("M");
             }
-            if (option.isLimit255)
+            if (option.sparseMode == TypeOptions.SparseMode.Bool)
             {
-                result.Append("L255");
+                result.Append("L0");
+            }
+            if (option.sparseMode == TypeOptions.SparseMode.Byte)
+            {
+                result.Append("L1");
+            }
+            if (option.sparseMode == TypeOptions.SparseMode.Ushort)
+            {
+                result.Append("L2");
             }
             if (option.isEmpty)
             {
                 result.Append("Empty");
             }
-            if (option.isExceptSparseDirectDense)
-            {
-                result.Append("Lite");
-            }
-            if (option.isForceUseISerialize)
+            if (option.isUseISerialize)
             {
                 result.Append("Ser");
             }
@@ -99,14 +94,11 @@ namespace AnotherECS.Generator
             {
                 result.Append("Inj");
             }
-            if (option.isCompileDirectAccess)
+            if (option.isCompileFastAccess)
             {
-                result.Append("Dir");
+                result.Append("Fast");
             }
-            if (option.isReferenceStorage)
-            {
-                result.Append("Ref");
-            }
+            
             return result;
         }
 
@@ -117,12 +109,7 @@ namespace AnotherECS.Generator
             {
                 result.Append(", ");
                 result.Append(nameof(ICopyable));
-                result.Append("<T>");
-            }
-            if (option.isVersion)
-            {
-                result.Append(", ");
-                result.Append(nameof(IVersion));
+                result.Append("<TComponent>");
             }
             if (option.isAttach)
             {
@@ -134,15 +121,20 @@ namespace AnotherECS.Generator
                 result.Append(", ");
                 result.Append(nameof(IDetach));
             }
-            if (option.isShared)
+            if (option.isSingle)
             {
                 result.Append(", ");
                 result.Append(nameof(IShared));
             }
-            if (option.isMarker)
+            if (!option.isSingle)
             {
                 result.Append(", ");
-                result.Append(nameof(IMarker));
+                result.Append(nameof(IResizableCaller));
+            }
+            if (option.isUseISerialize)
+            {
+                result.Append(", ");
+                result.Append(nameof(ISerialize));
             }
 
             return result.ToString();
@@ -167,45 +159,47 @@ namespace AnotherECS.Generator
                 result.Append(", ");
                 result.Append(nameof(IDetach));
             }
-            if (option.isShared)
+            if (option.isSingle)
             {
                 result.Append(", ");
                 result.Append(nameof(IShared));
             }
             return result.ToString();
         }
-
-        public static string GetHistoryFlags(in TypeOptions option)
-            => GetStorageFlags(option);
     }
 
     internal struct TypeOptions
     {
         public Type type;
 
+        public bool isHistory;
         public bool isHistoryByChange;
         public bool isHistoryByTick;
-        public bool isHistory;
+
+        public bool isEmpty;
+
+        public bool isSingle;
         public bool isCopyable;
-        public bool isBlittable;
+        public bool isUnmanaged;
         public bool isVersion;
         public bool isAttach;
         public bool isDetach;
-        public bool isShared;
         public bool isMarker;
-        public bool isDispose;
-        public bool isLimit255;
-        public bool isEmpty;
-        public bool isExceptSparseDirectDense;
-        public bool isCompileDirectAccess;
-        public bool isOverrideCapacity;
-        public int capacity;
+        public SparseMode sparseMode;
+        public bool isCompileFastAccess;
+
+        public bool isInject;
         public bool isInjectComponent;
         public bool isInjectMembers;
-        public bool isInject;
         public ComponentUtils.InjectData[] injectMembers;
-        public bool isForceUseISerialize;
-        public bool isReferenceStorage;
+
+        public bool isUseISerialize;
+        public bool isUseRecycle;
+        public bool isBindToEntity;
+
+        public bool isConfig;
+
+        public bool isDispose;
 
         public TypeOptions(Type type)
         {
@@ -221,32 +215,54 @@ namespace AnotherECS.Generator
             isHistoryByTick = ComponentUtils.IsHistoryByTick(type) && !isMarker;
 #endif
             isHistory = isHistoryByChange || isHistoryByTick;
+
+            isEmpty = ComponentUtils.IsEmpty(type);
+
+            isSingle = ComponentUtils.IsShared(type);
             isCopyable = ComponentUtils.IsCopyable(type);
-            isBlittable = ComponentUtils.IsBlittable(type);
+            isUnmanaged = ComponentUtils.IsUnmanaged(type);
             isVersion = ComponentUtils.IsVersion(type);
             isAttach = ComponentUtils.IsAttach(type);
             isDetach = ComponentUtils.IsDetach(type);
-            isShared = ComponentUtils.IsShared(type);
-            isLimit255 = ComponentUtils.IsLimit255(type);
-            isEmpty = ComponentUtils.IsEmpty(type);
-            isExceptSparseDirectDense = !isEmpty && ComponentUtils.IsExceptSparseDirectDense(type);
-            isCompileDirectAccess = ComponentUtils.IsCompileDirectAccess(type);
-            isOverrideCapacity = ComponentUtils.IsOverrideCapacity(type);
-            capacity = ComponentUtils.GetOverrideCapacity(type);
+            sparseMode = GetSparseMode(type);
+            isCompileFastAccess = ComponentUtils.IsCompileFastAccess(type);
+
             isInjectComponent = !isEmpty && ComponentUtils.IsInjectComponent(type);
             isInjectMembers = !isEmpty && ComponentUtils.IsInjectMembers(type);
             isInject = isInjectComponent | isInjectMembers;
             injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
-            isForceUseISerialize = !isEmpty && ComponentUtils.IsForceUseISerialize(type);
-            isReferenceStorage = ComponentUtils.IsReferenceStorage(type);
+
+            isUseISerialize = !isEmpty && ComponentUtils.IsUseISerialize(type);
+            isUseRecycle = !isMarker && !isEmpty;
+            isBindToEntity = !isMarker;
+
+            isConfig = ComponentUtils.IsConfig(type);
 
             isDispose = false;
 
             Validate();
         }
 
+        private static SparseMode GetSparseMode(Type type)
+        {
+            if (ComponentUtils.IsWithoutSparseDirectDense(type) || ComponentUtils.IsShared(type) || ComponentUtils.IsEmpty(type))
+            {
+                return SparseMode.Bool;
+            } 
+            else if (ComponentUtils.IsStorageLimit255(type))
+            {
+                return SparseMode.Byte;
+            }
+            
+            return SparseMode.Ushort;
+        }
+
         private void Validate()
         {
+            if (!isUnmanaged)
+            {
+                throw new Exceptions.OptionsConflictException(type, $"The component must not contain reference types.");
+            }
             if (isMarker && isHistory)
             {
                 throw new Exceptions.OptionsConflictException(type, $"{nameof(IMarker)}, Any history option.");
@@ -273,6 +289,13 @@ namespace AnotherECS.Generator
                     }
                 }
             }
+        }
+
+        public enum SparseMode
+        {
+            Bool,
+            Byte,
+            Ushort,
         }
     }
 

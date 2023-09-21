@@ -303,41 +303,4 @@ namespace AnotherECS.Serializer
             return dictionary;
         }
     }
-
-    public unsafe struct ArrayPtrSerializer : IElementSerializer
-    {
-        private readonly CountMeta _сount;
-
-        public Type Type => typeof(ArrayPtr);
-
-        public void Pack(ref WriterContextSerializer writer, object @value)
-        {
-            var arrayPtr = (ArrayPtr)@value;
-            _сount.Pack(ref writer, arrayPtr.length);
-            writer.Write(arrayPtr.data, arrayPtr.length);
-        }
-
-
-        public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
-        {
-            uint length = _сount.Unpack(ref reader);
-            var buffer = UnsafeMemory.Malloc(length);
-            reader.Read(buffer, length);
-            
-            return new ArrayPtr(buffer, length);
-        }
-    }
-
-    public unsafe struct ArrayPtr
-    {
-        public void* data;
-        public uint length;
-
-        public ArrayPtr(void* data, uint length)
-        {
-            this.data = data;
-            this.length = length;
-        }
-    }
-
 }

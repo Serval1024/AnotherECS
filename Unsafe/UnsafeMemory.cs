@@ -1,12 +1,21 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unsafe
 {
-    public unsafe static class UnsafeMemory
+    public unsafe static class UnsafeMemory     //TODO SER +crossplatform
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T* Allocate<T>()
+            where T : unmanaged
+            => (T*)Allocate(sizeof(T));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T* Allocate<T>(uint count)
+            where T : unmanaged
+            => (T*)Allocate(count * sizeof(T));
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void* Allocate(long size)
         {
@@ -16,11 +25,32 @@ namespace AnotherECS.Unsafe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Deallocate(void* ptr)
+        public static void Deallocate<T>(ref T* ptr)
+            where T : unmanaged
         {
-            if ((IntPtr)ptr != IntPtr.Zero)
+            if (ptr != null)
             {
                 Free(ptr);
+                ptr = null;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Deallocate(ref void* ptr)
+        {
+            if (ptr != null)
+            {
+                Free(ptr);
+                ptr = null;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Clear(void* destination, long size)
+        {
+            if (destination != null)
+            {
+                UnsafeUtility.MemClear(destination, size);
             }
         }
 
@@ -45,7 +75,7 @@ namespace AnotherECS.Unsafe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void MemCpy(void* destination, void* source, long size)
+        public static void MemCopy(void* destination, void* source, long size)
         {
             UnsafeUtility.MemCpy(destination, source, size);
         }
@@ -54,7 +84,7 @@ namespace AnotherECS.Unsafe
         public static void* Copy(void* source, long size)
         {
             var copy = Malloc(size);
-            MemCpy(copy, source, size);
+            MemCopy(copy, source, size);
             return copy;
         }
 

@@ -5,7 +5,7 @@ namespace AnotherECS.Exceptions
 {
     public class ReachedLimitComponentException : Exception
     {
-        public ReachedLimitComponentException(int limit)
+        public ReachedLimitComponentException(uint limit)
             : base($"{DebugConst.TAG}The limit of the maximum components, limit: '{limit}'.")
         { }
     }

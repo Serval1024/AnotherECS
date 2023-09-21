@@ -17,13 +17,13 @@ namespace AnotherECS.Core
         IStorage GetStorage();
         void Clear();
 #if ANOTHERECS_DEBUG
-        void SetState(IDebugException state);
+        //void SetState(IDebugException state);
 #endif
     }
 
     internal unsafe interface IEntityAdapter : IAdapter
     {
-        void BindExternal(Entities entities, Filters filters, ref Adapters adapters);
+        //void BindExternal(Entities entities, Filters filters, ref Adapters adapters);
         void Resize(int capacity);
         bool IsHas(EntityId id);
         void AddSyncVoid(EntityId id, State state, delegate*<State, int, void> sync);

@@ -16,7 +16,7 @@ namespace AnotherECS.Core
     internal static partial class RevertHelper
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToElementBuffer<T, U>(ref T subject, uint tick, ElementOffsetData<U>[] elementUshortBuffer, ref int elementUshortIndex)
+        public static unsafe void RevertToElementBuffer<T, U>(ref T subject, uint tick, TickOffsetData<U>[] elementUshortBuffer, ref int elementUshortIndex)
             where T : struct, IRevertPtrDenseRaw
             where U : unmanaged
         {
@@ -28,7 +28,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    elements[frame.offset] = frame.data;
+                    elements[frame.offset] = frame.value;
                 }
                 else
                 {
@@ -43,7 +43,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    elements[frame.offset] = frame.data;
+                    elements[frame.offset] = frame.value;
                 }
                 else
                 {
@@ -54,9 +54,9 @@ namespace AnotherECS.Core
         }
 
 
-        public static void RevertToSingleComponentBuffer<T, U>(ref T subject, uint tick, ComponentData<U>[] componentBuffer, ref int componentIndex)
+        public static void RevertToSingleComponentBuffer<T, U>(ref T subject, uint tick, TickData<U>[] componentBuffer, ref int componentIndex)
             where T : struct, IRevertSetSingleDenseRaw<U>
-            where U : struct
+            where U : unmanaged
         {
             var isNeedContinueSearch = true;
 
@@ -67,7 +67,7 @@ namespace AnotherECS.Core
                     var lastIndex = i + 1;
                     if (i < componentIndex)
                     {
-                        subject.SetSingleDenseRaw(ref componentBuffer[lastIndex].component);
+                        subject.SetSingleDenseRaw(ref componentBuffer[lastIndex].value);
                         componentIndex = lastIndex;
                         isNeedContinueSearch = false;
                     }
@@ -84,7 +84,7 @@ namespace AnotherECS.Core
                         var lastIndex = i + 1;
                         if (lastIndex < componentBuffer.Length)
                         {
-                            subject.SetSingleDenseRaw(ref componentBuffer[lastIndex].component);
+                            subject.SetSingleDenseRaw(ref componentBuffer[lastIndex].value);
                             componentIndex = lastIndex;
                             isNeedContinueSearch = false;
                         }
@@ -95,7 +95,7 @@ namespace AnotherECS.Core
 
             if (isNeedContinueSearch)
             {
-                subject.SetSingleDenseRaw(ref componentBuffer[componentIndex].component);
+                subject.SetSingleDenseRaw(ref componentBuffer[componentIndex].value);
             }
         }
     }

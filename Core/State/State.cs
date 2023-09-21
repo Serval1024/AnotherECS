@@ -9,16 +9,17 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
+    /*
     public unsafe abstract class State : IState, ISerializeConstructor, IDisposable, IDebugException
     {
-        public bool IsDisposed { get; private set; }
+        
 
         private static readonly delegate*<State, int, void> _syncCacheMethod = UnsafeUtils.ConvertToPointer(Sync);
 
         private GeneralConfig _generalConfig;
         private TickProvider _tickProvider;
         private Events _events;
-        private Entities _entities;
+        //private Entities _entities;
         private DArrayStorage _dArrayStorage;
         //private Filters _filters;
         private Adapters _adapters;
@@ -40,16 +41,16 @@ namespace AnotherECS.Core
             _tickProvider = new TickProvider();
             _events = new Events(general.history.recordTickLength);
 
-            _entities = new Entities(new EntitiesArgs(general, _tickProvider));
+            //_entities = new Entities(new EntitiesArgs(general, _tickProvider));
             _dArrayStorage = new DArrayStorage(new DArrayArgs(general, _tickProvider));
-/*
+
 #if ANOTHERECS_HISTORY_DISABLE
             _filters = new Filters(general, this, _entities);
 #else
             _filters = new Filters(general, this, _entities, new FilterHistoryFactory(general.history, _history));
 #endif
             _filters.Init(_adapters.Length);
-*/
+
             _adapters = new Adapters(new IAdapter[GetComponentCount()]);
 
             _injectContainer = new InjectContainer(this, _dArrayStorage);
@@ -69,36 +70,42 @@ namespace AnotherECS.Core
             get
             {
 #if ANOTHERECS_DEBUG
-                ExceptionHelper.ThrowIfDisposed(this);
+                ////ExceptionHelper.ThrowIfDisposed(this);
 #endif
-                return _entities.GetCount();
+                return 0;// _entities.GetCount();
             }
         }
+
+        public bool IsDisposed { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityId New()
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            ////ExceptionHelper.ThrowIfDisposed(this);
 #endif
+            
             if (_entities.TryResize())
             {
                 ResizeStorages((int)_entities.GetCapacity());
             }
 
             return _entities.Allocate();
+            
+            return 0;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Entity NewEntity()
-            => EntityExtensions.Pack(this, New());
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public Entity NewEntity()
+          //  => EntityExtensions.Pack(this, New());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
+            
             var count = _entities.GetComponents(id, _componentsBufferTemp);
 
             for(int i = 0; i < count; ++i)
@@ -118,7 +125,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return ((IComponentFactory<T>)_adapters.Get(GetIndex<T>())).Create();
         }
@@ -129,7 +136,7 @@ namespace AnotherECS.Core
           where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
             return _adapters.GetAsEntity<T>(GetIndex<T>()).IsHas(id);
         }
@@ -138,26 +145,27 @@ namespace AnotherECS.Core
         public IComponent Read(EntityId id, int index)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
-            if (index < 0 || index >= _entities.GetComponentCount(id))
+            //ExceptionHelper.ThrowIfInvalide(this, id);
+            //if (index < 0 || index >= _entities.GetComponentCount(id))
             {
-                throw new IndexOutOfRangeException($"Index {index} is out of range component count: { _entities.GetComponentCount(id)}.");
+                //throw new IndexOutOfRangeException($"Index {index} is out of range component count: { _entities.GetComponentCount(id)}.");
             }
 #endif
-            return _adapters.GetAsEntity(_entities.GetComponent(id, index)).GetCopy(id);
+            //return _adapters.GetAsEntity(_entities.GetComponent(id, index)).GetCopy(id);
+            return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, int index, IComponent component)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
-            if (index < 0 || index >= _entities.GetComponentCount(id))
+            //ExceptionHelper.ThrowIfInvalide(this, id);
+            //if (index < 0 || index >= _entities.GetComponentCount(id))
             {
-                throw new IndexOutOfRangeException($"Index {index} is out of range component count: { _entities.GetComponentCount(id)}.");
+                //throw new IndexOutOfRangeException($"Index {index} is out of range component count: { _entities.GetComponentCount(id)}.");
             }
 #endif
-            _adapters.GetAsEntity(_entities.GetComponent(id, index)).SetUnknow(id, component);
+            //_adapters.GetAsEntity(_entities.GetComponent(id, index)).SetUnknow(id, component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -165,7 +173,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
             if (!_adapters.IsCanAsEntity<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentHasNoDataException(typeof(T));
@@ -179,7 +187,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
             if (!_adapters.IsCanAsEntity<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentHasNoDataException(typeof(T));
@@ -193,7 +201,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
             if (!_adapters.IsCanAsEntity<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentHasNoDataException(typeof(T));
@@ -207,7 +215,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
             if (!_adapters.IsCanAsEntity<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentHasNoDataException(typeof(T));
@@ -226,7 +234,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
             _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSyncVoid(id, ref data, this, _syncCacheMethod);
         }
@@ -236,7 +244,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
             return ref _adapters.GetAsEntityAdd<T>(GetIndex<T>()).AddSync(id, this, _syncCacheMethod);
         }
@@ -247,7 +255,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
             _adapters.GetAsEntity<T>(GetIndex<T>()).AddSyncVoid(id, this, _syncCacheMethod);
         }
@@ -257,7 +265,7 @@ namespace AnotherECS.Core
             where T : struct, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
             var index = GetIndex<T>();
             if (_adapters.GetAsEntity<T>(index).RemoveSync(id))
@@ -273,7 +281,7 @@ namespace AnotherECS.Core
           where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -287,7 +295,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -301,7 +309,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -315,7 +323,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -329,7 +337,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -348,7 +356,7 @@ namespace AnotherECS.Core
            where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -378,7 +386,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -393,7 +401,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -407,7 +415,7 @@ namespace AnotherECS.Core
             where T : struct, IShared
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
             if (!_adapters.IsCanAsSingle<T>(GetIndex<T>()))
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
@@ -421,18 +429,20 @@ namespace AnotherECS.Core
         public bool IsHas(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            return _entities.IsHas(id);
+            //return _entities.IsHas(id);
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Count(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
 #endif
-            return _entities.GetComponentCount(id);
+            //return _entities.GetComponentCount(id);
+            return 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -449,7 +459,7 @@ namespace AnotherECS.Core
         ~State()
             => Dispose(false);
 
-        public void Dispose()        
+        public void Dispose()
             => Dispose(true);
 
 
@@ -460,7 +470,7 @@ namespace AnotherECS.Core
 #endif
             writer.Pack(_tickProvider);
             _events.Pack(ref writer);
-            writer.Pack(_entities);
+            //writer.Pack(_entities);
             writer.Pack(_dArrayStorage);
             
             _adapters.Pack(ref writer);
@@ -474,7 +484,7 @@ namespace AnotherECS.Core
 #endif
             _tickProvider = reader.Unpack<TickProvider>();
             _events.Unpack(ref reader);
-            _entities = reader.Unpack<Entities>(new EntitiesArgs(_generalConfig, _tickProvider));
+            //_entities = reader.Unpack<Entities>(new EntitiesArgs(_generalConfig, _tickProvider));
             _dArrayStorage = reader.Unpack<DArrayStorage>();
             
             _injectContainer = new InjectContainer(this, _dArrayStorage);
@@ -484,7 +494,7 @@ namespace AnotherECS.Core
             ResolveDepenciesAdapters();
             RefreshOriginal();
         }
-        /*
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetFilter<T>()
             where T : Filter, new()
@@ -496,12 +506,12 @@ namespace AnotherECS.Core
             }
             throw new Exception();
         }
-        */
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Send(BaseEvent @event)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
             //Send(new EventContainer(_history.CurrentTick + 1, @event));
         }
@@ -523,7 +533,7 @@ namespace AnotherECS.Core
         internal void Send(ITickEvent @event)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
             _events.Send(@event);
         }
@@ -532,9 +542,10 @@ namespace AnotherECS.Core
         internal bool IsHas(EntityId id, int generation)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            return _entities.IsHas(id) && _entities.GetGeneration(id) == generation;
+            //return _entities.IsHas(id) && _entities.GetGeneration(id) == generation;
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -546,7 +557,7 @@ namespace AnotherECS.Core
         internal bool IsHasByTypeId(EntityId id, ushort typeId)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfInvalide(this, id);
+            //ExceptionHelper.ThrowIfInvalide(this, id);
             if (typeId < 0 || typeId >= _adapters.Length)
             {
                 throw new ArgumentOutOfRangeException(nameof(typeId));
@@ -559,9 +570,10 @@ namespace AnotherECS.Core
         internal ushort GetGeneration(EntityId id)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDisposed(this);
+            //ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            return _entities.GetGeneration(id);
+            //return _entities.GetGeneration(id);
+            return 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -587,7 +599,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickFinished()
         {
-            _entities.TickFinished();
+            //_entities.TickFinished();
             _dArrayStorage.TickFinished();
             //_filters.TickFinished();
             OnTickFinished();
@@ -669,7 +681,7 @@ namespace AnotherECS.Core
             if (adapter is IEntityAdapter entityAdapter)
             {
                 //entityAdapter.BindExternal(_entities, _filters, ref _adapters);
-                entityAdapter.BindExternal(_entities, null, ref _adapters);
+                //entityAdapter.BindExternal(_entities, null, ref _adapters);
             }
 
             if (adapter is IStateBindExternalInternal stateBindExternalInternal)
@@ -699,6 +711,6 @@ namespace AnotherECS.Core
                 GC.SuppressFinalize(this);
             }
         }
-    }
+    }*/
 }
 

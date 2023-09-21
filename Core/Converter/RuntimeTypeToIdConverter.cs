@@ -2,6 +2,8 @@ using AnotherECS.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Remoting.Activation;
 
 namespace AnotherECS.Converter
 {
@@ -19,12 +21,8 @@ namespace AnotherECS.Converter
                 .Where(p => !p.IsAbstract)
                 .Where(p =>
                     {
-                        var types = ReflectionUtils.ExtractGenericFromInterface<TType>(p);
-                        if (types.Length != 0)
-                        {
-                            return types.Any(p1 => p1 == typeof(EState));
-                        }
-                        return true;
+                        var attribute = p.GetCustomAttribute<BindStateAttribute>();
+                        return attribute == null || attribute.State == typeof(EState);                        
                     }
                     )
                 .OrderBy(p => ComponentUtils.IsSortAtLast(p) ? 1 : 0)

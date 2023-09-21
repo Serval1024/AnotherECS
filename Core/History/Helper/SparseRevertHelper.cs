@@ -132,7 +132,7 @@ namespace AnotherECS.Core
                 subject.SetSparseRaw(sparseBuffer[sparseIndex].value);
             }
         }
-
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RevertToSparseBuffer<T, U>(ref T subject, uint tick, SparseData<U>[] sparseBuffer, ref int sparseIndex)
             where T : struct, IRevertGetSparseRaw<U[]>
@@ -146,7 +146,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -161,7 +161,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -198,27 +198,27 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
                         
-                        else if (!copy && frame.sparseValue)
+                        else if (!copy && frame.value)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy && !frame.sparseValue)
+                        else if (copy && !frame.value)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -234,26 +234,26 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
-                        else if (!copy && frame.sparseValue)
+                        else if (!copy && frame.value)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy && !frame.sparseValue)
+                        else if (copy && !frame.value)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -290,26 +290,26 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
-                        else if (copy == 0 && frame.sparseValue != 0)
+                        else if (copy == 0 && frame.value != 0)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy != 0 && frame.sparseValue == 0)
+                        else if (copy != 0 && frame.value == 0)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -325,26 +325,26 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
-                        else if (copy == 0 && frame.sparseValue != 0)
+                        else if (copy == 0 && frame.value != 0)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy != 0 && frame.sparseValue == 0)
+                        else if (copy != 0 && frame.value == 0)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -353,7 +353,7 @@ namespace AnotherECS.Core
                 }
             }
         }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RevertToSparseBuffer<T>(ref T subject, uint tick, SparseData<ushort>[] sparseBuffer, ref int sparseIndex, ref ushort[] sparseCopy, ref Op[] bufferOps)
             where T : struct, IRevertGetSparseRaw<ushort[]>
@@ -381,26 +381,26 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
-                        else if (copy == 0 && frame.sparseValue != 0)
+                        else if (copy == 0 && frame.value != 0)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy != 0 && frame.sparseValue == 0)
+                        else if (copy != 0 && frame.value == 0)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -416,26 +416,26 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    ref var copy = ref sparseCopy[frame.sparseIndex];
-                    ref var op = ref bufferOps[frame.sparseIndex];
+                    ref var copy = ref sparseCopy[frame.index];
+                    ref var op = ref bufferOps[frame.index];
 
                     if (op != Op.BOTH)
                     {
-                        if (copy != frame.sparseValue)
+                        if (copy != frame.value)
                         {
                             op |= Op.BOTH;
                         }
-                        else if (copy == 0 && frame.sparseValue != 0)
+                        else if (copy == 0 && frame.value != 0)
                         {
                             op |= Op.ADD;
                         }
-                        else if (copy != 0 && frame.sparseValue == 0)
+                        else if (copy != 0 && frame.value == 0)
                         {
                             op = Op.REMOVE;
                         }
                     }
 
-                    sparse[frame.sparseIndex] = frame.sparseValue;
+                    sparse[frame.index] = frame.value;
                 }
                 else
                 {
@@ -444,6 +444,6 @@ namespace AnotherECS.Core
                 }
             }
 
-        }
+        }*/
     }
 }

@@ -1,0 +1,45 @@
+namespace AnotherECS.Gen.Common
+{
+    public static class LayoutInstaller
+    {
+<#ARRAY [0..COMPONENT:COUNT]#>
+        public static void Add_<#COMPONENT:NAME#>(State state)
+        {
+---<#IF INJECT#>
+            state.AddLayout<<#CALLER:NAME#><<#COMPONENT:FULL_NAME#>>, <#COMPONENT:FULL_NAME#>>(new ComponentFunction<#COMPONENT:FULL_NAME#>() { construct = &<#COMPONENT:NAME#>_Construct, deconstruct = &<#COMPONENT:NAME#>_Deconstruct });
+
+            static void <#COMPONENT:NAME#>_Construct(ref StorageLayout<#COMPONENT:FULL_NAME#> layout, ref GlobalDepencies depencies)
+            {
+#if ANOTHERECS_DEBUG
+                ReflectionUtils.ReflectionInjectConstruct(ref component, ref injectContainer);
+#else
+------<#IF INJECT:SELF#>
+                component.Construct(<#INJECT:ARGS_SELF#>);
+------<#END#>
+------<#ARRAY [0..INJECT:FIELD_COUNT]#>
+                component.<#INJECT:FIELD_NAME#>.Construct(<#INJECT:ARGS#>);
+------<#END#>
+#endif
+            }
+
+            static void <#COMPONENT:NAME#>_Deconstruct(ref StorageLayout<#COMPONENT:FULL_NAME#> layout, ref GlobalDepencies depencies)
+            {
+#if ANOTHERECS_DEBUG
+                ReflectionUtils.ReflectionInjectDeconstruct(ref component, ref injectContainer);
+#else
+------<#IF INJECT:SELF#>
+                component.Deconstruct();
+------<#END#>
+------<#ARRAY [0..INJECT:FIELD_COUNT]#>
+                component.<#INJECT:FIELD_NAME#>.Deconstruct();
+------<#END#>
+#endif
+            }
+---<#ELSE#>
+            state.AddLayout<<#CALLER:NAME#><<#COMPONENT:FULL_NAME#>>, <#COMPONENT:FULL_NAME#>>();
+---<#END#>
+        }
+<#END#>
+    }
+}        
+        

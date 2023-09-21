@@ -95,6 +95,14 @@ namespace AnotherECS.Core
                 .Cast<MemberInfo>()
                 .Union(type.GetProperties(bindingFlags));
 
+        public static string GetMemberName(this MemberInfo memberInfo)
+           => memberInfo.MemberType switch
+           {
+               MemberTypes.Field => ((FieldInfo)memberInfo).Name,
+               MemberTypes.Property => ((PropertyInfo)memberInfo).Name,
+               _ => throw new NotImplementedException(),
+           };
+
         public static Type GetMemberType(this MemberInfo memberInfo)
             => memberInfo.MemberType switch
             {

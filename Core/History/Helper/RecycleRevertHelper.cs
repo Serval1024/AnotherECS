@@ -51,9 +51,9 @@ namespace AnotherECS.Core
                 }
             }
         }
-
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RevertToRecycledBuffer<T>(ref T subject, uint tick, RecycledData<ushort>[] recycledBuffer, ref int recycledIndex)
+        public static void RevertToRecycledBuffer<T>(ref T subject, uint tick, RecycleData<ushort>[] recycledBuffer, ref int recycledIndex)
            where T : struct, IRevertGetRecycledRaw<ushort>
         {
             var isNeedContinueSearch = true;
@@ -66,7 +66,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    recycled[frame.recycledIndex] = frame.recycled;
+                    recycled[frame.index] = frame.value;
                 }
                 else
                 {
@@ -84,7 +84,7 @@ namespace AnotherECS.Core
 
                     if (frame.tick > tick)
                     {
-                        recycled[frame.recycledIndex] = frame.recycled;
+                        recycled[frame.index] = frame.value;
                     }
                     else
                     {
@@ -94,9 +94,9 @@ namespace AnotherECS.Core
                 }
             }
         }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RevertToRecycledBuffer<T>(ref T subject, uint tick, RecycledData<uint>[] recycledBuffer, ref int recycledIndex)
+        public static void RevertToRecycledBuffer<T>(ref T subject, uint tick, RecycleData<uint>[] recycledBuffer, ref int recycledIndex)
             where T : struct, IRevertGetRecycledRaw<uint>
         {
             var isNeedContinueSearch = true;
@@ -109,7 +109,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    recycled[frame.recycledIndex] = frame.recycled;
+                    recycled[frame.index] = frame.value;
                 }
                 else
                 {
@@ -127,7 +127,7 @@ namespace AnotherECS.Core
 
                     if (frame.tick > tick)
                     {
-                        recycled[frame.recycledIndex] = frame.recycled;
+                        recycled[frame.index] = frame.value;
                     }
                     else
                     {
@@ -137,7 +137,7 @@ namespace AnotherECS.Core
                 }
             }
         }
-
+        */
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RevertToRecycledCountBufferClass<T, U>(T subject, uint tick, TickData<U>[] recycledCountBuffer, ref int recycledCountIndex)
            where T : class, IRevertSetRecycledCountRaw<U>
@@ -173,9 +173,9 @@ namespace AnotherECS.Core
                 }
             }
         }
-
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void RevertToRecycledBufferClass<T>(T subject, uint tick, RecycledData<ushort>[] recycledBuffer, ref int recycledIndex)
+        public static void RevertToRecycledBufferClass<T>(T subject, uint tick, RecycleData<ushort>[] recycledBuffer, ref int recycledIndex)
             where T : class, IRevertGetRecycledRaw<ushort>
         {
             var recycled = subject.GetRecycledRaw();
@@ -186,7 +186,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    recycled[frame.recycledIndex] = frame.recycled;
+                    recycled[frame.index] = frame.value;
                 }
                 else
                 {
@@ -201,7 +201,7 @@ namespace AnotherECS.Core
 
                 if (frame.tick > tick)
                 {
-                    recycled[frame.recycledIndex] = frame.recycled;
+                    recycled[frame.index] = frame.value;
                 }
                 else
                 {
@@ -209,6 +209,6 @@ namespace AnotherECS.Core
                     return;
                 }
             }
-        }
+        }*/
     }
 }

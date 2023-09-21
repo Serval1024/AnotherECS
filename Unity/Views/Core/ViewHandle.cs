@@ -4,13 +4,13 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views.Core
 {
-    [ComponentOption(ComponentOptions.HistoryNonSync | ComponentOptions.NoCompileDirectAccess | ComponentOptions.CompileSortAtLast)]
+    [ComponentOption(ComponentOptions.HistoryNonSync | ComponentOptions.NoCompileFastAccess | ComponentOptions.CompileSortAtLast)]
     public struct ViewSystemReference : IShared
     {
         public IViewSystem system;
     }
 
-    [ComponentOption(ComponentOptions.NoCompileDirectAccess | ComponentOptions.CompileSortAtLast)]
+    [ComponentOption(ComponentOptions.NoCompileFastAccess | ComponentOptions.CompileSortAtLast)]
     public struct ViewHandle : IComponent, IAttach, IDetach, ISerialize
     {
         internal EntityId ownerId;
@@ -18,12 +18,12 @@ namespace AnotherECS.Views.Core
 
         public void OnAttach(State state)
         { 
-            state.Get<ViewSystemReference>().system.Create(state, ownerId, viewId);
+            //state.Get<ViewSystemReference>().system.Create(state, ownerId, viewId);
         }
 
         public void OnDetach(State state)
         {
-            state.Get<ViewSystemReference>().system.Destroy(ownerId);
+            //state.Get<ViewSystemReference>().system.Destroy(ownerId);
         }
 
         public void Pack(ref WriterContextSerializer writer)

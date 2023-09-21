@@ -11,7 +11,7 @@ namespace AnotherECS.Views
         public static void CreateView<T>(this State context, EntityId id)
             where T : IView
         {
-            context.Add(id, new ViewHandle() { ownerId = id, viewId = context.Get<ViewSystemReference>().system.GetId<T>() });
+            //context.Add(id, new ViewHandle() { ownerId = id, viewId = context.Get<ViewSystemReference>().system.GetId<T>() });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

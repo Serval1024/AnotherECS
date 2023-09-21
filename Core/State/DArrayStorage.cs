@@ -1,4 +1,5 @@
 using AnotherECS.Core;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 using System;
@@ -221,7 +222,7 @@ namespace AnotherECS.Collections
                 throw new ArgumentException("It is not safe to copy to storage with a different data type.");
             }
 #endif
-            UnsafeMemory.MemCpy(destination.array, source.array, count * source.elementSize);
+            UnsafeMemory.MemCopy(destination.array, source.array, count * source.elementSize);
 
             IncVersion(destinationId);
         }
@@ -485,7 +486,7 @@ namespace AnotherECS.Collections
             {
                 if (IsValide())
                 {
-                    UnsafeMemory.Deallocate(array);
+                    UnsafeMemory.Deallocate(ref array);
                     count = 0;
                     elementSize = 0;
 
@@ -530,7 +531,7 @@ namespace AnotherECS.Collections
             {
                 writer.Write(count);
                 writer.Write(elementSize);
-                writer.WriteStruct(new ArrayPtr(array, (uint)ByteLength));
+                writer.WriteStruct(new ArrayPtr(array, (uint)ByteLength, (uint)count));
                 writer.Write(lastVersion);
                 writer.Write(version);
             }
@@ -539,7 +540,7 @@ namespace AnotherECS.Collections
             {
                 count = reader.ReadInt32();
                 elementSize = reader.ReadInt32();
-                array = reader.ReadStruct<ArrayPtr>().data;
+                array = reader.ReadStruct<ArrayPtr>().GetPtr();
                 lastVersion = reader.ReadInt32();
                 version = reader.ReadInt32();
             }
