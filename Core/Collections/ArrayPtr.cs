@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core.Collection
 {
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ArrayPtr : IDisposable
+    public unsafe struct ArrayPtr : IDisposable, ISerialize
     {
         private void* data;
         private uint byteLength;
@@ -49,6 +50,20 @@ namespace AnotherECS.Core.Collection
             this.byteLength = byteLength;
             this.elementCount = elementCount;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ArrayPtr CreateWrapper<T>(ArrayPtr<T> other)
+            where T : unmanaged
+        {
+            ArrayPtr wrapper;
+            wrapper.data = other.GetPtr();
+            wrapper.byteLength = other.ByteLength;
+            wrapper.elementCount = other.ElementCount;
+            return wrapper;
+        }
+
+        public static ArrayPtr Create(uint byteLength, uint elementCount)
+            => new ArrayPtr(byteLength, elementCount);
 
         public static ArrayPtr Create<T>(uint elementCount)
             where T : unmanaged
@@ -120,6 +135,46 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* GetPtr<T>(int index)
+           where T : unmanaged
+        {
+#if ANOTHERECS_DEBUG
+            ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
+#endif
+            return ((T*)data) + index;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetRef<T>(int index)
+            where T : unmanaged
+        {
+#if ANOTHERECS_DEBUG
+            ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
+#endif
+            return ref *(((T*)data) + index);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Get<T>(int index)
+            where T : unmanaged
+        {
+#if ANOTHERECS_DEBUG
+            ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
+#endif
+            return *(((T*)data) + index);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set<T>(int index, T value)
+            where T : unmanaged
+        {
+#if ANOTHERECS_DEBUG
+            ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
+#endif
+            *(((T*)data) + index) = value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint byteLength)
         {
             Resize(byteLength, sizeof(byte));
@@ -142,8 +197,11 @@ namespace AnotherECS.Core.Collection
             if (byteLength != ByteLength)
             {
                 var ptr = UnsafeMemory.Allocate(byteLength);
-                UnsafeMemory.MemCopy(ptr, data, Math.Min(byteLength, this.byteLength));
-                UnsafeMemory.Deallocate(ref data);
+                if (data != null)
+                {
+                    UnsafeMemory.MemCopy(ptr, data, Math.Min(byteLength, this.byteLength));
+                    UnsafeMemory.Deallocate(ref data);
+                }
                 data = ptr;
                 this.byteLength = byteLength;
                 this.elementCount = elementCount;
@@ -167,9 +225,14 @@ namespace AnotherECS.Core.Collection
             }
 #endif
             var copySize = count * other.ElementSize;
-            UnsafeMemory.Deallocate(ref data);
-            data = UnsafeMemory.Allocate(copySize);
-
+            if (data != null && copySize != byteLength)
+            {
+                UnsafeMemory.Deallocate(ref data);
+            }
+            if (data == null)
+            {
+                data = UnsafeMemory.Allocate(copySize);
+            }
             UnsafeMemory.MemCopy(data, other.data, copySize);
             byteLength = copySize;
             elementCount = count;
@@ -183,6 +246,24 @@ namespace AnotherECS.Core.Collection
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
 #endif
             UnsafeMemory.MemCopy(data, other.data, Math.Min(byteLength, other.byteLength));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyFrom(in ArrayPtr other, uint count)
+        {
+#if ANOTHERECS_DEBUG
+            ExceptionHelper.ThrowIfArrayPtrBroken(this);
+            ExceptionHelper.ThrowIfArrayPtrBroken(other);
+            if (count > elementCount || count > other.elementCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+            if (elementCount != other.elementCount)
+            {
+                throw new ArgumentException("It is not safe to copy to storage with a different data type.");
+            }
+#endif
+            UnsafeMemory.MemCopy(data, other.data, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -209,6 +290,16 @@ namespace AnotherECS.Core.Collection
         {
             UnsafeMemory.Deallocate(ref data);
             byteLength = 0;
+        }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            ArrayPtrSerializer.Pack(ref writer, ref this);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            this = ArrayPtrSerializer.Unpack(ref reader);
         }
     }
 
@@ -256,6 +347,16 @@ namespace AnotherECS.Core.Collection
             data = UnsafeMemory.Allocate<T>(elementCount);
             byteLength = elementCount * (uint)sizeof(T);
             this.elementCount = elementCount;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ArrayPtr<T> CreateWrapper(ArrayPtr other)
+        {
+            ArrayPtr<T> wrapper;
+            wrapper.data = other.GetPtr<T>();
+            wrapper.byteLength = other.ByteLength;
+            wrapper.elementCount = other.ElementCount;
+            return wrapper;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

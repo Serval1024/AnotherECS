@@ -23,19 +23,29 @@ namespace AnotherECS.Core
                 : Array.Empty<Type>();
         }
 
-        public static string GetGeneratorFullName(Type type, Dictionary<Type, Type> map = null)
-            =>
-            (
-            type.IsGenericType
-                ? $"{type.SwapGenericToName(map)[..type.SwapGenericToName(map).IndexOf('`')]}<{string.Join(", ", type.GetGenericArguments().Select(p => GetGeneratorFullName(p, map)))}>"
-                : type.SwapGenericToName(map)
-            )
-            .Replace('+', '.');
+        public static string GetUnderLineName(Type type)
+            => type.Name
+            .Replace('+', '_')
+            .Replace('.', '_');
 
+        public static string GetGenericFullName(Type type, Dictionary<Type, Type> map = null)
+            =>
+            type.IsGenericType
+                ? $"{type.SwapGenericToName(map)[..type.SwapGenericToName(map).IndexOf('`')]}<{string.Join(", ", type.GetGenericArguments().Select(p => GetDotFullName(p, map)))}>"
+                : type.SwapGenericToName(map);
+
+        public static string GetUnderLineFullName(Type type, Dictionary<Type, Type> map = null)
+            => GetGenericFullName(type, map)
+            .Replace('+', '_')
+            .Replace('.', '_');
+
+        public static string GetDotFullName(Type type, Dictionary<Type, Type> map = null)
+            => GetGenericFullName(type, map)
+            .Replace('+', '.');
 
         public static void ReflectionInjectConstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct
-            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<Collections.DArrayStorage>.Construct));
+            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<DArrayCaller>.Construct));
 
         public static void ReflectionInjectDeconstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct
@@ -151,12 +161,12 @@ namespace AnotherECS.Core
                     {
                         if (map.TryGetValue(realCandidateType, out var mapType))
                         {
-                            return GetGeneratorFullName(mapType);
+                            return GetDotFullName(mapType);
                         }
                     }
                 }
 
-                return GetGeneratorFullName(realCandidateTypes.First());
+                return GetDotFullName(realCandidateTypes.First());
             }
 
             return type.FullName;

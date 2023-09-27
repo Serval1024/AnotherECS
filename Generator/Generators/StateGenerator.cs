@@ -7,11 +7,11 @@ namespace AnotherECS.Generator
 {
     public class StateGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "_State.gen.cs";
+        public string SaveFilePostfixName => "_ImplState.gen.cs";
         public string TemplateFileName => "state.template.txt";
 
         private const string STATE_NAME_POSTFIX =
-            "Data";
+            "ImplState";
 
         public ContentGenerator[] Compile(GeneratorContext context, bool isForceOverride)
             => context.GetStateTypes()

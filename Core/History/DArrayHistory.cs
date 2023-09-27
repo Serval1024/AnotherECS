@@ -1,7 +1,7 @@
 using AnotherECS.Serializer;
 using System;
 using System.Runtime.CompilerServices;
-using AnotherECS.Collections;
+
 using AnotherECS.Unsafe;
 using AnotherECS.Core.Collection;
 #if ANOTHERECS_DEBUG
@@ -14,8 +14,9 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe sealed class DArrayHistory : History, IHistory, IDisposable, ISerialize
+    internal unsafe sealed class DArrayHistory 
     {
+        /*
         private uint _buffersCapacity;
 
         private int _recycledCountIndex = 0;
@@ -107,7 +108,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick, DArrayStorage subject)
+        public void RevertTo(uint tick, DArrayCaller subject)
         {
             RevertToRecycledCountBuffer(tick, subject);
             RevertToRecycledBuffer(tick, subject);
@@ -126,31 +127,31 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledCountBuffer(uint tick, DArrayStorage subject)
+        private void RevertToRecycledCountBuffer(uint tick, DArrayCaller subject)
         {
             RevertHelper.RevertToRecycledCountBufferClass(subject, tick, _recycledCountBuffer, ref _recycledCountIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToRecycledBuffer(uint tick, DArrayStorage subject)
+        private void RevertToRecycledBuffer(uint tick, DArrayCaller subject)
         {
             //RevertHelper.RevertToRecycledBufferClass(subject, tick, _recycledBuffer, ref _recycledIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToCountBuffer(uint tick, DArrayStorage subject)
+        private void RevertToCountBuffer(uint tick, DArrayCaller subject)
         {
             RevertHelper.RevertToCountBufferClass(subject, tick, _countBuffer, ref _countIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RevertToElementBuffer(uint tick, DArrayStorage subject)
+        private void RevertToElementBuffer(uint tick, DArrayCaller subject)
         {
             RevertToElementBufferClass(subject, tick, _elementBuffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void RevertToElementBufferClass(DArrayStorage subject, uint tick, ElementBufferData[] elementBuffer)
+        private static void RevertToElementBufferClass(DArrayCaller subject, uint tick, ElementBufferData[] elementBuffer)
         {
             var elements = subject.GetDenseRaw();
 
@@ -303,6 +304,6 @@ namespace AnotherECS.Core
                 elementSize = reader.ReadInt32();
                 data = reader.ReadStruct<ArrayPtr>().GetPtr();
             }
-        }
+        }*/
     }
 }

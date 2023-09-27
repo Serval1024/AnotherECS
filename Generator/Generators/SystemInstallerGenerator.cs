@@ -2,10 +2,10 @@ using System.IO;
 
 namespace AnotherECS.Generator
 {
-    public class LayoutInstallerGenerator : IFileGenerator
+    public class SystemInstallerGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "LayoutInstaller.gen.cs";
-        public string TemplateFileName => "layoutinstaller.template.txt";
+        public string SaveFilePostfixName => "SystemInstaller.gen.cs";
+        public string TemplateFileName => "systeminstaller.template.txt";
 
         public ContentGenerator[] Compile(GeneratorContext context, bool isForceOverride)
             => new[] { CompileInternal(context) };
@@ -18,7 +18,7 @@ namespace AnotherECS.Generator
 
         private ContentGenerator CompileInternal(GeneratorContext context)
         {
-            var variables = VariablesConfigGenerator.GetLayoutInstaller(context.GetComponents());
+            var variables = VariablesConfigGenerator.GetSystem(context.GetStates(), context.GetSystems());
             
             return new ContentGenerator(
                 GetPath(context),
@@ -27,6 +27,6 @@ namespace AnotherECS.Generator
         }
 
         private string GetPath(GeneratorContext context)
-            => Path.Combine(context.FindRootGenDirectory(), SaveFilePostfixName);
+           => Path.Combine(context.FindRootGenDirectory(),  SaveFilePostfixName);
     }
 }

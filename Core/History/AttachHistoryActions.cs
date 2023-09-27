@@ -3,7 +3,7 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    internal static class AttachHistoryActions<T>
+    internal static class MultiAttachHistoryActions<T>
         where T : unmanaged, IAttach
     {
         public static unsafe void CallAttach_empty(ref UnmanagedLayout<T> layout, State state, ref ArrayPtr<Op> ops)

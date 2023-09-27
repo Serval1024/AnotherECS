@@ -11,7 +11,7 @@ namespace AnotherECS.Converter
         Type IdToType(UId id);
         UId TypeToId(Type type);
         Dictionary<UId, Type> GetAssociationTable();
-        int Count();
+        int Count() => GetAssociationTable().Count;
     }
 }
 

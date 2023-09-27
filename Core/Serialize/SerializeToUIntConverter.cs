@@ -67,9 +67,6 @@ namespace AnotherECS.Serializer
         public uint TypeToId(Type type)
             => _reverse[type];
 
-        public int Count()
-            => _direct.Count;
-
         public Dictionary<uint, Type> GetAssociationTable()
             => _direct;
     }

@@ -25,9 +25,6 @@ namespace AnotherECS.Converter
         public UId TypeToId(Type type)
             => _reverse[type];
 
-        public int Count()
-            => _direct.Count;
-
         protected void Init()
         {
             _direct = GetSortAssociationTableInternal();

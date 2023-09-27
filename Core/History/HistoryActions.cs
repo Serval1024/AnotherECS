@@ -64,7 +64,7 @@ namespace AnotherECS.Core
 
             for (int i = 0; i < denseLength; ++i)
             {
-                construct(ref depencies, ref denseBuffer[i].value);
+                construct(ref depencies.injectContainer, ref denseBuffer[i].value);
             }
         }
 
@@ -440,6 +440,12 @@ namespace AnotherECS.Core
             }
 
             subject = bufferPtr[bufferIndex].value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void HistoryClear(ref UnmanagedLayout<T> layout)
+        {
+            layout.history.Clear();
         }
     }
 }

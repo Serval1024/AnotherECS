@@ -8,7 +8,7 @@ namespace AnotherECS.Generator
     public class GeneratorContext
     {
         private readonly RuntimeStateConverter _stateConverter;
-        private readonly RuntimeOrderSystem _systemConverter;
+        private readonly RuntimeSystemConverter _systemConverter;
         private readonly Type[] _ignoreTypes;
         private readonly IEnvironmentProvider _environmentProvider;
 
@@ -19,7 +19,7 @@ namespace AnotherECS.Generator
         public GeneratorContext(Type[] ignoreTypes, IEnvironmentProvider environmentProvider)
         {
             _ignoreTypes = ignoreTypes ?? Array.Empty<Type>();
-            _systemConverter = new RuntimeOrderSystem(_ignoreTypes);
+            _systemConverter = new RuntimeSystemConverter(_ignoreTypes);
             _stateConverter = new RuntimeStateConverter(_ignoreTypes);
             _environmentProvider = environmentProvider;
         }
@@ -32,7 +32,7 @@ namespace AnotherECS.Generator
 
         public ITypeToUshort GetComponents(Type stateType)
         {
-            var type = typeof(RuntimeComponentToIntConverter<>);
+            var type = typeof(RuntimeComponentConverter<>);
             var genericType = type.MakeGenericType(stateType);
             return (ITypeToUshort)Activator.CreateInstance(genericType, new[] { _ignoreTypes });
         }
@@ -42,6 +42,9 @@ namespace AnotherECS.Generator
 
         public string GetTemplate(string fileName)
             => _environmentProvider.GetTemplate(fileName);
+
+        public string FindRootGenDirectory()
+            => _environmentProvider.FindRootGenDirectory();
 
         public string FindRootGenCommonDirectory()
             => _environmentProvider.FindRootGenCommonDirectory();
@@ -56,6 +59,7 @@ namespace AnotherECS.Generator
         public Type[] GetAllTypes()
             => GetStateTypes()
                 .Union(GetComponents())
+                .Union(GetSystems().GetAssociationTable().Values)
                 .ExceptDublicates()
                 .ToArray();
 

@@ -32,22 +32,25 @@ namespace AnotherECS.Core
             }
 
             element.tick = tick;
-            element.value = CreateFrom(ref data, layout.storage.denseIndex);
+            CopyFrom(ref element.value, ref data, layout.storage.denseIndex);
 
             HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
-        private unsafe static ArrayPtr CreateFrom(ref ArrayPtr data, uint denseIndex)
+        private unsafe static void CopyFrom(ref ArrayPtr destination, ref ArrayPtr source, uint denseIndex)
         {
-            var dense = data.GetPtr<T>();
-            var result = ArrayPtr.Create<T>(data.ElementCount);
-            var destPtr = result.GetPtr<T>();
+            if (!destination.IsValide || destination.ElementCount != source.ElementCount)
+            {
+                destination.Resize<T>(source.ElementCount);
+            }
+            
+            var sourcePtr = source.GetPtr<T>();
+            var destinationPtr = destination.GetPtr<T>();
 
             for (uint i = 0; i < denseIndex; i++)
             {
-                destPtr[i].CopyFrom(dense[i]);
+                destinationPtr[i].CopyFrom(sourcePtr[i]);
             }
-            return result;
         }
 
         private unsafe static void CallRecycle(ref ArrayPtr data)
@@ -57,6 +60,23 @@ namespace AnotherECS.Core
             {
                 dense[i].OnRecycle();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryClear(ref UnmanagedLayout<T> layout)
+        {
+            var denseBufferPtr = layout.history.denseBuffer.GetPtr<TickOffsetData<T>>();
+            var count = layout.history.denseBuffer.ElementCount;
+
+            for (int i = 0; i < count; ++i)
+            {
+                if (denseBufferPtr[i].tick != 0)
+                {
+                    denseBufferPtr[i].value.OnRecycle();
+                }
+            }
+
+            HistoryActions<T>.HistoryClear(ref layout);
         }
     }
 }

@@ -30,7 +30,7 @@ namespace AnotherECS.Core
             {
                 if (adapters[i] is IRevert revert)
                 {
-                    revert.RevertTo(tick);
+                    //revert.RevertTo(tick);
                 }
             }
         }

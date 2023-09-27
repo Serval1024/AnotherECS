@@ -23,6 +23,8 @@ namespace AnotherECS.Unity.Editor.Generator
             return null;
         }
 
+        public string FindRootGenDirectory()
+            => UnityGeneratorUtils.FindRootGenDirectory();
         public string FindRootGenCommonDirectory()
             => UnityGeneratorUtils.FindRootGenCommonDirectory();
         public string GetTemplate(string fileName)

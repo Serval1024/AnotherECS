@@ -195,7 +195,6 @@ namespace AnotherECS.Serializer
             where T : struct
             => (T[])_arrayMeta.Unpack(ref reader);
 
-
         public unsafe void WriteUnmanaged<T>(ref WriterContextSerializer writer, T[] data, int count)
             where T : unmanaged
         {

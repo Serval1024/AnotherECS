@@ -4,36 +4,36 @@ using System.Linq;
 using System.Text;
 using AnotherECS.Converter;
 using AnotherECS.Core;
-using Unity.Collections;
+using AnotherECS.Core.Actions;
 
 namespace AnotherECS.Generator
 {
     internal static class VariablesConfigGenerator
     {
-        public static TemplateParser.Variables GetStorage(TypeOptions option)
+        public static TemplateParser.Variables GetCaller(TypeOptions option)
             => new()
             {
-                { "GENERIC_CONSTRAINTS:TComponent", p => TypeOptionsUtils.GetStorageInterfaces(option) },
-                { "STORAGE:TYPE_NAME", p => TypeOptionsUtils.GetStorageFlags(option) },
+                { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(option) },
+                { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(option) },
 
-                { "ATTACH", p => option.isAttach },
-                { "DETACH", p => option.isDetach },
-                { "SINGLE", p => option.isSingle },
-                { "MULTI", p => !option.isSingle },
-                { "STORAGE:MODE", p => option.isSingle ? "Single" : "Multi" },
-                { "EMPTY", p => option.isEmpty },
-                { "ALLOCATOR:RECYCLE", p => option.isUseRecycle },
-                { "INJECT", p => option.isInject },
-                { "SPARSE:BOOL", p => option.sparseMode == TypeOptions.SparseMode.Bool },
-                { "HISTORY", p => option.isHistory },
-                { "HISTORY:BYCHANGE", p => option.isHistoryByChange },
-                { "HISTORY:BYTICK", p => option.isHistoryByTick },
-                { "BIND_TO_ENTITY", p => option.isBindToEntity   },
-                { "COPYABLE", p => option.isCopyable },
-                { "SPARSE:TYPE_NAME", p => option.sparseMode.ToString().ToLower() },
-                { "FORCE:ISerialize", p => option.isUseISerialize },
-                
-                { "CALLER:TYPE_TYPE", p => TypeOptionsUtils.GetCallerFlags(option) },
+                { "ATTACH", () => option.isAttach },
+                { "DETACH", () => option.isDetach },
+                { "SINGLE", () => option.isSingle },
+                { "MULTI", () => !option.isSingle },
+                { "STORAGE:MODE", () => option.isSingle ? "Single" : "Multi" },
+                { "EMPTY", () => option.isEmpty },
+                { "ALLOCATOR:RECYCLE", () => option.isUseRecycle },
+                { "INJECT", () => option.isInject },
+                { "SPARSE:BOOL", () => option.sparseMode == TypeOptions.SparseMode.Bool },
+                { "HISTORY", () => option.isHistory },
+                { "HISTORY:BYCHANGE", () => option.isHistoryByChange },
+                { "HISTORY:BYTICK", () => option.isHistoryByTick },
+                { "BIND_TO_ENTITY", () => option.isBindToEntity   },
+                { "COPYABLE", () => option.isCopyable },
+                { "SPARSE:TYPE_NAME", () => option.sparseMode.ToString().ToLower() },
+                { "FORCE:ISerialize", () => option.isUseISerialize },
+
+                { "HISTORY:FLAG", () =>  GetHistoryFlag(option) },
             };
 
         public static TemplateParser.Variables GetLayoutInstaller(Type[] components)
@@ -41,33 +41,45 @@ namespace AnotherECS.Generator
             TemplateParser.Variables variables = null;
             variables = new()
                 {
-                    { "COMPONENT:COUNT", p => components.Length.ToString() },
-                    { "COMPONENT:NAME", p => components[p].Name },
-                    { "COMPONENT:FULL_NAME", p => components[p].FullName },
-                    { "CALLER:NAME", p => TypeOptionsUtils.GetCallerFlags(new TypeOptions(components[p])) },
+                    { "COMPONENT:COUNT", () => components.Length.ToString() },
+                    { "COMPONENT:NAME", () => components[variables.GetIndex(0)].Name },
+                    { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components[variables.GetIndex(0)]) },
+                    { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components[variables.GetIndex(0)]) },
+                    { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)])) },
 
-                    { "INJECT", p => new TypeOptions(components[p]).isInject },
-                    { "INJECT:SELF", p => new TypeOptions(components[p]).isInjectComponent },
-                    { "INJECT:ARGS_SELF", p => GetInjectArguments(components[p]) },
+                    { "INJECT", () => new TypeOptions(components[variables.GetIndex(0)]).isInject },
+                    { "INJECT:SELF", () => new TypeOptions(components[variables.GetIndex(0)]).isInjectComponent },
+                    { "INJECT:SELF:ARGS", () => GetInjectArguments(components[variables.GetIndex(0)]) },
 
-                    { "INJECT:COUNT", p => new TypeOptions(components[variables.GetIndex(0)]).injectMembers.Length.ToString() },
-                    { "INJECT:FIELD_NAME", p => new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].fieldName },
-                    { "INJECT:ARGS", p => GetInjectArguments(new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].argumentTypes) },
+                    { "INJECT:FIELD:COUNT", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers.Length.ToString() },
+                    { "INJECT:FIELD:NAME", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].fieldName },
+                    { "INJECT:FIELD:ARGS", () => GetInjectArguments(new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].argumentTypes) },
                 };
             return variables;
         }
 
         public static TemplateParser.Variables GetState(Type stateType, string stateGenName, ITypeToUshort components)
         {
+            var fastAccessComponents = new CustomTypeToIdConverter<ushort, IComponent>(
+                components.GetAssociationTable().Values.Where(p => new TypeOptions(p).isCompileFastAccess)
+                );
+
             TemplateParser.Variables variables = null;
             variables = new()
                 {
-                    { "STATE:NAME", p => stateType.Name },
-                    { "STATE:GEN_NAME", p => stateGenName },
+                    { "STATE:NAME", () => stateType.Name },
+                    { "STATE:GEN_NAME", () => stateGenName },
 
-                    { "COMPONENT:FASTACCESS", p => new TypeOptions(components.IdToType(p)).isCompileFastAccess },
-                    { "COMPONENT:COUNT", p => components.GetAssociationTable().Count.ToString() },
-                    { "COMPONENT:FULL_NAME", p => components.IdToType(p).FullName },
+                    { "COMPONENT:COUNT", () => components.GetAssociationTable().Count.ToString() },
+                    { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components.IdToType(variables.GetIndexAsId(0))) },
+                    { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components.IdToType(variables.GetIndexAsId(0))) },
+
+                    { "CALLER:FASTACCESS:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(new TypeOptions(fastAccessComponents.IdToType(variables.GetIndexAsId(0)))) },
+
+                    { "COMPONENT:FASTACCESS", () => new TypeOptions(components.IdToType(variables.GetIndexAsId(0))).isCompileFastAccess },
+                    { "COMPONENT:FASTACCESS:COUNT", () => fastAccessComponents.GetAssociationTable().Count.ToString() },
+                    { "COMPONENT:FASTACCESS:NAME", () => ReflectionUtils.GetUnderLineName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
+                    { "COMPONENT:FASTACCESS:FULL_NAME", () => ReflectionUtils.GetDotFullName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
                 };
             return variables;
         }
@@ -77,14 +89,44 @@ namespace AnotherECS.Generator
             TemplateParser.Variables variables = null;
             variables = new()
             {
-                { "STATE:COUNT", p => states.Count().ToString() },
-                { "STATE:GEN_NAME", p => StateGenerator.GetStateNameGen(states.IdToType(variables.GetIndexAsId(0))) },
+                { "STATE:COUNT", () => states.Count().ToString() },
+                { "STATE:GEN_NAME", () => StateGenerator.GetStateNameGen(states.IdToType(variables.GetIndexAsId(0))) },
 
-                { "SYSTEM:COUNT", p => systems.Count().ToString() },
-                { "SYSTEM:NAME", p => GetSystemName(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
+                { "SYSTEM:COUNT", () => systems.Count().ToString() },
+                { "SYSTEM:NAME", () => GetSystemName(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
             };
             return variables;
         }
+
+        public static TemplateParser.Variables GetComponent(GeneratorContext context)
+        {
+            var states = context.GetStates();
+            TemplateParser.Variables variables = null;
+            variables = new()
+            {
+                { "STATE:COUNT", () => states.Count().ToString() },
+                { "STATE:GEN_NAME", () => StateGenerator.GetStateNameGen(states.IdToType(variables.GetIndexAsId(0))) },
+
+                { "COMPONENT:COUNT", () =>
+                    context.GetComponents(
+                        states.IdToType(variables.GetIndexAsId(0))
+                    ).Count().ToString()
+                },
+                { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(
+                    context.GetComponents(
+                        states.IdToType(variables.GetIndexAsId(0))
+                        )
+                    .IdToType(variables.GetIndexAsId(1)))
+                },
+            };
+            return variables;
+        }
+
+        private static string GetHistoryFlag(TypeOptions option)
+            => nameof(HistoryMode) + "." +
+            (option.isHistory
+                ? (option.isHistoryByChange ? HistoryMode.BYCHANGE : HistoryMode.BYTICK)
+                : HistoryMode.NONE).ToString();
 
         private static string GetSystemName(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
         {
@@ -97,7 +139,7 @@ namespace AnotherECS.Generator
                     { typeof(State), state }
                 };
 
-                return ReflectionUtils.GetGeneratorFullName(systems.IdToType(id1), typeMapTemp);
+                return ReflectionUtils.GetDotFullName(systems.IdToType(id1), typeMapTemp);
             }
             catch (InvalidOperationException e)
             {

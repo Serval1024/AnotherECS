@@ -20,17 +20,6 @@ namespace AnotherECS.Generator
             return result.ToString();
         }
 
-        public static string GetStorageFlags(in TypeOptions option)
-        {
-            var result = GetDefaultStorageFlags(option);
-
-            if (result.Length == 0)
-            {
-                result.Append("Simple");
-            }
-            return result.ToString();
-        }
-
         private static StringBuilder GetDefaultStorageFlags(in TypeOptions option)
         {
             var result = new StringBuilder();
@@ -102,7 +91,7 @@ namespace AnotherECS.Generator
             return result;
         }
 
-        public static string GetStorageInterfaces(in TypeOptions option)
+        public static string GetCallerInterfaces(in TypeOptions option)
         {
             var result = new StringBuilder();
             if (option.isCopyable)
@@ -126,17 +115,12 @@ namespace AnotherECS.Generator
                 result.Append(", ");
                 result.Append(nameof(IShared));
             }
-            if (!option.isSingle)
-            {
-                result.Append(", ");
-                result.Append(nameof(IResizableCaller));
-            }
             if (option.isUseISerialize)
             {
                 result.Append(", ");
                 result.Append(nameof(ISerialize));
             }
-
+            
             return result.ToString();
         }
 
@@ -233,12 +217,12 @@ namespace AnotherECS.Generator
             injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
 
             isUseISerialize = !isEmpty && ComponentUtils.IsUseISerialize(type);
-            isUseRecycle = !isMarker && !isEmpty;
+            isUseRecycle = !isMarker && !isEmpty && !isSingle;
             isBindToEntity = !isMarker;
 
             isConfig = ComponentUtils.IsConfig(type);
 
-            isDispose = false;
+            isDispose = isAttach || isDetach || isCopyable;
 
             Validate();
         }
@@ -283,7 +267,7 @@ namespace AnotherECS.Generator
             {
                 foreach (var member in injectMembers)
                 {
-                    if (member.argumentTypes.Any(p1 => p1 == nameof(DArrayStorage)))
+                    if (member.argumentTypes.Any(p1 => p1 == nameof(DArrayCaller)))
                     {
                         throw new Exceptions.OptionsConflictException(type, $"{typeof(DArray<>).Name}, {typeof(DList<>).Name} with 'no history' option.");
                     }

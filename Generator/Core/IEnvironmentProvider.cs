@@ -6,6 +6,7 @@ namespace AnotherECS.Generator
     {
         string GetFilePathToType(Type type);
         string GetTemplate(string fileName);
+        string FindRootGenDirectory();
         string FindRootGenCommonDirectory();
     }
 }

@@ -3,11 +3,12 @@ using System.Runtime.InteropServices;
 using System;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
+using AnotherECS.Converter;
 
 namespace AnotherECS.Core
 {
     [StructLayout(LayoutKind.Sequential, Size = 192)]
-    public unsafe struct UnmanagedLayout     // Union ComponetLayout and ComponetLayout<TComponent>
+    public unsafe struct UnmanagedLayout : ISerialize     // Union ComponetLayout and ComponetLayout<TComponent>
     {
         public ComponetStorage storage;
         public HistoryStorage history;
@@ -26,11 +27,24 @@ namespace AnotherECS.Core
             history.Dispose();
         }
 
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            storage.Pack(ref writer);
+            history.Pack(ref writer);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            storage.Unpack(ref reader);
+            history.Unpack(ref reader);
+        }
+
+        [IgnoreCompile]
         public struct Mock : IComponent { }
     }
 
     [StructLayout(LayoutKind.Sequential, Size = 192)]
-    public unsafe struct UnmanagedLayout<TComponent>     // Union ComponetLayout and ComponetLayout<TComponent>
+    public unsafe struct UnmanagedLayout<TComponent> : ISerialize     // Union ComponetLayout and ComponetLayout<TComponent>
         where TComponent : unmanaged
     {
         public ComponetStorage storage;
@@ -50,24 +64,36 @@ namespace AnotherECS.Core
             storage.Dispose();
             history.Dispose();
         }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            storage.Pack(ref writer);
+            history.Pack(ref writer);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            storage.Unpack(ref reader);
+            history.Unpack(ref reader);
+        }
     }
 
     public unsafe struct ComponentFunction<TComponent>
         where TComponent : unmanaged
     {
-        internal delegate*<ref GlobalDepencies, ref TComponent, void> construct;
-        internal delegate*<ref GlobalDepencies, ref TComponent, void> deconstruct;
+        public delegate*<ref InjectContainer, ref TComponent, void> construct;
+        public delegate*<ref InjectContainer, ref TComponent, void> deconstruct;
     }
   
-    public unsafe struct ComponetStorage : IDisposable
+    public unsafe struct ComponetStorage : IDisposable, ISerialize
     {
         public ArrayPtr sparse;
         public ArrayPtr dense;
         public ArrayPtr version;
         public ArrayPtr recycle;
 
-        public uint recycleIndex;
         public uint denseIndex;
+        public uint recycleIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
@@ -77,8 +103,8 @@ namespace AnotherECS.Core
             version.Clear();
             recycle.Clear();
 
-            recycleIndex = 0;
             denseIndex = 0;
+            recycleIndex = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,9 +115,57 @@ namespace AnotherECS.Core
             version.Dispose();
             recycle.Dispose();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PackCommon(ref WriterContextSerializer writer)
+        {
+            sparse.Pack(ref writer);
+            version.Pack(ref writer);
+            recycle.Pack(ref writer);
+
+            writer.Write(denseIndex);
+            writer.Write(recycleIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PackDense(ref WriterContextSerializer writer)
+        {
+            dense.Pack(ref writer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            PackCommon(ref writer);
+            PackDense(ref writer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackCommon(ref ReaderContextSerializer reader)
+        {
+            sparse.Unpack(ref reader);
+            version.Unpack(ref reader);
+            recycle.Unpack(ref reader);
+
+            denseIndex = reader.ReadUInt32();
+            recycleIndex = reader.ReadUInt32();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackDense(ref ReaderContextSerializer reader)
+        {
+            dense.Unpack(ref reader);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            UnpackCommon(ref reader);
+            UnpackDense(ref reader);
+        }
     }
 
-    public unsafe struct HistoryStorage : IDisposable
+    public unsafe struct HistoryStorage : IDisposable, ISerialize
     {
         public ArrayPtr recycleCountBuffer;
         public ArrayPtr recycleBuffer;
@@ -112,11 +186,13 @@ namespace AnotherECS.Core
             recycleBuffer.Clear();
             countBuffer.Clear();
             denseBuffer.Clear();
+            sparseBuffer.Clear();
 
             recycleCountIndex = 0;
             recycleIndex = 0;
             countIndex = 0;
             denseIndex = 0;
+            sparseIndex = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,32 +202,64 @@ namespace AnotherECS.Core
             recycleBuffer.Dispose();
             countBuffer.Dispose();
             denseBuffer.Dispose();
+            sparseBuffer.Dispose();
         }
-    }
 
-    internal unsafe struct GlobalDepencies : ISerialize
-    {
-        public GeneralConfig config;
-        public TickProvider tickProvider;
-        public EntitiesCaller entities;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PackCommon(ref WriterContextSerializer writer)
+        {
+            recycleCountBuffer.Pack(ref writer);
+            recycleBuffer.Pack(ref writer);
+            countBuffer.Pack(ref writer);
+            sparseBuffer.Pack(ref writer);
 
+            writer.Write(recycleCountIndex);
+            writer.Write(recycleIndex);
+            writer.Write(countIndex);
+            writer.Write(denseIndex);
+            writer.Write(sparseIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PackDense(ref WriterContextSerializer writer)
+        {
+            denseBuffer.Pack(ref writer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.WriteStruct(config);
-            tickProvider.Pack(ref writer);
+            PackCommon(ref writer);
+            PackDense(ref writer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackCommon(ref ReaderContextSerializer reader)
+        {
+            recycleCountBuffer.Unpack(ref reader);
+            recycleBuffer.Unpack(ref reader);
+            countBuffer.Unpack(ref reader);
+            sparseBuffer.Unpack(ref reader);
+
+            recycleCountIndex = reader.ReadUInt32();
+            recycleIndex = reader.ReadUInt32();
+            countIndex = reader.ReadUInt32();
+            denseIndex = reader.ReadUInt32();
+            sparseIndex = reader.ReadUInt32();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackDense(ref ReaderContextSerializer reader)
+        {
+            denseBuffer.Unpack(ref reader);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            config = reader.ReadStruct<GeneralConfig>();
-            tickProvider.Unpack(ref reader);
+            UnpackCommon(ref reader);
+            UnpackDense(ref reader);
         }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct FastAccess
-    {
-        public UnmanagedLayout* layoutPtr;
     }
 
 

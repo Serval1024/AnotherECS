@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -11,9 +12,10 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateLayout(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies)
         {
-            ChunkStorageActions<EntityHead>.AllocateLayout(ref layout, depencies.config.entityCapacity, depencies.config.recycledCapacity);
+            MultiStorageActions<EntityHead>.AllocateDense(ref layout, depencies.config.entityCapacity);
+            MultiStorageActions<EntityHead>.AllocateRecycle(ref layout, depencies.config.recycledCapacity);
             MultiStorageActions<EntityHead>.AllocateSparse<uint>(ref layout, 1);
-
+            
             MultiHistoryFacadeActions<EntityHead>.AllocateRecycle(ref layout, ref depencies);
             MultiHistoryFacadeActions<EntityHead>.AllocateDenseSegment<ushort>(ref layout, ref depencies);
         }
@@ -21,8 +23,8 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static EntityId Allocate(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies)
         {
-            var id = ChunkStorageActions<EntityHead>.UnsafeAdd(ref layout);
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var id = UnsafeAdd(ref layout, ref depencies);
+            var head = Read(ref layout, id);
 
             HistoryActions<EntityHead>.PushSegment(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, &head->generation);
 
@@ -40,7 +42,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Deallocate(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies, EntityId id)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
 
             HistoryActions<EntityHead>.PushSegment(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, &head->generation);
             head->generation -= AllocateGeneration;
@@ -56,12 +58,12 @@ namespace AnotherECS.Core.Actions
 
             count -= iMax;
             
-            ChunkStorageActions<EntityHead>.Remove(ref layout, id);
+            Remove(ref layout, ref depencies, id);
 
             if (next != 0)
             {
                 var idTail = next;
-                var tail = ChunkStorageActions<EntityHead>.Read(ref layout, idTail);
+                var tail = Read(ref layout, idTail);
                 next = tail->next;
 
                 iMax = Math.Min(count, EntityTail.ComponentMax);
@@ -71,7 +73,7 @@ namespace AnotherECS.Core.Actions
                 }
                 count -= EntityTail.ComponentMax;   //TODO SER CHECK ushort < 0
 
-                ChunkStorageActions<EntityHead>.Remove(ref layout, idTail);
+                Remove(ref layout, ref depencies, idTail);
             }
         }
 
@@ -85,11 +87,11 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort GetComponentCount(ref UnmanagedLayout<EntityHead> layout, EntityId id)
-            => ChunkStorageActions<EntityHead>.Read(ref layout, id)->count;
+            => Read(ref layout, id)->count;
 
         public static ushort GetComponents(ref UnmanagedLayout<EntityHead> layout, EntityId id, ushort[] buffer)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
             var count = head->count;
 #if ANOTHERECS_DEBUG
             if (buffer.Length < count)
@@ -111,7 +113,7 @@ namespace AnotherECS.Core.Actions
                 EntityTail* tail = null;
                 while (next != 0)
                 {
-                    tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                    tail = ReadAs<EntityTail>(ref layout, next);
                     components = tail->components;
 
                     for (int i = 0; i < EntityTail.ComponentMax; ++i)
@@ -130,20 +132,20 @@ namespace AnotherECS.Core.Actions
         {
             if (index < EntityHead.ComponentMax)
             {
-                return ChunkStorageActions<EntityHead>.Read(ref layout, id)->components[index];
+                return Read(ref layout, id)->components[index];
             }
             else
             {
-                var next = ChunkStorageActions<EntityHead>.Read(ref layout, id)->next;
+                var next = Read(ref layout, id)->next;
                 index -= EntityHead.ComponentMax;
                 while (next != 0)
                 {
                     if (index < EntityTail.ComponentMax)
                     {
-                        return ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next)->components[index];
+                        return ReadAs<EntityTail>(ref layout, next)->components[index];
                     }
 
-                    next = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next)->next;
+                    next = ReadAs<EntityTail>(ref layout, next)->next;
                     index -= EntityTail.ComponentMax;
                 }
             }
@@ -152,7 +154,7 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort GetGeneration(ref UnmanagedLayout<EntityHead> layout, EntityId id)
-            => ChunkStorageActions<EntityHead>.Read(ref layout, id)->generation;
+            => Read(ref layout, id)->generation;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint GetCount(ref UnmanagedLayout<EntityHead> layout)
@@ -169,7 +171,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Add(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies, EntityId id, ushort componentType)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
             if (head->count < EntityHead.ComponentMax)
             {
                 ref var component = ref head->components[head->count];
@@ -183,8 +185,8 @@ namespace AnotherECS.Core.Actions
                 if (next == 0)
                 {
                     TryIncResizeDense(ref layout);
-                    head->next = ChunkStorageActions<EntityHead>.UnsafeAdd(ref layout);
-                    tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                    head->next = UnsafeAdd(ref layout, ref depencies);
+                    tail = ReadAs<EntityTail>(ref layout, next);
                     tail->components[0] = componentType;
                 }
                 else
@@ -192,7 +194,7 @@ namespace AnotherECS.Core.Actions
                     var index = head->count - EntityHead.ComponentMax + EntityTail.ComponentMax;
                     while (next != 0)
                     {
-                        tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                        tail = ReadAs<EntityTail>(ref layout, next);
                         next = tail->next;
                         index -= EntityTail.ComponentMax;
                     }
@@ -204,8 +206,8 @@ namespace AnotherECS.Core.Actions
                     else
                     {
                         TryIncResizeDense(ref layout);
-                        tail->next = ChunkStorageActions<EntityHead>.UnsafeAdd(ref layout);
-                        tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                        tail->next = UnsafeAdd(ref layout, ref depencies);
+                        tail = ReadAs<EntityTail>(ref layout, next);
                         tail->components[0] = componentType;
                     }
                 }
@@ -219,7 +221,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Remove(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies, EntityId id, ushort componentType)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
 
             var componentPtr = FindComponentPtr(ref layout, id, componentType);
             if (componentPtr != null)
@@ -261,7 +263,7 @@ namespace AnotherECS.Core.Actions
                     currentIndexGC = 0;
                 }
 
-                var entity = ChunkStorageActions<EntityHead>.Read(ref layout, currentIndexGC);
+                var entity = Read(ref layout, currentIndexGC);
                 if (entity->generation >= AllocateGeneration && entity->count == 0)
                 {
                     DeallocateZero(ref layout, ref depencies, currentIndexGC);
@@ -272,17 +274,17 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void DeallocateZero(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies, EntityId id)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
 
             HistoryActions<EntityHead>.PushSegment(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, &head->generation);
             
             head->generation -= AllocateGeneration;
-            ChunkStorageActions<EntityHead>.Remove(ref layout, id);
+            Remove(ref layout, ref depencies, id);
         }
 
         private static ushort* FindComponentPtr(ref UnmanagedLayout<EntityHead> layout, EntityId id, ushort componentType)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
             var components = head->components;
 
             for (int i = 0, iMax = Math.Min(head->count, EntityHead.ComponentMax); i < iMax; ++i)
@@ -297,7 +299,7 @@ namespace AnotherECS.Core.Actions
             EntityTail* tail = null;
             while (next != 0)
             {
-                tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                tail = ReadAs<EntityTail>(ref layout, next);
                 components = tail->components;
 
                 for (int i = 0; i < EntityTail.ComponentMax; ++i)
@@ -315,7 +317,7 @@ namespace AnotherECS.Core.Actions
 
         private static ushort* FindComponentLastPtr(ref UnmanagedLayout<EntityHead> layout, EntityId id)
         {
-            var head = ChunkStorageActions<EntityHead>.Read(ref layout, id);
+            var head = Read(ref layout, id);
 
             if (head->count <= EntityHead.ComponentMax)
             {
@@ -328,13 +330,42 @@ namespace AnotherECS.Core.Actions
                 EntityTail* tail = null;
                 while (next != 0)
                 {
-                    tail = ChunkStorageActions<EntityHead>.ReadAs<EntityTail>(ref layout, next);
+                    tail = ReadAs<EntityTail>(ref layout, next);
                     next = tail->next;
                 }
                 return tail->components + index;
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static uint UnsafeAdd(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies)
+        {
+            return MultiStorageActions<EntityHead>.AllocateIdHistory(ref layout, ref depencies);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Add(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies)
+        {
+            TryResizeDense(ref layout);
+            return UnsafeAdd(ref layout, ref depencies);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static EntityHead* Read(ref UnmanagedLayout<EntityHead> layout, uint id)
+          => layout.storage.dense.GetPtr<EntityHead>(id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UChunk* ReadAs<UChunk>(ref UnmanagedLayout<EntityHead> layout, uint id)
+            where UChunk : unmanaged
+            => layout.storage.dense.GetPtr<UChunk>(id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Remove(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies, uint id)
+        {
+            MultiStorageActions<EntityHead>.DeallocateIdHistory(ref layout, ref depencies, id);
+            ref var component = ref MultiStorageActions<EntityHead>.ReadDirect(ref layout, id);
+            MultiStorageActions<EntityHead>.RemoveDense(ref layout, ref depencies, id, ref component);
+        }
     }
 }
 

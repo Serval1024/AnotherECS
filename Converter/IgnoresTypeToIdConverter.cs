@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace AnotherECS.Converter
 {
@@ -21,6 +22,7 @@ namespace AnotherECS.Converter
         protected override IEnumerable<Type> GetSortTypes()
            => base
                 .GetSortTypes()
+                .Where(p => p.GetCustomAttribute<IgnoreCompileAttribute>() == null)
                 .Where(p => !_ignoreTypes.Any(p0 => p0 == p));
     }
 }

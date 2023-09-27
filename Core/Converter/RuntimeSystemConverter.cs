@@ -1,13 +1,13 @@
-using AnotherECS.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AnotherECS.Core;
 
 namespace AnotherECS.Converter
 {
-    public class RuntimeOrderSystem : IgnoresTypeToIdConverter<ushort, ISystem>, ITypeToUshort
+    public class RuntimeSystemConverter : IgnoresTypeToIdConverter<ushort, ISystem>, ITypeToUshort
     {
-        public RuntimeOrderSystem(Type[] ignoreTypes) 
+        public RuntimeSystemConverter(Type[] ignoreTypes) 
             : base(ignoreTypes)
         {
         }

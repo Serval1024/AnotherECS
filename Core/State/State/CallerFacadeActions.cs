@@ -1,17 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Actions
 {
+
     internal static unsafe class CallerFacadeActions<T>
         where T : unmanaged
     {
-        public enum HistoryMode
-        {
-            NONE,
-            BYCHANGE,
-            BYTICK,
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateDenseMulti(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
@@ -59,7 +54,7 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSingleDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+        public static void AllocateDenseSingle(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
             MultiStorageActions<T>.AllocateDense(ref layout, 1);            
 
@@ -70,7 +65,7 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSingleSparse(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+        public static void AllocateSparseSingle(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
             MultiStorageActions<T>.AllocateSparse<bool>(ref layout, 1);
             if (historyMode != HistoryMode.NONE)
@@ -80,10 +75,18 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSingleVersion(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+        public static void AllocateVersionSingle(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
             MultiStorageActions<T>.AllocateVersion(ref layout, 1);
         }
     }
+
+    internal enum HistoryMode
+    {
+        NONE,
+        BYCHANGE,
+        BYTICK,
+    }
+
 }
 

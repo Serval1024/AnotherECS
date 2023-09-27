@@ -60,14 +60,14 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfDontExists(State state, uint id, int index, int indexMax, ICaller caller)
+        public static void ThrowIfDontExists(State state, uint id, int index, uint count, ICaller caller)
         {
             ThrowIfDisposed(state);
             ThrowIfNotMultiAccess(state, id, caller);
 
-            if (index < 0 || index >= indexMax)
+            if (index < 0 || index >= count)
             {
-                throw new IndexOutOfRangeException($"Index {index} is out of range component count: {indexMax}.");
+                throw new IndexOutOfRangeException($"Index {index} is out of range component count: {count}.");
             }
         }
 
@@ -113,6 +113,16 @@ namespace AnotherECS.Core
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
+        }
+
+        public static void ThrowIfArrayPtrBroken(ArrayPtr arrayPtr, int index, uint segmentSize)
+        {
+            ThrowIfArrayPtrBroken(arrayPtr);
+            if (index < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+            ThrowIfArrayPtrBroken(arrayPtr, (uint)index, segmentSize);
         }
 
         public static void ThrowIfArrayPtrBroken<T>(ArrayPtr<T> arrayPtr, uint index)

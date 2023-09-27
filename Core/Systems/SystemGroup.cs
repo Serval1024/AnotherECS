@@ -22,16 +22,16 @@ namespace AnotherECS.Core
         private readonly List<ITickSystem> _tickSystems = new();
         private readonly Dictionary<Type, List<ISystemContainer>> _receiverSystems = new();
 
-        private readonly Order _order;
+        private readonly SortOrder _order;
         private bool _isDisposed;
 
 
-        public SystemGroup(Order order = Order.SortByAttributes)
+        public SystemGroup(SortOrder order = SortOrder.Attributes)
         {
             _order = order;
         }
 
-        public SystemGroup(IEnumerable<ISystem> systems, Order order = Order.SortByAttributes)
+        public SystemGroup(IEnumerable<ISystem> systems, SortOrder order = SortOrder.Attributes)
             :this(order)
         {
             if (systems == null)
@@ -193,7 +193,7 @@ namespace AnotherECS.Core
             _tickSystems.Clear();
             _receiverSystems.Clear();
 
-            if (_order == Order.SortByAttributes)
+            if (_order == SortOrder.Attributes)
             {
                 var order = SystemGlobalRegister.GetOrders();
                 _systems.Sort((p0, p1) =>
@@ -221,18 +221,18 @@ namespace AnotherECS.Core
                         if (args.Length == 2)
                         {
                             Type eventType = args[1];
-                            Type containerType = typeof(SystemContainer<,>);
+                            Type containerType = typeof(EventContainer<,>);
 
                             Type containerTypeGeneric = containerType.MakeGenericType(args);
-                            var newContainer = (ISystemContainer)Activator.CreateInstance(containerTypeGeneric, receiverSystem, receiverSystemGeneric, eventType);
+                            var eventContainer = (ISystemContainer)Activator.CreateInstance(containerTypeGeneric, receiverSystem, receiverSystemGeneric, eventType);
 
                             if (_receiverSystems.TryGetValue(eventType, out List<ISystemContainer> receivers))
                             {
-                                receivers.Add(newContainer);
+                                receivers.Add(eventContainer);
                             }
                             else
                             {
-                                _receiverSystems.Add(eventType, new List<ISystemContainer>() { newContainer });
+                                _receiverSystems.Add(eventType, new List<ISystemContainer>() { eventContainer });
                             }
                         }
                     }
@@ -293,13 +293,13 @@ namespace AnotherECS.Core
             void Call(State context, BaseEvent @event);
         }
 
-        private struct SystemContainer<UState, UEvent> : ISystemContainer
+        private struct EventContainer<UState, UEvent> : ISystemContainer
             where UState : State
             where UEvent : BaseEvent
         {
             private readonly Action<UState, UEvent> _call;
 
-            public SystemContainer(IReceiverSystem system, Type interfaceType, Type eventType)
+            public EventContainer(IReceiverSystem system, Type interfaceType, Type eventType)
             {
                 var method = interfaceType.GetMethod(nameof(IReceiverSystem<UEvent>.Receive));
                 _call = (Action<UState, UEvent>)method.CreateDelegate(typeof(Action<UState, UEvent>), system);
@@ -310,10 +310,10 @@ namespace AnotherECS.Core
                 => _call((UState)context, (UEvent)@event);
         }
 
-        public enum Order
+        public enum SortOrder
         {
-            SortByAttributes,
-            SortByDeclaration
+            Attributes,
+            Declaration,
         }
     }
 }

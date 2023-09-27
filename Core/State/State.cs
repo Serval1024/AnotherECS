@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Collections;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 using EntityId = System.UInt32;

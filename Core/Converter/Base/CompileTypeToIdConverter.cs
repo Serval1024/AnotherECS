@@ -1,6 +1,6 @@
-﻿using AnotherECS.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using AnotherECS.Core;
 
 namespace AnotherECS.Converter
 {

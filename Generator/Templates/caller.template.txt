@@ -5,8 +5,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
-using AnotherECS.Core.Actions
-using EntityId = System.UInt32;
+using AnotherECS.Core.Actions;
+<#IF MULTI#>using EntityId = System.UInt32;<#END#>
 
 namespace AnotherECS.Gen.Common
 {
@@ -14,10 +14,11 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct <#STORAGE:TYPE_NAME#>_Caller<TComponent> : I<#STORAGE:MODE#>Caller<TComponent>
+    public unsafe struct <#CALLER:TYPE_NAME#>_Caller<TComponent> : 
+        I<#STORAGE:MODE#>Caller<TComponent><#IF DISPOSABLE#>, IDisposable<#END#><#IF HISTORY#>, IRevert<#END#><#IF FORCE:ISerialize#>, ISerialize<#END#><#IF HISTORY:BYTICK && !EMPTY#>ITickFinished<#END#>
         where TComponent : unmanaged, IComponent<#GENERIC_CONSTRAINTS:TComponent#>
     {
-        private StorageLayout<EntityHead>* _layout;
+        private UnmanagedLayout<TComponent>* _layout;
         private GlobalDepencies* _depencies;
         private ushort _elementId;
 
@@ -28,8 +29,8 @@ namespace AnotherECS.Gen.Common
         private Op _opsTemp;
 ---<#END#>
 ---<#IF MULTI#>
-        private ArrayPtr _bufferCopyTemp;
-        private ArrayPtr<Op> _opsTemp;
+        private AnotherECS.Core.Collection.ArrayPtr _bufferCopyTemp;
+        private AnotherECS.Core.Collection.ArrayPtr<Op> _opsTemp;
 ---<#END#>
 <#END#>
 
@@ -37,18 +38,18 @@ namespace AnotherECS.Gen.Common
         private DefaultContainer _empty;
 <#END#>
 
-        void ICaller.Config(StorageLayout* layout, GlobalDepencies* depencies, ushort id, State state)
+        void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
         {
+            _layout = (UnmanagedLayout<TComponent>*)layout;
+            _depencies = depencies;
+            _elementId = id;
 <#IF ATTACH || DETACH#>
             _state = state;
 ---<#IF MULTI#>
-            _bufferCopyTemp = ArrayPtr.Create<<#SPARSE:TYPE_NAME#>>(_depencies.config.entityCapacity);
-            _opsTemp = new ArrayPtr<T>(_depencies.config.entityCapacity);
+            _bufferCopyTemp = AnotherECS.Core.Collection.ArrayPtr.Create<<#SPARSE:TYPE_NAME#>>(_depencies->config.entityCapacity);
+            _opsTemp = new AnotherECS.Core.Collection.ArrayPtr<Op>(_depencies->config.entityCapacity);
 ---<#END#>
 <#END#>
-            _layout = layout;
-            _depencies = depencies;
-            _elementId = id;
 <#IF EMPTY#>
             _empty = new DefaultContainer();
 <#END#>
@@ -56,7 +57,7 @@ namespace AnotherECS.Gen.Common
 
         void ICaller.AllocateLayout()
         {
-            CallerFacadeActions<TComponent>.AllocateSparse<#STORAGE:MODE#><<#SPARSE:TYPE_NAME#>>(ref *_layout, ref *_depencies, <#HISTORY:FLAG#>);
+            CallerFacadeActions<TComponent>.AllocateSparse<#STORAGE:MODE#><#IF MULTI#><<#SPARSE:TYPE_NAME#>><#END#>(ref *_layout, ref *_depencies, <#HISTORY:FLAG#>);
 <#IF !EMPTY#>
             CallerFacadeActions<TComponent>.AllocateDense<#STORAGE:MODE#>(ref *_layout, ref *_depencies, <#HISTORY:FLAG#>);
 <#END#>
@@ -68,37 +69,38 @@ namespace AnotherECS.Gen.Common
 <#END#>
         }
 
-        public T Create()
+        public TComponent Create()
         {
 <#IF INJECT#>
-            var component = new T();
-            StorageActions<T>.CallConstruct(ref *_layout, ref *_depencies, ref component);
+            var component = new TComponent();
+            StorageActions<TComponent>.CallConstruct(ref *_layout, ref *_depencies, ref component);
             return component;
 <#ELSE#>
             return default;
 <#END#>
         }
 
-<#IF ATTACH || DETACH#>
+<#IF DISPOSABLE#>
         public void Dispose()
         {
 ---<#IF MULTI#>
             _bufferCopyTemp.Dispose();
             _opsTemp.Dispose();
 ---<#END#>
+            Reset();
         }
 <#END#>
         public Type GetElementType()
-            => typeof(T);
+            => typeof(TComponent);
 
         public uint GetCount()
             => <#STORAGE:MODE#>StorageActions<TComponent>.GetCount(ref *_layout);
 
 <#IF MULTI#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Resize(int capacity)
+        public void Resize(uint capacity)
         {
-            <#STORAGE:MODE#>StorageActions<TComponent>.ResizeSparse(ref *_layout, capacity);
+            <#STORAGE:MODE#>StorageActions<TComponent>.ResizeSparse<<#SPARSE:TYPE_NAME#>>(ref *_layout, capacity);
 ---<#IF SPARSE:BOOL#>
 ------<#IF !EMPTY#>
             <#STORAGE:MODE#>StorageActions<TComponent>.ResizeDense(ref *_layout, capacity);
@@ -125,9 +127,9 @@ namespace AnotherECS.Gen.Common
         public void Attach()
         {
 ---<#IF EMPTY#>
-            AttachStorageActions<T>.Attach_empty(_state);
+            AttachStorageActions<TComponent>.Attach_empty(_state);
 ---<#ELSE#>
-            <#STORAGE:MODE#>AttachStorageActions<T>.Attach_<#SPARSE:TYPE_NAME#>(ref *_layout, _state<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
+            <#STORAGE:MODE#>AttachStorageActions<TComponent>.Attach_<#SPARSE:TYPE_NAME#>(ref *_layout, _state<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
 ---<#END#>
         }
 <#END#>
@@ -137,20 +139,34 @@ namespace AnotherECS.Gen.Common
         public void Detach()
         {
 ---<#IF EMPTY#>
-            DetachStorageActions<T>.Detach_empty();
+            DetachStorageActions<TComponent>.Detach_empty();
 ---<#ELSE#>
-            <#STORAGE:MODE#>DetachStorageActions<T>.Detach_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
+            <#STORAGE:MODE#>DetachStorageActions<TComponent>.Detach_<#SPARSE:TYPE_NAME#>(ref *_layout, _state<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
 ---<#END#>
         }
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas(<#IF MULTI#>EntityId id<#END#>)
-            => <#STORAGE:MODE#>StorageActions<T>.IsHas_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF MULTI#>, id<#END#>);
+            => <#STORAGE:MODE#>StorageActions<TComponent>.IsHas_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF MULTI#>, id<#END#>);
+
+<#IF SINGLE#>
+        public void SetOrAdd(ref TComponent component)
+        {
+            if (IsHas())
+            {
+                Set(ref component);
+            }
+            else
+            {
+                Add(ref component);
+            }
+        }
+<#END#>
 
 <#IF EMPTY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(<#IF MULTI#>EntityId id, <#END#>ref T data)
+        public void Add(<#IF MULTI#>EntityId id, <#END#>ref TComponent data)
         {
             AddInternal(<#IF MULTI#>id<#END#>);
 ---<#IF ATTACH#>
@@ -159,7 +175,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Add(<#IF MULTI#>EntityId id<#END#>)
+        public ref TComponent Add(<#IF MULTI#>EntityId id<#END#>)
         {
             AddInternal(<#IF MULTI#>id<#END#>);
 ---<#IF ATTACH#>
@@ -180,27 +196,27 @@ namespace AnotherECS.Gen.Common
         private void AddInternal(<#IF MULTI#>EntityId id<#END#>)
         {
 ---<#IF BIND_TO_ENTITY && MULTI#>
-            _depencies.entities.Add(id, _elementId);
+            _depencies->entities.Add(id, _elementId);
 ---<#END#>
 ---<#IF VERSION && MULTI#>
-            <#STORAGE:MODE#>StorageActions<T>.TryResizeVersion(ref *_layout);
+            <#STORAGE:MODE#>StorageActions<TComponent>.TryResizeVersion(ref *_layout);
 ---<#END#>
 ---<#IF MULTI#>
-            var denseIndex = <#STORAGE:MODE#>StorageActions<T>.AllocateId<#IF !ALLOCATOR:RECYCLE#>Increment<#END#>(ref *_layout, ref *_depencies);
-            <#STORAGE:MODE#>StorageActions<T>.SetSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies, id);
+            var denseIndex = (ushort)<#STORAGE:MODE#>StorageActions<TComponent>.AllocateId<#IF !ALLOCATOR:RECYCLE#>Increment<#END#>(ref *_layout, ref *_depencies);
+            <#STORAGE:MODE#>StorageActions<TComponent>.SetSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies, id);
 ---<#ELSE#>
-            SingleStorageActions<T>.SetSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies);
+            SingleStorageActions<TComponent>.SetSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies);
 ---<#END#>
 ---<#IF VERSION#>
-            <#STORAGE:MODE#>StorageActions<T>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
+            <#STORAGE:MODE#>StorageActions<TComponent>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
 ---<#END#>
 ---<#IF INJECT#>
-            StorageActions<T>.CallConstruct(ref *_layout, ref *_depencies, ref _empty.value);
+            StorageActions<TComponent>.CallConstruct(ref *_layout, ref *_depencies, ref _empty.value);
 ---<#END#>
         }
 <#ELSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(<#IF MULTI#>EntityId id, <#END#>ref T data)
+        public void Add(<#IF MULTI#>EntityId id, <#END#>ref TComponent data)
         {
             ref var component = ref AddInternal(<#IF MULTI#>id<#END#>);
             component = data;
@@ -210,7 +226,7 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Add(<#IF MULTI#>EntityId id<#END#>)
+        public ref TComponent Add(<#IF MULTI#>EntityId id<#END#>)
         {
             ref var component = ref AddInternal(<#IF MULTI#>id<#END#>);
 ---<#IF ATTACH#>
@@ -229,22 +245,22 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref T AddInternal(<#IF MULTI#>EntityId id<#END#>)
+        private ref TComponent AddInternal(<#IF MULTI#>EntityId id<#END#>)
         {
 ---<#IF BIND_TO_ENTITY && MULTI#>
-            _depencies.entities.Add(id, _elementId);
+            _depencies->entities.Add(id, _elementId);
 ---<#END#>
 ---<#IF MULTI#>
-            MultiStorageActions<T>.TryResizeDense<#IF VERSION#>Version<#END#>(ref *_layout);
+            MultiStorageActions<TComponent>.TryResizeDense<#IF VERSION#>Version<#END#>(ref *_layout);
 ---<#END#>
-            var denseIndex = MultiStorageActions<T>.AllocateId<#IF !ALLOCATOR:RECYCLE#>Increment<#END#><#IF HISTORY#>History<#END#>(ref *_layout, ref *_depencies);
+            var denseIndex = (ushort)MultiStorageActions<TComponent>.AllocateId<#IF !ALLOCATOR:RECYCLE#>Increment<#END#><#IF HISTORY#>History<#END#>(ref *_layout, ref *_depencies);
 
-            ref var component = ref <#STORAGE:MODE#>StorageActions<T>.SetSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies<#IF MULTI#>, id, denseIndex<#END#>);
+            ref var component = ref <#STORAGE:MODE#>StorageActions<TComponent>.SetSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies<#IF MULTI#>, id, denseIndex<#END#>);
 ---<#IF VERSION#>
-            <#STORAGE:MODE#>StorageActions<T>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
+            <#STORAGE:MODE#>StorageActions<TComponent>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
 ---<#END#>
 ---<#IF INJECT#>
-            StorageActions<T>.CallConstruct(ref *_layout, ref *_depencies, ref component);
+            StorageActions<TComponent>.CallConstruct(ref *_layout, ref *_depencies, ref component);
 ---<#END#>
             return ref component;
         }
@@ -255,11 +271,11 @@ namespace AnotherECS.Gen.Common
         public void Remove(<#IF MULTI#>EntityId id<#END#>)
         {
 ---<#IF BIND_TO_ENTITY#>
-            _depencies.entities.Remove(id, _elementId);
+            _depencies->entities.Remove(id, _elementId);
 ---<#END#>
-            <#STORAGE:MODE#>StorageActions<T>.RemoveSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies<#IF MULTI#>, id<#END#>);
+            <#STORAGE:MODE#>StorageActions<TComponent>.RemoveSparse<#IF HISTORY#>History<#END#>_empty(ref *_layout, ref *_depencies<#IF MULTI#>, id<#END#>);
 ---<#IF DETACH#>
-            default(T).OnDetach(_state);
+            default(TComponent).OnDetach(_state);
 ---<#END#>
         }
 <#ELSE#>
@@ -267,31 +283,31 @@ namespace AnotherECS.Gen.Common
         public void Remove(<#IF MULTI#>EntityId id<#END#>)
         {
 <#IF SINGLE#>
-            <#STORAGE:MODE#>StorageActions<T>.RemoveSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies);
+            <#STORAGE:MODE#>StorageActions<TComponent>.RemoveSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies);
 <#END#>
 <#IF MULTI#>
-            var denseIndex = <#STORAGE:MODE#>StorageActions<T>.RemoveSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies, id);
+            var denseIndex = (ushort)<#STORAGE:MODE#>StorageActions<TComponent>.RemoveSparse<#IF HISTORY#>History<#END#>_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies, id);
 <#END#>
 ---<#IF ALLOCATOR:RECYCLE#>
-            StorageActions<T>.DeallocateId<#IF HISTORY#>History<#END#>(ref *_layout, ref *_depencies, denseIndex);
+            MultiStorageActions<TComponent>.DeallocateId<#IF HISTORY#>History<#END#>(ref *_layout, ref *_depencies, denseIndex);
 ---<#END#>
-            ref var component ref = <#STORAGE:MODE#>StorageActions<T>.ReadDirect(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
+            ref var component = ref <#STORAGE:MODE#>StorageActions<TComponent>.ReadDirect(ref *_layout<#IF MULTI#>, denseIndex<#END#>);
 ---<#IF HISTORY:BYCHANGE#>
-            <#STORAGE:MODE#>StorageActions<T>.RemoveDense(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>, ref component);
+            <#STORAGE:MODE#>StorageActions<TComponent>.RemoveDense(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>, ref component);
 ---<#END#>
-            Recycle();
+            Recycle(ref component);
 
 ---<#IF DETACH#>
             component.OnDetach(_state);
 ---<#END#>
 ---<#IF INJECT#>
-            StorageActions<T>.CallDeconstruct(ref *_layout, ref *_depencies, ref T component);
+            StorageActions<TComponent>.CallDeconstruct(ref *_layout, ref *_depencies, ref component);
 ---<#END#>
         }
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Recycle()
+        private void Recycle(ref TComponent component)
         {
 <#IF COPYABLE#>
 ---<#IF HISTORY:BYTICK#>
@@ -304,49 +320,61 @@ namespace AnotherECS.Gen.Common
 <#END#>
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IComponent GetCopy(<#IF MULTI#>EntityId id<#END#>)
+            => Get(<#IF MULTI#>id<#END#>);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set(<#IF MULTI#>EntityId id, <#END#>IComponent data)
+        {
+            ref var component = ref Get(<#IF MULTI#>id<#END#>);
+            component = (TComponent)data;
+        }
+
 <#IF EMPTY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(<#IF MULTI#>EntityId id<#END#>)
+        public ref readonly TComponent Read(<#IF MULTI#>EntityId id<#END#>)
             => ref _empty.value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(<#IF MULTI#>EntityId id<#END#>)
+        public ref TComponent Get(<#IF MULTI#>EntityId id<#END#>)
             => ref _empty.value;
 
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(<#IF MULTI#>EntityId id, <#END#>ref T data)
+        public void Set(<#IF MULTI#>EntityId id, <#END#>ref TComponent data)
         {
             _empty.value = data;
         }
 <#ELSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(<#IF MULTI#>EntityId id<#END#>)
+        public ref readonly TComponent Read(<#IF MULTI#>EntityId id<#END#>)
 ---<#IF SPARSE:BOOL#>
-            => ref <#STORAGE:MODE#>StorageActions<T>.ReadDirect(ref _layout, id);
+            => ref <#STORAGE:MODE#>StorageActions<TComponent>.ReadDirect(ref *_layout<#IF MULTI#>, id<#END#>);
 ---<#ELSE#>
-            => ref <#STORAGE:MODE#>StorageActions<T>.Read(ref _layout, id);
+            => ref <#STORAGE:MODE#>StorageActions<TComponent>.Read_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF MULTI#>, id<#END#>);
 ---<#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(<#IF MULTI#>EntityId id<#END#>)
+        public ref TComponent Get(<#IF MULTI#>EntityId id<#END#>)
         {
 ---<#IF MULTI#>
-            var denseIndex = <#STORAGE:MODE#>StorageActions<T>.GetDense_<#SPARSE:TYPE_NAME#>(ref *_layout, id);
+            var denseIndex = <#STORAGE:MODE#>StorageActions<TComponent>.GetDense_<#SPARSE:TYPE_NAME#>(ref *_layout, id);
 ---<#END#>
-            ref var component = <#STORAGE:MODE#>StorageActions<T>.ReadDirect(ref *_layout<#IF MULTI#>, denseIndex<#END#>);
+            ref var component = ref <#STORAGE:MODE#>StorageActions<TComponent>.ReadDirect(ref *_layout<#IF MULTI#>, denseIndex<#END#>);
 ---<#IF VERSION#>
-            <#STORAGE:MODE#>StorageActions<T>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
+            <#STORAGE:MODE#>StorageActions<TComponent>.UpdateVersion(ref *_layout, ref *_depencies<#IF MULTI#>, denseIndex<#END#>);
 ---<#END#>
 ---<#IF HISTORY:BYCHANGE && !EMPTY#>
-            <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<T>.PushDense(ref layout, ref depencies<#IF MULTI#>, denseIndex<#ELSE#>0<#END#>, ref component);
+            <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<TComponent>.PushDense(ref *_layout, ref *_depencies, <#IF MULTI#>denseIndex<#ELSE#>0<#END#>, ref component);
 ---<#END#>
             return ref component;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(<#IF MULTI#>EntityId id<#END#>, ref T data)
+        public void Set(<#IF MULTI#>EntityId id, <#END#>ref TComponent data)
         {
-            ref var component = Get(<#IF MULTI#>id<#END#>);
+            ref var component = ref Get(<#IF MULTI#>id<#END#>);
             component = data;
         }
 <#END#>
@@ -354,79 +382,102 @@ namespace AnotherECS.Gen.Common
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetVersion(<#IF MULTI#>EntityId id<#END#>)
 <#IF VERSION#>
-            => <#STORAGE:MODE#>StorageActions<T>.GetVersion_<#SPARSE:TYPE_NAME#>(ref *_layout, id);
+            => <#STORAGE:MODE#>StorageActions<TComponent>.GetVersion_<#SPARSE:TYPE_NAME#>(ref *_layout, id);
 <#ELSE#>
             => 0;
 <#END#>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Reset()
+        public void ResetStorage()
         {
 <#IF DETACH#>
             Detach();
 <#END#>
 <#IF COPYABLE#>
-            <#STORAGE:MODE#>CopyableStorageActions<T>.CallRecycle_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
+            <#STORAGE:MODE#>CopyableStorageActions<TComponent>.CallRecycle_<#SPARSE:TYPE_NAME#>(ref *_layout<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
 <#END#>
 <#IF INJECT#>
             <#STORAGE:MODE#>StorageActions<TComponent>.CallDeconstruct_<#SPARSE:TYPE_NAME#>(ref *_layout, ref *_depencies<#IF !SPARSE:BOOL#>, GetCount()<#END#>);
 <#END#>
-            <#STORAGE:MODE#>StorageActions<T>.StorageClear(ref *_layout);
+            <#STORAGE:MODE#>StorageActions<TComponent>.StorageClear(ref *_layout);
         }
-    
+<#IF HISTORY#>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ResetHistory()
+        {
+            <#IF COPYABLE#>Copyable<#END#>HistoryActions<TComponent>.HistoryClear(ref *_layout);
+        }
+<#END#>
+        public void Reset()
+        {
+            ResetStorage();
+<#IF HISTORY#>
+            ResetHistory();
+<#END#>
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick)
+        public void RevertTo(uint tick, State state)
         {
 <#IF ATTACH | DETACH#>
-            <#STORAGE:MODE#>HistoryFacadeActions<T>.RevertToSparseAttachDetachBuffer<#IF MULTI#><<#SPARSE:TYPE_NAME#>><#END#>(ref *_layout, tick, ref _opsTemp<#IF MULTI#>, ref _bufferCopyTemp<#END#>);
+            <#STORAGE:MODE#>HistoryFacadeActions<TComponent>.RevertToSparseAttachDetachBuffer<#IF MULTI#><<#SPARSE:TYPE_NAME#>><#END#>(ref *_layout, tick, ref _opsTemp<#IF MULTI#>, ref _bufferCopyTemp<#END#>);
 <#ELSE#>
-            MultiHistoryFacadeActions<T>.RevertToSparseBuffer<<#SPARSE:TYPE_NAME#>>(ref *_layout, tick);
+            MultiHistoryFacadeActions<TComponent>.RevertToSparseBuffer<<#SPARSE:TYPE_NAME#>>(ref *_layout, tick);
 <#END#>
 <#IF !EMPTY && !SINGLE#>
-            <#STORAGE:MODE#>HistoryFacadeActions<T>.RevertToDenseCountBuffer(ref *_layout, tick);
+            <#STORAGE:MODE#>HistoryFacadeActions<TComponent>.RevertToCountBuffer(ref *_layout, tick);
 <#END#>
 <#IF ALLOCATOR:RECYCLE#>
-            <#STORAGE:MODE#>HistoryFacadeActions<T>.RevertToRecycleCountBuffer(ref *_layout, tick);
-            <#STORAGE:MODE#>HistoryFacadeActions<T>.RevertToRecycleBuffer(ref *_layout, tick);
+            <#STORAGE:MODE#>HistoryFacadeActions<TComponent>.RevertToRecycleCountBuffer(ref *_layout, tick);
+            <#STORAGE:MODE#>HistoryFacadeActions<TComponent>.RevertToRecycleBuffer(ref *_layout, tick);
 <#END#>
 <#IF EMPTY#>
 ---<#IF DETACH#>
-            <#STORAGE:MODE#>DetachHistoryActions<T>.CallDetach_empty(ref *_layout, state, ref _opsTemp);
+            <#STORAGE:MODE#>DetachHistoryActions<TComponent>.CallDetach_empty(ref *_layout, state, ref _opsTemp);
 ---<#END#>
 ---<#IF ATTACH#>
-            <#STORAGE:MODE#>AttachHistoryActions<T>.CallAttach_empty(ref *_layout, state, ref _opsTemp);
+            <#STORAGE:MODE#>AttachHistoryActions<TComponent>.CallAttach_empty(ref *_layout, state, ref _opsTemp);
 ---<#END#>
 <#ELSE#>
 ---<#IF DETACH#>
-            <#STORAGE:MODE#>DetachHistoryActions<T>.CallDetach_<#SPARSE:TYPE_NAME#>(ref *_layout, state, ref _opsTemp);
+            <#STORAGE:MODE#>DetachHistoryActions<TComponent>.CallDetach_<#SPARSE:TYPE_NAME#>(ref *_layout, state, ref _opsTemp);
 ---<#END#>
 ---<#IF HISTORY:BYCHANGE#>
-            MultiHistoryFacadeActions<T>.RevertToDenseBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<TComponent>.RevertToDenseBuffer(ref *_layout, tick);
 ---<#END#>
 ---<#IF HISTORY:BYTICK#>
-            MultiHistoryFacadeActions<T>.RevertToFullDenseBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<TComponent>.RevertToFullDenseBuffer(ref *_layout, tick);
 ---<#END#>
 ---<#IF ATTACH#>
-            <#STORAGE:MODE#>AttachHistoryActions<T>.CallAttach_<#SPARSE:TYPE_NAME#>(ref *_layout, state, ref _opsTemp);
+            <#STORAGE:MODE#>AttachHistoryActions<TComponent>.CallAttach_<#SPARSE:TYPE_NAME#>(ref *_layout, state, ref _opsTemp);
 ---<#END#>
 <#END#>
 <#IF VERSION#>
-            <#STORAGE:MODE#>StorageActions<T>.UpdateVersion(ref *_layout, ref *_depencies);
+            <#STORAGE:MODE#>StorageActions<TComponent>.UpdateVersion(ref *_layout, ref *_depencies);
 <#END#>
         }
 
 <#IF HISTORY:BYTICK && !EMPTY#>
         public void TickFinished()
         {
-            <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<T>.PushFullDense(ref *_layout, ref *_depencies);
+            <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<TComponent>.PushFullDense(ref *_layout, ref *_depencies);
         }
 <#END#>
+<#IF FORCE:ISerialize#>
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            CustomSerializeActions<TComponent>.Pack(ref writer, ref *_layout, <#HISTORY:FLAG#>);
+        }
 
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            CustomSerializeActions<TComponent>.Unpack(ref reader, ref *_layout, <#HISTORY:FLAG#>);
+        }
+<#END#>
 <#IF EMPTY#>
         private class DefaultContainer
         {
-            public T value;
+            public TComponent value;
         }
 <#END#>
     }

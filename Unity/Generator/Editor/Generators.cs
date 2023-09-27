@@ -17,10 +17,14 @@ namespace AnotherECS.Unity.Editor.Generator
         {
             _generators = new IFileGenerator[]
             {
-                new StateGenerator(),
+                new LayoutInstallerGenerator(),
+                new SystemInstallerGenerator(),
+                new ComponentInstallerGenerator(),
+
                 new CallerGenerator(),
                 new FastAccessGenerator(),
-                new SystemGenerator(),
+
+                new StateGenerator(),
             };
         }
 

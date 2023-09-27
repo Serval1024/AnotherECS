@@ -37,7 +37,7 @@ namespace AnotherECS.Generator
                 {
                     if (skipCompileRule == null || skipCompileRule(option))
                     {
-                        var variables = VariablesConfigGenerator.GetStorage(option);
+                        var variables = VariablesConfigGenerator.GetCaller(option);
 
                         return new ContentGenerator(
                             GetPathByOptions(context, option),

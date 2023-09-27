@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using AnotherECS.Unsafe;
 using AnotherECS.Serializer;
-using AnotherECS.Core.Collection;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
@@ -22,12 +21,18 @@ namespace AnotherECS.Core
         private uint _layoutCount;
 
         private ICaller[] _callers;
+
+        private Events _events;
         #endregion
 
         #region cache
         private EntitiesCaller _entities;
+        private DArrayCaller _dArray;
 
-        private IResizableCaller[] _resizableCallers;
+        private bool[] _isCustomSerializeCallers;
+        private ITickFinished[] _tickFinishedCallers;  //TODO SER MTHREAD
+        private IResizableCaller[] _resizableCallers;  //TODO SER MTHREAD
+        private IRevert[] _revertCallers;
         private readonly ushort[] _componentsBufferTemp;
         #endregion
 
@@ -40,19 +45,17 @@ namespace AnotherECS.Core
             _componentsBufferTemp = new ushort[64];
 
             _layoutCount = 1;
-            _layoutPtr = (UnmanagedLayout*)UnsafeMemory.Allocate<UnmanagedLayout<UnmanagedLayout.Mock>>(GetComponentCount() + 1);
-            _callers = new ICaller[GetComponentCount() + 1];
+            _layoutPtr = (UnmanagedLayout*)UnsafeMemory.Allocate<UnmanagedLayout<UnmanagedLayout.Mock>>(GetLayoutCount());
+            _callers = new ICaller[GetLayoutCount()];
 
             _depencies = UnsafeMemory.Allocate<GlobalDepencies>();
 
-            _entities = AddLayout<EntitiesCaller, EntityHead>();
             _depencies->config = config;
             _depencies->tickProvider = new TickProvider();
-            _depencies->entities = _entities;
 
-            BindingCodeGenerationStage(config);
+            _events = new Events(config.history.recordTickLength);
 
-            _resizableCallers = _callers.Where(p => p is IResizableCaller).Cast<IResizableCaller>().ToArray();
+            CommonInit();
             AllocateLayouts();
         }
 
@@ -60,7 +63,6 @@ namespace AnotherECS.Core
         {
             Unpack(ref reader);
         }
-
 
         public override void OnDispose()
         {
@@ -85,28 +87,62 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Pack(new ArrayPtr(_layoutPtr, (uint)sizeof(UnmanagedLayout) * _layoutCount, _layoutCount));
+            for(int i = 1; i < GetLayoutCount(); ++i)
+            {
+                if (_isCustomSerializeCallers[i])
+                {
+                    ((ISerialize)_callers[i]).Pack(ref writer);
+                }
+                else
+                {
+                    _layoutPtr[i].Pack(ref writer);
+                }
+            }
 
             _depencies->Pack(ref writer);
+            _events.Pack(ref writer);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
             _layoutCount = 1;
 
-            _layoutPtr = (UnmanagedLayout*)reader.Unpack<ArrayPtr>().GetPtr();
-
-            _callers = new ICaller[GetComponentCount() + 1];
+            _layoutPtr = (UnmanagedLayout*)UnsafeMemory.Allocate<UnmanagedLayout<UnmanagedLayout.Mock>>(GetLayoutCount());
+            _callers = new ICaller[GetLayoutCount()];
 
             _depencies = UnsafeMemory.Allocate<GlobalDepencies>();
             _depencies->Unpack(ref reader);
+            _events.Unpack(ref reader);
 
-            _entities = AddLayout<EntitiesCaller, EntityHead>();
-            _depencies->entities = _entities;
+            CommonInit();
 
+            for (int i = 1; i < GetLayoutCount(); ++i)
+            {
+                if (_isCustomSerializeCallers[i])
+                {
+                    ((ISerialize)_callers[i]).Unpack(ref reader);
+                }
+                else
+                {
+                    _layoutPtr[i].Unpack(ref reader);
+                }
+            }
+        }
+
+        private void CommonInit()
+        {
             BindingCodeGenerationStage(_depencies->config);
 
+            _entities = AddLayout<EntitiesCaller, EntityHead>();
+            _dArray = AddLayout<DArrayCaller, DArrayCaller.Container>();
+            _depencies->entities = _entities;
+            _depencies->dArray = _dArray;
+            _depencies->injectContainer = new InjectContainer(_dArray);
+
+            _isCustomSerializeCallers = _callers.Select(p => p is ISerialize).ToArray();
+            _tickFinishedCallers = _callers.Where(p => p is ITickFinished).Cast<ITickFinished>().ToArray();
             _resizableCallers = _callers.Where(p => p is IResizableCaller).Cast<IResizableCaller>().ToArray();
+            _revertCallers = _callers.Where(p => p is IRevert).Cast<IRevert>().ToArray();
         }
         #endregion
 
@@ -287,7 +323,7 @@ namespace AnotherECS.Core
         public IComponent Read(EntityId id, int index)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDontExists(this, id, index, 0, GetCaller<ICaller>(_entities.GetComponentCount(id)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller<ICaller>(_entities.GetComponentCount(id)));
 #endif
             return GetCaller<IMultiCaller>(_entities.GetComponentCount(id)).GetCopy(id);
         }
@@ -316,7 +352,7 @@ namespace AnotherECS.Core
         public void Set(EntityId id, int index, IComponent component)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDontExists(this, id, index, 0, GetCaller<ICaller>(_entities.GetComponentCount(id)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller<ICaller>(_entities.GetComponentCount(id)));
 #endif
             GetCaller<IMultiCaller>(_entities.GetComponent(id, index)).Set(id, component);
         }
@@ -429,14 +465,19 @@ namespace AnotherECS.Core
         internal void TickStarted()
         {
             //_history.TickStarted();
-            //_events.TickStarted(GetTick());
+            _events.TickStarted(GetTick());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickFinished()
         {
+            foreach (var tickFinished in _tickFinishedCallers)
+            {
+                tickFinished.TickFinished();
+            }
+
             _entities.TickFinished();
-            //_dArrayStorage.TickFinished();
+            _dArray.TickFinished();
             //_filters.TickFinished();
             OnTickFinished();
         }
@@ -444,12 +485,16 @@ namespace AnotherECS.Core
 
         #region ticks api
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Send(BaseEvent @event)
+        public uint GetTick()
+            => _depencies->tickProvider.tick;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(BaseEvent @event)
         {
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            //Send(new EventContainer(_history.CurrentTick + 1, @event));
+            Send(new EventContainer(_depencies->tickProvider.tick + 1, @event));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -458,7 +503,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            //_events.Send(@event);
+            _events.Send(@event);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -467,16 +512,11 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void GetEvent(uint tick, List<ITickEvent> result)
-        //=> _events.Find(tick, result);
-        { }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetTick()
-            => 0;
-
+            => _events.Find(tick, result);
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint GetNextTickForEvent()
-            => 0;
+            => _events.NextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)
@@ -484,11 +524,18 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            //_revertAdapters.RevertTo(_adapters.Gets(), tick);
+            foreach(var revert in _revertCallers)
+            {
+                revert.RevertTo(tick, this);
+            }
+            _dArray.RevertFinished();
         }
         #endregion
 
         #region helpers
+        private uint GetLayoutCount()
+            => GetComponentCount() + 3;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller<T> GetCaller<T>()
             where T : unmanaged, IComponent
@@ -500,7 +547,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             => (U)_callers[index];
 #else
-            => UnsafeUtility.As<ICaller, U>(ref _callers[index]);
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, U>(ref _callers[index]);
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -510,16 +557,16 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             => (U)_callers[GetIndex<T>()];
 #else
-            => UnsafeUtility.As<ICaller, U>(ref _callers[GetIndex<T>()]);
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, U>(ref _callers[GetIndex<T>()]);
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UCaller AddLayout<UCaller, TComponent>(ComponentFunction<TComponent> componentFunction = default)    //TODO SER hide interface
-            where UCaller : unmanaged, ICaller
+        public UCaller AddLayout<UCaller, TComponent>(ComponentFunction<TComponent> componentFunction = default)
+            where UCaller : struct, ICaller
             where TComponent : unmanaged
         {
 #if ANOTHERECS_DEBUG
-            if (_layoutCount == GetComponentCount() + 1)
+            if (_layoutCount == GetLayoutCount())
             {
                 throw new InvalidOperationException();
             }
@@ -529,11 +576,27 @@ namespace AnotherECS.Core
 
             var caller = (ICaller<TComponent>)default(UCaller);
             _callers[_layoutCount] = caller;
+            
             caller.Config(_layoutPtr + _layoutCount, _depencies, (ushort)_layoutCount, this);
 
             ++_layoutCount;
 
             return (UCaller)caller;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EFastAccess CreateFA<TComponent, UCaller, EFastAccess>()
+            where TComponent : IComponent
+            where UCaller : ICaller
+            where EFastAccess : struct, IFastAccess<UCaller>
+        {
+            EFastAccess fastAccess = default;
+#if ANOTHERECS_DEBUG
+            fastAccess.Config((UCaller)_callers[GetIndex<TComponent>()]);
+#else
+            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, UCaller>(ref _callers[GetIndex<TComponent>()]);
+#endif
+            return fastAccess;
         }
 
         private void AllocateLayouts()
@@ -543,19 +606,13 @@ namespace AnotherECS.Core
                 _callers[i].AllocateLayout();
             }
         }
-
-        protected void UpdateFastAccess<T>(T* fastAccess)
-            where T : unmanaged
-        {
-            ((FastAccess*)fastAccess)->layoutPtr = _layoutPtr;
-        }
-        #endregion
+#endregion
 
         #region codegen & abstract
         protected abstract void BindingCodeGenerationStage(in GeneralConfig config);
         protected abstract uint GetComponentCount();
         protected abstract ushort GetIndex<T>()
-            where T : struct, IComponent;
+            where T : IComponent;
         protected abstract void OnTickFinished();
         #endregion
     }

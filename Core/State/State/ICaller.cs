@@ -10,6 +10,12 @@ namespace AnotherECS.Core
         Type GetElementType();
     }
 
+    public interface IFastAccess<TCaller>
+        where TCaller : ICaller
+    {
+        internal unsafe void Config(TCaller caller);
+    }
+
     internal interface ICaller<TComponent> : ICaller
        where TComponent : unmanaged
     {
@@ -28,7 +34,7 @@ namespace AnotherECS.Core
         void Remove(EntityId id);
     }
 
-    internal interface IMultiCaller<TComponent> : IMultiCaller, ICaller<TComponent>
+    internal interface IMultiCaller<TComponent> : IMultiCaller, ICaller<TComponent>, IResizableCaller
         where TComponent : unmanaged, IComponent
     {
         bool IsHas(EntityId id);
@@ -36,9 +42,9 @@ namespace AnotherECS.Core
         void Add(EntityId id, ref TComponent component);
         ref TComponent Add(EntityId id);
 
-        ref TComponent Read(EntityId id);
+        ref readonly TComponent Read(EntityId id);
         ref TComponent Get(EntityId id);
-        ref TComponent Set(EntityId id, ref TComponent component);
+        void Set(EntityId id, ref TComponent component);
 
     }
 
@@ -52,9 +58,9 @@ namespace AnotherECS.Core
         void SetOrAdd(ref TComponent component);
         void Remove();
 
-        ref TComponent Read();
+        ref readonly TComponent Read();
         ref TComponent Get();
-        ref TComponent Set(ref TComponent component);
+        void Set(ref TComponent component);
     }
 }
 

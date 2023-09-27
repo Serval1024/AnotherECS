@@ -18,7 +18,7 @@
 
         public ContentGenerator Compile()
         {
-            TemplateParser.Variables variables = CollectionGeneratorUtils.GetVariablesDefault(COLLECTION_SIZES);
+            TemplateParser.Variables variables = CollectionVariablesConfigGenerator.Get(COLLECTION_SIZES);
 
             return new ContentGenerator(_path, TemplateParser.Transform(_template, variables));
         }

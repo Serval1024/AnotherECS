@@ -5,7 +5,7 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Views.Core
 {
     [ComponentOption(ComponentOptions.HistoryNonSync | ComponentOptions.NoCompileFastAccess | ComponentOptions.CompileSortAtLast)]
-    public struct ViewSystemReference : IShared
+    public struct ViewSystemReference : IConfig
     {
         public IViewSystem system;
     }

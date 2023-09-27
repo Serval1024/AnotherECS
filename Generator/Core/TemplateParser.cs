@@ -1,4 +1,5 @@
 ﻿using Mono.Cecil.Cil;
+using PlasticGui.WorkspaceWindow.Replication;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -222,10 +223,7 @@ namespace AnotherECS.Generator
             }
 
             public override bool IsTrue(Variables variables)
-            {
-                ushort index = (ushort)variables.GetIndex();
-                return variables.TryGetValue(Value, out Func<ushort, object> function) && (bool)function(index);
-            }
+                => variables.TryGetValue(Value, out Func<object> function) && (bool)function();
         }
 
         public class AndCondition : Condition
@@ -305,11 +303,8 @@ namespace AnotherECS.Generator
                 this.Head = head;
             }
 
-            public override string ToText(Variables variables)
-            {
-                ushort index = (ushort)variables.GetIndex();
-                return Transform((string)variables[Head](index), variables);
-            }
+            public override string ToText(Variables variables)    
+                => Transform((string)variables[Head](), variables);
         }
 
         public class IntVariableExpression : VariableExpression, IExpressionToInt
@@ -471,7 +466,7 @@ namespace AnotherECS.Generator
                 => "//" + Head;
         }
 
-        public class Variables : Dictionary<string, Func<ushort, object>> 
+        public class Variables : Dictionary<string, Func<object>> 
         {
             private readonly string _INDEX_TAG = "INDEX";
             private readonly string _LEN_TAG = "LEN";
@@ -514,8 +509,8 @@ namespace AnotherECS.Generator
 
                 var indexStr = GetIndex().ToString();
                 var indexDeepStr = GetIndex(Deep).ToString();
-                this[_INDEX_TAG] = p => indexStr;
-                this[$"{_INDEX_TAG}{Deep}"] = p => indexDeepStr;
+                this[_INDEX_TAG] = () => indexStr;
+                this[$"{_INDEX_TAG}{Deep}"] = () => indexDeepStr;
             }
 
             public void SetLength(int deep, int length)
@@ -524,8 +519,8 @@ namespace AnotherECS.Generator
 
                 var lenStr = GetIndex().ToString();
                 var lenDeepStr = GetIndex(Deep).ToString();
-                this[_LEN_TAG] = p => lenStr;
-                this[$"{_LEN_TAG}{Deep}"] = p => lenDeepStr;
+                this[_LEN_TAG] = () => lenStr;
+                this[$"{_LEN_TAG}{Deep}"] = () => lenDeepStr;
             }
         };
 
@@ -764,7 +759,7 @@ namespace AnotherECS.Generator
 
     internal static class VariablesExtension
     {
-        public static ushort GetIndexAsId(this Variables variables, int deep)
+        public static ushort GetIndexAsId(this Variables variables, int deep = 0)
             => (ushort)(variables.GetIndex(deep) + 1);
     }
 }    

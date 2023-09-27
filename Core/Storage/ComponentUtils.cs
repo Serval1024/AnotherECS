@@ -7,7 +7,8 @@ namespace AnotherECS.Core
 {
     internal static class ComponentUtils
     {
-        private const BindingFlags DATA_FREE_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        private const BindingFlags DATA_FREE_FLAGS =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         public static bool IsOption(Type type, ComponentOptions option)
         {
@@ -99,7 +100,7 @@ namespace AnotherECS.Core
         {
             var result = new List<InjectData>();
 
-            foreach (var member in type.GetMembers(DATA_FREE_FLAGS))
+            foreach (var member in type.GetFieldsAndProperties(DATA_FREE_FLAGS))
             {
                 if (typeof(IInject).IsAssignableFrom(member.GetMemberType()))
                 {

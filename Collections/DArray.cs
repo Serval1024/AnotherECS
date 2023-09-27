@@ -7,16 +7,16 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Collections
 {
-    public struct DArray<T> : IInject<DArrayStorage>, IEnumerable<T>, ISerialize
+    public struct DArray<T> : IInject<DArrayCaller>, IEnumerable<T>, ISerialize
         where T : unmanaged
     {
-        private DArrayStorage _bind;
-        private ushort _id;
+        private DArrayCaller _bind;
+        private uint _id;
         private int _length;
 #if ANOTHERECS_DEBUG
         private int _version;
 #endif
-        internal DArray(DArrayStorage bind, ushort id, int length)
+        internal DArray(DArrayCaller bind, ushort id, int length)
         {
             _bind = bind;
             _id = id;
@@ -28,7 +28,7 @@ namespace AnotherECS.Collections
 
 #if ANOTHERECS_DEBUG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<DArrayStorage>.Construct(DArrayStorage bind)
+        void IInject<DArrayCaller>.Construct(DArrayCaller bind)
         {
             _bind = bind;
         }
@@ -66,7 +66,7 @@ namespace AnotherECS.Collections
 #endif
         public void Allocate(int length)
         {
-            if (_bind == null)
+            if (!_bind.IsValide)
             {
                 throw new Exceptions.MissInjectException(typeof(DArray<T>));
             }
@@ -211,7 +211,7 @@ namespace AnotherECS.Collections
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _id = reader.ReadUInt16();
+            _id = reader.ReadUInt32();
             _length = reader.ReadInt32();
         }
 
@@ -310,17 +310,20 @@ namespace AnotherECS.Collections
         internal unsafe void* ReadUnsafe()
             => _bind.Read(_id);
 
-        internal DArrayStorage Bind
+        internal DArrayCaller Bind
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _bind;
         }
 
-        internal ushort Id
+        internal uint Id
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _id;
         }
+
+
+
 
         public struct Enumerator : IEnumerator<T>
         {

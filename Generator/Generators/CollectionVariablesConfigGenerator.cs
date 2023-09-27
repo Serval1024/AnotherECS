@@ -1,15 +1,15 @@
 ﻿namespace AnotherECS.Generator
 {
-    internal static class CollectionGeneratorUtils
+    internal static class CollectionVariablesConfigGenerator
     {
-        public static TemplateParser.Variables GetVariablesDefault(int[] collectionSizes)
+        public static TemplateParser.Variables Get(int[] collectionSizes)
         {
             TemplateParser.Variables variables = null;
             variables = new()
             {
-                { "STRUCT_COUNT", p => collectionSizes.Length.ToString() },
-                { "ELEMENT_COUNT", p => collectionSizes[p].ToString() },
-                { "SEPARATOR1:,", p =>
+                { "STRUCT_COUNT", () => collectionSizes.Length.ToString() },
+                { "ELEMENT_COUNT", () => collectionSizes[variables.GetIndex(0)].ToString() },
+                { "SEPARATOR1:,", () =>
                     (variables.GetIndex(1) < variables.GetLength(1) - 1)
                     ? ", "
                     : string.Empty

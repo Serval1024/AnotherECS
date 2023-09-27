@@ -11,23 +11,13 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CallConstruct(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ref T component)
         {
-            layout.componentFunction.construct(ref depencies, ref component);
+            layout.componentFunction.construct(ref depencies.injectContainer, ref component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CallDeconstruct(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ref T component)
         {
-            layout.componentFunction.deconstruct(ref depencies, ref component);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StorageClear(ref UnmanagedLayout<T> layout)
-        {
-            ref var storage = ref layout.storage;
-
-            storage.sparse.Clear();
-            storage.dense.Clear();
-            storage.version.Clear();
+            layout.componentFunction.deconstruct(ref depencies.injectContainer, ref component);
         }
     }
 
@@ -44,7 +34,7 @@ namespace AnotherECS.Core.Actions
 
             if (*sparse)
             {
-                layout.componentFunction.construct(ref depencies, ref *dense);
+                layout.componentFunction.construct(ref depencies.injectContainer, ref *dense);
             }
         }
 
@@ -167,8 +157,18 @@ namespace AnotherECS.Core.Actions
 
             if (*sparse)
             {
-                layout.componentFunction.deconstruct(ref depencies, ref *dense);
+                layout.componentFunction.deconstruct(ref depencies.injectContainer, ref *dense);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void StorageClear(ref UnmanagedLayout<T> layout)
+        {
+            ref var storage = ref layout.storage;
+
+            storage.sparse.Clear();
+            storage.dense.Clear();
+            storage.version.Clear();
         }
     }
 
@@ -193,7 +193,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateRecycle(ref UnmanagedLayout<T> layout, uint recycledCapacity)
         {
-            layout.storage.recycle = ArrayPtr.Create<ushort>(recycledCapacity);
+            layout.storage.recycle = ArrayPtr.Create<uint>(recycledCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -217,7 +217,7 @@ namespace AnotherECS.Core.Actions
             {
                 if (sparse[i])
                 {
-                    construct(ref depencies, ref dense[i]);
+                    construct(ref depencies.injectContainer, ref dense[i]);
                 }
             }
         }
@@ -239,7 +239,7 @@ namespace AnotherECS.Core.Actions
                 {
                     if (sparse[i] != 0)
                     {
-                        construct(ref depencies, ref dense[sparse[i]]);
+                        construct(ref depencies.injectContainer, ref dense[sparse[i]]);
                         if (--count == 0)
                         {
                             break;
@@ -266,7 +266,7 @@ namespace AnotherECS.Core.Actions
                 {
                     if (sparse[i] != 0)
                     {
-                        construct(ref depencies, ref dense[sparse[i]]);
+                        construct(ref depencies.injectContainer, ref dense[sparse[i]]);
                         if (--count == 0)
                         {
                             break;
@@ -291,7 +291,7 @@ namespace AnotherECS.Core.Actions
             {
                 if (sparse[i])
                 {
-                    deconstruct(ref depencies, ref dense[i]);
+                    deconstruct(ref depencies.injectContainer, ref dense[i]);
                 }
             }
         }
@@ -313,7 +313,7 @@ namespace AnotherECS.Core.Actions
                 {
                     if (sparse[i] != 0)
                     {
-                        deconstruct(ref depencies, ref dense[sparse[i]]);
+                        deconstruct(ref depencies.injectContainer, ref dense[sparse[i]]);
                         if (--count == 0)
                         {
                             break;
@@ -340,7 +340,7 @@ namespace AnotherECS.Core.Actions
                 {
                     if (sparse[i] != 0)
                     {
-                        deconstruct(ref depencies, ref dense[sparse[i]]);
+                        deconstruct(ref depencies.injectContainer, ref dense[sparse[i]]);
                         if (--count == 0)
                         {
                             break;
@@ -440,7 +440,7 @@ namespace AnotherECS.Core.Actions
             ref var storage = ref layout.storage;
             if (storage.recycleIndex == storage.recycle.ElementCount)
             {
-                layout.storage.recycle.Resize<ushort>(size);
+                layout.storage.recycle.Resize<uint>(size);
 
                 return true;
             }
@@ -456,7 +456,7 @@ namespace AnotherECS.Core.Actions
             if (recycleIndex > 0)
             {
                 MultiHistoryFacadeActions<T>.PushRecycledCount(ref layout, ref depencies, recycleIndex);
-                return storage.recycle.Get<ushort>(--recycleIndex);
+                return storage.recycle.Get<uint>(--recycleIndex);
             }
             else
             {
@@ -488,7 +488,7 @@ namespace AnotherECS.Core.Actions
 
             if (recycleIndex > 0)
             {
-                return storage.recycle.Get<ushort>(--recycleIndex);
+                return storage.recycle.Get<uint>(--recycleIndex);
             }
             else
             {
@@ -583,7 +583,7 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetSparseHistory_empty(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, uint id, ushort denseIndex)
+        public static void SetSparseHistory_empty(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, uint id)
         {
             ref var storage = ref layout.storage;
 
@@ -678,22 +678,22 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DeallocateId(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ushort denseIndex)
+        public static void DeallocateId(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, uint denseIndex)
         {
             TryResizeRecycle(ref layout);
 
             ref var recycleIndex = ref layout.storage.recycleIndex;
-            var recycle = layout.storage.recycle.GetPtr<ushort>();
+            var recycle = layout.storage.recycle.GetPtr<uint>();
             recycle[recycleIndex++] = denseIndex;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DeallocateIdHistory(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ushort denseIndex)
+        public static void DeallocateIdHistory(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, uint denseIndex)
         {
             TryResizeRecycle(ref layout);
 
             ref var recycleIndex = ref layout.storage.recycleIndex;
-            var recycle = layout.storage.recycle.GetPtr<ushort>();
+            var recycle = layout.storage.recycle.GetPtr<uint>();
 
             MultiHistoryFacadeActions<T>.PushRecycle(ref layout, ref depencies, recycleIndex, recycle[recycleIndex]);
             MultiHistoryFacadeActions<T>.PushCount(ref layout, ref depencies, recycleIndex);
@@ -794,10 +794,17 @@ namespace AnotherECS.Core.Actions
             => layout.storage.sparse.GetPtr<ushort>()[id];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Read(ref UnmanagedLayout<T> layout, uint id)
+        public static ref T Read_byte(ref UnmanagedLayout<T> layout, uint id)
         {
             ref var storage = ref layout.storage;
-            return ref storage.dense.GetPtr<T>()[storage.sparse.GetPtr<byte>()[id]];
+            return ref storage.dense.GetPtr<T>()[GetDense_byte(ref layout, id)];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Read_ushort(ref UnmanagedLayout<T> layout, uint id)
+        {
+            ref var storage = ref layout.storage;
+            return ref storage.dense.GetPtr<T>()[GetDense_ushort(ref layout, id)];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -834,6 +841,7 @@ namespace AnotherECS.Core.Actions
             storage.recycle.Clear(storage.recycleIndex);
 
             layout.storage.denseIndex = 1;
+            layout.storage.recycleIndex = 0;
         }
 
         public static uint GetMaxValue<UNumber>()

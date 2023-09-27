@@ -76,7 +76,9 @@ namespace AnotherECS.Unity.Editor.Generator
             => new UnityGeneratorContext().GetAllTypes()
                 .Select(p => p.Name)
                 .OrderBy(p => p)
-                .Aggregate((s, p) => s + ":" + p).GetHashCode().ToString();
+                .Aggregate((s, p) => s + ":" + p)
+                .GetHashCode()
+                .ToString();
 
         private static void SaveIngoreTypes(Type[] deletedTypes)
         {

@@ -37,11 +37,11 @@ namespace AnotherECS.Generator
             {
                 if (skipCompileRule(option))
                 {
-                    var variables = VariablesConfigGenerator.GetStorage(option);
+                    var variables = VariablesConfigGenerator.GetCaller(option);
 
                     return new ContentGenerator(
                         GetPathByOptions(context, option),
-                        TemplateParser.Transform(TemplateFileName, variables)
+                        TemplateParser.Transform(context.GetTemplate(TemplateFileName), variables)
                         );
                 }
                 return default;
@@ -52,6 +52,6 @@ namespace AnotherECS.Generator
             .ToArray();
 
         private string GetPathByOptions(GeneratorContext context, TypeOptions typeOptions)
-            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsUtils.GetStorageFlags(typeOptions) + SaveFilePostfixName);
+            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsUtils.GetCallerFlags(typeOptions) + SaveFilePostfixName);
     }
 }

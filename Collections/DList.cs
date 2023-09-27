@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Collections
 {
-    public struct DList<T> : IInject<DArrayStorage>, IEnumerable<T>, IList<T>, ISerialize
+    public struct DList<T> : IInject<DArrayCaller>, IEnumerable<T>, IList<T>, ISerialize
         where T : unmanaged
     {
         private DArray<T> _data;
@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
 
 #if ANOTHERECS_DEBUG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<DArrayStorage>.Construct(DArrayStorage bind)
+        void IInject<DArrayCaller>.Construct(DArrayCaller bind)
         { 
             InjectUtils.Contruct(ref _data, bind);
         }
@@ -47,7 +47,7 @@ namespace AnotherECS.Collections
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _count;
+            get => (int)_count;
         }
 
         public bool IsReadOnly

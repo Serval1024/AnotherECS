@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    public abstract class History : IHistory
+    public abstract class History//: IHistory
     {
         protected uint _recordHistoryLength = 0;
         private readonly TickProvider _tickProvider;
