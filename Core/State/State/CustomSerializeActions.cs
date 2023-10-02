@@ -5,82 +5,296 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core.Actions
 {
+    internal static unsafe class LayoutSerializer
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Pack(ref WriterContextSerializer writer, ref UnmanagedLayout layout)
+        {
+            ref var storage = ref layout.storage;
+
+            storage.sparse.Pack(ref writer);
+            storage.dense.Pack(ref writer);
+            storage.version.Pack(ref writer);
+            storage.recycle.Pack(ref writer);
+
+            writer.Write(storage.denseIndex);
+            writer.Write(storage.recycleIndex);
+
+            ref var history = ref layout.history;
+
+            history.recycleCountBuffer.Pack(ref writer);
+            history.recycleBuffer.Pack(ref writer);
+            history.countBuffer.Pack(ref writer);
+            history.denseBuffer.Pack(ref writer);
+            history.sparseBuffer.Pack(ref writer);
+
+            writer.Write(history.recycleCountIndex);
+            writer.Write(history.recycleIndex);
+            writer.Write(history.countIndex);
+            writer.Write(history.denseIndex);
+            writer.Write(history.sparseIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Unpack(ref ReaderContextSerializer reader, ref UnmanagedLayout layout)
+        {
+            ref var storage = ref layout.storage;
+
+            storage.sparse.Unpack(ref reader);
+            storage.dense.Unpack(ref reader);
+            storage.version.Unpack(ref reader);
+            storage.recycle.Unpack(ref reader);
+
+            storage.denseIndex = reader.ReadUInt32();
+            storage.recycleIndex = reader.ReadUInt32();
+
+            ref var history = ref layout.history;
+
+            history.recycleCountBuffer.Unpack(ref reader);
+            history.recycleBuffer.Unpack(ref reader);
+            history.countBuffer.Unpack(ref reader);
+            history.denseBuffer.Unpack(ref reader);
+            history.sparseBuffer.Unpack(ref reader);
+
+            history.recycleCountIndex = reader.ReadUInt32();
+            history.recycleIndex = reader.ReadUInt32();
+            history.countIndex = reader.ReadUInt32();
+            history.denseIndex = reader.ReadUInt32();
+            history.sparseIndex = reader.ReadUInt32();
+        }
+    }
+
+    internal static unsafe class LayoutSerializer<T>
+        where T : unmanaged
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PackCommon(ref WriterContextSerializer writer, ref ComponetStorage storage)
+        {
+            storage.sparse.Pack(ref writer);
+            storage.version.Pack(ref writer);
+            storage.recycle.Pack(ref writer);
+
+            writer.Write(storage.denseIndex);
+            writer.Write(storage.recycleIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PackCommon(ref WriterContextSerializer writer, ref HistoryStorage history)
+        {
+            history.recycleCountBuffer.Pack(ref writer);
+            history.recycleBuffer.Pack(ref writer);
+            history.countBuffer.Pack(ref writer);
+            history.sparseBuffer.Pack(ref writer);
+
+            writer.Write(history.recycleCountIndex);
+            writer.Write(history.recycleIndex);
+            writer.Write(history.countIndex);
+            writer.Write(history.denseIndex);
+            writer.Write(history.sparseIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void UnpackCommon(ref ReaderContextSerializer reader, ref ComponetStorage storage)
+        {
+            storage.sparse.Unpack(ref reader);
+            storage.version.Unpack(ref reader);
+            storage.recycle.Unpack(ref reader);
+
+            storage.denseIndex = reader.ReadUInt32();
+            storage.recycleIndex = reader.ReadUInt32();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void UnpackCommon(ref ReaderContextSerializer reader, ref HistoryStorage history)
+        {
+            history.recycleCountBuffer.Unpack(ref reader);
+            history.recycleBuffer.Unpack(ref reader);
+            history.countBuffer.Unpack(ref reader);
+            history.sparseBuffer.Unpack(ref reader);
+
+            history.recycleCountIndex = reader.ReadUInt32();
+            history.recycleIndex = reader.ReadUInt32();
+            history.countIndex = reader.ReadUInt32();
+            history.denseIndex = reader.ReadUInt32();
+            history.sparseIndex = reader.ReadUInt32();
+        }
+    }
+
+    internal static unsafe class NonBlittableSerializeActions<T>
+        where T : unmanaged
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Pack(ref WriterContextSerializer writer, ref UnmanagedLayout<T> layout, HistoryMode historyMode, uint count, bool isStorageBlittable)
+        {
+            LayoutSerializer<T>.PackCommon(ref writer, ref layout.storage);
+            if (isStorageBlittable)
+            {
+                layout.storage.dense.Pack(ref writer);
+            }
+            else
+            {
+                ArrayPtr<T>.CreateWrapper(ref layout.storage.dense).Pack(ref writer);
+            }
+            if (historyMode != HistoryMode.NONE)
+            {
+                LayoutSerializer<T>.PackCommon(ref writer, ref layout.history);
+
+                HistroyArrayPtrEachNonBlittableStaticSerializer<T>.Pack(ref writer, layout.history.denseBuffer, historyMode, count);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Unpack(ref ReaderContextSerializer reader, ref UnmanagedLayout<T> layout, HistoryMode historyMode, bool isStorageBlittable)
+        {
+            LayoutSerializer<T>.UnpackCommon(ref reader, ref layout.storage);
+
+            if (isStorageBlittable)
+            {
+                layout.storage.dense.Unpack(ref reader);
+            }
+            else
+            {
+                ArrayPtr<T> array = default;
+                array.Unpack(ref reader);
+                layout.storage.dense = ArrayPtr.CreateWrapper(ref array);
+            }
+
+            if (historyMode != HistoryMode.NONE)
+            {
+                LayoutSerializer<T>.UnpackCommon(ref reader, ref layout.history);
+
+                layout.history.denseBuffer = HistroyArrayPtrEachNonBlittableStaticSerializer<T>.Unpack(ref reader, historyMode);
+            }
+        }
+    }
+
+    internal unsafe class HistroyArrayPtrEachNonBlittableStaticSerializer<T>
+        where T : unmanaged
+    {
+        private static readonly ArrayPtrMeta _meta;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Pack(ref WriterContextSerializer writer, ArrayPtr arrayPtr, HistoryMode historyMode, uint count)
+        {
+            _meta.Pack(ref writer, ref arrayPtr);
+
+            if (historyMode == HistoryMode.BYCHANGE)
+            {
+                var ptr = arrayPtr.GetPtr<TickOffsetData<T>>();
+                for (uint i = 0; i < arrayPtr.ElementCount; i++)
+                {
+                    ptr[i].Pack(ref writer);
+                }
+            }
+            else if (historyMode == HistoryMode.BYTICK)
+            {
+                var ptr = arrayPtr.GetPtr<TickDataPtr<T>>();
+                for (uint i = 0; i < arrayPtr.ElementCount; i++)
+                {
+                    TickDataPtrNonBlittableSerializer<T>.Pack(ref writer, ref ptr[i]);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ArrayPtr Unpack(ref ReaderContextSerializer reader, HistoryMode historyMode)
+        {
+            (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
+
+            if (historyMode == HistoryMode.BYCHANGE)
+            {
+                var buffer = (TickOffsetData<T>*)UnsafeMemory.Malloc(byteLength);
+                for (uint i = 0; i < elementCount; i++)
+                {
+                    buffer[i].Unpack(ref reader);
+                }
+                return new ArrayPtr(buffer, byteLength, elementCount);
+            }
+            else if (historyMode == HistoryMode.BYTICK)
+            {
+                var buffer = (TickDataPtr<T>*)UnsafeMemory.Malloc(byteLength);
+                for (uint i = 0; i < elementCount; i++)
+                {
+                    buffer[i] = TickDataPtrNonBlittableSerializer<T>.Unpack(ref reader);
+                }
+                return new ArrayPtr(buffer, byteLength, elementCount);
+            }
+            return default;
+        }
+    }
+
+    internal class TickDataPtrNonBlittableSerializer<T>
+        where T : unmanaged
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Pack(ref WriterContextSerializer writer, ref TickDataPtr<T> data)
+        {
+            writer.Write(data.tick);
+            var arrayPtr = ArrayPtr<T>.CreateWrapper(ref data.value);
+            arrayPtr.Pack(ref writer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TickDataPtr<T> Unpack(ref ReaderContextSerializer reader)
+        {
+            TickDataPtr<T> data;
+
+            data.tick = reader.ReadUInt32();
+            ArrayPtr<T> array = default;
+            array.Unpack(ref reader);
+            data.value = ArrayPtr.CreateWrapper(ref array);
+
+            return data;
+        }
+    }
+
+
+
+
     internal static unsafe class CustomSerializeActions<T>
         where T : unmanaged, ISerialize
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Pack(ref WriterContextSerializer writer, ref UnmanagedLayout<T> layout, HistoryMode historyMode)
+        public static void Pack(ref WriterContextSerializer writer, ref UnmanagedLayout<T> layout, HistoryMode historyMode, uint count)
         {
-            layout.storage.PackCommon(ref writer);
-            ArrayPtrEachTStaticSerializer<T>.Pack(ref writer, ArrayPtr<T>.CreateWrapper(layout.storage.dense));
+            LayoutSerializer<T>.PackCommon(ref writer, ref layout.storage);
+            var arrayPtr = ArrayPtr<T>.CreateWrapper(ref layout.storage.dense);
+            ArrayPtrEachSerializeStaticSerializer<T>.Pack(ref writer, ref arrayPtr, count);
 
             if (historyMode != HistoryMode.NONE)
             {
-                layout.history.PackCommon(ref writer);
+                LayoutSerializer<T>.PackCommon(ref writer, ref layout.history);
 
-                HistroyArrayPtrEachTStaticSerializer<T>.Pack(ref writer, layout.history.denseBuffer, historyMode);    
+                HistroyArrayPtrEachSerializeStaticSerializer<T>.Pack(ref writer, layout.history.denseBuffer, historyMode);    
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Unpack(ref ReaderContextSerializer reader, ref UnmanagedLayout<T> layout, HistoryMode historyMode)
         {
-            layout.storage.UnpackCommon(ref reader);
-            layout.storage.dense = ArrayPtr.CreateWrapper(ArrayPtrEachTStaticSerializer<T>.Unpack(ref reader));
+            LayoutSerializer<T>.UnpackCommon(ref reader, ref layout.storage);
+            var array = ArrayPtrEachSerializeStaticSerializer<T>.Unpack(ref reader);
+            layout.storage.dense = ArrayPtr.CreateWrapper(ref array);
 
             if (historyMode != HistoryMode.NONE)
             {
-                layout.history.UnpackCommon(ref reader);
+                LayoutSerializer<T>.UnpackCommon(ref reader, ref layout.history);
 
-                layout.history.denseBuffer = HistroyArrayPtrEachTStaticSerializer<T>.Unpack(ref reader, historyMode);
+                layout.history.denseBuffer = HistroyArrayPtrEachSerializeStaticSerializer<T>.Unpack(ref reader, historyMode);
             }
         }
     }
 
-    internal unsafe class ArrayPtrEachTStaticSerializer<T>
+    internal unsafe class HistroyArrayPtrEachSerializeStaticSerializer<T>
         where T : unmanaged, ISerialize
     {
-        private static readonly CountMeta _сount;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Pack(ref WriterContextSerializer writer, ArrayPtr<T> arrayPtr)
-        {
-            _сount.Pack(ref writer, arrayPtr.ByteLength);
-            _сount.Pack(ref writer, arrayPtr.ElementCount);
-            var ptr = arrayPtr.GetPtr();
-            for (uint i = 0; i < arrayPtr.ElementCount; i++)
-            {
-                ptr[i].Pack(ref writer);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayPtr<T> Unpack(ref ReaderContextSerializer reader)
-        {
-            uint length = _сount.Unpack(ref reader);
-            uint count = _сount.Unpack(ref reader);
-            var buffer = (T*)UnsafeMemory.Malloc(length);
-            T element = default;
-            for (uint i = 0; i < count; i++)
-            {
-                element.Unpack(ref reader);
-                buffer[i] = element;
-            }
-            return new ArrayPtr<T>(buffer, count);
-        }
-    }
-
-    internal unsafe class HistroyArrayPtrEachTStaticSerializer<T>
-        where T : unmanaged, ISerialize
-    {
-        private static readonly CountMeta _сount;
+        private static readonly ArrayPtrMeta _meta;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Pack(ref WriterContextSerializer writer, ArrayPtr arrayPtr, HistoryMode historyMode)
         {
-            _сount.Pack(ref writer, arrayPtr.ByteLength);
-            _сount.Pack(ref writer, arrayPtr.ElementCount);
-
+            _meta.Pack(ref writer, ref arrayPtr);
+            
             if (historyMode == HistoryMode.BYCHANGE)
             {
                 var ptr = arrayPtr.GetPtr<TickOffsetData<T>>();
@@ -102,26 +316,25 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ArrayPtr Unpack(ref ReaderContextSerializer reader, HistoryMode historyMode)
         {
-            uint length = _сount.Unpack(ref reader);
-            uint count = _сount.Unpack(ref reader);
+            (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
 
             if (historyMode == HistoryMode.BYCHANGE)
             {
-                var buffer = (TickOffsetData<T>*)UnsafeMemory.Malloc(length);
-                for (uint i = 0; i < count; i++)
+                var buffer = (TickOffsetData<T>*)UnsafeMemory.Malloc(byteLength);
+                for (uint i = 0; i < elementCount; i++)
                 {
                     buffer[i] = TickOffsetDataSerializer<T>.Unpack(ref reader);
                 }
-                return new ArrayPtr(buffer, length, count);
+                return new ArrayPtr(buffer, byteLength, elementCount);
             }
             else if (historyMode == HistoryMode.BYTICK)
             {
-                var buffer = (TickDataPtr<T>*)UnsafeMemory.Malloc(length);
-                for (uint i = 0; i < count; i++)
+                var buffer = (TickDataPtr<T>*)UnsafeMemory.Malloc(byteLength);
+                for (uint i = 0; i < elementCount; i++)
                 {
                     buffer[i] = TickDataPtrSerializer<T>.Unpack(ref reader);
                 }
-                return new ArrayPtr(buffer, length, count);
+                return new ArrayPtr(buffer, byteLength, elementCount);
             }
             return default;
         }
@@ -159,7 +372,8 @@ namespace AnotherECS.Core.Actions
         public static void Pack(ref WriterContextSerializer writer, ref TickDataPtr<T> data)
         {
             writer.Write(data.tick);
-            ArrayPtrEachTStaticSerializer<T>.Pack(ref writer, ArrayPtr<T>.CreateWrapper(data.value));
+            var arrayPtr = ArrayPtr<T>.CreateWrapper(ref data.value);
+            ArrayPtrEachSerializeStaticSerializer<T>.Pack(ref writer, ref arrayPtr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -168,7 +382,8 @@ namespace AnotherECS.Core.Actions
             TickDataPtr<T> data;
 
             data.tick = reader.ReadUInt32();
-            data.value = ArrayPtr.CreateWrapper(ArrayPtrEachTStaticSerializer<T>.Unpack(ref reader));
+            var array = ArrayPtrEachSerializeStaticSerializer<T>.Unpack(ref reader);
+            data.value = ArrayPtr.CreateWrapper(ref array);
 
             return data;
         }

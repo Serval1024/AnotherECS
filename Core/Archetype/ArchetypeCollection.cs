@@ -20,7 +20,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_HISTORY_DISABLE
         public ArchetypeCollection(uint rootItemCount, uint totalItemCapacity)
 #else
-        public ArchetypeCollection(uint rootItemCount, uint totalItemCapacity, in HistoryByChangeArgs args)
+        public ArchetypeCollection(uint rootItemCount, uint totalItemCapacity)
 #endif
         {
             _archetypeCount = (int)rootItemCount + 1;
@@ -34,7 +34,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_HISTORY_DISABLE
             _items = new BacketCollection(totalItemCapacity,(uint)_archetypeCount);
 #else
-            _items = new BacketCollection(totalItemCapacity, (uint)_archetypeCount, args);
+            _items = new BacketCollection(totalItemCapacity, (uint)_archetypeCount);
 #endif
         }
 

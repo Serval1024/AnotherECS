@@ -23,6 +23,7 @@ namespace AnotherECS.Collections
     }
 
     [Serializable]
+    [ForceBlittable]
     public struct FList<#ELEMENT_COUNT#><TData> : IFList, IFList<TData>, IList<TData>, ISerialize
         where TData : unmanaged
     {

@@ -55,6 +55,40 @@ namespace AnotherECS.Core
                 .All(p => IsUnmanaged(p.FieldType));
         }
 
+        public static bool IsSimple(Type type)
+        {
+            if (type.IsPrimitive || type.IsEnum)
+            {
+                return true;
+            }
+
+            if (!type.IsValueType)
+            {
+                return false;
+            }
+
+            return type
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .All(p => IsSimple(p.FieldType));
+        }
+
+        public static bool IsBlittable(Type type)
+        {
+            if (type.IsPrimitive || type.IsEnum || type.IsPointer || type.GetCustomAttribute<ForceBlittableAttribute>() != null)
+            {
+                return true;
+            }
+
+            if (!type.IsValueType)
+            {
+                return false;
+            }
+
+            return type
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .All(p => IsBlittable(p.FieldType));
+        }
+
         public static bool IsAttach(Type type)
             => typeof(IAttach).IsAssignableFrom(type);
 

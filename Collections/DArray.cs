@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Collections
 {
+    [ForceBlittable]
     public struct DArray<T> : IInject<DArrayCaller>, IEnumerable<T>, ISerialize
         where T : unmanaged
     {
@@ -23,6 +24,7 @@ namespace AnotherECS.Collections
             _length = length;
 #if ANOTHERECS_DEBUG
             _version = 0;
+            Validate();
 #endif
         }
 
@@ -30,6 +32,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<DArrayCaller>.Construct(DArrayCaller bind)
         {
+            Validate();
             _bind = bind;
         }
 
@@ -242,11 +245,9 @@ namespace AnotherECS.Collections
         internal unsafe int IndexOf(ref T item, int count)
         {
 #if ANOTHERECS_DEBUG
+            if (!IsValide())
             {
-                if (!IsValide())
-                {
-                    throw new Exceptions.DArrayInvalideException(this.GetType());
-                }
+                throw new Exceptions.DArrayInvalideException(this.GetType());
             }
 #endif
             var array = (T*)ReadUnsafe();
@@ -322,7 +323,15 @@ namespace AnotherECS.Collections
             get => _id;
         }
 
-
+#if ANOTHERECS_DEBUG
+        private void Validate()
+        {
+            if (!ComponentUtils.IsSimple(typeof(T)))
+            {
+                throw new Exceptions.DArraySimpleException(typeof(T));
+            }
+        }
+#endif
 
 
         public struct Enumerator : IEnumerator<T>

@@ -1,16 +1,14 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Actions
 {
-
     internal static unsafe class CallerFacadeActions<T>
         where T : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateDenseMulti(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
-            MultiStorageActions<T>.AllocateDense(ref layout, depencies.config.componentCapacity);
+            MultiStorageActions<T>.AllocateDense(ref layout, depencies.config.general.componentCapacity);
             switch (historyMode)
             {
                 case HistoryMode.BYCHANGE:
@@ -30,7 +28,7 @@ namespace AnotherECS.Core.Actions
         public static void AllocateSparseMulti<USparse>(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
             where USparse : unmanaged
         {
-            MultiStorageActions<T>.AllocateSparse<USparse>(ref layout, depencies.config.entityCapacity);
+            MultiStorageActions<T>.AllocateSparse<USparse>(ref layout, depencies.config.general.entityCapacity);
             if (historyMode != HistoryMode.NONE)
             {
                 MultiHistoryFacadeActions<T>.AllocateSparse<USparse>(ref layout, ref depencies);
@@ -40,7 +38,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateRecycleMulti(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
-            MultiStorageActions<T>.AllocateRecycle(ref layout, depencies.config.recycledCapacity);
+            MultiStorageActions<T>.AllocateRecycle(ref layout, depencies.config.general.recycledCapacity);
             if (historyMode != HistoryMode.NONE)
             {
                 MultiHistoryFacadeActions<T>.AllocateRecycle(ref layout, ref depencies);
@@ -50,7 +48,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateVersion(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
-            MultiStorageActions<T>.AllocateVersion(ref layout, depencies.config.entityCapacity);
+            MultiStorageActions<T>.AllocateVersion(ref layout, depencies.config.general.entityCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

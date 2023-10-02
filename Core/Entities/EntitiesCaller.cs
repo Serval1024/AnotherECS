@@ -27,7 +27,7 @@ namespace AnotherECS.Core
         {
             _layout = layout;
             _depencies = depencies;
-            _gcEntityCheckPerTick = (int)depencies->config.gcEntityCheckPerTick;
+            _gcEntityCheckPerTick = (int)depencies->config.general.gcEntityCheckPerTick;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

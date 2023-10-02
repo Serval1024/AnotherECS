@@ -4,7 +4,7 @@ namespace AnotherECS.Serializer
 {
     public struct ArrayMeta
     {
-        private readonly CountMeta _сount;
+        private readonly CountMeta _count;
         private readonly GenericMeta _type;
         private readonly CompoundMeta _compound;
 
@@ -40,8 +40,8 @@ namespace AnotherECS.Serializer
 
         public void PackValue(ref WriterContextSerializer writer, Array array, Type elementType, int count)
         {
-            _сount.Pack(ref writer, (uint)array.Length);
-            _сount.Pack(ref writer, (uint)count);
+            _count.Pack(ref writer, (uint)array.Length);
+            _count.Pack(ref writer, (uint)count);
 
             if (typeof(ISerialize).IsAssignableFrom(elementType))
             {
@@ -72,8 +72,8 @@ namespace AnotherECS.Serializer
 
         private void PackRefence(ref WriterContextSerializer writer, Array array, int count)
         {
-            _сount.Pack(ref writer, (uint)array.Length);
-            _сount.Pack(ref writer, (uint)count);
+            _count.Pack(ref writer, (uint)array.Length);
+            _count.Pack(ref writer, (uint)count);
 
             for (int i = 0; i < count; ++i)
             {
@@ -83,8 +83,8 @@ namespace AnotherECS.Serializer
 
         private Array UnpackValue(ref ReaderContextSerializer reader, Type elementType)
         {
-            var length = _сount.Unpack(ref reader);
-            var count = _сount.Unpack(ref reader);
+            var length = _count.Unpack(ref reader);
+            var count = _count.Unpack(ref reader);
 
             var array = Array.CreateInstance(elementType, length);
 
@@ -120,8 +120,8 @@ namespace AnotherECS.Serializer
 
         private Array UnpackReference(ref ReaderContextSerializer reader, Type elementType)
         {
-            var length = _сount.Unpack(ref reader);
-            var count = _сount.Unpack(ref reader);
+            var length = _count.Unpack(ref reader);
+            var count = _count.Unpack(ref reader);
 
             var array = Array.CreateInstance(elementType, length);
             for (int i = 0; i < count; ++i)

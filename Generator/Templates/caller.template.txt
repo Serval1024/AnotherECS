@@ -15,10 +15,11 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     public unsafe struct <#CALLER:TYPE_NAME#>_Caller<TComponent> : 
-        I<#STORAGE:MODE#>Caller<TComponent><#IF DISPOSABLE#>, IDisposable<#END#><#IF HISTORY#>, IRevert<#END#><#IF FORCE:ISerialize#>, ISerialize<#END#><#IF HISTORY:BYTICK && !EMPTY#>ITickFinished<#END#>
+        I<#STORAGE:MODE#>Caller<TComponent><#IF DISPOSABLE#>, IDisposable<#END#><#IF HISTORY#>, IRevert<#END#><#IF FORCE:ISerialize#>, ISerialize<#END#><#IF HISTORY:BYTICK && !EMPTY#>ITickFinished<#END#><#IF ATTACH#>, ICallerAttach<#END#><#IF DETACH#>, ICallerDetach<#END#>
         where TComponent : unmanaged, IComponent<#GENERIC_CONSTRAINTS:TComponent#>
     {
-        private UnmanagedLayout<TComponent>* _layout;
+    
+        private UnmanagedLayout<<#SPARSE:TYPE_NAME#>, TComponent, <#VERSION:TYPE_NAME#>, <#RECYCLE:TYPE_NAME#>>* _layout;
         private GlobalDepencies* _depencies;
         private ushort _elementId;
 
@@ -46,8 +47,8 @@ namespace AnotherECS.Gen.Common
 <#IF ATTACH || DETACH#>
             _state = state;
 ---<#IF MULTI#>
-            _bufferCopyTemp = AnotherECS.Core.Collection.ArrayPtr.Create<<#SPARSE:TYPE_NAME#>>(_depencies->config.entityCapacity);
-            _opsTemp = new AnotherECS.Core.Collection.ArrayPtr<Op>(_depencies->config.entityCapacity);
+            _bufferCopyTemp = AnotherECS.Core.Collection.ArrayPtr.Create<<#SPARSE:TYPE_NAME#>>(_depencies->config.general.entityCapacity);
+            _opsTemp = new AnotherECS.Core.Collection.ArrayPtr<Op>(_depencies->config.general.entityCapacity);
 ---<#END#>
 <#END#>
 <#IF EMPTY#>
@@ -463,17 +464,29 @@ namespace AnotherECS.Gen.Common
             <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<TComponent>.PushFullDense(ref *_layout, ref *_depencies);
         }
 <#END#>
-<#IF FORCE:ISerialize#>
+
+<#IF !BLITTABLE | FORCE:ISerialize#>
         public void Pack(ref WriterContextSerializer writer)
         {
+---<#IF FORCE:ISerialize#>
             CustomSerializeActions<TComponent>.Pack(ref writer, ref *_layout, <#HISTORY:FLAG#>);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            CustomSerializeActions<TComponent>.Unpack(ref reader, ref *_layout, <#HISTORY:FLAG#>);
+---<#ELSE#>
+            NonBlittableSerializeActions<TComponent>.Pack(ref writer, ref *_layout, <#HISTORY:FLAG#>, <#BLITTABLE#>);
+---<#END#>
         }
 <#END#>
+
+<#IF !BLITTABLE | FORCE:ISerialize | HISTORY:BYTICK#>
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+---<#IF FORCE:ISerialize#>
+            CustomSerializeActions<TComponent>.Unpack(ref reader, ref *_layout, <#HISTORY:FLAG#>, _layout->storage.denseIndex);
+---<#ELSE#>
+            NonBlittableSerializeActions<TComponent>.Unpack(ref reader, ref *_layout, <#HISTORY:FLAG#>, _layout->storage.denseIndex, <#BLITTABLE#>);
+---<#END#>
+        }
+<#END#>
+
 <#IF EMPTY#>
         private class DefaultContainer
         {

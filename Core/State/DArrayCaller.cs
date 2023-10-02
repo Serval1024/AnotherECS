@@ -16,6 +16,7 @@ namespace AnotherECS.Core
         private UnmanagedLayout<Container>* _layout;
         private GlobalDepencies* _depencies;
 
+
         public bool IsValide
             => _layout != null && _depencies != null;
 
@@ -287,7 +288,7 @@ namespace AnotherECS.Core
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            CustomSerializeActions<Container>.Pack(ref writer, ref *_layout, HistoryMode.BYCHANGE);
+            CustomSerializeActions<Container>.Pack(ref writer, ref *_layout, HistoryMode.BYCHANGE, _layout->storage.denseIndex);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)

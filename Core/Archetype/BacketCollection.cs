@@ -21,7 +21,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_HISTORY_DISABLE
             public BacketCollection(uint itemCapacity, uint backetCapacity)
 #else
-            public BacketCollection(uint itemCapacity, uint backetCapacity, in HistoryByChangeArgs args)
+            public BacketCollection(uint itemCapacity, uint backetCapacity)
 #endif
             {
                 _allocator = new IdUnitAllocator(32);
@@ -75,12 +75,7 @@ namespace AnotherECS.Core
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
-                Unpack(ref reader, default);
-            }
-
-            public void Unpack(ref ReaderContextSerializer reader, in HistoryByChangeArgs args)
-            {
-                _allocator.Unpack(ref reader, args);
+                _allocator.Unpack(ref reader);
                 _items = reader.ReadArray<UintSet>();
             }
         }

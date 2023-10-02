@@ -1,7 +1,6 @@
+using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using AnotherECS.Debug;
-using System;
-using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {

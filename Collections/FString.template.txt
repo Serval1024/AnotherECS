@@ -13,6 +13,7 @@ using System.Text;
 namespace AnotherECS.Collections
 {
 <#ARRAY [0..STRUCT_COUNT]#>
+    [ForceBlittable]
     public unsafe struct FString<#ELEMENT_COUNT#> : IEquatable<FString<#ELEMENT_COUNT#>>, IEnumerable<char>
     {
         public const int Capacity = <#ELEMENT_COUNT#>;
@@ -28,7 +29,7 @@ namespace AnotherECS.Collections
         {
             if (text.Length > Capacity)
             {
-                throw new ArgumentException($"{nameof(text)} is longer than ñapacity. Capacity: '{Capacity}'. text length '{text.Length}'");
+                throw new ArgumentException($"{nameof(text)} is longer than capacity. Capacity: '{Capacity}'. text length '{text.Length}'");
             }
 
             for (int i = 0; i < text.Length; ++i)

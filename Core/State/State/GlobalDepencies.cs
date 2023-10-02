@@ -5,7 +5,7 @@ namespace AnotherECS.Core
 {
     internal unsafe struct GlobalDepencies : ISerialize
     {
-        public GeneralConfig config;
+        public WorldConfig config;
         public TickProvider tickProvider;
         public InjectContainer injectContainer;
         public EntitiesCaller entities;
@@ -21,7 +21,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            config = reader.ReadStruct<GeneralConfig>();
+            config = reader.ReadStruct<WorldConfig>();
             tickProvider.Unpack(ref reader);
         }
     }

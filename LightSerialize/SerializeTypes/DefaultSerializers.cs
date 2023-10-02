@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using AnotherECS.Unsafe;
 
 namespace AnotherECS.Serializer
 {
@@ -189,7 +188,7 @@ namespace AnotherECS.Serializer
 
     public struct ListSerializer : IElementSerializer
     {
-        private readonly CountMeta _сountMeta;
+        private readonly CountMeta _countMeta;
         private readonly GenericMeta _typeMeta;
 
         public Type Type => typeof(List<>);
@@ -200,7 +199,7 @@ namespace AnotherECS.Serializer
             var elementType = @value.GetType().GetGenericArguments()[0];
             _typeMeta.Pack(ref writer, elementType);
 
-            _сountMeta.Pack(ref writer, (uint)list.Count);
+            _countMeta.Pack(ref writer, (uint)list.Count);
             for (int i = 0; i < list.Count; ++i)
             {
                 writer.Pack(list[i]);
@@ -210,7 +209,7 @@ namespace AnotherECS.Serializer
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
         {
             var elementType = _typeMeta.Unpack(ref reader);
-            var count = _сountMeta.Unpack(ref reader);
+            var count = _countMeta.Unpack(ref reader);
 
             var list = Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType), (int)count) as IList;
             for (int i = 0; i < count; ++i)
@@ -223,7 +222,7 @@ namespace AnotherECS.Serializer
 
     public struct HashSetSerializer : IElementSerializer
     {
-        private readonly CountMeta _сountMeta;
+        private readonly CountMeta _countMeta;
         private readonly GenericMeta _typeMeta;
 
         public Type Type => typeof(HashSet<>);
@@ -241,7 +240,7 @@ namespace AnotherECS.Serializer
                 ++count;
             }
 
-            _сountMeta.Pack(ref writer, (uint)count);
+            _countMeta.Pack(ref writer, (uint)count);
 
             foreach (var element in enumerable)
             {
@@ -252,7 +251,7 @@ namespace AnotherECS.Serializer
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
         {
             var elementType = _typeMeta.Unpack(ref reader);
-            var count = _сountMeta.Unpack(ref reader);
+            var count = _countMeta.Unpack(ref reader);
 
             var hashSet = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(elementType), (int)count);
             var addMethod = hashSet.GetType().GetMethod("Add");
@@ -269,7 +268,7 @@ namespace AnotherECS.Serializer
 
     public struct DictionarySerializer : IElementSerializer
     {
-        private readonly CountMeta _сountMeta;
+        private readonly CountMeta _countMeta;
         private readonly GenericMeta _typeMeta;
 
         public Type Type => typeof(Dictionary<,>);
@@ -280,7 +279,7 @@ namespace AnotherECS.Serializer
             var elementTypes = @value.GetType().GetGenericArguments();
             _typeMeta.Pack(ref writer, elementTypes[0]);
             _typeMeta.Pack(ref writer, elementTypes[1]);
-            _сountMeta.Pack(ref writer, (uint)dictionary.Count);
+            _countMeta.Pack(ref writer, (uint)dictionary.Count);
 
             foreach (DictionaryEntry entry in dictionary)
             {
@@ -293,7 +292,7 @@ namespace AnotherECS.Serializer
         {
             var elementType0 = _typeMeta.Unpack(ref reader);
             var elementType1 = _typeMeta.Unpack(ref reader);
-            var count = _сountMeta.Unpack(ref reader);
+            var count = _countMeta.Unpack(ref reader);
 
             var dictionary = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(elementType0, elementType1), (int)count) as IDictionary;
             for (int i = 0; i < count; ++i)

@@ -18,22 +18,27 @@ namespace AnotherECS.Generator
 
                 { "ATTACH", () => option.isAttach },
                 { "DETACH", () => option.isDetach },
+
                 { "SINGLE", () => option.isSingle },
                 { "MULTI", () => !option.isSingle },
-                { "STORAGE:MODE", () => option.isSingle ? "Single" : "Multi" },
+
                 { "EMPTY", () => option.isEmpty },
+                { "STORAGE:MODE", () => option.isSingle ? "Single" : "Multi" },
                 { "ALLOCATOR:RECYCLE", () => option.isUseRecycle },
                 { "INJECT", () => option.isInject },
+
                 { "SPARSE:BOOL", () => option.sparseMode == TypeOptions.SparseMode.Bool },
+                { "SPARSE:TYPE_NAME", () => option.sparseMode.ToString().ToLower() },
+
                 { "HISTORY", () => option.isHistory },
                 { "HISTORY:BYCHANGE", () => option.isHistoryByChange },
                 { "HISTORY:BYTICK", () => option.isHistoryByTick },
+                { "HISTORY:FLAG", () =>  GetHistoryFlag(option) },
+
                 { "BIND_TO_ENTITY", () => option.isBindToEntity   },
                 { "COPYABLE", () => option.isCopyable },
-                { "SPARSE:TYPE_NAME", () => option.sparseMode.ToString().ToLower() },
                 { "FORCE:ISerialize", () => option.isUseISerialize },
-
-                { "HISTORY:FLAG", () =>  GetHistoryFlag(option) },
+                { "BLITTABLE", () => option.isBlittable },
             };
 
         public static TemplateParser.Variables GetLayoutInstaller(Type[] components)
@@ -45,6 +50,7 @@ namespace AnotherECS.Generator
                     { "COMPONENT:NAME", () => components[variables.GetIndex(0)].Name },
                     { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components[variables.GetIndex(0)]) },
                     { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components[variables.GetIndex(0)]) },
+
                     { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)])) },
 
                     { "INJECT", () => new TypeOptions(components[variables.GetIndex(0)]).isInject },

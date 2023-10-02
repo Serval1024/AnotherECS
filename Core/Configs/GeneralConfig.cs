@@ -15,27 +15,21 @@
         public uint markerCapacity;
         public uint markerBacketSize;
 
-
-        public HistoryConfig history;
-
         public static GeneralConfig Create()
-            => new()
-            {
-                entityCapacity = 16,
-                recycledCapacity = 256,
-                gcEntityCheckPerTick = 8,
+           => new()
+           {
+               entityCapacity = 16,
+               recycledCapacity = 256,
+               gcEntityCheckPerTick = 8,
 
-                dArrayCapacity = 32,
+               dArrayCapacity = 32,
 
-                filterCapacity = 256,
+               filterCapacity = 256,
 
-                componentCapacity = 64,
+               componentCapacity = 64,
 
-                markerCapacity = 64,
-                markerBacketSize = 16,
-
-
-                history = HistoryConfig.Create(),
-            };
+               markerCapacity = 64,
+               markerBacketSize = 16,
+           };
     }
 }

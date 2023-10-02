@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
+[assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
 namespace AnotherECS.Core
 {
     public interface ICaller
@@ -61,6 +63,16 @@ namespace AnotherECS.Core
         ref readonly TComponent Read();
         ref TComponent Get();
         void Set(ref TComponent component);
+    }
+
+    internal interface ICallerAttach
+    {
+        void Attach();
+    }
+
+    internal interface ICallerDetach
+    {
+        void Detach();
     }
 }
 

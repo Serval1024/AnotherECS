@@ -27,7 +27,7 @@ namespace AnotherECS.Collections
         {
             if (text.Length > Capacity)
             {
-                throw new ArgumentException($"{nameof(text)} is longer than �apacity. Capacity: '{Capacity}'. text length '{text.Length}'");
+                throw new ArgumentException($"{nameof(text)} is longer than capacity. Capacity: '{Capacity}'. text length '{text.Length}'");
             }
 
             for (int i = 0; i < text.Length; ++i)

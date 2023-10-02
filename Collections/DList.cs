@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Collections
 {
+    [ForceBlittable]
     public struct DList<T> : IInject<DArrayCaller>, IEnumerable<T>, IList<T>, ISerialize
         where T : unmanaged
     {

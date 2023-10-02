@@ -177,6 +177,7 @@ namespace AnotherECS.Generator
         public bool isInjectMembers;
         public ComponentUtils.InjectData[] injectMembers;
 
+        public bool isBlittable;
         public bool isUseISerialize;
         public bool isUseRecycle;
         public bool isBindToEntity;
@@ -216,7 +217,8 @@ namespace AnotherECS.Generator
             isInject = isInjectComponent | isInjectMembers;
             injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
 
-            isUseISerialize = !isEmpty && ComponentUtils.IsUseISerialize(type);
+            isBlittable = ComponentUtils.IsBlittable(type);
+            isUseISerialize = !isEmpty && (ComponentUtils.IsUseISerialize(type) || !isBlittable);
             isUseRecycle = !isMarker && !isEmpty && !isSingle;
             isBindToEntity = !isMarker;
 

@@ -12,8 +12,8 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateLayout(ref UnmanagedLayout<EntityHead> layout, ref GlobalDepencies depencies)
         {
-            MultiStorageActions<EntityHead>.AllocateDense(ref layout, depencies.config.entityCapacity);
-            MultiStorageActions<EntityHead>.AllocateRecycle(ref layout, depencies.config.recycledCapacity);
+            MultiStorageActions<EntityHead>.AllocateDense(ref layout, depencies.config.general.entityCapacity);
+            MultiStorageActions<EntityHead>.AllocateRecycle(ref layout, depencies.config.general.recycledCapacity);
             MultiStorageActions<EntityHead>.AllocateSparse<uint>(ref layout, 1);
             
             MultiHistoryFacadeActions<EntityHead>.AllocateRecycle(ref layout, ref depencies);

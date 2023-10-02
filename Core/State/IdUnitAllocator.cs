@@ -64,11 +64,6 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            Unpack(ref reader, default);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader, in HistoryByChangeArgs args)
-        {
             _counter = reader.ReadUInt32();
             _recycle = reader.ReadUInt32();
             _recycled = reader.ReadUnmanagedArray<uint>(); 

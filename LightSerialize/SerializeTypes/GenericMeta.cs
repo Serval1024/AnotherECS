@@ -5,7 +5,7 @@ namespace AnotherECS.Serializer
     public struct GenericMeta
     {
         private readonly TypeMeta _typeMeta;
-        private readonly CountMeta _сountMeta;
+        private readonly CountMeta _countMeta;
 
         public void Pack(ref WriterContextSerializer writer, Type type)
         {
@@ -14,7 +14,7 @@ namespace AnotherECS.Serializer
                 var types = type.GetGenericArguments();
 
                 _typeMeta.Pack(ref writer, writer.TypeToId(type.GetGenericTypeDefinition()));
-                _сountMeta.Pack(ref writer, (uint)types.Length);
+                _countMeta.Pack(ref writer, (uint)types.Length);
 
                 for (int i = 0; i < types.Length; ++i)
                 {
@@ -48,7 +48,7 @@ namespace AnotherECS.Serializer
 
                 if (type.IsGenericType)
                 {
-                    var count = _сountMeta.Unpack(ref reader);
+                    var count = _countMeta.Unpack(ref reader);
                     var types = new Type[count];
                     for (int i = 0; i < count; ++i)
                     {

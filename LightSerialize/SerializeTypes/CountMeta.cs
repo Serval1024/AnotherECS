@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace AnotherECS.Serializer
 {
     public struct CountMeta

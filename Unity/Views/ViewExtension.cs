@@ -7,6 +7,7 @@ namespace AnotherECS.Views
 {
     public static class ViewExtension
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State context, EntityId id)
             where T : IView
@@ -43,6 +44,6 @@ namespace AnotherECS.Views
         public static void DestroyView(this Entity entity)
         {
             DestroyView(entity.state, entity.id);
-        }
+        }*/
     }
 }

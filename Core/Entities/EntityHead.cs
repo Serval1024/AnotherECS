@@ -3,7 +3,7 @@
 namespace AnotherECS.Core
 {
     [StructLayout(LayoutKind.Sequential, Size = 32)]
-    internal unsafe struct EntityHead   //TODO SER SIZE CHECK, and for storagelayout
+    internal unsafe struct EntityHead   //TODO SER SIZE CHECK, and for unmanagedlayout. UnitTest here
     {
         public const ushort ComponentMax = 12;
 

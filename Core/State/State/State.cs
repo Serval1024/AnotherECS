@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using AnotherECS.Unsafe;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
+using AnotherECS.Core.Actions;
 
 namespace AnotherECS.Core
 {
@@ -25,7 +26,7 @@ namespace AnotherECS.Core
         private Events _events;
         #endregion
 
-        #region cache
+        #region data cache
         private EntitiesCaller _entities;
         private DArrayCaller _dArray;
 
@@ -38,14 +39,14 @@ namespace AnotherECS.Core
 
         #region construct & destruct
         public State()
-            : this(GeneralConfig.Create()) { }
+            : this(WorldConfig.Create()) { }
 
-        public State(in GeneralConfig config)
+        public State(in WorldConfig config)
         {
             _componentsBufferTemp = new ushort[64];
 
             _layoutCount = 1;
-            _layoutPtr = (UnmanagedLayout*)UnsafeMemory.Allocate<UnmanagedLayout<UnmanagedLayout.Mock>>(GetLayoutCount());
+            _layoutPtr = UnsafeMemory.Allocate<UnmanagedLayout>(GetLayoutCount());
             _callers = new ICaller[GetLayoutCount()];
 
             _depencies = UnsafeMemory.Allocate<GlobalDepencies>();
@@ -66,7 +67,7 @@ namespace AnotherECS.Core
 
         public override void OnDispose()
         {
-            for (int i = 0; i < _callers.Length; ++i)
+            for (int i = 1; i < _callers.Length; ++i)
             {
                 if (_callers[i] is IDisposable disposable)
                 {
@@ -76,7 +77,7 @@ namespace AnotherECS.Core
 
             for(int i = 1; i < _layoutCount; ++i)
             {
-                (_layoutPtr + i)->Dispose();
+                _layoutPtr[i].Dispose();
             }
 
             UnsafeMemory.Deallocate(ref _layoutPtr);
@@ -95,7 +96,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    _layoutPtr[i].Pack(ref writer);
+                    LayoutSerializer.Pack(ref writer, ref _layoutPtr[i]);
                 }
             }
 
@@ -107,7 +108,7 @@ namespace AnotherECS.Core
         {
             _layoutCount = 1;
 
-            _layoutPtr = (UnmanagedLayout*)UnsafeMemory.Allocate<UnmanagedLayout<UnmanagedLayout.Mock>>(GetLayoutCount());
+            _layoutPtr = UnsafeMemory.Allocate<UnmanagedLayout>(GetLayoutCount());
             _callers = new ICaller[GetLayoutCount()];
 
             _depencies = UnsafeMemory.Allocate<GlobalDepencies>();
@@ -124,7 +125,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    _layoutPtr[i].Unpack(ref reader);
+                    LayoutSerializer.Unpack(ref reader, ref _layoutPtr[i]);
                 }
             }
         }
@@ -152,9 +153,9 @@ namespace AnotherECS.Core
         {
             for (int i = 1; i < _callers.Length; ++i)
             {
-                if (_callers[i] is IAttachInternal attachInternal)
+                if (_callers[i] is ICallerAttach callerAttach)
                 {
-                    attachInternal.Attach();
+                    callerAttach.Attach();
                 }
             }
         }
@@ -609,7 +610,7 @@ namespace AnotherECS.Core
 #endregion
 
         #region codegen & abstract
-        protected abstract void BindingCodeGenerationStage(in GeneralConfig config);
+        protected abstract void BindingCodeGenerationStage(in WorldConfig config);
         protected abstract uint GetComponentCount();
         protected abstract ushort GetIndex<T>()
             where T : IComponent;

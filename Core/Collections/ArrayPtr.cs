@@ -7,7 +7,7 @@ using AnotherECS.Unsafe;
 namespace AnotherECS.Core.Collection
 {
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ArrayPtr : IDisposable, ISerialize
+    public unsafe struct ArrayPtr : IArrayPtr, IDisposable, ISerialize
     {
         private void* data;
         private uint byteLength;
@@ -52,7 +52,7 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayPtr CreateWrapper<T>(ArrayPtr<T> other)
+        public static ArrayPtr CreateWrapper<T>(ref ArrayPtr<T> other)
             where T : unmanaged
         {
             ArrayPtr wrapper;
@@ -294,17 +294,19 @@ namespace AnotherECS.Core.Collection
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            ArrayPtrSerializer.Pack(ref writer, ref this);
+            ArrayPtrSerializer serializer;
+            serializer.Pack(ref writer, ref this);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            this = ArrayPtrSerializer.Unpack(ref reader);
+            ArrayPtrSerializer serializer;
+            serializer.Unpack(ref reader, ref this);
         }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ArrayPtr<T> : IDisposable
+    public unsafe struct ArrayPtr<T> : IArrayPtr, IDisposable, ISerialize
         where T : unmanaged
     {
         private T* data;
@@ -350,7 +352,7 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ArrayPtr<T> CreateWrapper(ArrayPtr other)
+        public static ArrayPtr<T> CreateWrapper(ref ArrayPtr other)
         {
             ArrayPtr<T> wrapper;
             wrapper.data = other.GetPtr<T>();
@@ -367,6 +369,9 @@ namespace AnotherECS.Core.Collection
 #endif
             return data;
         }
+
+        void* IArrayPtr.GetPtr()
+            => GetPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T* GetPtr(uint index)
@@ -486,5 +491,26 @@ namespace AnotherECS.Core.Collection
                 elementCount = byteLength / (uint)sizeof(T);
             }
         }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            ArrayPtrSerializer<T> serializer;
+            serializer.Pack(ref writer, ref this);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            ArrayPtrSerializer<T> serializer;
+            serializer.Unpack(ref reader, ref this);
+        }
+    }
+
+    public unsafe interface IArrayPtr : IDisposable
+    {
+        public uint ByteLength { get; }
+        public uint ElementCount { get; }
+        public uint ElementSize { get; }
+        public bool IsValide { get; }
+        public void* GetPtr();
     }
 }

@@ -2,7 +2,7 @@
 {
     public struct ArrayUnmanagedMeta
     {
-        private readonly CountMeta _сount;
+        private readonly CountMeta _count;
 
         public unsafe void Write<T>(ref WriterContextSerializer writer, T[] data, int count)
         where T : unmanaged
@@ -12,8 +12,8 @@
                 count = data.Length;
             }
 
-            _сount.Pack(ref writer, (uint)data.Length);
-            _сount.Pack(ref writer, (uint)count);
+            _count.Pack(ref writer, (uint)data.Length);
+            _count.Pack(ref writer, (uint)count);
 
             fixed (T* ptr = data)
             {
@@ -28,8 +28,8 @@
         public unsafe T[] Read<T>(ref ReaderContextSerializer reader)
             where T : unmanaged
         {
-            var length = _сount.Unpack(ref reader);
-            var count = (int)_сount.Unpack(ref reader);
+            var length = _count.Unpack(ref reader);
+            var count = (int)_count.Unpack(ref reader);
              
             var data = new T[length];
 

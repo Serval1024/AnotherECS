@@ -20,13 +20,13 @@ namespace AnotherECS.Core
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(tick);
-            writer.Pack(value);
+            value.Pack(ref writer);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
             tick = reader.ReadUInt32();
-            value = reader.Unpack<ArrayPtr>();
+            value.Unpack(ref reader);
         }
 
         public void Dispose()

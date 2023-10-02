@@ -1,5 +1,5 @@
-﻿using AnotherECS.Debug;
-using System;
+﻿using System;
+using AnotherECS.Debug;
 
 namespace AnotherECS.Exceptions
 {
