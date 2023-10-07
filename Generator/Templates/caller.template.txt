@@ -15,11 +15,11 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     public unsafe struct <#CALLER:TYPE_NAME#>_Caller<TComponent> : 
-        I<#STORAGE:MODE#>Caller<TComponent><#IF DISPOSABLE#>, IDisposable<#END#><#IF HISTORY#>, IRevert<#END#><#IF FORCE:ISerialize#>, ISerialize<#END#><#IF HISTORY:BYTICK && !EMPTY#>ITickFinished<#END#><#IF ATTACH#>, ICallerAttach<#END#><#IF DETACH#>, ICallerDetach<#END#>
+        I<#STORAGE:MODE#>Caller<TComponent><#IF DISPOSABLE#>, IDisposable<#END#><#IF HISTORY#>, IRevert<#END#><#IF FORCE:ISerialize#>, ISerialize<#END#><#IF INTERFACE:ITickFinished#>ITickFinished<#END#><#IF ATTACH#>, ICallerAttach<#END#><#IF DETACH#>, ICallerDetach<#END#>
         where TComponent : unmanaged, IComponent<#GENERIC_CONSTRAINTS:TComponent#>
     {
     
-        private UnmanagedLayout<<#SPARSE:TYPE_NAME#>, TComponent, <#VERSION:TYPE_NAME#>, <#RECYCLE:TYPE_NAME#>>* _layout;
+        private UnmanagedLayout<TComponent>* _layout;
         private GlobalDepencies* _depencies;
         private ushort _elementId;
 
@@ -105,6 +105,9 @@ namespace AnotherECS.Gen.Common
 ---<#IF SPARSE:BOOL#>
 ------<#IF !EMPTY#>
             <#STORAGE:MODE#>StorageActions<TComponent>.ResizeDense(ref *_layout, capacity);
+---------<#IF HISTORY:BYVERSION#>
+            HistoryFacadeActions<TComponent>.ResizeVersionIndexer(ref *_layout, capacity);
+---------<#END#>
 ------<#END#>
 ------<#IF VERSION#>
             <#STORAGE:MODE#>StorageActions<TComponent>.ResizeVersion(ref *_layout, capacity);
@@ -252,7 +255,14 @@ namespace AnotherECS.Gen.Common
             _depencies->entities.Add(id, _elementId);
 ---<#END#>
 ---<#IF MULTI#>
+------<#IF HISTORY:BYVERSION#>
+            if (MultiStorageActions<TComponent>.TryResizeDense<#IF VERSION#>Version<#END#>(ref *_layout))
+            {
+                HistoryFacadeActions<TComponent>.ResizeVersionIndexer(ref *_layout, _layout->dense.ElementCount);
+            }
+------<#ELSE#>
             MultiStorageActions<TComponent>.TryResizeDense<#IF VERSION#>Version<#END#>(ref *_layout);
+------<#END#>
 ---<#END#>
             var denseIndex = (ushort)MultiStorageActions<TComponent>.AllocateId<#IF !ALLOCATOR:RECYCLE#>Increment<#END#><#IF HISTORY#>History<#END#>(ref *_layout, ref *_depencies);
 
@@ -446,6 +456,9 @@ namespace AnotherECS.Gen.Common
 ---<#IF HISTORY:BYCHANGE#>
             MultiHistoryFacadeActions<TComponent>.RevertToDenseBuffer(ref *_layout, tick);
 ---<#END#>
+---<#IF HISTORY:BYVERSION#>
+            MultiHistoryFacadeActions<TComponent>.RevertToVersionDenseBuffer(ref *_layout, tick);
+ ---<#END#>
 ---<#IF HISTORY:BYTICK#>
             MultiHistoryFacadeActions<TComponent>.RevertToFullDenseBuffer(ref *_layout, tick);
 ---<#END#>
@@ -458,10 +471,15 @@ namespace AnotherECS.Gen.Common
 <#END#>
         }
 
-<#IF HISTORY:BYTICK && !EMPTY#>
+<#IF INTERFACE:ITickFinished#>
         public void TickFinished()
         {
+---<#IF HISTORY:BYTICK#>
             <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<TComponent>.PushFullDense(ref *_layout, ref *_depencies);
+---<#END#>
+---<#IF HISTORY:BYVERSION#>
+            <#IF COPYABLE#>Copyable<#ELSE#>Multi<#END#>HistoryFacadeActions<TComponent>.PushVersionDense(ref *_layout, ref *_depencies);
+---<#END#>
         }
 <#END#>
 

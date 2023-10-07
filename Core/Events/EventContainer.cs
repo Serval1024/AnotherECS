@@ -1,5 +1,4 @@
 ﻿using AnotherECS.Serializer;
-using System.IO;
 
 namespace AnotherECS.Core
 {

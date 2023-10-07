@@ -8,6 +8,12 @@ namespace AnotherECS.Core
         where T : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void AllocateForVersionDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
+        {
+            HistoryActions<T>.AllocateForVersionDense(ref layout, depencies.config.history.buffersAddRemoveCapacity, depencies.config.history.buffersChangeCapacity, depencies.config.general.componentCapacity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
             HistoryActions<T>.AllocateDense(ref layout, depencies.config.history.buffersAddRemoveCapacity, depencies.config.history.buffersChangeCapacity);
@@ -86,6 +92,12 @@ namespace AnotherECS.Core
         public static void PushFullDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
             HistoryActions<T>.PushFullDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, ref layout.history.denseBuffer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PushVersionDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
+        {
+            HistoryActions<T>.PushVersionDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

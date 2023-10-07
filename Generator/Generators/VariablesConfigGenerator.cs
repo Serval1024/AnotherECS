@@ -16,6 +16,10 @@ namespace AnotherECS.Generator
                 { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(option) },
                 { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(option) },
 
+                { "INTERFACE:ITickFinished", () => (option.isHistoryByTick || option.isHistoryByVersion) && !option.isEmpty},
+
+                { "VERSION", () => option.isVersion || option.isHistoryByVersion },
+
                 { "ATTACH", () => option.isAttach },
                 { "DETACH", () => option.isDetach },
 
@@ -33,6 +37,7 @@ namespace AnotherECS.Generator
                 { "HISTORY", () => option.isHistory },
                 { "HISTORY:BYCHANGE", () => option.isHistoryByChange },
                 { "HISTORY:BYTICK", () => option.isHistoryByTick },
+                { "HISTORY:BYVERSION", () => option.isHistoryByTick },
                 { "HISTORY:FLAG", () =>  GetHistoryFlag(option) },
 
                 { "BIND_TO_ENTITY", () => option.isBindToEntity   },

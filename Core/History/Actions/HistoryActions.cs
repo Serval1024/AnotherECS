@@ -17,6 +17,16 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void AllocateForVersionDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity, uint capacity)
+        {
+            ref var history = ref layout.history;
+
+            history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+            history.denseBuffer = ArrayPtr.Create<TickIndexerOffsetData<T>>(buffersChangeCapacity);
+            history.versionIndexer = ArrayPtr.Create<uint>(capacity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateForFullDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
         {
             ref var history = ref layout.history;
@@ -51,6 +61,13 @@ namespace AnotherECS.Core
             
             history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
             history.denseBuffer = ArrayPtr.Create<TickOffsetData<USegment>>(buffersChangeCapacity);
+        }
+
+        public static void ResizeVersionIndexer(ref UnmanagedLayout<T> layout, uint capacity)
+        {
+            ref var history = ref layout.history;
+
+            history.versionIndexer.Resize<uint>(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,8 +137,38 @@ namespace AnotherECS.Core
             element.tick = tick;
             element.value.CreateFrom(data);
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickDataPtr<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void PushVersionDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength)
+        {
+            var denseBuffer = layout.history.denseBuffer;
+            var denseBufferPtr = denseBuffer.GetPtr<TickIndexerOffsetData<T>>();
+            var dense = layout.storage.dense;
+            var densePtr = dense.GetPtr<T>();
+
+            var versionPtr = layout.storage.version.GetPtr<uint>();
+            var versionIndexer = layout.history.versionIndexer.GetPtr<uint>();
+            ref var denseIndex = ref layout.history.denseIndex;
+
+            for (uint i = 0, iMax = layout.storage.denseIndex; i < iMax; ++i)
+            {
+                if (versionPtr[i] != tick)
+                {
+                    ref var element = ref denseBufferPtr[denseIndex];
+
+                    element.tick = tick;
+                    element.offset = i;
+                    element.value = densePtr[i];
+                    versionIndexer[i] = denseIndex;
+
+                    ++denseIndex;
+                    HistoryUtils.CheckAndResizeLoopBuffer<TickIndexerOffsetData<T>>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
+                }
+            }
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void PushSegment<USegment>(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, USegment* data)
@@ -441,6 +488,59 @@ namespace AnotherECS.Core
 
             subject = bufferPtr[bufferIndex].value;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertToMultiValueIndexerBuffer<TTickOffsetDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref ArrayPtr indexerBuffer, ref uint bufferIndex)
+          where TTickOffsetDataTypeData : unmanaged
+        {
+            var indexerBufferPtr = indexerBuffer.GetPtr<uint>();
+            var bufferPtr = buffer.GetPtr<TickIndexerOffsetData<TTickOffsetDataTypeData>>();
+            var subjectPtr = subject.GetPtr<TTickOffsetDataTypeData>();
+
+            if (bufferIndex != 0)
+            {
+                for (uint i = bufferIndex - 1; i >= 0; --i)
+                {
+                    var frame = bufferPtr[i];
+
+                    if (frame.tick >= tick)
+                    {
+                        ref var earlyFrameIndex = ref frame.index;
+                        if (earlyFrameIndex != 0)
+                        {
+                            subjectPtr[frame.offset] = bufferPtr[earlyFrameIndex].value;
+                        }
+                        indexerBufferPtr[frame.offset] = earlyFrameIndex;
+                    }
+                    else
+                    {
+                        bufferIndex = i + 1;
+                        return;
+                    }
+                }
+            }
+
+            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            {
+                var frame = bufferPtr[i];
+
+                if (frame.tick >= tick)
+                {
+                    ref var earlyFrameIndex = ref frame.index;
+                    if (earlyFrameIndex != 0)
+                    {
+                        subjectPtr[frame.offset] = bufferPtr[earlyFrameIndex].value;
+                    }
+                    indexerBufferPtr[frame.offset] = earlyFrameIndex;
+                }
+                else
+                {
+                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    return;
+                }
+            }
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void HistoryClear(ref UnmanagedLayout<T> layout)

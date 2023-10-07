@@ -159,6 +159,7 @@ namespace AnotherECS.Generator
         public bool isHistory;
         public bool isHistoryByChange;
         public bool isHistoryByTick;
+        public bool isHistoryByVersion;
 
         public bool isEmpty;
 
@@ -195,11 +196,13 @@ namespace AnotherECS.Generator
 #if ANOTHERECS_HISTORY_DISABLE
             isHistoryByChange = false;
             isHistoryByTick = false;
+            isHistoryByVersion = false;
 #else
             isHistoryByChange = ComponentUtils.IsHistoryByChange(type) && !isMarker;
             isHistoryByTick = ComponentUtils.IsHistoryByTick(type) && !isMarker;
+            isHistoryByVersion = ComponentUtils.IsHistoryByVersion(type) && !isMarker;
 #endif
-            isHistory = isHistoryByChange || isHistoryByTick;
+            isHistory = isHistoryByChange || isHistoryByTick || isHistoryByVersion;
 
             isEmpty = ComponentUtils.IsEmpty(type);
 
@@ -253,9 +256,9 @@ namespace AnotherECS.Generator
             {
                 throw new Exceptions.OptionsConflictException(type, $"{nameof(IMarker)}, Any history option.");
             }
-            if (isHistoryByChange && isHistoryByTick)
+            if (((isHistoryByChange ? 1 : 0) + (isHistoryByTick ? 1 : 0) + (isHistoryByVersion ? 1 : 0)) > 1)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByChange)}, {nameof(ComponentOptions.HistoryByTick)}.");
+                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByChange)}, {nameof(ComponentOptions.HistoryByTick)}, {nameof(ComponentOptions.HistoryByVersion)}.");
             }
             if (isCopyable && isEmpty)
             {
@@ -264,6 +267,10 @@ namespace AnotherECS.Generator
             if (isHistoryByTick && isEmpty)
             {
                 throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByTick)}, {ComponentOptions.DataFree}.");
+            }
+            if (isHistoryByVersion && isEmpty)
+            {
+                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByVersion)}, {ComponentOptions.DataFree}.");
             }
             if (!isHistory && isInject)
             {

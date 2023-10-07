@@ -27,6 +27,7 @@ namespace AnotherECS.Core.Actions
             history.countBuffer.Pack(ref writer);
             history.denseBuffer.Pack(ref writer);
             history.sparseBuffer.Pack(ref writer);
+            history.versionIndexer.Pack(ref writer);
 
             writer.Write(history.recycleCountIndex);
             writer.Write(history.recycleIndex);
@@ -55,6 +56,7 @@ namespace AnotherECS.Core.Actions
             history.countBuffer.Unpack(ref reader);
             history.denseBuffer.Unpack(ref reader);
             history.sparseBuffer.Unpack(ref reader);
+            history.versionIndexer.Unpack(ref reader);
 
             history.recycleCountIndex = reader.ReadUInt32();
             history.recycleIndex = reader.ReadUInt32();
@@ -85,6 +87,7 @@ namespace AnotherECS.Core.Actions
             history.recycleBuffer.Pack(ref writer);
             history.countBuffer.Pack(ref writer);
             history.sparseBuffer.Pack(ref writer);
+            history.versionIndexer.Pack(ref writer);
 
             writer.Write(history.recycleCountIndex);
             writer.Write(history.recycleIndex);
@@ -111,6 +114,7 @@ namespace AnotherECS.Core.Actions
             history.recycleBuffer.Unpack(ref reader);
             history.countBuffer.Unpack(ref reader);
             history.sparseBuffer.Unpack(ref reader);
+            history.versionIndexer.Unpack(ref reader);
 
             history.recycleCountIndex = reader.ReadUInt32();
             history.recycleIndex = reader.ReadUInt32();
@@ -127,6 +131,7 @@ namespace AnotherECS.Core.Actions
         public static void Pack(ref WriterContextSerializer writer, ref UnmanagedLayout<T> layout, HistoryMode historyMode, uint count, bool isStorageBlittable)
         {
             LayoutSerializer<T>.PackCommon(ref writer, ref layout.storage);
+
             if (isStorageBlittable)
             {
                 layout.storage.dense.Pack(ref writer);
@@ -219,7 +224,7 @@ namespace AnotherECS.Core.Actions
                 }
                 return new ArrayPtr(buffer, byteLength, elementCount);
             }
-            return default;
+            return default;     //TODO SER BYVERSION?
         }
     }
 

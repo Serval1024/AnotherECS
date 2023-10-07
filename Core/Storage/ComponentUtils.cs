@@ -38,6 +38,9 @@ namespace AnotherECS.Core
         public static bool IsHistoryByTick(Type type)
             => IsHistory(type) && IsOption(type, ComponentOptions.HistoryByTick);
 
+        public static bool IsHistoryByVersion(Type type)
+            => IsHistory(type) && IsOption(type, ComponentOptions.HistoryByVersion);
+
         public static bool IsUnmanaged(Type type)
         {
             if (type.IsPrimitive || type.IsPointer || type.IsEnum)

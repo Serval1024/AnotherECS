@@ -31,10 +31,7 @@ namespace AnotherECS.Serializer
             var generalConfig = (GeneralConfig)@value;
             writer.Write(generalConfig.entityCapacity);
             writer.Write(generalConfig.recycledCapacity);
-            writer.Write(generalConfig.filterCapacity);
             writer.Write(generalConfig.componentCapacity);
-            writer.Write(generalConfig.markerCapacity);
-            writer.Write(generalConfig.markerBacketSize);
             writer.Write(generalConfig.dArrayCapacity);
             writer.Write(generalConfig.gcEntityCheckPerTick);
         }
@@ -44,10 +41,7 @@ namespace AnotherECS.Serializer
             {
                 entityCapacity = reader.ReadUInt32(),
                 recycledCapacity = reader.ReadUInt32(),
-                filterCapacity = reader.ReadUInt32(),
                 componentCapacity = reader.ReadUInt32(),
-                markerCapacity = reader.ReadUInt32(),
-                markerBacketSize = reader.ReadUInt32(),
                 dArrayCapacity = reader.ReadUInt32(),
                 gcEntityCheckPerTick = reader.ReadUInt32(),
             };

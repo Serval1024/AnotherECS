@@ -5,8 +5,8 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    [StructLayout(LayoutKind.Sequential, Size = 192)]
-    public unsafe struct UnmanagedLayout     // Union ComponetLayout and ComponetLayout<TComponent>
+    [StructLayout(LayoutKind.Sequential, Size = 208)]
+    public unsafe struct UnmanagedLayout     // Union ComponetLayout and ComponetLayout<TComponent> 192
     {
         public ComponetStorage storage;
         public HistoryStorage history;
@@ -26,13 +26,14 @@ namespace AnotherECS.Core
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Size = 192)]
-    public unsafe struct UnmanagedLayout<TComponent>     // Union ComponetLayout and ComponetLayout<TComponent>
-        where TComponent : unmanaged
+    [StructLayout(LayoutKind.Sequential, Size = 208)]
+    public unsafe struct UnmanagedLayout<QSparse, WDense>     // Union ComponetLayout and ComponetLayout<TComponent>
+        where QSparse : unmanaged
+        where WDense : unmanaged
     {
-        public ComponetStorage storage;
+        public ComponetStorage<QSparse, WDense> storage;
         public HistoryStorage history;
-        public ComponentFunction<TComponent> componentFunction;
+        public ComponentFunction<WDense> componentFunction;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
@@ -56,12 +57,14 @@ namespace AnotherECS.Core
         public delegate*<ref InjectContainer, ref TComponent, void> deconstruct;
     }
   
-    public unsafe struct ComponetStorage : IDisposable
+    public unsafe struct ComponetStorage<QSparse, WDense> : IDisposable
+        where QSparse : unmanaged
+        where WDense : unmanaged
     {
-        public ArrayPtr sparse;
-        public ArrayPtr dense;
-        public ArrayPtr version;
-        public ArrayPtr recycle;
+        public ArrayPtr<QSparse> sparse;
+        public ArrayPtr<WDense> dense;
+        public ArrayPtr<uint> version;
+        public ArrayPtr<uint> recycle;
 
         public uint denseIndex;
         public uint recycleIndex;
@@ -95,6 +98,7 @@ namespace AnotherECS.Core
         public ArrayPtr countBuffer;
         public ArrayPtr denseBuffer;
         public ArrayPtr sparseBuffer;
+        public ArrayPtr versionIndexer;
 
         public uint recycleCountIndex;
         public uint recycleIndex;
@@ -110,6 +114,7 @@ namespace AnotherECS.Core
             countBuffer.Clear();
             denseBuffer.Clear();
             sparseBuffer.Clear();
+            versionIndexer.Clear();
 
             recycleCountIndex = 0;
             recycleIndex = 0;
@@ -126,6 +131,7 @@ namespace AnotherECS.Core
             countBuffer.Dispose();
             denseBuffer.Dispose();
             sparseBuffer.Dispose();
+            versionIndexer.Dispose();
         }
     }
 }

@@ -14,7 +14,13 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushFullDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
-            CopyableHistoryActions<T>.PushFullDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, ref layout.storage.dense);
+            CopyableHistoryActions<T>.PushFullDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PushVersionDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
+        {
+            CopyableHistoryActions<T>.PushVersionDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength);
         }
     }
 }

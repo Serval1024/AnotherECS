@@ -51,6 +51,9 @@ namespace AnotherECS.Core.Collection
             this.elementCount = elementCount;
         }
 
+        public void Allocate(uint byteLength, uint elementCount)
+            => this = Create(byteLength, elementCount);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ArrayPtr CreateWrapper<T>(ref ArrayPtr<T> other)
             where T : unmanaged
@@ -63,7 +66,7 @@ namespace AnotherECS.Core.Collection
         }
 
         public static ArrayPtr Create(uint byteLength, uint elementCount)
-            => new ArrayPtr(byteLength, elementCount);
+            => new(byteLength, elementCount);
 
         public static ArrayPtr Create<T>(uint elementCount)
             where T : unmanaged
@@ -350,6 +353,12 @@ namespace AnotherECS.Core.Collection
             byteLength = elementCount * (uint)sizeof(T);
             this.elementCount = elementCount;
         }
+
+        public void Allocate(uint elementCount)
+            => this = Create(elementCount);
+
+        public static ArrayPtr<T> Create(uint elementCount)
+            => new(elementCount);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ArrayPtr<T> CreateWrapper(ref ArrayPtr other)

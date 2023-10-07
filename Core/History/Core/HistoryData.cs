@@ -80,7 +80,34 @@ namespace AnotherECS.Core
         }
     }
 
-    internal enum Op : byte
+    internal struct TickIndexerOffsetData<U> : ITick, ISerialize
+    {
+        public uint Tick
+            => tick;
+
+        public uint tick;
+        public uint index;
+        public uint offset;
+        public U value;
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            writer.Write(tick);
+            writer.Write(index);
+            writer.Write(offset);
+            writer.WriteStruct(value);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            tick = reader.ReadUInt32();
+            index = reader.ReadUInt32();
+            offset = reader.ReadUInt32();
+            value = reader.ReadStruct<U>();
+        }
+    }
+
+    public enum Op : byte
     {
         NONE = 0,
         ADD = 1 << 0,

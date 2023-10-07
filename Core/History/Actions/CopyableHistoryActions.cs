@@ -23,7 +23,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushFullDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, ref ArrayPtr data)
+        public static void PushFullDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength)
         {
             ref var element = ref layout.history.denseBuffer.GetRef<TickDataPtr<T>>(layout.history.denseIndex++);
             if (element.tick != 0)
@@ -32,9 +32,43 @@ namespace AnotherECS.Core
             }
 
             element.tick = tick;
-            CopyFrom(ref element.value, ref data, layout.storage.denseIndex);
+            CopyFrom(ref element.value, ref layout.storage.dense, layout.storage.denseIndex);
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickDataPtr<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void PushVersionDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength)
+        {
+            var denseBuffer = layout.history.denseBuffer;
+            var denseBufferPtr = denseBuffer.GetPtr<TickIndexerOffsetData<T>>();
+            var dense = layout.storage.dense;
+            var densePtr = dense.GetPtr<T>();
+
+            var versionPtr = layout.storage.version.GetPtr<uint>();
+            var versionIndexer = layout.history.versionIndexer.GetPtr<uint>();
+            ref var denseIndex = ref layout.history.denseIndex;
+
+            for (uint i = 0, iMax = layout.storage.denseIndex; i < iMax; ++i)
+            {
+                if (versionPtr[i] != tick)
+                {
+                    ref var element = ref denseBufferPtr[denseIndex];
+                    if (element.tick != 0)
+                    {
+                        element.value.OnRecycle();
+                    }
+
+                    element.tick = tick;
+                    element.offset = i;
+                    element.value.CopyFrom(in densePtr[i]);
+                    element.index = versionIndexer[i];
+                    versionIndexer[i] = denseIndex;
+
+                    ++denseIndex;
+                    HistoryUtils.CheckAndResizeLoopBuffer<TickIndexerOffsetData<T>>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
+                }
+            }
         }
 
         private unsafe static void CopyFrom(ref ArrayPtr destination, ref ArrayPtr source, uint denseIndex)

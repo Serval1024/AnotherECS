@@ -2,26 +2,14 @@
 
 namespace AnotherECS.Core.Actions
 {
-    internal static unsafe class CallerFacadeActions<T>
-        where T : unmanaged
+    internal static unsafe class CallerFacadeActions<QSparse, WDense>
+        where QSparse : unmanaged
+        where WDense : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDenseMulti(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+        public static void AllocateDenseMulti(ref UnmanagedLayout<QSparse, WDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
-            MultiStorageActions<T>.AllocateDense(ref layout, depencies.config.general.componentCapacity);
-            switch (historyMode)
-            {
-                case HistoryMode.BYCHANGE:
-                    {
-                        MultiHistoryFacadeActions<T>.AllocateDense(ref layout, ref depencies);
-                        break;
-                    }
-                case HistoryMode.BYTICK:
-                    {
-                        MultiHistoryFacadeActions<T>.AllocateForFullDense(ref layout, ref depencies);
-                        break;
-                    }
-            }
+            AllocateDense(ref layout, ref depencies, historyMode, depencies.config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,12 +42,7 @@ namespace AnotherECS.Core.Actions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateDenseSingle(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
         {
-            MultiStorageActions<T>.AllocateDense(ref layout, 1);            
-
-            if (historyMode != HistoryMode.NONE)
-            {
-                MultiHistoryFacadeActions<T>.AllocateDense(ref layout, ref depencies);
-            }
+            AllocateDense(ref layout, ref depencies, historyMode, 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,6 +60,30 @@ namespace AnotherECS.Core.Actions
         {
             MultiStorageActions<T>.AllocateVersion(ref layout, 1);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void AllocateDense(ref UnmanagedLayout<QSparse, WDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode, uint capacity)
+        {
+            MultiStorageActions<T>.AllocateDense(ref layout, capacity);
+            switch (historyMode)
+            {
+                case HistoryMode.BYCHANGE:
+                    {
+                        MultiHistoryFacadeActions<T>.AllocateDense(ref layout, ref depencies);
+                        break;
+                    }
+                case HistoryMode.BYTICK:
+                    {
+                        MultiHistoryFacadeActions<T>.AllocateForFullDense(ref layout, ref depencies);
+                        break;
+                    }
+                case HistoryMode.BYVERSION:
+                    {
+                        MultiHistoryFacadeActions<T>.AllocateForVersionDense(ref layout, ref depencies);
+                        break;
+                    }
+            }
+        }
     }
 
     internal enum HistoryMode
@@ -84,6 +91,7 @@ namespace AnotherECS.Core.Actions
         NONE,
         BYCHANGE,
         BYTICK,
+        BYVERSION
     }
 
 }
