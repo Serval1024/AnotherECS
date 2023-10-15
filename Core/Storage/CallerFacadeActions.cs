@@ -2,19 +2,20 @@
 
 namespace AnotherECS.Core.Actions
 {
-    internal static unsafe class CallerFacadeActions<QSparse, WDense>
-        where QSparse : unmanaged
-        where WDense : unmanaged
+    internal static unsafe class CallerFacadeActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDenseMulti(ref UnmanagedLayout<QSparse, WDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+        public static void AllocateDenseMulti<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+            where TSparse : unmanaged
+            where TDense : unmanaged
         {
             AllocateDense(ref layout, ref depencies, historyMode, depencies.config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSparseMulti<USparse>(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
-            where USparse : unmanaged
+        public static void AllocateSparse<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
+            where TSparse : unmanaged
+            where TDense : unmanaged
         {
             MultiStorageActions<T>.AllocateSparse<USparse>(ref layout, depencies.config.general.entityCapacity);
             if (historyMode != HistoryMode.NONE)
@@ -62,7 +63,9 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDense(ref UnmanagedLayout<QSparse, WDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode, uint capacity)
+        public static void AllocateDense<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode, uint capacity)
+            where TSparse : unmanaged
+            where TDense : unmanaged
         {
             MultiStorageActions<T>.AllocateDense(ref layout, capacity);
             switch (historyMode)

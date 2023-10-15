@@ -512,6 +512,18 @@ namespace AnotherECS.Core.Collection
             ArrayPtrSerializer<T> serializer;
             serializer.Unpack(ref reader, ref this);
         }
+
+        public void PackBlittable(ref WriterContextSerializer writer)
+        {
+            ArrayPtrSerializer<T> serializer;
+            serializer.PackBlittable(ref writer, ref this);
+        }
+
+        public void UnpackBlittable(ref ReaderContextSerializer reader)
+        {
+            ArrayPtrSerializer<T> serializer;
+            serializer.UnpackBlittable(ref reader, ref this);
+        }
     }
 
     public unsafe interface IArrayPtr : IDisposable

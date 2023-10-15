@@ -5,13 +5,13 @@ using System.Reflection;
 
 namespace AnotherECS.Converter
 {
-    public abstract class IgnoresTypeToIdConverter<UId, TType> : TypeToIdConverter<UId, TType>
+    public class IgnoresTypeToIdConverter<UId, TType> : TypeToIdConverter<UId, TType>
         where UId : unmanaged
         where TType : class
     {
         private readonly Type[] _ignoreTypes;
 
-        public IgnoresTypeToIdConverter(Type[] ignoreTypes)
+        public IgnoresTypeToIdConverter(Type[] ignoreTypes = null)
         {
             _ignoreTypes = ignoreTypes ?? Array.Empty<Type>();
             Init();

@@ -1,47 +1,23 @@
-using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
 {
-    internal interface ITick
+    internal interface ITickData<TDense>
     {
         public uint Tick { get; }
+        public TDense Value { get; }
     }
-
-    internal unsafe struct TickDataPtr<U> : ITick, ISerialize
-        where U : unmanaged
+    
+    public struct TickData<TDense> : ITickData<TDense>, ISerialize
     {
         public uint Tick
             => tick;
 
-        public uint tick;
-        public ArrayPtr value;
-
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            writer.Write(tick);
-            value.Pack(ref writer);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            tick = reader.ReadUInt32();
-            value.Unpack(ref reader);
-        }
-
-        public void Dispose()
-        {
-            value.Dispose();
-        }
-    }
-
-    internal struct TickData<U> : ITick, ISerialize
-    {
-        public uint Tick
-            => tick;
+        public TDense Value
+            => value;
 
         public uint tick;
-        public U value;
+        public TDense value;
 
         public void Pack(ref WriterContextSerializer writer)
         {
@@ -52,18 +28,21 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             tick = reader.ReadUInt32();
-            value = reader.ReadStruct<U>();
+            value = reader.ReadStruct<TDense>();
         }
     }
 
-    internal struct TickOffsetData<U> : ITick, ISerialize
+    public struct TickOffsetData<TDense> : ITickData<TDense>, ISerialize
     {
         public uint Tick
             => tick;
 
+        public TDense Value
+            => value;
+
         public uint tick;
         public uint offset;
-        public U value;
+        public TDense value;
 
         public void Pack(ref WriterContextSerializer writer)
         {
@@ -76,19 +55,22 @@ namespace AnotherECS.Core
         {
             tick = reader.ReadUInt32();
             offset = reader.ReadUInt32();
-            value = reader.ReadStruct<U>();
+            value = reader.ReadStruct<TDense>();
         }
     }
 
-    internal struct TickIndexerOffsetData<U> : ITick, ISerialize
+    public struct TickIndexerOffsetData<TDense> : ITickData<TDense>, ISerialize
     {
         public uint Tick
             => tick;
 
+        public TDense Value
+            => value;
+
         public uint tick;
         public uint index;
         public uint offset;
-        public U value;
+        public TDense value;
 
         public void Pack(ref WriterContextSerializer writer)
         {
@@ -103,7 +85,7 @@ namespace AnotherECS.Core
             tick = reader.ReadUInt32();
             index = reader.ReadUInt32();
             offset = reader.ReadUInt32();
-            value = reader.ReadStruct<U>();
+            value = reader.ReadStruct<TDense>();
         }
     }
 

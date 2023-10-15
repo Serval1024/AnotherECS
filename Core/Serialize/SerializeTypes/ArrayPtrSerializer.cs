@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using AnotherECS.Unsafe;
@@ -19,7 +20,7 @@ namespace AnotherECS.Serializer
         public void Unpack(ref ReaderContextSerializer reader, ref ArrayPtr data)
         {   
             var (byteLength, elementCount) = _meta.Unpack(ref reader);
-            var buffer = UnsafeMemory.Malloc(byteLength);
+            var buffer = byteLength != 0 ? UnsafeMemory.Malloc(byteLength) : null;
             reader.Read(buffer, byteLength);
 
             data = new ArrayPtr(buffer, byteLength, elementCount);
@@ -27,11 +28,22 @@ namespace AnotherECS.Serializer
     }
 
 
-    internal unsafe struct ArrayPtrSerializer<T>
+    internal unsafe struct ArrayPtrSerializer<T> : IElementSerializer
         where T : unmanaged
     {
         private ArrayPtrMeta _meta;
         private CompoundMeta _compound;
+
+        public Type Type => typeof(ArrayPtr<>);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PackBlittable(ref WriterContextSerializer writer, ref ArrayPtr<T> data)
+        {
+            _meta.Pack(ref writer, ref data);
+
+            _meta.Pack(ref writer, ref data);
+            writer.Write(data.GetPtr(), data.ByteLength);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer, ref ArrayPtr<T> data)
@@ -65,39 +77,65 @@ namespace AnotherECS.Serializer
             }
         }
 
+        public void Pack(ref WriterContextSerializer writer, object value)
+        {
+            var concreteValue = (ArrayPtr<T>)value;
+            Pack(ref writer, ref concreteValue);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackBlittable(ref ReaderContextSerializer reader, ref ArrayPtr<T> data)
+        {
+            var (byteLength, elementCount) = _meta.Unpack(ref reader);
+            var buffer = byteLength != 0 ? (T*)UnsafeMemory.Malloc(byteLength) : null;
+            reader.Read(buffer, byteLength);
+
+            data = new ArrayPtr<T>(buffer, elementCount);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader, ref ArrayPtr<T> data)
         {
-            (_, uint elementCount) = _meta.Unpack(ref reader);
+            (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
 
-            data.Resize(elementCount);
+            if (byteLength != 0)
+            {
+                data.Resize(elementCount);
 
-            if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
-            {
-                for (uint i = 0; i < data.ElementCount; ++i)
-                {
-                    var serialize = new T() as ISerialize;
-                    serialize.Unpack(ref reader);
-                    data.Set(i, (T)serialize);
-                }
-            }
-            else
-            {
-                if (reader.GetSerializer(typeof(T), out var serializer))
+                if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
                     for (uint i = 0; i < data.ElementCount; ++i)
                     {
-                        data.Set(i, (T)serializer.Unpack(ref reader, null));
+                        var serialize = new T() as ISerialize;
+                        serialize.Unpack(ref reader);
+                        data.Set(i, (T)serialize);
                     }
                 }
                 else
                 {
-                    for (uint i = 0; i < data.ElementCount; ++i)
+                    if (reader.GetSerializer(typeof(T), out var serializer))
                     {
-                        data.Set(i, (T)_compound.Unpack(ref reader, typeof(T)));
+                        for (uint i = 0; i < data.ElementCount; ++i)
+                        {
+                            data.Set(i, (T)serializer.Unpack(ref reader, null));
+                        }
+                    }
+                    else
+                    {
+                        for (uint i = 0; i < data.ElementCount; ++i)
+                        {
+                            data.Set(i, (T)_compound.Unpack(ref reader, typeof(T)));
+                        }
                     }
                 }
             }
+        }
+
+        public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
+        {
+            ArrayPtr<T> concreteValue = default;
+            Unpack(ref reader, ref concreteValue);
+            return concreteValue;
         }
     }
 
@@ -120,9 +158,12 @@ namespace AnotherECS.Serializer
             _count.Pack(ref writer, count);
 
             var ptr = arrayPtr.GetPtr();
-            for (uint i = 0; i < count; i++)
+            if (ptr != null)
             {
-                ptr[i].Pack(ref writer);
+                for (uint i = 0; i < count; i++)
+                {
+                    ptr[i].Pack(ref writer);
+                }
             }
         }
 
@@ -132,14 +173,21 @@ namespace AnotherECS.Serializer
             (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
             var count = _count.Unpack(ref reader);
 
-            var buffer = (T*)UnsafeMemory.Malloc(byteLength);
-            T element = default;
-            for (uint i = 0; i < count; i++)
+            if (byteLength != 0)
             {
-                element.Unpack(ref reader);
-                buffer[i] = element;
+                var buffer = (T*)UnsafeMemory.Malloc(byteLength);
+                T element = default;
+                for (uint i = 0; i < count; i++)
+                {
+                    element.Unpack(ref reader);
+                    buffer[i] = element;
+                }
+                return new ArrayPtr<T>(buffer, elementCount);
             }
-            return new ArrayPtr<T>(buffer, elementCount);
+            else
+            {
+                return default;
+            }
         }
     }
 }

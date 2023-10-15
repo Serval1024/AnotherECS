@@ -1,284 +1,329 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Actions;
+using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    internal static class HistoryActions<T>
-        where T : unmanaged
+    internal static class HistoryActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
+        public static void PushCount<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint recordLength, uint count)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged, ITickData<TTickDataDense>
+            where TTickDataDense : unmanaged
         {
-            ref var history = ref layout.history;
-            
-            history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
-            history.denseBuffer = ArrayPtr.Create<TickOffsetData<T>>(buffersChangeCapacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateForVersionDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity, uint capacity)
-        {
-            ref var history = ref layout.history;
-
-            history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
-            history.denseBuffer = ArrayPtr.Create<TickIndexerOffsetData<T>>(buffersChangeCapacity);
-            history.versionIndexer = ArrayPtr.Create<uint>(capacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateForFullDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
-        {
-            ref var history = ref layout.history;
-
-            history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
-            history.denseBuffer = ArrayPtr.Create<TickDataPtr<T>>(buffersChangeCapacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateRecycle(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity)
-        {
-            ref var history = ref layout.history;
-
-            history.recycleCountBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
-            history.recycleBuffer = ArrayPtr.Create<TickOffsetData<uint>>(buffersAddRemoveCapacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSparse<USparse>(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity)
-            where USparse : unmanaged
-        {
-            ref var history = ref layout.history;
-
-            history.sparseBuffer = ArrayPtr.Create<TickOffsetData<USparse>>(buffersAddRemoveCapacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDenseSegment<USegment>(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
-            where USegment : unmanaged
-        {
-            ref var history = ref layout.history;
-            
-            history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
-            history.denseBuffer = ArrayPtr.Create<TickOffsetData<USegment>>(buffersChangeCapacity);
-        }
-
-        public static void ResizeVersionIndexer(ref UnmanagedLayout<T> layout, uint capacity)
-        {
-            ref var history = ref layout.history;
-
-            history.versionIndexer.Resize<uint>(capacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Inject(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
-        {
-            ref var history = ref layout.history;
-            var denseBuffer = history.denseBuffer.GetPtr<TickOffsetData<T>>();
-            var denseLength = history.denseBuffer.ElementCount;
-
-            ref var construct = ref layout.componentFunction.construct;
-
-            for (int i = 0; i < denseLength; ++i)
-            {
-                construct(ref depencies.injectContainer, ref denseBuffer[i].value);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushRecycledCount(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint recycleIndex)
-        {
-            ref var element = ref layout.history.recycleCountBuffer.GetRef<TickData<uint>>(layout.history.recycleCountIndex++);
-            element.tick = tick;
-            element.value = recycleIndex;
-
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>>(ref layout.history.recycleCountIndex, ref layout.history.recycleCountBuffer, recordLength, nameof(layout.history.recycleCountBuffer));
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushRecycle(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint recycleIndex, uint recycle)
-        {
-            ref var element = ref layout.history.recycleBuffer.GetRef<TickOffsetData<uint>>(layout.history.recycleIndex++);
-            element.tick = tick;
-            element.offset = recycleIndex;
-            element.value = recycle;
-
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushCount(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint count)
-        {
-            ref var element = ref layout.history.countBuffer.GetRef<TickData<uint>>(layout.history.countIndex++);
+            ref var element = ref layout.history.countBuffer.GetRef(layout.history.countIndex++);
             element.tick = tick;
             element.value = count;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>>(ref layout.history.countIndex, ref layout.history.countBuffer, recordLength, nameof(layout.history.countBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>, uint>(ref layout.history.countIndex, ref layout.history.countBuffer, recordLength, nameof(layout.history.countBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint offset, ref T data)
+        public static void PushRecycledCount<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint recordLength, uint recycleIndex)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged, ITickData<TTickDataDense>
+            where TTickDataDense : unmanaged
         {
-            ref var element = ref layout.history.denseBuffer.GetRef<TickOffsetData<T>>(layout.history.denseIndex++);
-          
+            ref var element = ref layout.history.recycleCountBuffer.GetRef(layout.history.recycleCountIndex++);
             element.tick = tick;
-            element.offset = offset;
-            element.value = data;
+            element.value = recycleIndex;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>, uint>(ref layout.history.recycleCountIndex, ref layout.history.recycleCountBuffer, recordLength, nameof(layout.history.recycleCountBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushFullDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, ref ArrayPtr data)
+        public unsafe static void PushFullDense<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickData<ArrayPtr<TDense>>> layout, uint tick, uint recordLength, ArrayPtr<TDense> data)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
-            ref var element = ref layout.history.denseBuffer.GetRef<TickDataPtr<T>>(layout.history.denseIndex++);
+            ref var element = ref layout.history.denseBuffer.GetRef(layout.history.denseIndex++);
 
-            element.tick = tick;
-            element.value.CreateFrom(data);
+            TCopyable copyable = default;
+            if (copyable.Is)
+            {
+                if (element.tick != 0)
+                {
+                    CallRecycle<TDense, TCopyable>(ref element.value);
+                }
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickDataPtr<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+                element.tick = tick;
+                CopyFrom<TDense, TCopyable>(ref element.value, ref layout.storage.dense, layout.storage.denseIndex);
+            }
+            else
+            {
+                element.tick = tick;
+                element.value.CreateFrom(data);
+            }
+
+            HistoryUtils.CheckAndResizeLoopBuffer<TickData<ArrayPtr<TDense>>, ArrayPtr<TDense>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void PushVersionDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength)
+        public static unsafe void PushVersionDense<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickIndexerOffsetData<TDense>> layout, uint tick, uint recordLength)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
             var denseBuffer = layout.history.denseBuffer;
-            var denseBufferPtr = denseBuffer.GetPtr<TickIndexerOffsetData<T>>();
+            var denseBufferPtr = denseBuffer.GetPtr();
             var dense = layout.storage.dense;
-            var densePtr = dense.GetPtr<T>();
+            var densePtr = dense.GetPtr();
 
-            var versionPtr = layout.storage.version.GetPtr<uint>();
-            var versionIndexer = layout.history.versionIndexer.GetPtr<uint>();
+            var versionPtr = layout.storage.version.GetPtr();
+            var versionIndexer = layout.history.versionIndexer.GetPtr();
             ref var denseIndex = ref layout.history.denseIndex;
 
-            for (uint i = 0, iMax = layout.storage.denseIndex; i < iMax; ++i)
+            TCopyable copyable = default;
+            if (copyable.Is)
             {
-                if (versionPtr[i] != tick)
+                for (uint i = 0, iMax = layout.storage.denseIndex; i < iMax; ++i)
                 {
-                    ref var element = ref denseBufferPtr[denseIndex];
+                    if (versionPtr[i] == tick)
+                    {
+                        ref var element = ref denseBufferPtr[denseIndex];
+                        if (element.Tick != 0)
+                        {
+                            copyable.Recycle(ref element.value);
+                        }
 
-                    element.tick = tick;
-                    element.offset = i;
-                    element.value = densePtr[i];
-                    versionIndexer[i] = denseIndex;
-
-                    ++denseIndex;
-                    HistoryUtils.CheckAndResizeLoopBuffer<TickIndexerOffsetData<T>>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
+                        element.tick = tick;
+                        element.offset = i;
+                        copyable.CopyFrom(ref densePtr[i], ref element.value);
+                        element.index = versionIndexer[i];
+                        versionIndexer[i] = denseIndex;
+                        ++denseIndex;
+                    }
                 }
+            }
+            else
+            {
+                for (uint i = 0, iMax = layout.storage.denseIndex; i < iMax; ++i)
+                {
+                    if (versionPtr[i] == tick)
+                    {
+                        ref var element = ref denseBufferPtr[denseIndex];
+
+                        element.tick = tick;
+                        element.offset = i;
+                        densePtr[i] = element.value;
+                        element.index = versionIndexer[i];
+                        versionIndexer[i] = denseIndex;
+                        ++denseIndex;
+                    }
+                }
+            }
+            HistoryUtils.CheckAndResizeLoopBuffer<TickIndexerOffsetData<TDense>, TDense>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryChangeClear<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TDense>> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
+        {
+            var denseBufferPtr = layout.history.denseBuffer.GetPtr();
+            var count = layout.history.denseBuffer.ElementCount;
+
+            TCopyable copyable = default;
+            if (copyable.Is)
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    if (denseBufferPtr[i].Tick != 0)
+                    {
+                        copyable.Recycle(ref denseBufferPtr[i].value);
+                    }
+                }
+            }
+            layout.history.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryTickClear<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickData<ArrayPtr<TDense>>> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
+        {
+            var denseBufferPtr = layout.history.denseBuffer.GetPtr();
+            var count = layout.history.denseBuffer.ElementCount;
+
+            TCopyable copyable = default;
+            if (copyable.Is)
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    if (denseBufferPtr[i].Tick != 0)
+                    {
+                        var dense = denseBufferPtr[i].value;
+                        CallRecycle<TDense, TCopyable>(ref dense);
+                    }
+                }
+            }
+            layout.history.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryVersionClear<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickIndexerOffsetData<TDense>> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
+        {
+            var denseBufferPtr = layout.history.denseBuffer.GetPtr();
+            var count = layout.history.denseBuffer.ElementCount;
+
+            TCopyable copyable = default;
+            if (copyable.Is)
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    if (denseBufferPtr[i].Tick != 0)
+                    {
+                        copyable.Recycle(ref denseBufferPtr[i].value);
+                    }
+                }
+            }
+            layout.history.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private unsafe static void CopyFrom<TDense, TCopyable>(ref ArrayPtr<TDense> destination, ref ArrayPtr<TDense> source, uint denseIndex)
+            where TDense : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>
+        {
+            if (!destination.IsValide || destination.ElementCount != source.ElementCount)
+            {
+                destination.Resize(source.ElementCount);
+            }
+
+            TCopyable copyable = default;
+            var sourcePtr = source.GetPtr();
+            var destinationPtr = destination.GetPtr();
+
+            for (uint i = 0; i < denseIndex; i++)
+            {
+                copyable.CopyFrom(ref sourcePtr[i], ref destinationPtr[i]);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe void CallRecycle<TDense, TCopyable>(ref ArrayPtr<TDense> element)
+            where TDense : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
+        {
+            TCopyable copyable = default;
+            var dense = element;
+            var densePtr = element.GetPtr();
+
+            for (uint j = 0, jMax = dense.ElementCount; j < jMax; j++)
+            {
+                copyable.Recycle(ref densePtr[j]);
             }
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void PushSegment<USegment>(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, USegment* data)
-            where USegment : unmanaged
+        public static unsafe void PushDenseSegment<TSparse, TDense, TDenseIndex, TSegment>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TSegment>> layout, uint tick, uint recordLength, TSegment* data)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TSegment : unmanaged
         {
-            ref var element = ref layout.history.denseBuffer.GetRef<TickOffsetData<USegment>>(layout.history.denseIndex++);
+            ref var element = ref layout.history.denseBuffer.GetRef(layout.history.denseIndex++);
             element.tick = tick;
-            element.offset = (uint)(data - layout.storage.dense.GetPtr<USegment>());
+            element.offset = (uint)((byte*)data - (byte*)layout.storage.dense.GetPtr());
             element.value = *data;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<USegment>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PushSparse<USparse>(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint offset, USparse data)
-            where USparse : unmanaged
+        public static void PushSparse<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint recordLength, uint offset, TSparse data)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged, ITickData<TTickDataDense>
+            where TTickDataDense : unmanaged
         {
-            ref var element = ref layout.history.denseBuffer.GetRef<TickOffsetData<USparse>>(layout.history.sparseIndex++);
+            ref var element = ref layout.history.sparseBuffer.GetRef(layout.history.sparseIndex++);
             element.tick = tick;
             element.offset = offset;
             element.value = data;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<USparse>>(ref layout.history.sparseIndex, ref layout.history.sparseBuffer, recordLength, nameof(layout.history.sparseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TSparse>, TSparse>(ref layout.history.sparsendex, ref layout.history.sparseBuffer, recordLength, nameof(layout.history.sparseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToSingleSparseBuffer(uint tick, ref bool subject, ref ArrayPtr buffer, ref uint bufferIndex, out Op op)
+        public static void PushDense<TSparse, TDense, TDenseIndex, TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TDense>> layout, uint tick, uint recordLength, TDenseIndex offset, ref TDense data)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
-            var bufferPtr = buffer.GetPtr<TickOffsetData<bool>>();
+            ref var element = ref layout.history.denseBuffer.GetRef(layout.history.denseIndex++);
 
-            op = Op.NONE;
-
-            if (bufferIndex != 0)
+            TCopyable copyable = default;
+            if (copyable.Is)
             {
-                for (uint i = bufferIndex - 1; i >= 0; --i)
+                if (element.tick != 0)
                 {
-                    var frame = bufferPtr[i];
-
-                    if (frame.tick > tick)
-                    {
-                        if (op != Op.BOTH)
-                        {
-                            if (subject != frame.value)
-                            {
-                                op |= Op.BOTH;
-                            }
-                            else if (!subject && frame.value)
-                            {
-                                op |= Op.ADD;
-                            }
-                            else if (subject && !frame.value)
-                            {
-                                op = Op.REMOVE;
-                            }
-                        }
-
-                        subject = frame.value;
-                    }
-                    else
-                    {
-                        bufferIndex = i + 1;
-                        return;
-                    }
+                    copyable.Recycle(ref element.value);
                 }
+
+                element.tick = tick;
+                element.offset = offset;
+                copyable.CopyFrom(ref data, ref element.value);
+            }
+            else
+            {
+                element.tick = tick;
+                element.offset = offset;
+                element.value = data;
             }
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
-            {
-                var frame = bufferPtr[i];
-
-                if (frame.tick > tick)
-                {
-                    if (op != Op.BOTH)
-                    {
-                        if (subject != frame.value)
-                        {
-                            op |= Op.BOTH;
-                        }
-                        else if (!subject && frame.value)
-                        {
-                            op |= Op.ADD;
-                        }
-                        else if (subject && !frame.value)
-                        {
-                            op = Op.REMOVE;
-                        }
-                    }
-
-                    subject = frame.value;
-                }
-                else
-                {
-                    bufferIndex = (i + 1) % buffer.ElementCount;
-                    return;
-                }
-            }
+            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TDense>, TDense>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToSparseBufferMulti<USparse>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref uint bufferIndex, ref ArrayPtr bufferCopy, ref ArrayPtr<Op> ops)
-            where USparse : unmanaged, IEquatable<T>
+        public static void PushRecycled<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint recordLength, uint offset, TDenseIndex recycle)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged, ITickData<TTickDataDense>
+            where TTickDataDense : unmanaged
         {
-            var bufferPtr = buffer.GetPtr<TickOffsetData<USparse>>();
-            var subjectPtr = subject.GetPtr<USparse>();
+            ref var element = ref layout.history.recycleBuffer.GetRef(layout.history.recycleIndex++);
+            element.tick = tick;
+            element.offset = offset;
+            element.value = recycle;
+
+            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TDenseIndex>, TDenseIndex>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertToSparseBuffer<TSparse>(uint tick, ref ArrayPtr<TSparse> subject, ref ArrayPtr<TickOffsetData<TSparse>> buffer, ref uint bufferIndex, ref ArrayPtr<TSparse> bufferCopy, ref ArrayPtr<Op> ops)
+           where TSparse : unmanaged, IEquatable<TSparse>
+        {
+            var bufferPtr = buffer.GetPtr();
+            var subjectPtr = subject.GetPtr();
 
             bufferCopy.Resize(subject.ByteLength);
             bufferCopy.CopyFrom(subject);
 
-            var bufferCopyPtr = bufferCopy.GetPtr<USparse>();
-            var zero = default(USparse);
+            var bufferCopyPtr = bufferCopy.GetPtr();
+            TSparse zero = default;
 
             if (ops.ElementCount != subject.ElementCount)
             {
@@ -363,11 +408,11 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToMultiValueBuffer<TTickOffsetDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref uint bufferIndex)
-            where TTickOffsetDataTypeData : unmanaged
+        public static unsafe void RevertToValueBuffer<TData>(uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TickOffsetData<TData>> buffer, ref uint bufferIndex)
+            where TData : unmanaged
         {
-            var bufferPtr = buffer.GetPtr<TickOffsetData<TTickOffsetDataTypeData>>();
-            var subjectPtr = subject.GetPtr<TTickOffsetDataTypeData>();
+            var bufferPtr = buffer.GetPtr();
+            var subjectPtr = subject.GetPtr();
 
             if (bufferIndex != 0)
             {
@@ -404,10 +449,10 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToSingleValueBuffer<TTickDataTypeData>(uint tick, ref TTickDataTypeData subject, ref ArrayPtr buffer, ref uint bufferIndex)
-            where TTickDataTypeData : unmanaged
+        public static unsafe void RevertToValueBuffer<TData>(uint tick, ref TData subject, ref ArrayPtr<TickData<TData>> buffer, ref uint bufferIndex)
+            where TData : unmanaged
         {
-            var bufferPtr = buffer.GetPtr<TickData<TTickDataTypeData>>();
+            var bufferPtr = buffer.GetPtr();
 
             if (bufferIndex != 0)
             {
@@ -447,55 +492,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToSingleValueBufferPtr<TTickDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref uint bufferIndex)
-            where TTickDataTypeData : unmanaged
+        public static unsafe void RevertToValueIndexerBuffer<TData>(uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TickIndexerOffsetData<TData>> buffer, ref ArrayPtr<uint> indexerBuffer, ref uint bufferIndex)
+           where TData : unmanaged
         {
-            var bufferPtr = buffer.GetPtr<TickDataPtr<TTickDataTypeData>>();
-
-            if (bufferIndex != 0)
-            {
-                for (uint i = bufferIndex - 1; i >= 0; --i)
-                {
-                    if (bufferPtr[i].tick <= tick)
-                    {
-                        var lastIndex = i + 1;
-                        if (i < bufferIndex)
-                        {
-                            subject = bufferPtr[lastIndex].value;
-                            bufferIndex = lastIndex;
-                            return;
-                        }
-                        break;
-                    }
-                }
-            }
-
-
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
-            {
-                if (bufferPtr[i].tick <= tick)
-                {
-                    var lastIndex = i + 1;
-                    if (lastIndex < buffer.ElementCount)
-                    {
-                        subject = bufferPtr[lastIndex].value;
-                        bufferIndex = lastIndex;
-                        return;
-                    }
-                    break;
-                }
-            }
-
-            subject = bufferPtr[bufferIndex].value;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void RevertToMultiValueIndexerBuffer<TTickOffsetDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref ArrayPtr indexerBuffer, ref uint bufferIndex)
-          where TTickOffsetDataTypeData : unmanaged
-        {
-            var indexerBufferPtr = indexerBuffer.GetPtr<uint>();
-            var bufferPtr = buffer.GetPtr<TickIndexerOffsetData<TTickOffsetDataTypeData>>();
-            var subjectPtr = subject.GetPtr<TTickOffsetDataTypeData>();
+            var indexerBufferPtr = indexerBuffer.GetPtr();
+            var bufferPtr = buffer.GetPtr();
+            var subjectPtr = subject.GetPtr();
 
             if (bufferIndex != 0)
             {
@@ -541,11 +543,285 @@ namespace AnotherECS.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertTo<TSparse, TDense, TDenseIndex, TTickData, TAttachDetachStorage, TAttach, TDetach, JSparseBoolConst, TVersion, KRevertDense>
+            (UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout, ref TAttachDetachStorage attachDetachStorage, uint tick)
+            where TSparse : unmanaged, IEquatable<TSparse>
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+
+            where TAttachDetachStorage : struct, IAttachDetachProvider<TSparse>, IBoolConst
+            where TAttach : struct, IAttach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
+            where TDetach : struct, IDetach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
+            where JSparseBoolConst : struct, IBoolConst
+            where TVersion : struct, IBoolConst
+            where KRevertDense : struct, IDenseRevert<TSparse, TDense, TDenseIndex, TTickData>
+        {
+            RevertToValueBuffer(tick, ref layout->storage.denseIndex, ref layout->history.countBuffer, ref layout->history.countIndex);
+
+            RevertToValueBuffer(tick, ref layout->storage.recycleIndex, ref layout->history.recycleCountBuffer, ref layout->history.recycleCountIndex);
+            RevertToValueBuffer(tick, ref layout->storage.recycle, ref layout->history.recycleBuffer, ref layout->history.recycleIndex);
+
+            if (attachDetachStorage.Is)
+            {
+                var bufferCopy = attachDetachStorage.GetSparseTempBuffer();
+                var ops = attachDetachStorage.GetOps();
+                RevertToSparseBuffer(tick, ref layout->storage.sparse, ref layout->history.sparseBuffer, ref layout->history.sparseIndex, ref bufferCopy, ref ops);
+
+                TDetach detach = default;
+                if (detach.Is)
+                {
+                    detach.Detach<JSparseBoolConst>(layout, attachDetachStorage.GetState(), ref ops);
+                }
+
+                KRevertDense revertDense = default;
+                revertDense.RevertDense(ref *layout, tick);
+
+
+                TAttach attach = default;
+                if (attach.Is)
+                {
+                    attach.Attach<JSparseBoolConst>(layout, attachDetachStorage.GetState(), ref ops);
+                }
+            }
+            else
+            {
+                RevertToValueBuffer(tick, ref layout->storage.sparse, ref layout->history.sparseBuffer, ref layout->history.sparseIndex);
+
+                KRevertDense revertDense = default;
+                revertDense.RevertDense(ref *layout, tick);
+            }
+
+            TVersion version = default;
+            if (version.Is)
+            {
+                StorageActions.UpdateVersion(ref *layout, tick, layout->storage.denseIndex);
+            }
+        }
+
+        
+
+        /*
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
+       {
+           ref var history = ref layout.history;
+
+           history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+           history.denseBuffer = ArrayPtr.Create<TickOffsetData<T>>(buffersChangeCapacity);
+       }
+
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateForVersionDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity, uint capacity)
+       {
+           ref var history = ref layout.history;
+
+           history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+           history.denseBuffer = ArrayPtr.Create<TickIndexerOffsetData<T>>(buffersChangeCapacity);
+           history.versionIndexer = ArrayPtr.Create<uint>(capacity);
+       }
+
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateForFullDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
+       {
+           ref var history = ref layout.history;
+
+           history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+           history.denseBuffer = ArrayPtr.Create<TickDataPtr<T>>(buffersChangeCapacity);
+       }
+
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateRecycle(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity)
+       {
+           ref var history = ref layout.history;
+
+           history.recycleCountBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+           history.recycleBuffer = ArrayPtr.Create<TickOffsetData<uint>>(buffersAddRemoveCapacity);
+       }
+
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateSparse<USparse>(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity)
+           where USparse : unmanaged
+       {
+           ref var history = ref layout.history;
+
+           history.sparseBuffer = ArrayPtr.Create<TickOffsetData<USparse>>(buffersAddRemoveCapacity);
+       }
+
+       [MethodImpl(MethodImplOptions.AggressiveInlining)]
+       public static void AllocateDenseSegment<USegment>(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
+           where USegment : unmanaged
+       {
+           ref var history = ref layout.history;
+
+           history.countBuffer = ArrayPtr.Create<TickData<uint>>(buffersAddRemoveCapacity);
+           history.denseBuffer = ArrayPtr.Create<TickOffsetData<USegment>>(buffersChangeCapacity);
+       }
+
+       public static void ResizeVersionIndexer(ref UnmanagedLayout<T> layout, uint capacity)
+       {
+           ref var history = ref layout.history;
+
+           history.versionIndexer.Resize<uint>(capacity);
+       }
+       */
+
+
+        /*
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PushRecycle(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint recycleIndex, uint recycle)
+        {
+            ref var element = ref layout.history.recycleBuffer.GetRef<TickOffsetData<uint>>(layout.history.recycleIndex++);
+            element.tick = tick;
+            element.offset = recycleIndex;
+            element.value = recycle;
+
+            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
+        }
+*/
+        /*
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PushDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint offset, ref T data)
+        {
+            ref var element = ref layout.history.denseBuffer.GetRef<TickOffsetData<T>>(layout.history.denseIndex++);
+          
+            element.tick = tick;
+            element.offset = offset;
+            element.value = data;
+
+            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+        }
+        */
+
+
+
+        /*
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertToSingleSparseBuffer(uint tick, ref bool subject, ref ArrayPtr buffer, ref uint bufferIndex, out Op op)
+        {
+            var bufferPtr = buffer.GetPtr<TickOffsetData<bool>>();
+
+            op = Op.NONE;
+
+            if (bufferIndex != 0)
+            {
+                for (uint i = bufferIndex - 1; i >= 0; --i)
+                {
+                    var frame = bufferPtr[i];
+
+                    if (frame.tick > tick)
+                    {
+                        if (op != Op.BOTH)
+                        {
+                            if (subject != frame.value)
+                            {
+                                op |= Op.BOTH;
+                            }
+                            else if (!subject && frame.value)
+                            {
+                                op |= Op.ADD;
+                            }
+                            else if (subject && !frame.value)
+                            {
+                                op = Op.REMOVE;
+                            }
+                        }
+
+                        subject = frame.value;
+                    }
+                    else
+                    {
+                        bufferIndex = i + 1;
+                        return;
+                    }
+                }
+            }
+
+            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            {
+                var frame = bufferPtr[i];
+
+                if (frame.tick > tick)
+                {
+                    if (op != Op.BOTH)
+                    {
+                        if (subject != frame.value)
+                        {
+                            op |= Op.BOTH;
+                        }
+                        else if (!subject && frame.value)
+                        {
+                            op |= Op.ADD;
+                        }
+                        else if (subject && !frame.value)
+                        {
+                            op = Op.REMOVE;
+                        }
+                    }
+
+                    subject = frame.value;
+                }
+                else
+                {
+                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    return;
+                }
+            }
+        }
+        */
+
+
+
+
+
+
+        /*
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void HistoryClear(ref UnmanagedLayout<T> layout)
+        public static unsafe void RevertToSingleValueBufferPtr<TTickDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref uint bufferIndex)
+            where TTickDataTypeData : unmanaged
         {
-            layout.history.Clear();
+            var bufferPtr = buffer.GetPtr<TickDataPtr<TTickDataTypeData>>();
+
+            if (bufferIndex != 0)
+            {
+                for (uint i = bufferIndex - 1; i >= 0; --i)
+                {
+                    if (bufferPtr[i].tick <= tick)
+                    {
+                        var lastIndex = i + 1;
+                        if (i < bufferIndex)
+                        {
+                            subject = bufferPtr[lastIndex].value;
+                            bufferIndex = lastIndex;
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+
+
+            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            {
+                if (bufferPtr[i].tick <= tick)
+                {
+                    var lastIndex = i + 1;
+                    if (lastIndex < buffer.ElementCount)
+                    {
+                        subject = bufferPtr[lastIndex].value;
+                        bufferIndex = lastIndex;
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            subject = bufferPtr[bufferIndex].value;
         }
+        */
+
+
     }
 }

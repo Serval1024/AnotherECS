@@ -1,26 +1,121 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Actions
 {
-    internal static unsafe class StorageActions<T>
-        where T : unmanaged
+    internal static unsafe class StorageActions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint GetCount<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout)
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+            => layout.storage.sparse.Get(0) ? (uint)1 : 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CallConstruct(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ref T component)
+        public static uint GetCount<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint startIndex)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+            => GetSpaceCount(ref layout, startIndex) - layout.storage.recycleIndex;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint GetSpaceCount<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint startIndex)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+            => layout.storage.denseIndex - startIndex;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryResizeDense<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
-            layout.componentFunction.construct(ref depencies.injectContainer, ref component);
+            ref var storage = ref layout.storage;
+            if (storage.denseIndex == storage.dense.ElementCount)
+            {
+                layout.storage.dense.Resize(capacity);
+
+                return true;
+            }
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CallDeconstruct(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, ref T component)
+        public static bool TryResizeRecycle<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
-            layout.componentFunction.deconstruct(ref depencies.injectContainer, ref component);
+            ref var storage = ref layout.storage;
+            if (storage.recycleIndex == storage.recycle.ElementCount)
+            {
+                layout.storage.recycle.Resize(capacity);
+
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CheckDenseLimit<TSparse, TDense, TDenseIndex, TTickData, RNumber>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+            where RNumber : unmanaged
+        {
+            if (layout.storage.denseIndex == GetMaxValue<RNumber>())
+            {
+                throw new Exceptions.ReachedLimitComponentException(GetMaxValue<RNumber>());
+            }
+        }
+
+        public static uint GetMaxValue<QNumber>()
+          where QNumber : unmanaged
+          => Type.GetTypeCode(typeof(QNumber)) switch
+          {
+              TypeCode.Boolean => 1,
+              TypeCode.Byte => byte.MaxValue,
+              TypeCode.UInt16 => ushort.MaxValue,
+              TypeCode.UInt32 => uint.MaxValue,
+              _ => throw new ArgumentException(),
+          };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void StorageClear<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+        {
+            ref var storage = ref layout.storage;
+
+            storage.sparse.Clear();
+            storage.dense.Clear();
+            storage.version.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void UpdateVersion<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint count)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+        {
+            var version = layout.storage.version.GetPtr();
+            for (uint i = 0; i < count; ++i)
+            {
+                version[i] = tick;
+            }
         }
     }
-
+    /*
     internal static unsafe class SingleStorageActions<T>
         where T : unmanaged
     {
@@ -171,23 +266,26 @@ namespace AnotherECS.Core.Actions
             storage.version.Clear();
         }
     }
-
-    internal static unsafe class MultiStorageActions<T>
-        where T : unmanaged
+    */
+    internal static unsafe class MultiStorageActions
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateDense(ref UnmanagedLayout<T> layout, uint denseCapacity)
+        public static void AllocateDense<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, uint denseCapacity)
+            where TSparse : unmanaged
+            where TDense : unmanaged
         {
             ref var storage = ref layout.storage;
-            storage.dense = ArrayPtr.Create<T>(denseCapacity);
+            storage.dense.Allocate(denseCapacity);
             storage.denseIndex = 1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AllocateSparse<USparse>(ref UnmanagedLayout<T> layout, uint capacity)
-            where USparse : unmanaged
+        public static void AllocateSparse<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, uint capacity)
+            where TSparse : unmanaged
+            where TDense : unmanaged
         {
-            layout.storage.sparse = ArrayPtr.Create<USparse>(capacity);
+            layout.storage.sparse.Allocate(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -200,7 +298,7 @@ namespace AnotherECS.Core.Actions
         public static void AllocateVersion(ref UnmanagedLayout<T> layout, uint denseCapacity)
         {
             layout.storage.version = ArrayPtr.Create<uint>(denseCapacity);
-        }
+        }*/
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static void CallConstruct_bool(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)

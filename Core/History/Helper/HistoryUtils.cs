@@ -7,14 +7,15 @@ namespace AnotherECS.Core
     internal static class HistoryUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool CheckAndResizeLoopBufferInternal<U>(ref uint index, ref ArrayPtr buffer, uint recordHistoryLength)
-           where U : unmanaged, ITick
+        private static bool CheckAndResizeLoopBufferInternal<ETickDataDense, TDense>(ref uint index, ref ArrayPtr<ETickDataDense> buffer, uint recordHistoryLength)
+            where ETickDataDense : unmanaged, ITickData<TDense>
+            where TDense : unmanaged
         {
             if (index == buffer.ElementCount)
             {
-                if (buffer.GetRef<U>(buffer.ElementCount - 1).Tick - buffer.GetRef<U>(0).Tick < recordHistoryLength)
+                if (buffer.GetRef(buffer.ElementCount - 1).Tick - buffer.GetRef(0).Tick < recordHistoryLength)
                 {
-                    buffer.Resize<U>(buffer.ElementCount << 1);
+                    buffer.Resize(buffer.ElementCount << 1);
                     return true;
                 }
                 else
@@ -27,11 +28,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CheckAndResizeLoopBuffer<U>(ref uint index, ref ArrayPtr buffer, uint recordHistoryLength, string debugBufferName)
-            where U : unmanaged, ITick
+        public static void CheckAndResizeLoopBuffer<ETickDataDense, TDense>(ref uint index, ref ArrayPtr<ETickDataDense> buffer, uint recordHistoryLength, string debugBufferName)
+            where ETickDataDense : unmanaged, ITickData<TDense>
+            where TDense : unmanaged
         {
 #if ANOTHERECS_DEBUG
-            var isResized = CheckAndResizeLoopBufferInternal<U>(ref index, ref buffer, recordHistoryLength);
+            var isResized = CheckAndResizeLoopBufferInternal<ETickDataDense, TDense>(ref index, ref buffer, recordHistoryLength);
             if (isResized)
             {
                 Logger.HistoryBufferResized(debugBufferName, buffer.ElementCount);

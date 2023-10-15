@@ -1,8 +1,8 @@
-﻿using AnotherECS.Converter;
-using AnotherECS.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AnotherECS.Converter;
+using AnotherECS.Core;
 
 namespace AnotherECS.Serializer
 {
@@ -15,10 +15,10 @@ namespace AnotherECS.Serializer
 
         public SerializeToUIntConverter(uint startId)
         {
-            var iSerializers = new TypeToIdConverter<uint, IElementSerializer>().GetAssociationTable();
-            var iSerializes = new TypeToIdConverter<uint, ISerialize>().GetAssociationTable();
-            var iComponents = new TypeToIdConverter<uint, IComponent>().GetAssociationTable();
-            var iEvents = new TypeToIdConverter<uint, IEvent>().GetAssociationTable();
+            var iSerializers = new IgnoresTypeToIdConverter<uint, IElementSerializer>().GetAssociationTable();
+            var iSerializes = new IgnoresTypeToIdConverter<uint, ISerialize>().GetAssociationTable();
+            var iComponents = new IgnoresTypeToIdConverter<uint, IComponent>().GetAssociationTable();
+            var iEvents = new IgnoresTypeToIdConverter<uint, IEvent>().GetAssociationTable();
             
             var serializeAttributes = TypeUtils.GetAllowHasAttributeFromTypesAcrossAll<SerializeAttribute>();
 

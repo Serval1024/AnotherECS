@@ -31,9 +31,9 @@ namespace AnotherECS.Core
         private DArrayCaller _dArray;
 
         private bool[] _isCustomSerializeCallers;
-        private ITickFinished[] _tickFinishedCallers;  //TODO SER MTHREAD
+        private ITickFinishedCaller[] _tickFinishedCallers;  //TODO SER MTHREAD
         private IResizableCaller[] _resizableCallers;  //TODO SER MTHREAD
-        private IRevert[] _revertCallers;
+        private IRevertCaller[] _revertCallers;
         private readonly ushort[] _componentsBufferTemp;
         #endregion
 
@@ -96,7 +96,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    LayoutSerializer.Pack(ref writer, ref _layoutPtr[i]);
+                    LayoutSerializer.PackBlittable(ref writer, ref _layoutPtr[i]);
                 }
             }
 
@@ -125,7 +125,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    LayoutSerializer.Unpack(ref reader, ref _layoutPtr[i]);
+                    LayoutSerializer.UnpackBlittable(ref reader, ref _layoutPtr[i]);
                 }
             }
         }
@@ -141,9 +141,9 @@ namespace AnotherECS.Core
             _depencies->injectContainer = new InjectContainer(_dArray);
 
             _isCustomSerializeCallers = _callers.Select(p => p is ISerialize).ToArray();
-            _tickFinishedCallers = _callers.Where(p => p is ITickFinished).Cast<ITickFinished>().ToArray();
+            _tickFinishedCallers = _callers.Where(p => p is ITickFinishedCaller).Cast<ITickFinishedCaller>().ToArray();
             _resizableCallers = _callers.Where(p => p is IResizableCaller).Cast<IResizableCaller>().ToArray();
-            _revertCallers = _callers.Where(p => p is IRevert).Cast<IRevert>().ToArray();
+            _revertCallers = _callers.Where(p => p is IRevertCaller).Cast<IRevertCaller>().ToArray();
         }
         #endregion
 
@@ -153,7 +153,7 @@ namespace AnotherECS.Core
         {
             for (int i = 1; i < _callers.Length; ++i)
             {
-                if (_callers[i] is ICallerAttach callerAttach)
+                if (_callers[i] is IAttachCaller callerAttach)
                 {
                     callerAttach.Attach();
                 }
@@ -285,7 +285,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfExists<T>(this, id, GetCaller<T>());
+            ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T, IMultiCaller<T>>().Add(id, ref data);
         }

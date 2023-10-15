@@ -1,20 +1,63 @@
 using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Converter;
+using AnotherECS.Core;
 using AnotherECS.Core.Actions;
+using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
+using static AnotherECS.Core.Caller.FFF;
 
+
+/*
+using ImplCaller = Caller<
+               ushort, AnotherECS.Core.DArrayContainer, ushort, AnotherECS.Core.TickOffsetData<AnotherECS.Core.DArrayContainer>, AnotherECS.Core.DArrayContainer,
+               InjectFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
+               RecycleStorageFeature<ushort, TEST, ushort, TickOffsetData<TEST>, TEST, UshortNextNumber>,
+               DefaultFeature<TEST>,
+               AttachDetachFeature<ushort>,
+               AttachFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
+               DetachFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
+               UshortSparseFeature<TEST, TickOffsetData<TEST>, TEST>,
+               UshortDenseFeature<ushort, TEST, TickOffsetData<TEST>>,
+               TrueConst,
+               CopyableFeature<TEST>,
+               UshortVersionFeature<ushort, TEST, TickOffsetData<TEST>>,
+               ByChangeHistoryFeature<ushort, TEST, ushort>,
+               BBSerialize<ushort, TEST, ushort, TickOffsetData<TEST>>
+               >;
+*/
 namespace AnotherECS.Core
 {
+    using DArrayLayout =
+        UnmanagedLayout<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>;
+    
+    using ImplCaller = Caller<
+               ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>, DArrayContainer,
+               Nothing<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>,
+               RecycleStorageFeature<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>, DArrayContainer, UshortNextNumber>,
+               DefaultFeature<DArrayContainer>,
+               Nothing<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>,
+               Nothing<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>,
+               Nothing<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>,
+               UshortSparseFeature<DArrayContainer, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
+               UshortDenseFeature<ushort, DArrayContainer, TickIndexerOffsetData<DArrayContainer>>,
+               Nothing,
+               CopyableFeature<DArrayContainer>,
+               UshortVersionFeature<ushort, DArrayContainer, TickIndexerOffsetData<DArrayContainer>>,
+               ByVersionHistoryFeature<ushort, DArrayContainer, ushort>,
+               SSSerialize<ushort, DArrayContainer, ushort, TickIndexerOffsetData<DArrayContainer>>
+               >;
+
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct DArrayCaller : ICaller<DArrayCaller.Container>, IDisposable, ISerialize
+    public unsafe struct DArrayCaller : ICaller<DArrayContainer>, IDisposable, ISerialize
     {
-        private UnmanagedLayout<Container>* _layout;
-        private GlobalDepencies* _depencies;
+        //private DArrayLayout* _layout;
+        //private GlobalDepencies* _depencies;
+
 
 
         public bool IsValide
@@ -23,11 +66,11 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
         {
-            Config((UnmanagedLayout<Container>*)layout, depencies);
+            Config((UnmanagedLayout<DArrayContainer>*)layout, depencies);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Config(UnmanagedLayout<Container>* layout, GlobalDepencies* depencies)
+        private void Config(UnmanagedLayout<DArrayContainer>* layout, GlobalDepencies* depencies)
         {
             _layout = layout;
             _depencies = depencies;
@@ -39,20 +82,20 @@ namespace AnotherECS.Core
             DArrayActions.AllocateLayout(ref *_layout, ref *_depencies);
         }
 
-        Container ICaller<Container>.Create()
+        DArrayContainer ICaller<DArrayContainer>.Create()
             => default;
 
         public Type GetElementType()
-            => typeof(Container);
+            => typeof(DArrayContainer);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Add<T>(int count)
             where T : unmanaged
         {
-            MultiStorageActions<Container>.TryResizeDense(ref *_layout);
+            MultiStorageActions<DArrayContainer>.TryResizeDense(ref *_layout);
 
-            var denseIndex = MultiStorageActions<Container>.AllocateIdHistory(ref *_layout, ref *_depencies);
-            ref var container = ref MultiStorageActions<Container>.ReadDirect(ref *_layout, denseIndex);
+            var denseIndex = MultiStorageActions<DArrayContainer>.AllocateIdHistory(ref *_layout, ref *_depencies);
+            ref var container = ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, denseIndex);
             container.Prepare<T>((uint)count);
             return denseIndex;
         }
@@ -60,7 +103,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(uint id)
         {
-            MultiStorageActions<Container>.TryResizeRecycle(ref *_layout);
+            MultiStorageActions<DArrayContainer>.TryResizeRecycle(ref *_layout);
             IncVersion(id);
         }
 
@@ -70,7 +113,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeId(id);
 #endif
-            return MultiStorageActions<Container>.ReadDirect(ref *_layout, id).count;
+            return MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).count;
         }
 
         public void Clear(uint id)
@@ -78,7 +121,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeId(id);
 #endif
-            MultiStorageActions<Container>.ReadDirect(ref *_layout, id).Clear();
+            MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,7 +130,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeId(id);
 #endif
-            return MultiStorageActions<Container>.ReadDirect(ref *_layout, id).data.GetPtr();
+            return MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).data.GetPtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -97,7 +140,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeIndex(id, index);
 #endif
-            return ref MultiStorageActions<Container>.ReadDirect(ref *_layout, id).Read<T>(index);
+            return ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).Read<T>(index);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +150,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeIndex(id, index);
 #endif
-            return ref MultiStorageActions<Container>.ReadDirect(ref *_layout, id).Get<T>(index);
+            return ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).Get<T>(index);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,7 +160,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeIndex(id, index);
 #endif
-            MultiStorageActions<Container>.ReadDirect(ref *_layout, id).SetRaw(index, ref value);
+            MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).SetRaw(index, ref value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -127,7 +170,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeIndex(id, index);
 #endif
-            MultiStorageActions<Container>.ReadDirect(ref *_layout, id).Set(index, ref value);
+            MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).Set(index, ref value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,7 +185,7 @@ namespace AnotherECS.Core
                 return;
             }
 
-            ref var dense = ref MultiStorageActions<Container>.ReadDirect(ref *_layout, id);
+            ref var dense = ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id);
             var elementSize = dense.data.ElementSize;
             var array = (byte*)dense.data.GetPtr();
 
@@ -166,7 +209,7 @@ namespace AnotherECS.Core
                 return;
             }
 
-            ref var dense = ref MultiStorageActions<Container>.ReadDirect(ref *_layout, id);
+            ref var dense = ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id);
             var elementSize = dense.data.ElementSize;
             var array = (byte*)dense.data.GetPtr();
 
@@ -185,8 +228,8 @@ namespace AnotherECS.Core
             ThrowIfOutOfRangeId(sourceId);
             ThrowIfOutOfRangeId(destinationId);
 #endif
-            ref var source = ref MultiStorageActions<Container>.ReadDirect(ref *_layout, sourceId);
-            ref var destination = ref MultiStorageActions<Container>.ReadDirect(ref *_layout, destinationId);
+            ref var source = ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, sourceId);
+            ref var destination = ref MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, destinationId);
 
             destination.data.CopyFrom(source.data, (uint)count);
 
@@ -199,7 +242,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeId(id);
 #endif
-            MultiStorageActions<Container>.ReadDirect(ref *_layout, id).IncVersion();
+            MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).IncVersion();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,20 +251,20 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ThrowIfOutOfRangeId(id);
 #endif
-            return MultiStorageActions<Container>.ReadDirect(ref *_layout, id).version;
+            return MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, id).version;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
         {
 #if !ANOTHERECS_HISTORY_DISABLE
-            var dense = _layout->storage.dense.GetPtr<Container>();
+            var dense = _layout->storage.dense.GetPtr<DArrayContainer>();
             for (uint i = 0, iMax = _layout->storage.denseIndex; i < iMax; ++i)
             {
                 if (dense[i].IsChange)
                 {
                     dense[i].DropChange();
-                    CopyableHistoryFacadeActions<Container>.PushDense(ref *_layout, ref *_depencies, i, ref dense[i]);
+                    CopyableHistoryFacadeActions<DArrayContainer>.PushDense(ref *_layout, ref *_depencies, i, ref dense[i]);
                 }
             }
 #endif
@@ -231,11 +274,11 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick, State state)
         {
-            MultiHistoryFacadeActions<Container>.RevertToRecycleCountBuffer(ref *_layout, tick);
-            MultiHistoryFacadeActions<Container>.RevertToRecycleBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<DArrayContainer>.RevertToRecycleCountBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<DArrayContainer>.RevertToRecycleBuffer(ref *_layout, tick);
 
-            MultiHistoryFacadeActions<Container>.RevertToCountBuffer(ref *_layout, tick);
-            MultiHistoryFacadeActions<Container>.RevertToDenseBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<DArrayContainer>.RevertToCountBuffer(ref *_layout, tick);
+            MultiHistoryFacadeActions<DArrayContainer>.RevertToDenseBuffer(ref *_layout, tick);
         }
 #endif
 
@@ -251,7 +294,7 @@ namespace AnotherECS.Core
         {
             for (uint i = 0, iMax = _layout->storage.denseIndex; i < iMax; ++i)
             {
-                MultiStorageActions<Container>.ReadDirect(ref *_layout, i).Dispose();
+                MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, i).Dispose();
             }
         }
 
@@ -282,199 +325,201 @@ namespace AnotherECS.Core
         {
             for (uint i = 0, iMax = _layout->storage.denseIndex; i < iMax; ++i)
             {
-                MultiStorageActions<Container>.ReadDirect(ref *_layout, i).DropChange();
+                MultiStorageActions<DArrayContainer>.ReadDirect(ref *_layout, i).DropChange();
             }
         }
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            CustomSerializeActions<Container>.Pack(ref writer, ref *_layout, HistoryMode.BYCHANGE, _layout->storage.denseIndex);
+            CustomSerializeActions<DArrayContainer>.Pack(ref writer, ref *_layout, HistoryMode.BYCHANGE, _layout->storage.denseIndex);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            CustomSerializeActions<Container>.Unpack(ref reader, ref *_layout, HistoryMode.BYCHANGE);
+            CustomSerializeActions<DArrayContainer>.Unpack(ref reader, ref *_layout, HistoryMode.BYCHANGE);
         }
 
-        [IgnoreCompile]
-        internal unsafe struct Container : ICopyable<Container>, IDisposable, ISerialize
+       
+    }
+
+    [IgnoreCompile]
+    internal unsafe struct DArrayContainer : ICopyable<DArrayContainer>, IDisposable, ISerialize, IDefault
+    {
+        public ArrayPtr data;
+        public int count;
+
+        public int lastVersion;
+        public int version;
+
+        public int ByteLength
         {
-            public ArrayPtr data;
-            public int count;
-
-            public int lastVersion;
-            public int version;
-
-            public int ByteLength
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (int)data.ByteLength;
-            }
-
-            public bool IsValide
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => data.IsValide;
-            }
-
-            public bool IsChange
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => lastVersion != version;
-            }
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void DropChange()
-            {
-                lastVersion = version;
-            }
+            get => (int)data.ByteLength;
+        }
 
+        public bool IsValide
+        {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetRaw<T>(int index, ref T value)
-                where T : unmanaged
-            {
-                data.Set(index, value);
-            }
+            get => data.IsValide;
+        }
 
+        public bool IsChange
+        {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Set<T>(int index, ref T value)
-                where T : unmanaged
+            get => lastVersion != version;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DropChange()
+        {
+            lastVersion = version;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetRaw<T>(int index, ref T value)
+            where T : unmanaged
+        {
+            data.Set(index, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set<T>(int index, ref T value)
+            where T : unmanaged
+        {
+            IncVersion();
+            SetRaw(index, ref value);
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Get<T>(int index)
+            where T : unmanaged
+        {
+            IncVersion();
+            return ref data.GetRef<T>(index);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T Read<T>(int index)
+            where T : unmanaged
+            => ref data.GetRef<T>(index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate<T>(uint size)
+            where T : unmanaged
+        {
+            Allocate(size, (uint)sizeof(T));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate(uint size, uint elementSize)
+        {
+            if (!IsValide)
             {
-                IncVersion();
-                SetRaw(index, ref value);
-            }
-
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Get<T>(int index)
-                where T : unmanaged
-            {
-                IncVersion();
-                return ref data.GetRef<T>(index);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public ref T Read<T>(int index)
-                where T : unmanaged
-                => ref data.GetRef<T>(index);
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Allocate<T>(uint size)
-                where T : unmanaged
-            {
-                Allocate(size, (uint)sizeof(T));
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Allocate(uint size, uint elementSize)
-            {
-                if (!IsValide)
+                if (size > 0)
                 {
-                    if (size > 0)
-                    {
-                        data = new ArrayPtr(elementSize * size, size);
-                        count = (int)size;
-                        IncVersion();
-                    }
-                }
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Prepare<T>(uint sizeMin)
-                where T : unmanaged
-            {
-                if (!data.IsValide)
-                {
-                    Allocate<T>(sizeMin);
-                }
-                else if (data.ElementCount < sizeMin || data.ElementCount > (sizeMin >> 1))
-                {
-                    Resize(sizeMin, data.ElementSize);
-                }
-                else
-                {
-                    Clear();
-                }
-                count = (int)sizeMin;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Resize(uint size, uint elementSize)
-            {
-                data.Resize(size, elementSize);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Deallocate()
-            {
-                if (IsValide)
-                {
-                    data.Dispose();
+                    data = new ArrayPtr(elementSize * size, size);
+                    count = (int)size;
                     IncVersion();
                 }
             }
+        }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Replace(ArrayPtr data)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Prepare<T>(uint sizeMin)
+            where T : unmanaged
+        {
+            if (!data.IsValide)
             {
-                if (IsValide)
-                {
-                    Deallocate();
-                }
-                this.data = data;
+                Allocate<T>(sizeMin);
             }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void IncVersion()
+            else if (data.ElementCount < sizeMin || data.ElementCount > (sizeMin >> 1))
             {
-                version = unchecked(version + 1);
+                Resize(sizeMin, data.ElementSize);
             }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Clear()
+            else
             {
-                if (IsValide)
-                {
-                    data.Clear();
-
-                    IncVersion();
-                }
+                Clear();
             }
+            count = (int)sizeMin;
+        }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose()
-            {
-                data.Dispose();
-            }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Resize(uint size, uint elementSize)
+        {
+            data.Resize(size, elementSize);
+        }
 
-            public void CopyFrom(in Container other)
-            {
-                data.CopyFrom(other.data);
-                count = other.count;
-                lastVersion = other.lastVersion;
-                version = other.version;
-            }
-
-            public void OnRecycle()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deallocate()
+        {
+            if (IsValide)
             {
                 data.Dispose();
+                IncVersion();
             }
+        }
 
-            public void Pack(ref WriterContextSerializer writer)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Replace(ArrayPtr data)
+        {
+            if (IsValide)
             {
-                writer.Write(count);
-                writer.WriteStruct(data);
-                writer.Write(lastVersion);
-                writer.Write(version);
+                Deallocate();
             }
+            this.data = data;
+        }
 
-            public void Unpack(ref ReaderContextSerializer reader)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void IncVersion()
+        {
+            version = unchecked(version + 1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear()
+        {
+            if (IsValide)
             {
-                count = reader.ReadInt32();
-                data = reader.ReadStruct<ArrayPtr>();
-                lastVersion = reader.ReadInt32();
-                version = reader.ReadInt32();
+                data.Clear();
+
+                IncVersion();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            data.Dispose();
+        }
+
+        public void CopyFrom(in DArrayContainer other)
+        {
+            data.CopyFrom(other.data);
+            count = other.count;
+            lastVersion = other.lastVersion;
+            version = other.version;
+        }
+
+        public void OnRecycle()
+        {
+            data.Dispose();
+        }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            writer.Write(count);
+            writer.WriteStruct(data);
+            writer.Write(lastVersion);
+            writer.Write(version);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            count = reader.ReadInt32();
+            data = reader.ReadStruct<ArrayPtr>();
+            lastVersion = reader.ReadInt32();
+            version = reader.ReadInt32();
         }
     }
 }

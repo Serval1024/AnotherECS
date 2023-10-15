@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
-    internal interface IRevert 
+    internal interface IRevertCaller 
     {
         void RevertTo(uint tick, State state);
     }

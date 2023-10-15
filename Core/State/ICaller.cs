@@ -22,6 +22,11 @@ namespace AnotherECS.Core
        where TComponent : unmanaged
     {
         TComponent Create();
+
+        public bool IRevert { get; }
+        public bool IsTickFinished { get; }
+        public bool IsSerialize { get; }
+        public bool IsResizable { get; }
     }
 
     internal interface IResizableCaller : ICaller
@@ -65,12 +70,12 @@ namespace AnotherECS.Core
         void Set(ref TComponent component);
     }
 
-    internal interface ICallerAttach
+    internal interface IAttachCaller
     {
         void Attach();
     }
 
-    internal interface ICallerDetach
+    internal interface IDetachCaller
     {
         void Detach();
     }

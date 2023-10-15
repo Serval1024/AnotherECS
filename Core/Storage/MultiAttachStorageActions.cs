@@ -1,76 +1,24 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core.Caller;
+using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Actions
 {
-    internal static unsafe class SingleAttachStorageActions<T>
-        where T : unmanaged, IAttach
+    internal static unsafe class AttachLayoutActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Attach_bool(ref UnmanagedLayout<T> layout, State state)
+        public static void Attach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool,  TDense, TDenseIndex, TTickData> layout, State state, uint startIndex)
+            where TDense : unmanaged, IAttach
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
 
-            var sparse = storage.sparse.GetPtr<bool>();
-            var dense = storage.dense.GetPtr<T>();
-
-            if (*sparse)
-            {
-                dense->OnAttach(state);
-            }
-        }
-    }
-
-    internal static unsafe class SingleDetachStorageActions<T>
-       where T : unmanaged, IDetach
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_bool(ref UnmanagedLayout<T> layout, State state)
-        {
-            ref var storage = ref layout.storage;
-
-            var sparse = storage.sparse.GetPtr<bool>();
-            var dense = storage.dense.GetPtr<T>();
-
-            if (*sparse)
-            {
-                dense->OnDetach(state);
-            }
-        }
-    }
-
-    internal static unsafe class DetachStorageActions<T>
-       where T : unmanaged, IDetach
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_empty(ref GlobalDepencies depencies, State state)
-        {
-            default(T).OnDetach(state);
-        }
-    }
-
-    internal static unsafe class AttachStorageActions<T>
-        where T : unmanaged, IAttach
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Attach_empty(ref GlobalDepencies depencies, State state)
-        {
-            default(T).OnAttach(state);
-        }
-    }
-
-    internal static unsafe class MultiAttachStorageActions<T>
-        where T : unmanaged, IAttach
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Attach_bool(ref UnmanagedLayout<T> layout, State state)
-        {
-            ref var storage = ref layout.storage;
-
-            var sparse = storage.sparse.GetPtr<bool>();
-            var dense = storage.dense.GetPtr<T>();
+            var sparse = storage.sparse.GetPtr();
+            var dense = storage.dense.GetPtr();
             var denseIndex = storage.denseIndex;
 
-            for (uint i = 1; i < denseIndex; ++i)
+            for (uint i = startIndex; i < denseIndex; ++i)
             {
                 if (sparse[i])
                 {
@@ -80,15 +28,18 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Attach_byte(ref UnmanagedLayout<T> layout, State state, uint count)
+        public static void Attach_ushort<TDense, TDenseIndex, ETickDataDense>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, ETickDataDense> layout, State state, uint count)
+            where TDenseIndex : unmanaged
+            where TDense : unmanaged, IAttach
+            where ETickDataDense : unmanaged
         {
             if (count != 0)
             {
                 ref var storage = ref layout.storage;
 
-                var sparse = storage.sparse.GetPtr<byte>();
+                var sparse = storage.sparse.GetPtr();
                 var sparseLength = storage.sparse.ElementCount;
-                var dense = storage.dense.GetPtr<T>();
+                var dense = storage.dense.GetPtr();
 
                 for (uint i = 1; i < sparseLength; ++i)
                 {
@@ -105,44 +56,59 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Attach_ushort(ref UnmanagedLayout<T> layout, State state, uint count)
+        public static unsafe void Attach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+           where TDense : unmanaged, IAttach
+           where TDenseIndex : unmanaged
+           where TTickData : unmanaged
         {
-            if (count != 0)
+            ref var sparse = ref layout.storage.sparse;
+            var densePtr = layout.storage.dense.GetPtr();
+
+            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
             {
-                ref var storage = ref layout.storage;
-
-                var sparse = storage.sparse.GetPtr<ushort>();
-                var sparseLength = storage.sparse.ElementCount;
-                var dense = storage.dense.GetPtr<T>();
-
-                for (uint i = 1; i < sparseLength; ++i)
+                if ((ops.Get(i) & Op.ADD) != 0)
                 {
-                    if (sparse[i] != 0)
-                    {
-                        dense[sparse[i]].OnAttach(state);
-                        if (--count == 0)
-                        {
-                            break;
-                        }
-                    }
+                    densePtr[i].OnAttach(state);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void Attach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+            where TDense : unmanaged, IAttach
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+        {
+            ref var sparse = ref layout.storage.sparse;
+            var sparsePtr = sparse.GetPtr();
+            var densePtr = layout.storage.dense.GetPtr();
+            var opsPtr = ops.GetPtr();
+
+            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
+            {
+                if ((opsPtr[i] & Op.ADD) != 0)
+                {
+                    densePtr[sparsePtr[i]].OnAttach(state);
                 }
             }
         }
     }
 
-    internal static unsafe class MultiDetachStorageActions<T>
-        where T : unmanaged, IDetach
+    internal static unsafe class DetachLayoutActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_bool(ref UnmanagedLayout<T> layout, State state)
+        public static void Detach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, uint startIndex)
+            where TDenseIndex : unmanaged
+            where TDense : unmanaged, IDetach
+            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
 
-            var sparse = storage.sparse.GetPtr<bool>();
-            var dense = storage.dense.GetPtr<T>();
+            var sparse = storage.sparse.GetPtr();
+            var dense = storage.dense.GetPtr();
             var denseIndex = storage.denseIndex;
 
-            for (uint i = 1; i < denseIndex; ++i)
+            for (uint i = startIndex; i < denseIndex; ++i)
             {
                 if (sparse[i])
                 {
@@ -152,15 +118,18 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_byte(ref UnmanagedLayout<T> layout, State state, uint count)
+        public static void Detach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, uint count)
+            where TDenseIndex : unmanaged
+            where TDense : unmanaged, IDetach
+            where TTickData : unmanaged
         {
             if (count != 0)
             {
                 ref var storage = ref layout.storage;
 
-                var sparse = storage.sparse.GetPtr<byte>();
+                var sparse = storage.sparse.GetPtr();
                 var sparseLength = storage.sparse.ElementCount;
-                var dense = storage.dense.GetPtr<T>();
+                var dense = storage.dense.GetPtr();
 
                 for (uint i = 1; i < sparseLength; ++i)
                 {
@@ -177,26 +146,39 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_ushort(ref UnmanagedLayout<T> layout, State state, uint count)
+        public static unsafe void Detach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+          where TDense : unmanaged, IDetach
+          where TDenseIndex : unmanaged
+          where TTickData : unmanaged
         {
-            if (count != 0)
+            ref var sparse = ref layout.storage.sparse;
+            var densePtr = layout.storage.dense.GetPtr();
+
+            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
             {
-                ref var storage = ref layout.storage;
-
-                var sparse = storage.sparse.GetPtr<ushort>();
-                var sparseLength = storage.sparse.ElementCount;
-                var dense = storage.dense.GetPtr<T>();
-
-                for (uint i = 1; i < sparseLength; ++i)
+                if ((ops.Get(i) & Op.ADD) != 0)
                 {
-                    if (sparse[i] != 0)
-                    {
-                        dense[sparse[i]].OnDetach(state);
-                        if (--count == 0)
-                        {
-                            break;
-                        }
-                    }
+                    densePtr[i].OnDetach(state);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void Detach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+            where TDense : unmanaged, IDetach
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
+        {
+            ref var sparse = ref layout.storage.sparse;
+            var sparsePtr = sparse.GetPtr();
+            var densePtr = layout.storage.dense.GetPtr();
+            var opsPtr = ops.GetPtr();
+
+            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
+            {
+                if ((opsPtr[i] & Op.ADD) != 0)
+                {
+                    densePtr[sparsePtr[i]].OnDetach(state);
                 }
             }
         }

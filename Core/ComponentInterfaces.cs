@@ -7,6 +7,11 @@ namespace AnotherECS.Core
     public interface IMarker : IComponent { }
     public interface ICopyable : IComponent { }
 
+    public interface IDefault : IComponent
+    {
+        void Setup();
+    }
+
     public interface ICopyable<T> : ICopyable
        where T : unmanaged
     {

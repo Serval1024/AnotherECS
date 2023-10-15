@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
-    internal interface ITickFinished
+    internal interface ITickFinishedCaller
     {
         void TickFinished();
     }
