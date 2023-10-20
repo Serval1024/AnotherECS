@@ -5,6 +5,7 @@ namespace AnotherECS.Core
     internal static unsafe class SingleDetachHistoryActions<T>
         where T : unmanaged, IDetach
     {
+        /*
         public static unsafe void CallDetach_empty(ref UnmanagedLayout<T> layout, State state, ref Op op)
         {
             ref var sparse = ref layout.storage.sparse;
@@ -24,6 +25,6 @@ namespace AnotherECS.Core
             {
                 densePtr->OnDetach(state);
             }
-        }
+        }*/
     }
 }

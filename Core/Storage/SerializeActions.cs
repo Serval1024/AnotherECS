@@ -106,7 +106,7 @@ namespace AnotherECS.Core.Actions
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.PackCommonBlittable(ref writer, ref unknowLayout->storage);
 
-            ArrayPtrEachSerializeStaticSerializer<TDense>.Pack(ref writer, ref layout->storage.dense);
+            ArrayPtrEachSerializeStaticSerializer<TDense>.Pack(ref writer, ref layout->storage.dense, layout->storage.denseIndex);
         }
 
 
@@ -141,11 +141,11 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackStorageBlittable<TSparse, TDense, TDenseIndex, TTickData>
-          (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
-          where TSparse : unmanaged
-          where TDense : unmanaged
-          where TDenseIndex : unmanaged
-          where TTickData : unmanaged
+            (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref unknowLayout->storage);
@@ -155,11 +155,11 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackStorageSerialize<TSparse, TDense, TDenseIndex, TTickData>
-           (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
-           where TSparse : unmanaged
-           where TDense : unmanaged
-           where TDenseIndex : unmanaged
-           where TTickData : unmanaged, ISerialize
+            (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged, ISerialize
         {
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref unknowLayout->storage);
@@ -169,11 +169,11 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackHistoryBlittable<TSparse, TDense, TDenseIndex, TTickData>
-           (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
-           where TSparse : unmanaged
-           where TDense : unmanaged
-           where TDenseIndex : unmanaged
-           where TTickData : unmanaged
+            (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref unknowLayout->history);

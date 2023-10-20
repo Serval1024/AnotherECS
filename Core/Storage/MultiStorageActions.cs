@@ -299,7 +299,7 @@ namespace AnotherECS.Core.Actions
         {
             layout.storage.version = ArrayPtr.Create<uint>(denseCapacity);
         }*/
-
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static void CallConstruct_bool(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
@@ -950,7 +950,7 @@ namespace AnotherECS.Core.Actions
                 TypeCode.UInt16 => ushort.MaxValue,
                 TypeCode.UInt32 => uint.MaxValue,
                 _ => throw new ArgumentException(),
-            };
+            };*/
     }
 
 

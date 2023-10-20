@@ -4,4 +4,9 @@
     {
         void TickFinished();
     }
+
+    internal interface IRevertFinishedCaller
+    {
+        void RevertFinished();
+    }
 }

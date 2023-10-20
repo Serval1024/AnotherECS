@@ -19,14 +19,14 @@ namespace AnotherECS.Core
     }
 
     internal interface ICaller<TComponent> : ICaller
-       where TComponent : unmanaged
+        where TComponent : unmanaged
     {
         TComponent Create();
 
-        public bool IRevert { get; }
-        public bool IsTickFinished { get; }
-        public bool IsSerialize { get; }
-        public bool IsResizable { get; }
+        bool IRevert { get; }
+        bool IsTickFinished { get; }
+        bool IsSerialize { get; }
+        bool IsResizable { get; }
     }
 
     internal interface IResizableCaller : ICaller

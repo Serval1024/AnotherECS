@@ -134,8 +134,8 @@ namespace AnotherECS.Core
         {
             BindingCodeGenerationStage(_depencies->config);
 
-            _entities = AddLayout<EntitiesCaller, EntityHead>();
-            _dArray = AddLayout<DArrayCaller, DArrayCaller.Container>();
+            _entities = EntitiesCaller.LayoutInstaller.Install(this);
+            _dArray = DArrayCaller.LayoutInstaller.Install(this);
             _depencies->entities = _entities;
             _depencies->dArray = _dArray;
             _depencies->injectContainer = new InjectContainer(_dArray);
@@ -562,9 +562,12 @@ namespace AnotherECS.Core
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UCaller AddLayout<UCaller, TComponent>(ComponentFunction<TComponent> componentFunction = default)
+        public UCaller AddLayout<UCaller, TSparse, TDense, TDenseIndex, TTickData>(ComponentFunction<TDense> componentFunction = default)
             where UCaller : struct, ICaller
-            where TComponent : unmanaged
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickData : unmanaged
         {
 #if ANOTHERECS_DEBUG
             if (_layoutCount == GetLayoutCount())
@@ -572,10 +575,10 @@ namespace AnotherECS.Core
                 throw new InvalidOperationException();
             }
 #endif
-            var layout = (UnmanagedLayout<TComponent>*)(_layoutPtr + _layoutCount);
+            var layout = (UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>*)(_layoutPtr + _layoutCount);
             layout->componentFunction = componentFunction;
 
-            var caller = (ICaller<TComponent>)default(UCaller);
+            var caller = (ICaller<TDense>)default(UCaller);
             _callers[_layoutCount] = caller;
             
             caller.Config(_layoutPtr + _layoutCount, _depencies, (ushort)_layoutCount, this);

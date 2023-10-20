@@ -5,6 +5,7 @@ namespace AnotherECS.Core.Actions
 {
     internal static unsafe class DArrayActions
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateLayout(ref UnmanagedLayout<DArrayContainer> layout, ref GlobalDepencies depencies)
         {
@@ -13,7 +14,7 @@ namespace AnotherECS.Core.Actions
 
             MultiHistoryFacadeActions<DArrayContainer>.AllocateRecycle(ref layout, ref depencies);
             MultiHistoryFacadeActions<DArrayContainer>.AllocateDense(ref layout, ref depencies);
-        }
+        }*/
     }
 }
 

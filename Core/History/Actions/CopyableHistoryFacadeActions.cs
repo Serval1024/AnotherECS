@@ -5,6 +5,7 @@ namespace AnotherECS.Core
     internal static class CopyableHistoryFacadeActions<T>
         where T : unmanaged, ICopyable<T>
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies, uint offset, ref T data)
         {
@@ -21,6 +22,6 @@ namespace AnotherECS.Core
         public static void PushVersionDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
             CopyableHistoryActions<T>.PushVersionDense(ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength);
-        }
+        }*/
     }
 }

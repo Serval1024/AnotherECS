@@ -4,9 +4,11 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
+    /*
     internal static unsafe class MultiHistoryFacadeActions<T>
         where T : unmanaged
     {
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateForVersionDense(ref UnmanagedLayout<T> layout, ref GlobalDepencies depencies)
         {
@@ -156,5 +158,5 @@ namespace AnotherECS.Core
         {
             HistoryActions<T>.RevertToSparseBufferMulti<USparse>(tick, ref layout.storage.sparse, ref layout.history.sparseBuffer, ref layout.history.sparseIndex, ref bufferCopyTemp, ref ops);
         }
-    }
+    }*/
 }

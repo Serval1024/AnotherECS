@@ -13,17 +13,25 @@ namespace AnotherECS.Serializer
         public void Pack(ref WriterContextSerializer writer, ref ArrayPtr data)
         {
             _meta.Pack(ref writer, ref data);
-            writer.Write(data.GetPtr(), data.ByteLength);
+            if (data.GetPtr() != null)
+            {
+                writer.Write(data.GetPtr(), data.ByteLength);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader, ref ArrayPtr data)
         {   
             var (byteLength, elementCount) = _meta.Unpack(ref reader);
-            var buffer = byteLength != 0 ? UnsafeMemory.Malloc(byteLength) : null;
-            reader.Read(buffer, byteLength);
+            if (byteLength != uint.MaxValue)
+            {
+                var buffer = byteLength != 0 ? UnsafeMemory.Malloc(byteLength) : null;
+                reader.Read(buffer, byteLength);
 
-            data = new ArrayPtr(buffer, byteLength, elementCount);
+                data = new ArrayPtr(buffer, byteLength, elementCount);
+                return;
+            }
+            data = default;
         }
     }
 
@@ -40,9 +48,25 @@ namespace AnotherECS.Serializer
         public void PackBlittable(ref WriterContextSerializer writer, ref ArrayPtr<T> data)
         {
             _meta.Pack(ref writer, ref data);
+            if (data.GetPtr() != null)
+            {
+                writer.Write(data.GetPtr(), data.ByteLength);
+            }
+        }
 
-            _meta.Pack(ref writer, ref data);
-            writer.Write(data.GetPtr(), data.ByteLength);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnpackBlittable(ref ReaderContextSerializer reader, ref ArrayPtr<T> data)
+        {
+            var (byteLength, elementCount) = _meta.Unpack(ref reader);
+            if (byteLength != uint.MaxValue)
+            {
+                var buffer = byteLength != 0 ? (T*)UnsafeMemory.Malloc(byteLength) : null;
+                reader.Read(buffer, byteLength);
+
+                data = new ArrayPtr<T>(buffer, elementCount);
+                return;
+            }
+            data = default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,47 +74,34 @@ namespace AnotherECS.Serializer
         {
             _meta.Pack(ref writer, ref data);
 
-            if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
+            if (data.GetPtr() != null)
             {
-                for (uint i = 0; i < data.ElementCount; ++i)
-                {
-                    var value = data.Get(i);
-                    ((ISerialize)value).Pack(ref writer);
-                }
-            }
-            else
-            {
-                if (writer.GetSerializer(typeof(T), out var serializer))
+                if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
                     for (uint i = 0; i < data.ElementCount; ++i)
                     {
-                        serializer.Pack(ref writer, data.Get(i));
+                        var value = data.Get(i);
+                        ((ISerialize)value).Pack(ref writer);
                     }
                 }
                 else
                 {
-                    for (uint i = 0; i < data.ElementCount; ++i)
+                    if (writer.GetSerializer(typeof(T), out var serializer))
                     {
-                        _compound.Pack(ref writer, data.Get(i));
+                        for (uint i = 0; i < data.ElementCount; ++i)
+                        {
+                            serializer.Pack(ref writer, data.Get(i));
+                        }
+                    }
+                    else
+                    {
+                        for (uint i = 0; i < data.ElementCount; ++i)
+                        {
+                            _compound.Pack(ref writer, data.Get(i));
+                        }
                     }
                 }
             }
-        }
-
-        public void Pack(ref WriterContextSerializer writer, object value)
-        {
-            var concreteValue = (ArrayPtr<T>)value;
-            Pack(ref writer, ref concreteValue);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnpackBlittable(ref ReaderContextSerializer reader, ref ArrayPtr<T> data)
-        {
-            var (byteLength, elementCount) = _meta.Unpack(ref reader);
-            var buffer = byteLength != 0 ? (T*)UnsafeMemory.Malloc(byteLength) : null;
-            reader.Read(buffer, byteLength);
-
-            data = new ArrayPtr<T>(buffer, elementCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -98,7 +109,7 @@ namespace AnotherECS.Serializer
         {
             (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
 
-            if (byteLength != 0)
+            if (byteLength != uint.MaxValue)
             {
                 data.Resize(elementCount);
 
@@ -131,6 +142,14 @@ namespace AnotherECS.Serializer
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Pack(ref WriterContextSerializer writer, object value)
+        {
+            var concreteValue = (ArrayPtr<T>)value;
+            Pack(ref writer, ref concreteValue);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
         {
             ArrayPtr<T> concreteValue = default;
@@ -155,11 +174,11 @@ namespace AnotherECS.Serializer
         public static void Pack(ref WriterContextSerializer writer, ref ArrayPtr<T> arrayPtr, uint count)
         {
             _meta.Pack(ref writer, ref arrayPtr);
-            _count.Pack(ref writer, count);
-
             var ptr = arrayPtr.GetPtr();
             if (ptr != null)
             {
+                _count.Pack(ref writer, count);
+
                 for (uint i = 0; i < count; i++)
                 {
                     ptr[i].Pack(ref writer);
@@ -171,10 +190,11 @@ namespace AnotherECS.Serializer
         public static ArrayPtr<T> Unpack(ref ReaderContextSerializer reader)
         {
             (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
-            var count = _count.Unpack(ref reader);
 
-            if (byteLength != 0)
+            if (byteLength != uint.MaxValue)
             {
+                var count = _count.Unpack(ref reader);
+
                 var buffer = (T*)UnsafeMemory.Malloc(byteLength);
                 T element = default;
                 for (uint i = 0; i < count; i++)

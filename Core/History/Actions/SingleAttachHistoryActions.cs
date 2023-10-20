@@ -5,6 +5,7 @@ namespace AnotherECS.Core
     internal static unsafe class SingleAttachHistoryActions<T>
       where T : unmanaged, IAttach
     {
+        /*
         public static unsafe void CallAttach_empty(ref UnmanagedLayout<T> layout, State state, ref Op op)
         {
             ref var sparse = ref layout.storage.sparse;
@@ -24,6 +25,6 @@ namespace AnotherECS.Core
             {
                 densePtr->OnAttach(state);
             }
-        }
+        }*/
     }
 }

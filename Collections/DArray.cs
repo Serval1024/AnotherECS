@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
         private uint _id;
         private int _length;
 #if ANOTHERECS_DEBUG
-        private int _version;
+        internal uint _version;
 #endif
         internal DArray(DArrayCaller bind, ushort id, int length)
         {
@@ -62,11 +62,8 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsValide()
-#if ANOTHERECS_DEBUG
-            => _id != 0 && _version == GetVersion();
-#else
             => _id != 0;
-#endif
+
         public void Allocate(int length)
         {
             if (!_bind.IsValide)
@@ -80,7 +77,7 @@ namespace AnotherECS.Collections
                 _id = _bind.Add<T>(length);
                 _length = length;
 #if ANOTHERECS_DEBUG
-                _version = GetVersion();
+                ++_version;
 #endif
             }
             else
@@ -121,10 +118,6 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetVersion()
-            => _bind.GetVersion(_id);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int index)
 #if ANOTHERECS_DEBUG
         {
@@ -146,7 +139,7 @@ namespace AnotherECS.Collections
                 throw new Exceptions.DArrayInvalideException(GetType());
             }
             ref var temp = ref _bind.Get<T>(_id, index);
-            _version = GetVersion();
+            ++_version;
             return ref temp;
         }
 #else
@@ -168,7 +161,7 @@ namespace AnotherECS.Collections
                 throw new Exceptions.DArrayInvalideException(GetType());
             }
             _bind.Set(_id, index, ref value);
-            _version = GetVersion();
+            ++_version;
         }
 #else
             => _bind.Set(_id, index, ref value);
@@ -237,7 +230,7 @@ namespace AnotherECS.Collections
         internal void ApplyVersionRaw()
         {
 #if ANOTHERECS_DEBUG
-            _version = GetVersion();
+            ++_version;
 #endif
         }
 
@@ -304,7 +297,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void IncVersion()
         {
-            _bind.IncVersion(_id);
+            _bind.UpdateVersion(_id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -340,7 +333,7 @@ namespace AnotherECS.Collections
             private int _current;
             private readonly int _length;
 #if ANOTHERECS_DEBUG
-            private readonly int _version;
+            private readonly uint _version;
 #endif
             public Enumerator(ref DArray<T> data)
             {
@@ -348,7 +341,7 @@ namespace AnotherECS.Collections
                 _length = _data.Length;
                 _current = -1;
 #if ANOTHERECS_DEBUG
-                _version = _data.GetVersion();
+                _version = _data._version;
 #endif
             }
 
@@ -358,7 +351,7 @@ namespace AnotherECS.Collections
                 get
                 {
 #if ANOTHERECS_DEBUG
-                    if (_version != _data.GetVersion())
+                    if (_version != _data._version)
                     {
                         throw new InvalidOperationException("Collection was modified.");
                     }

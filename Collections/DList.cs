@@ -55,10 +55,6 @@ namespace AnotherECS.Collections
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetVersion()
-           => _data.GetVersion();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int index)
         {
             if (index >= _count)
@@ -244,7 +240,7 @@ namespace AnotherECS.Collections
             private int _current;
             private readonly int _count;
 #if ANOTHERECS_DEBUG
-            private readonly int _version;
+            private readonly uint _version;
 #endif
             public Enumerator(ref DList<T> data)
             {
@@ -252,7 +248,7 @@ namespace AnotherECS.Collections
                 _count = _data.Count;
                 _current = -1;
 #if ANOTHERECS_DEBUG
-                _version = _data.GetVersion();
+                _version = _data._data._version;
 #endif
             }
 
@@ -262,7 +258,7 @@ namespace AnotherECS.Collections
                 get
                 {
 #if ANOTHERECS_DEBUG
-                    if (_version != _data.GetVersion())
+                    if (_version != _data._data._version)
                     {
                         throw new InvalidOperationException("Collection was modified.");
                     }

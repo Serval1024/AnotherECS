@@ -13,28 +13,30 @@ namespace AnotherECS.Core.Caller
 #endif
     [IgnoreCompile]
     internal unsafe struct Caller
-      <
-      TSparse,
-      TDense,
-      TDenseIndex,
-      TTickData,
-      TTickDataDense,
+        <
+        TSparse,
+        TDense,
+        TDenseIndex,
+        TTickData,
+        TTickDataDense,
 
-      TInject,
-      TIdAllocator,
-      TDefaultSetter,
-      TAttachDetachStorage,
-      TAttach,
-      TDetach,
-      TSparseStorage,
-      TDenseStorage,
-      TIsBindToEntity,
-      TCopyable,
-      TVersion,
-      THistory,
-      TSerialize
-      >
-      : ICaller<TDense>, IDisposable, ISerialize, IRevertCaller, ITickFinishedCaller, IAttachCaller, IDetachCaller, IResizableCaller
+        TUintNextNumber,
+        TInject,
+        TIdAllocator,
+        TDefaultSetter,
+        TAttachDetachStorage,
+        TAttach,
+        TDetach,
+        TSparseStorage,
+        TDenseStorage,
+        TIsBindToEntity,
+        TCopyable,
+        TVersion,
+        THistory,
+        TSerialize,
+        TManualHistory
+        >
+        : ICaller<TDense>, IDisposable, ISerialize, IRevertCaller, ITickFinishedCaller, IRevertFinishedCaller, IAttachCaller, IDetachCaller, IResizableCaller
 
         where TSparse : unmanaged
         where TDense : unmanaged, IComponent
@@ -42,6 +44,7 @@ namespace AnotherECS.Core.Caller
         where TTickData : unmanaged, ITickData<TTickDataDense>
         where TTickDataDense : unmanaged
 
+        where TUintNextNumber : struct, INumberProvier<TDenseIndex>
         where TInject : struct, IInject<TSparse, TDense, TDenseIndex, TTickData>
         where TIdAllocator : struct, IIdAllocator<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>
         where TDefaultSetter : struct, IDefaultSetter<TDense>
@@ -53,9 +56,10 @@ namespace AnotherECS.Core.Caller
         where TDenseStorage : struct, IStartIndexProvider, IDenseProvider<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>
         where TIsBindToEntity : struct, IBoolConst
         where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
-        where TVersion : struct, IChange<TSparse, TDense, TDenseIndex, TTickData>, IVersion<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
+        where TVersion : struct, IChange<TSparse, TDense, TDenseIndex, TTickData>, IVersion<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>, IRevertFinished, IBoolConst
         where THistory : struct, IHistory<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>
         where TSerialize : struct, ICustomSerialize<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
+        where TManualHistory : struct, ISegmentHistory<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>
     {
         private UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* _layout;
         private GlobalDepencies* _depencies;
@@ -70,6 +74,18 @@ namespace AnotherECS.Core.Caller
                    TVersion,
                    THistory> allocator;
 
+        public bool IsValide
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _layout != null && _depencies != null;
+        }
+
+        public bool IsResizable
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => allocator.IsSparseResize<TSparseStorage>();
+        }
+
         public bool IRevert
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,20 +98,28 @@ namespace AnotherECS.Core.Caller
             get => default(THistory).IsTickFinished;
         }
 
+        public bool IsRevertFinished
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => default(TVersion).IsRevertFinished;
+        }
+
         public bool IsSerialize
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => default(TSerialize).Is;
         }
-        public bool IsResizable
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => default(TDense).Is;
-        }
-        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        Type ICaller.GetElementType()
+        public UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* GetLayout()
+            => _layout;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public GlobalDepencies* GetDepencies()
+            => _depencies;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Type GetElementType()
             => typeof(TDense);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,6 +172,13 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetAllocated()
+        {
+            TDenseStorage dense = default;
+            return dense.GetAllocated(ref *_layout);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint capacity)
         {
             allocator.SparseResize<TSparseStorage>(ref *_layout, capacity);
@@ -197,10 +228,22 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TDense Read(EntityId id)
+            => ref UnsafeDirectRead(id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TDense UnsafeDirectRead(EntityId id)
         {
             TSparseStorage sparse = default;
             TDenseStorage dense = default;
             return ref dense.GetDense(ref *_layout, sparse.ConvertToDenseIndex(ref *_layout, id));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TDense* UnsafeDirectReadPtr(EntityId id)
+        {
+            TSparseStorage sparse = default;
+            TDenseStorage dense = default;
+            return dense.GetDensePtr(ref *_layout, sparse.ConvertToDenseIndex(ref *_layout, id));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -212,11 +255,10 @@ namespace AnotherECS.Core.Caller
             TDenseStorage dense = default;
             ref var component = ref dense.GetDense(ref *_layout, denseIndex);
 
-            TVersion change = default;
-            change.Change(ref *_layout, ref *_depencies, denseIndex);
+            DirectDenseUpdateVersion(denseIndex);
 
             THistory history = default;
-            history.PushDense<TCopyable>(ref *_layout, ref *_depencies, denseIndex, ref component);
+            history.PushDense<TCopyable, TUintNextNumber>(ref *_layout, ref *_depencies, denseIndex, ref component);
 
             return ref component;
         }
@@ -273,6 +315,42 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TDenseIndex AllocateForId(EntityId id)
+        {
+            var denseIndex = AllocateForId();
+
+            TIsBindToEntity isBindToEntity = default;
+            if (isBindToEntity.Is)
+            {
+                _depencies->entities.Add(id, _elementId);
+            }
+
+            TSparseStorage sparseStorage = default;
+            if (sparseStorage.IsUseSparse)
+            {
+                sparseStorage.SetSparse<THistory>(ref *_layout, ref *_depencies, id, denseIndex);
+            }
+            return denseIndex;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TDenseIndex AllocateForId()
+        {
+            TryResizeDenseInternal();
+            return UnsafeAllocateForId();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TDenseIndex UnsafeAllocateForId()
+        {
+            TIdAllocator idAllocator = default;
+            var denseIndex = idAllocator.AllocateId<THistory, TUintNextNumber>(ref *_layout, ref *_depencies);
+
+            DirectDenseUpdateVersion(denseIndex);
+            return denseIndex;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(EntityId id)
         {
             TSparseStorage sparseStorage = default;
@@ -280,13 +358,15 @@ namespace AnotherECS.Core.Caller
             TDenseStorage denseStorage = default;
 
             var denseIndex = sparseStorage.ConvertToDenseIndex(ref *_layout, id);
-            ref var sparse = ref sparseStorage.GetSparse(ref *_layout, id);
-            history.PushSparse(ref *_layout, ref *_depencies, id, sparse);
-            sparse = default;
-
+            if (sparseStorage.IsUseSparse)
+            {
+                ref var sparse = ref sparseStorage.GetSparse(ref *_layout, id);
+                history.PushSparse(ref *_layout, ref *_depencies, id, sparse);
+                sparse = default;
+            }
             ref var component = ref denseStorage.GetDense(ref *_layout, denseIndex);
 
-            history.PushDense<TCopyable>(ref *_layout, ref *_depencies, denseIndex, ref component);
+            history.PushDense<TCopyable, TUintNextNumber>(ref *_layout, ref *_depencies, denseIndex, ref component);
 
             TCopyable copyable = default;
             copyable.Recycle(ref component);
@@ -307,6 +387,44 @@ namespace AnotherECS.Core.Caller
         {
             TVersion version = default;
             return version.GetVersion(ref *_layout, id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DirectDenseUpdateVersion(TDenseIndex denseIndex)
+        {
+            TVersion change = default;
+            change.Change(ref * _layout, ref * _depencies, denseIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DirectPush(TTickDataDense* data)
+        {
+            TManualHistory manualHistory = default;
+            manualHistory.PushSegmentDense(ref *_layout, ref *_depencies, data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryResizeDense()
+        {
+            TDenseStorage denseStorage = default;
+            uint capacity = denseStorage.GetCapacity(ref *_layout);
+            if (denseStorage.GetAllocated(ref *_layout) == capacity)
+            {
+                allocator.DenseResize(ref *_layout, capacity << 1);
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TryIncResizeDense()
+        {
+            TDenseStorage denseStorage = default;
+            uint capacity = denseStorage.GetCapacity(ref *_layout);
+            if (denseStorage.GetAllocated(ref *_layout) == capacity)
+            {
+                allocator.DenseResize(ref *_layout, capacity + 1);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -349,10 +467,18 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertFinished()
+        {
+            TVersion version = default;
+            TDenseStorage dense = default;
+            version.DropChange(ref *_layout, ref *_depencies, dense.GetIndex(), dense.GetAllocated(ref *_layout));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick, State state)
         {
             THistory history = default;
-            history.RevertTo<TAttachDetachStorage, TAttach, TDetach, TSparseStorage, TVersion>
+            history.RevertTo<TAttachDetachStorage, TAttach, TDetach, TSparseStorage, TVersion, TSparseStorage>
                 (_layout, ref attachDetachStorage, tick);
         }
 
@@ -370,27 +496,11 @@ namespace AnotherECS.Core.Caller
             serialize.Unpack(ref reader, _layout);
         }
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref TDense AddInternal(EntityId id)
         {
-            TIsBindToEntity isBindToEntity = default;
-            if (isBindToEntity.Is)
-            {
-                _depencies->entities.Add(id, _elementId);
-            }
-
-            TryResizeDense();
-            TIdAllocator idAllocator = default;
-            var denseIndex = idAllocator.AllocateId<THistory>(ref *_layout, ref *_depencies);
-
-            TVersion version = default;
-            version.Change(ref *_layout, ref *_depencies, denseIndex);
-
-            TSparseStorage sparseStorage = default;
-            sparseStorage.SetSparse<THistory>(ref *_layout, ref *_depencies, id, denseIndex);
             TDenseStorage senseStorage = default;
-            ref var component = ref senseStorage.GetDense(ref *_layout, denseIndex);
+            ref var component = ref senseStorage.GetDense(ref *_layout, AllocateForId(id));
 
             return ref component;
         }
@@ -405,7 +515,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryResizeDense()
+        private void TryResizeDenseInternal()
         {
             TDenseStorage denseStorage = default;
             uint capacity = denseStorage.GetCapacity(ref *_layout);
@@ -414,70 +524,5 @@ namespace AnotherECS.Core.Caller
                 allocator.DenseResize(ref *_layout, capacity << 1);
             }
         }
-    }
-
-
-
-
-    public class FFF
-    {
-        public struct TEST : IAttach, IDetach, ICopyable<TEST>, IDefault
-        {
-            public void CopyFrom(in TEST other)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnAttach(State state)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnDetach(State state)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnRecycle()
-            {
-                throw new NotImplementedException();
-            }
-
-            void IDefault.Setup()
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-
-        public void GG()
-        {
-            UnmanagedLayout<ushort, TEST, ushort, TickOffsetData<TEST>> l = default;
-
-
-            Caller<
-                ushort, TEST, ushort, TickOffsetData<TEST>, TEST,
-                InjectFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
-                RecycleStorageFeature<ushort, TEST, ushort, TickOffsetData<TEST>, TEST, UshortNextNumber>,
-                DefaultFeature<TEST>,
-                AttachDetachFeature<ushort>,
-                AttachFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
-                DetachFeature<ushort, TEST, ushort, TickOffsetData<TEST>>,
-                UshortSparseFeature<TEST, TickOffsetData<TEST>, TEST>,
-                UshortDenseFeature<ushort, TEST, TickOffsetData<TEST>>,
-                TrueConst,
-                CopyableFeature<TEST>,
-                UshortVersionFeature<ushort, TEST, TickOffsetData<TEST>>,
-                ByChangeHistoryFeature<ushort, TEST, ushort>,
-                BBSerialize<ushort, TEST, ushort, TickOffsetData<TEST>>
-                >
-                c = default;
-
-            
-
-
-
-        }
-
     }
 }

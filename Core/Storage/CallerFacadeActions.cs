@@ -4,6 +4,7 @@ namespace AnotherECS.Core.Actions
 {
     internal static unsafe class CallerFacadeActions
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AllocateDenseMulti<TSparse, TDense>(ref UnmanagedLayout<TSparse, TDense> layout, ref GlobalDepencies depencies, HistoryMode historyMode)
             where TSparse : unmanaged
@@ -86,7 +87,7 @@ namespace AnotherECS.Core.Actions
                         break;
                     }
             }
-        }
+        }*/
     }
 
     internal enum HistoryMode

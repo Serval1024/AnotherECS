@@ -6,6 +6,7 @@ namespace AnotherECS.Core
     internal static class CopyableHistoryActions<T>
         where T : unmanaged, ICopyable<T>
     {
+        /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint offset, ref T data)
         {
@@ -111,6 +112,6 @@ namespace AnotherECS.Core
             }
 
             HistoryActions<T>.HistoryClear(ref layout);
-        }
+        }*/
     }
 }
