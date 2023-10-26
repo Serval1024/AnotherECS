@@ -1,8 +1,7 @@
 using System;
-using System.Linq;
 using System.Text;
-using AnotherECS.Collections;
 using AnotherECS.Core;
+using AnotherECS.Core.Caller;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Generator
@@ -63,10 +62,6 @@ namespace AnotherECS.Generator
             {
                 result.Append("L0");
             }
-            if (option.sparseMode == TypeOptions.SparseMode.Byte)
-            {
-                result.Append("L1");
-            }
             if (option.sparseMode == TypeOptions.SparseMode.Ushort)
             {
                 result.Append("L2");
@@ -83,11 +78,15 @@ namespace AnotherECS.Generator
             {
                 result.Append("Inj");
             }
-            if (option.isCompileFastAccess)
+            if (option.isBindToEntity)
             {
-                result.Append("Fast");
+                result.Append("NoBE");
             }
-            
+            if (option.isUseRecycle)
+            {
+                result.Append("R");
+            }
+
             return result;
         }
 
@@ -124,171 +123,320 @@ namespace AnotherECS.Generator
             return result.ToString();
         }
 
-        public static string GetHistoryInterfaces(in TypeOptions option)
+        public static StringBuilder GetCallerDeclaration(in TypeOptions option)
         {
+            var (TSparse, TDenseIndex, TTickData) = GetLayoutDeclaration(option);
+            var layoutSCDTC = $"{TSparse}, TComponent, {TDenseIndex}, {TTickData}, TComponent";
+            var layoutSCDT = $"{TSparse}, TComponent, {TDenseIndex}, {TTickData}";
+            var layoutSCT = $"{TSparse}, TComponent, {TTickData}";
+            var layoutSCD = $"{TSparse}, TComponent, {TDenseIndex}";
+            var layoutCTC = $"TComponent, {TTickData}, TComponent";
+            var layoutC = $"TComponent";
+            var layoutS = $"{TSparse}";
+
+            var extraSpace = new string('\t', 4);
+
+            var nothing = $"{typeof(Nothing<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTC}>";
+            var singleFeature = $"{typeof(SingleFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>";
+
+
             var result = new StringBuilder();
-            if (option.isCopyable)
-            {
-                result.Append(", ");
-                result.Append(nameof(ICopyable));
-                result.Append("<T>");
-            }
-            if (option.isAttach)
-            {
-                result.Append(", ");
-                result.Append(nameof(IAttach));
-            }
-            if (option.isDetach)
-            {
-                result.Append(", ");
-                result.Append(nameof(IDetach));
-            }
+            result.Append("Caller<");
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            result.Append(layoutSCDTC);
+            result.Append(", ");
+
             if (option.isSingle)
             {
-                result.Append(", ");
-                result.Append(nameof(IShared));
+                result.Append(nameof(UintNumber));
             }
-            return result.ToString();
-        }
-    }
-
-    internal struct TypeOptions
-    {
-        public Type type;
-
-        public bool isHistory;
-        public bool isHistoryByChange;
-        public bool isHistoryByTick;
-        public bool isHistoryByVersion;
-
-        public bool isEmpty;
-
-        public bool isSingle;
-        public bool isCopyable;
-        public bool isUnmanaged;
-        public bool isVersion;
-        public bool isAttach;
-        public bool isDetach;
-        public bool isMarker;
-        public SparseMode sparseMode;
-        public bool isCompileFastAccess;
-
-        public bool isInject;
-        public bool isInjectComponent;
-        public bool isInjectMembers;
-        public ComponentUtils.InjectData[] injectMembers;
-
-        public bool isBlittable;
-        public bool isUseISerialize;
-        public bool isUseRecycle;
-        public bool isBindToEntity;
-
-        public bool isConfig;
-
-        public bool isDispose;
-
-        public TypeOptions(Type type)
-        {
-            this.type = type;
-
-            isMarker = ComponentUtils.IsMarker(type);
-
-#if ANOTHERECS_HISTORY_DISABLE
-            isHistoryByChange = false;
-            isHistoryByTick = false;
-            isHistoryByVersion = false;
-#else
-            isHistoryByChange = ComponentUtils.IsHistoryByChange(type) && !isMarker;
-            isHistoryByTick = ComponentUtils.IsHistoryByTick(type) && !isMarker;
-            isHistoryByVersion = ComponentUtils.IsHistoryByVersion(type) && !isMarker;
-#endif
-            isHistory = isHistoryByChange || isHistoryByTick || isHistoryByVersion;
-
-            isEmpty = ComponentUtils.IsEmpty(type);
-
-            isSingle = ComponentUtils.IsShared(type);
-            isCopyable = ComponentUtils.IsCopyable(type);
-            isUnmanaged = ComponentUtils.IsUnmanaged(type);
-            isVersion = ComponentUtils.IsVersion(type);
-            isAttach = ComponentUtils.IsAttach(type);
-            isDetach = ComponentUtils.IsDetach(type);
-            sparseMode = GetSparseMode(type);
-            isCompileFastAccess = ComponentUtils.IsCompileFastAccess(type);
-
-            isInjectComponent = !isEmpty && ComponentUtils.IsInjectComponent(type);
-            isInjectMembers = !isEmpty && ComponentUtils.IsInjectMembers(type);
-            isInject = isInjectComponent | isInjectMembers;
-            injectMembers = isInjectMembers ? ComponentUtils.GetInjectToMembers(type) : Array.Empty<ComponentUtils.InjectData>();
-
-            isBlittable = ComponentUtils.IsBlittable(type);
-            isUseISerialize = !isEmpty && (ComponentUtils.IsUseISerialize(type) || !isBlittable);
-            isUseRecycle = !isMarker && !isEmpty && !isSingle;
-            isBindToEntity = !isMarker;
-
-            isConfig = ComponentUtils.IsConfig(type);
-
-            isDispose = isAttach || isDetach || isCopyable;
-
-            Validate();
-        }
-
-        private static SparseMode GetSparseMode(Type type)
-        {
-            if (ComponentUtils.IsWithoutSparseDirectDense(type) || ComponentUtils.IsShared(type) || ComponentUtils.IsEmpty(type))
-            {
-                return SparseMode.Bool;
-            } 
-            else if (ComponentUtils.IsStorageLimit255(type))
-            {
-                return SparseMode.Byte;
+            else
+            { 
+                result.Append(nameof(UshortNumber));
             }
-            
-            return SparseMode.Ushort;
-        }
 
-        private void Validate()
-        {
-            if (!isUnmanaged)
+            result.Append(",");
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isInject)
             {
-                throw new Exceptions.OptionsConflictException(type, $"The component must not contain reference types.");
+                result.Append($"{typeof(InjectFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
             }
-            if (isMarker && isHistory)
+            else
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(IMarker)}, Any history option.");
+                result.Append(nothing);
             }
-            if (((isHistoryByChange ? 1 : 0) + (isHistoryByTick ? 1 : 0) + (isHistoryByVersion ? 1 : 0)) > 1)
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isUseRecycle)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByChange)}, {nameof(ComponentOptions.HistoryByTick)}, {nameof(ComponentOptions.HistoryByVersion)}.");
+                result.Append($"{typeof(RecycleStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTC}>");
             }
-            if (isCopyable && isEmpty)
+            else if (option.isSingle)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(ICopyable)}, {nameof(ComponentOptions.DataFree)}.");
+                result.Append($"{typeof(SingleStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTC}>");
             }
-            if (isHistoryByTick && isEmpty)
+            else
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByTick)}, {ComponentOptions.DataFree}.");
+                result.Append($"{typeof(IncrementStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTC}>");
             }
-            if (isHistoryByVersion && isEmpty)
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isDefault)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(ComponentOptions.HistoryByVersion)}, {ComponentOptions.DataFree}.");
+                result.Append($"{typeof(DefaultFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
             }
-            if (!isHistory && isInject)
+            else
             {
-                foreach (var member in injectMembers)
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isAttach || option.isDetach)
+            {
+                result.Append($"{typeof(AttachDetachFeature<>).GetNameWithoutGeneric()}<{layoutS}>");
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isAttach)
+            {
+                result.Append($"{typeof(AttachFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isDetach)
+            {
+                result.Append($"{typeof(DetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isSingle || option.isEmpty)
+            {
+                result.Append($"{typeof(SingleSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTC}>");
+            }
+            else
+            { 
+                if (option.sparseMode == TypeOptions.SparseMode.Bool)
                 {
-                    if (member.argumentTypes.Any(p1 => p1 == nameof(DArrayCaller)))
-                    {
-                        throw new Exceptions.OptionsConflictException(type, $"{typeof(DArray<>).Name}, {typeof(DList<>).Name} with 'no history' option.");
-                    }
+                    result.Append($"{typeof(BoolSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTC}>");
+                }
+                else if (option.sparseMode == TypeOptions.SparseMode.Ushort)
+                {
+                    result.Append($"{typeof(UshortSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTC}>");
                 }
             }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isEmpty)
+            {
+                result.Append($"{typeof(EmptyFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+            }
+            else
+            {
+                if (option.isSingle)
+                {
+                    result.Append(singleFeature);
+                }
+                else
+                {
+                    result.Append($"{typeof(UshortDenseFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                }
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isBindToEntity)
+            {
+                result.Append(nameof(TrueConst));
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isCopyable)
+            {
+                result.Append($"{typeof(CopyableFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isVersion)
+            {
+                if (option.isSingle)
+                {
+                    result.Append($"{typeof(UintVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                }
+                else
+                {
+                    result.Append($"{typeof(UshortVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                }
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isHistory)
+            {
+                if (option.isHistoryByChange)
+                {
+                    result.Append($"{typeof(ByChangeHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
+                }
+                else if (option.isHistoryByTick)
+                {
+                    result.Append($"{typeof(ByTickHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
+                }
+                else if (option.isHistoryByVersion)
+                {
+                    result.Append($"{typeof(ByVersionHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
+                }
+            }
+            else
+            {
+                result.Append(nothing);
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isUseISerialize || !option.isBlittable)
+            {
+                result.Append($"{typeof(SSSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+            }
+            else
+            {
+                if (option.isHistoryByTick)
+                {
+                    result.Append($"{typeof(BSSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                }
+                else
+                {
+                    result.Append($"{typeof(BBSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                }
+            }
+            result.Append(",");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            result.Append(nothing);
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            result.Append(">");
+
+            return result;
+
+            /* temple example:
+             * "Caller<
+             * ushort, TComponent, ushort, TickOffsetData<TComponent>, TComponent,
+             * UshortNumber,
+             * InjectFeature<ushort, TComponent, ushort, TickOffsetData<TComponent>>,
+             * RecycleStorageFeature<ushort, TComponent, ushort, TickOffsetData<TComponent>, TComponent>,
+             * DefaultFeature<TComponent>,
+             * AttachDetachFeature<ushort>,
+             * AttachFeature<ushort, TComponent, ushort, TickOffsetData<TComponent>>,
+             * DetachFeature<ushort, TComponent, ushort, TickOffsetData<TComponent>>,
+             * UshortSparseFeature<TComponent, TickOffsetData<TComponent>, TComponent>,
+             * UshortDenseFeature<ushort, TComponent, TickOffsetData<TComponent>>,
+             * TrueConst,
+             * CopyableFeature<TComponent>,
+             * UshortVersionFeature<ushort, TComponent, TickOffsetData<TComponent>>,
+             * ByChangeHistoryFeature<ushort, TComponent, ushort>,
+             * BBSerialize<ushort, TComponent, ushort, TickOffsetData<TComponent>>,
+             * Nothing<ushort, TComponent, ushort, TickOffsetData<TComponent>, TComponent>
+             * >";
+            */
         }
 
-        public enum SparseMode
+        public static (string TSparse, string TDenseIndex, string TTickData) GetLayoutDeclaration(in TypeOptions option)
         {
-            Bool,
-            Byte,
-            Ushort,
+            string TSparse = string.Empty;
+            string TDenseIndex = string.Empty;
+            string TTickData = string.Empty;
+
+            switch (option.sparseMode)
+            {
+                case TypeOptions.SparseMode.Bool:
+                    {
+                        TSparse = "bool";
+                        if (option.isSingle)
+                        {
+                            TDenseIndex = "uint";
+                        }
+                        else
+                        {
+                            TDenseIndex = "ushort";
+                        }
+                        break;
+                    }
+                case TypeOptions.SparseMode.Ushort:
+                    {
+                        TSparse = "ushort";
+                        TDenseIndex = "ushort";
+                        break;
+                    }
+            }
+
+            if (option.isHistory)
+            {
+                if (option.isHistoryByChange)
+                {
+                    TTickData = $"{typeof(TickOffsetData<>).GetNameWithoutGeneric()}<TComponent>";
+                }
+                else if (option.isHistoryByTick)
+                {
+                    TTickData = $"{typeof(TickData<>).GetNameWithoutGeneric()}<ArrayPtr<TComponent>>";
+                }
+                else if (option.isHistoryByVersion)
+                {
+                    TTickData = $"{typeof(TickIndexerOffsetData<>).GetNameWithoutGeneric()}<TComponent>";
+                }
+            }
+            else
+            {
+                TTickData = nameof(Nothing);
+            }
+
+            return (TSparse, TDenseIndex, TTickData);
         }
     }
 

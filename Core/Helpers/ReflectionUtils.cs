@@ -11,10 +11,10 @@ namespace AnotherECS.Core
     {
         public static Type[] ExtractGenericFromInterface<T>(Type type)
         {
-            var @interface = type.GetInterfaces().Where(p => p.Name.StartsWith($"{typeof(T).Name}`"));
+            var interfaces = type.GetInterfaces().Where(p => p.Name.StartsWith($"{typeof(T).Name}`"));
 
-            return @interface.Any()
-                ? @interface
+            return interfaces.Any()
+                ? interfaces
                     .Select(p => p.GetGenericArguments())
                     .SelectMany(p => p)
                     .GroupBy(p => p)
@@ -106,12 +106,12 @@ namespace AnotherECS.Core
                 .Union(type.GetProperties(bindingFlags));
 
         public static string GetMemberName(this MemberInfo memberInfo)
-           => memberInfo.MemberType switch
-           {
-               MemberTypes.Field => ((FieldInfo)memberInfo).Name,
-               MemberTypes.Property => ((PropertyInfo)memberInfo).Name,
-               _ => throw new NotImplementedException(),
-           };
+            => memberInfo.MemberType switch
+            {
+                MemberTypes.Field => ((FieldInfo)memberInfo).Name,
+                MemberTypes.Property => ((PropertyInfo)memberInfo).Name,
+                _ => throw new NotImplementedException(),
+            };
 
         public static Type GetMemberType(this MemberInfo memberInfo)
             => memberInfo.MemberType switch
@@ -122,12 +122,12 @@ namespace AnotherECS.Core
             };
 
         public static object GetValue(this MemberInfo memberInfo, object instance)
-           => memberInfo.MemberType switch
-           {
-               MemberTypes.Field => ((FieldInfo)memberInfo).GetValue(instance),
-               MemberTypes.Property => ((PropertyInfo)memberInfo).GetValue(instance),
-               _ => throw new NotImplementedException(),
-           };
+            => memberInfo.MemberType switch
+            {
+                MemberTypes.Field => ((FieldInfo)memberInfo).GetValue(instance),
+                MemberTypes.Property => ((PropertyInfo)memberInfo).GetValue(instance),
+                _ => throw new NotImplementedException(),
+            };
 
         public static void SetValue(this MemberInfo memberInfo, object instance, object value)
         {
@@ -142,6 +142,13 @@ namespace AnotherECS.Core
                 default:
                     throw new NotImplementedException();
             };
+        }
+
+        public static string GetNameWithoutGeneric(this Type type)
+        {
+            string name = type.Name;
+            int index = name.IndexOf('`');
+            return index == -1 ? name : name[..index];
         }
 
         private static string SwapGenericToName(this Type type, Dictionary<Type, Type> map = null)

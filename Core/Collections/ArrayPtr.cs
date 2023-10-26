@@ -465,18 +465,12 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear(uint elementCount)
         {
-#if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfArrayPtrBroken(this);
-#endif
             UnsafeMemory.Clear(data, elementCount * (uint)sizeof(T));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-#if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfArrayPtrBroken(this);
-#endif
             UnsafeMemory.Clear(data, byteLength);
         }
 

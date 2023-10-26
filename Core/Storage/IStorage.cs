@@ -3,30 +3,7 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
-    public interface IStorage
-    {
-        public Type GetElementType();
-        void Clear();
-    }
-
-    public interface IEntityStorage : IStorage
-    {
-        public bool IsHas(EntityId id);
-        void Resize(int capacity);
-        void Remove(EntityId id);
-    }
-
-    public interface ISingleStorage : IStorage
-    {
-        public bool IsHas();
-        void Remove();
-    }
-
-    public interface IComponentFactory<T>
-        where T : IComponent
-    {
-        T Create();
-    }
+   
 
     public interface IInjectSupport
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Converter;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
@@ -34,10 +35,14 @@ namespace AnotherECS.Core
         private ImplCaller _impl;
 
         public bool IsValide => _impl.IsValide;
-        public bool IRevert => true;
+        public bool IsSingle => false;
+        public bool IsRevert => true;
         public bool IsTickFinished => true;
         public bool IsSerialize => true;
         public bool IsResizable => false;
+        public bool IsAttach => false;
+        public bool IsDetach => false;
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
@@ -281,6 +286,49 @@ namespace AnotherECS.Core
             _impl.Unpack(ref reader);
         }
 
+        public bool IsHas(uint id)
+            => _impl.Read(id).IsValide;
+
+        void ICaller<DArrayContainer>.Add(uint id, ref DArrayContainer component)
+        {
+            throw new NotSupportedException();
+        }
+
+        ref DArrayContainer ICaller<DArrayContainer>.Add(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        ref readonly DArrayContainer ICaller<DArrayContainer>.Read(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        ref DArrayContainer ICaller<DArrayContainer>.Get(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        void ICaller<DArrayContainer>.Set(uint id, ref DArrayContainer component)
+        {
+            throw new NotSupportedException();
+        }
+
+        void ICaller<DArrayContainer>.SetOrAdd(uint id, ref DArrayContainer component)
+        {
+            throw new NotSupportedException();
+        }
+
+        public IComponent GetCopy(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Set(uint id, IComponent data)
+        {
+            throw new NotSupportedException();
+        }
+
         public static class LayoutInstaller
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -289,6 +337,7 @@ namespace AnotherECS.Core
         }
     }
 
+    [IgnoreCompile]
     internal unsafe struct DArrayContainer : ICopyable<DArrayContainer>, IDisposable, ISerialize
     {
         public ArrayPtr data;

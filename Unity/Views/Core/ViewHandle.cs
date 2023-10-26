@@ -4,13 +4,12 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views.Core
 {
-    [ComponentOption(ComponentOptions.HistoryNonSync | ComponentOptions.NoCompileFastAccess | ComponentOptions.CompileSortAtLast)]
+    [CompileComponentOption(ComponentOptions.HistoryNonSync)]
     public struct ViewSystemReference : IConfig
     {
         public IViewSystem system;
     }
 
-    [ComponentOption(ComponentOptions.NoCompileFastAccess | ComponentOptions.CompileSortAtLast)]
     public struct ViewHandle : IComponent, IAttach, IDetach, ISerialize
     {
         internal EntityId ownerId;

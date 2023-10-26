@@ -54,7 +54,7 @@ namespace AnotherECS.Core
             ThrowIfDisposed(state);
             ThrowIfDontExists(state, id);
 
-            if (caller is not IMultiCaller)
+            if (caller.IsSingle)
             {
                 throw new Exceptions.ComponentNotMultiException(caller.GetElementType());
             }
@@ -100,7 +100,7 @@ namespace AnotherECS.Core
         {
             ThrowIfDisposed(state);
 
-            if (caller is not IMultiCaller)
+            if (caller.IsSingle)
             {
                 throw new Exceptions.ComponentNotSharedException(typeof(T));
             }

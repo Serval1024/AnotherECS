@@ -20,14 +20,14 @@ namespace AnotherECS.Unsafe
                 throw new ArgumentException(nameof(function));
             }
         }
-
-        public unsafe static delegate*<State, int, bool> ConvertToPointer(Func<State, int, bool> function)
+        
+        public unsafe static delegate*<State, int, bool> ConvertToPointer(Func<State, int, bool> function)// TODO SER REMOVE
         {
             ValidateConvertToPointer(function);
             return (delegate*<State, int, bool>)function.Method.MethodHandle.GetFunctionPointer();
         }
 
-        public static delegate*<ref T, ref InjectContainer, void> ConvertToPointer<T>(InjectDelegate<T> function)
+        public static delegate*<ref T, ref InjectContainer, void> ConvertToPointer<T>(InjectDelegate<T> function)// TODO SER REMOVE
             where T : struct
         {
             ValidateConvertToPointer(function);

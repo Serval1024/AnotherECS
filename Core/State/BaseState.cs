@@ -21,7 +21,7 @@ namespace AnotherECS.Core
             }
         }
 
-        public abstract void OnDispose();
+        protected abstract void OnDispose();
     }
 }
 

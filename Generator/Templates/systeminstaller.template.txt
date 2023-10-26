@@ -7,7 +7,7 @@ using AnotherECS.Core;
 namespace AnotherECS.Gen.Project
 {
 <#ARRAY [0..STATE:COUNT]#>
-    public static class SystemGlobalInstaller_<#STATE:GEN_NAME#>
+    public static class SystemInstaller_<#STATE:GEN_NAME#>
     {
         private static bool _isNoInstalled = true;
 

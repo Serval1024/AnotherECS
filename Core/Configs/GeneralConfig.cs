@@ -3,9 +3,9 @@
     public struct GeneralConfig
     {
         public uint entityCapacity;
-        public uint recycledCapacity;
 
         public uint componentCapacity;
+        public uint recycledCapacity;
         public uint dArrayCapacity;
 
         public uint gcEntityCheckPerTick;

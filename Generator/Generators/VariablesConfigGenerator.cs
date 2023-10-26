@@ -4,47 +4,48 @@ using System.Linq;
 using System.Text;
 using AnotherECS.Converter;
 using AnotherECS.Core;
-using AnotherECS.Core.Actions;
 
 namespace AnotherECS.Generator
 {
     internal static class VariablesConfigGenerator
     {
-        public static TemplateParser.Variables GetCaller(TypeOptions option)
-            => new()
-            {
-                { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(option) },
-                { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(option) },
+        public static TemplateParser.Variables GetCommonLayoutInstaller(Type[] components)
+        {
+            var callers = components
+                .Select(p => new TypeOptions(p))
+                .Select(p => (typeOption : p, name : TypeOptionsUtils.GetCallerFlags(p)))
+                .GroupBy(p => p.name).Select(p => p.First())
+                .Select(p => (p.typeOption, p.name, declaration : TypeOptionsUtils.GetLayoutDeclaration(p.typeOption)))
+                .ToArray();
 
-                { "INTERFACE:ITickFinished", () => (option.isHistoryByTick || option.isHistoryByVersion) && !option.isEmpty},
+            TemplateParser.Variables variables = null;
+            variables = new()
+                {
+                    { "CALLER:COUNT", () => callers.Length.ToString() },
+                    { "CALLER:TYPE_NAME", () => callers[variables.GetIndex(0)].name },
+                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(callers[variables.GetIndex(0)].typeOption) },
 
-                { "VERSION", () => option.isVersion || option.isHistoryByVersion },
+                    { "CALLER:DECLARE", () => GetCallerDeclaration(callers[variables.GetIndex(0)].typeOption)},
 
-                { "ATTACH", () => option.isAttach },
-                { "DETACH", () => option.isDetach },
+                    { "LAYOUT:TSparse", () => callers[variables.GetIndex(0)].declaration.TSparse },
+                    { "LAYOUT:TDenseIndex", () => callers[variables.GetIndex(0)].declaration.TDenseIndex },
+                    { "LAYOUT:TTickData", () => callers[variables.GetIndex(0)].declaration.TTickData },
 
-                { "SINGLE", () => option.isSingle },
-                { "MULTI", () => !option.isSingle },
+                    { "INJECT", () => callers[variables.GetIndex(0)].typeOption.isInject },
 
-                { "EMPTY", () => option.isEmpty },
-                { "STORAGE:MODE", () => option.isSingle ? "Single" : "Multi" },
-                { "ALLOCATOR:RECYCLE", () => option.isUseRecycle },
-                { "INJECT", () => option.isInject },
+                };
+            return variables;
+        }
 
-                { "SPARSE:BOOL", () => option.sparseMode == TypeOptions.SparseMode.Bool },
-                { "SPARSE:TYPE_NAME", () => option.sparseMode.ToString().ToLower() },
+        private static string GetCallerDeclaration(TypeOptions option)
+        {
+            var result = TypeOptionsUtils.GetCallerDeclaration(option);
+            result.Append(Environment.NewLine);
+            result.Append(new string('\t', 3));
+            return result.ToString();
+        }
 
-                { "HISTORY", () => option.isHistory },
-                { "HISTORY:BYCHANGE", () => option.isHistoryByChange },
-                { "HISTORY:BYTICK", () => option.isHistoryByTick },
-                { "HISTORY:BYVERSION", () => option.isHistoryByTick },
-                { "HISTORY:FLAG", () =>  GetHistoryFlag(option) },
 
-                { "BIND_TO_ENTITY", () => option.isBindToEntity   },
-                { "COPYABLE", () => option.isCopyable },
-                { "FORCE:ISerialize", () => option.isUseISerialize },
-                { "BLITTABLE", () => option.isBlittable },
-            };
 
         public static TemplateParser.Variables GetLayoutInstaller(Type[] components)
         {
@@ -133,11 +134,18 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        private static string GetHistoryFlag(TypeOptions option)
-            => nameof(HistoryMode) + "." +
-            (option.isHistory
-                ? (option.isHistoryByChange ? HistoryMode.BYCHANGE : HistoryMode.BYTICK)
-                : HistoryMode.NONE).ToString();
+        public static TemplateParser.Variables GetFastAccess(TypeOptions option)
+        {
+            TemplateParser.Variables variables = null;
+            variables = new()
+                {
+                    { "MULTI", () => !option.isSingle },
+                    { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(option) },
+                    { "CALLER:DECLARE", () => GetCallerDeclaration(option)},
+                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(option) },
+                };
+            return variables;
+        }
 
         private static string GetSystemName(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
         {

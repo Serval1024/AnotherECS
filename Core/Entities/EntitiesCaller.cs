@@ -15,7 +15,7 @@ namespace AnotherECS.Core
                 Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
                 Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
                 NonSparseFeature<EntityHead, TickOffsetData<ushort>, ushort>,
-                UintDenseFeature<uint, EntityHead, TickOffsetData<ushort>>,
+                EntityDenseFeature<uint, EntityHead, TickOffsetData<ushort>>,
                 Nothing,
                 Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
                 Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
@@ -31,19 +31,23 @@ namespace AnotherECS.Core
     internal unsafe struct EntitiesCaller : ICaller<EntityHead>, ITickFinishedCaller, IRevertCaller
     {
         private ImplCaller _impl;
-        private int _gcEntityCheckPerTick;
+        private uint _gcEntityCheckPerTick;
 
         public bool IsValide => _impl.IsValide;
-        public bool IRevert => true;
+        
+        public bool IsSingle => false;
+        public bool IsRevert => true;
         public bool IsTickFinished => true;
         public bool IsSerialize => false;
         public bool IsResizable => false;
-
+        public bool IsAttach => false;
+        public bool IsDetach => false;
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
         {
             CallerWrapper.Config<ImplCaller, EntityHead>(ref _impl, layout, depencies, 0, null);
-            _gcEntityCheckPerTick = (int)depencies->config.general.gcEntityCheckPerTick;
+            _gcEntityCheckPerTick = depencies->config.general.gcEntityCheckPerTick;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -129,9 +133,52 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void InterationGarbageCollect(uint tick, int checkCount)
+        private void InterationGarbageCollect(uint tick, uint checkCount)
         {
             EntitiesActions.InterationGarbageCollect(ref _impl, tick, checkCount);
+        }
+
+        public void Add(uint id, ref EntityHead component)
+        {
+            throw new NotSupportedException();
+        }
+
+        public ref EntityHead Add(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        public ref readonly EntityHead Read(uint id)
+            => ref _impl.Read(id);
+
+        public ref EntityHead Get(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Set(uint id, ref EntityHead component)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void SetOrAdd(uint id, ref EntityHead component)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Remove(uint id)
+        {
+            Deallocate(id);
+        }
+
+        public IComponent GetCopy(uint id)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Set(uint id, IComponent data)
+        {
+            throw new NotSupportedException();
         }
 
         public static class LayoutInstaller
@@ -185,7 +232,7 @@ namespace AnotherECS.Core
 
             count -= iMax;
 
-            Remove(ref caller, id);
+            caller.Remove(id);
 
             if (next != 0)
             {
@@ -198,9 +245,9 @@ namespace AnotherECS.Core
                 {
                     caller.DirectPush(componentsPtr + i);
                 }
-                count -= EntityTail.ComponentMax;   //TODO SER CHECK ushort < 0
+                count -= EntityTail.ComponentMax;
 
-                Remove(ref caller, idTail);
+                caller.Remove(idTail);
             }
         }
 
@@ -367,10 +414,10 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void InterationGarbageCollect
-            (ref ImplCaller caller, uint tick, int checkCount)
+            (ref ImplCaller caller, uint tick, uint checkCount)
         {
             var count = GetUpperBoundId(ref caller);
-            var currentIndexGC = tick % count;
+            var currentIndexGC = (tick * checkCount) % count;
 
             while (--checkCount > 0 && currentIndexGC < count)
             {
@@ -392,7 +439,7 @@ namespace AnotherECS.Core
             caller.DirectPush(&head->generation);
 
             head->generation -= AllocateGeneration;
-            Remove(ref caller, id);
+            caller.Remove(id);
         }
 
         private static ushort* FindComponentPtr(ref ImplCaller caller, EntityId id, ushort componentType)
@@ -454,13 +501,5 @@ namespace AnotherECS.Core
         public static UChunk* ReadAs<UChunk>(ref ImplCaller caller, uint id)
             where UChunk : unmanaged
             => (UChunk*)caller.UnsafeDirectReadPtr(id);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Remove(ref ImplCaller caller, uint id)
-        {
-            caller.Remove(id);
-            ref var component = ref caller.UnsafeDirectRead(id);
-            //MultiStorageActions<EntityHead>.RemoveDense(ref layout, ref depencies, id, ref component);    //TOD DO????????????????
-        }
     }
 }

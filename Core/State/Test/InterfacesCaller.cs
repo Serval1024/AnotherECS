@@ -34,6 +34,11 @@ namespace AnotherECS.Core.Caller
         uint GetIndex();
     }
 
+    internal interface ISingleDenseFlag
+    {
+        bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
+    }
+
     internal interface IDenseProvider<TSparse, TDense, TDenseIndex, TTickData>
         where TSparse : unmanaged
         where TDense : unmanaged

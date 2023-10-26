@@ -16,13 +16,13 @@ namespace AnotherECS.Gen.Project
         public ref readonly FastAccess Fast => ref _fast;
 
 
-        protected override void BindingCodeGenerationStage(in GeneralConfig general)
+        protected override void BindingCodeGenerationStage(in WorldConfig config)
         {
-            ComponentGlobalInstaller_<#STATE:GEN_NAME#>.Install();
-            SystemGlobalInstaller_<#STATE:GEN_NAME#>.Install();
+            ComponentInstaller_<#STATE:GEN_NAME#>.Install();
+            SystemInstaller_<#STATE:GEN_NAME#>.Install();
 
 <#ARRAY [0..COMPONENT:COUNT]#>
-            LayoutInstaller.Add_<#COMPONENT:FULL_NAME_AS_TEXT#>(this);
+            LayoutInstaller.Install_<#COMPONENT:FULL_NAME_AS_TEXT#>(this);
 <#END#>
             UpdateFastAccess();
         }
@@ -38,12 +38,6 @@ namespace AnotherECS.Gen.Project
         protected override ushort GetIndex<T>()
             => CompileComponentIdProvider<<#STATE:GEN_NAME#>, T>.ID;
 
-        protected override void OnTickFinished()
-        {
-<#ARRAY [0..COMPONENT:COUNT]#>
-            
-<#END#>
-        }
 
         public struct FastAccess
         {
@@ -53,7 +47,7 @@ namespace AnotherECS.Gen.Project
             internal FastAccess(State state)
             {
 <#ARRAY [0..COMPONENT:FASTACCESS:COUNT]#>
-                _fa<#COMPONENT:FASTACCESS:NAME#> = state.CreateFA<<#COMPONENT:FASTACCESS:FULL_NAME#>, <#CALLER:FASTACCESS:TYPE_NAME#>_Caller<<#COMPONENT:FASTACCESS:FULL_NAME#>>, <#CALLER:FASTACCESS:TYPE_NAME#>_FA<<#COMPONENT:FASTACCESS:FULL_NAME#>>>();
+                _fa<#COMPONENT:FASTACCESS:NAME#> = state.CreateFA<<#COMPONENT:FASTACCESS:FULL_NAME#>, <#CALLER:FASTACCESS:TYPE_NAME#>_FA<<#COMPONENT:FASTACCESS:FULL_NAME#>>>();
 <#END#>
             }
 <#ARRAY [0..COMPONENT:FASTACCESS:COUNT]#>

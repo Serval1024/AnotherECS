@@ -3,12 +3,12 @@
 namespace AnotherECS.Core
 {
     [AttributeUsage(AttributeTargets.Struct)]
-    public class ComponentOptionAttribute : Attribute
+    public class CompileComponentOptionAttribute : Attribute
     {
         public ComponentOptions Options { get; private set; }
         public int Capacity { get; private set; }
 
-        public ComponentOptionAttribute(ComponentOptions options)
+        public CompileComponentOptionAttribute(ComponentOptions options)
         {
             Options = options;
         }
@@ -23,11 +23,8 @@ namespace AnotherECS.Core
         HistoryByVersion = 1 << 4,
         DataFree = 1 << 5,
         NotDataFree = 1 << 6,
-        StorageLimit255 = 1 << 7,
-        StorageLimit65535 = 1 << 8,
         WithoutSparseDirectDense = 1 << 9,
-        NoCompileFastAccess = 1 << 10,
-        CompileSortAtLast = 1 << 11,
+        CompileFastAccess = 1 << 10,
         UseISerialize = 1 << 112,
     }
 }

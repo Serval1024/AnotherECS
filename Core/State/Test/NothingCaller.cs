@@ -6,9 +6,11 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Core.Caller
 {
     [IgnoreCompile]
-    internal unsafe struct Nothing : IData, IBoolConst
+    internal unsafe struct Nothing : IData, IBoolConst, ITickData<Nothing>
     {
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
+        public uint Tick => throw new System.NotImplementedException();
+        public Nothing Value => throw new System.NotImplementedException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() { }

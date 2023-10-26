@@ -24,8 +24,7 @@ namespace AnotherECS.Converter
                         return bindAttribute == null || bindAttribute.State == typeof(EState);
                     }
                     )
-                .OrderBy(p => ComponentUtils.IsSortAtLast(p) ? 1 : 0)
-                .ThenBy(p => p.Name);
+                .OrderBy(p => p.Name);
     }
 }
 

@@ -32,12 +32,13 @@ namespace AnotherECS.Generator
         {
 
             return types
+                .Where(p => ComponentUtils.IsCompileFastAccess(p))
                 .Select(p => new TypeOptions(p))
                 .Select(option =>
                 {
                     if (skipCompileRule == null || skipCompileRule(option))
                     {
-                        var variables = VariablesConfigGenerator.GetCaller(option);
+                        var variables = VariablesConfigGenerator.GetFastAccess(option);
 
                         return new ContentGenerator(
                             GetPathByOptions(context, option),

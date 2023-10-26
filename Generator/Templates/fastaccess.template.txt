@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
+using AnotherECS.Core.Caller;
 <#IF MULTI#>using EntityId = System.UInt32;<#END#>
 
 namespace AnotherECS.Gen.Common
@@ -13,15 +14,15 @@ namespace AnotherECS.Gen.Common
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct <#CALLER:TYPE_NAME#>_FA<TComponent> : IFastAccess<<#CALLER:TYPE_NAME#>_Caller<TComponent>>
+    public unsafe struct <#CALLER:TYPE_NAME#>_FA<TComponent> : IFastAccess
         where TComponent : unmanaged, IComponent<#GENERIC_CONSTRAINTS:TComponent#>
     {
-        private <#CALLER:TYPE_NAME#>_Caller<TComponent> _caller;
+        private <#CALLER:DECLARE#> _caller;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IFastAccess<<#CALLER:TYPE_NAME#>_Caller<TComponent>>.Config(<#CALLER:TYPE_NAME#>_Caller<TComponent> caller)
+        void IFastAccess.Config(ICaller caller)
         {
-            _caller = caller;
+            _caller = (<#CALLER:DECLARE#>)caller;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

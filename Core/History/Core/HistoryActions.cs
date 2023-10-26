@@ -690,7 +690,7 @@ namespace AnotherECS.Core
             TVersion version = default;
             if (version.Is)
             {
-                StorageActions.UpdateVersion(ref *layout, tick, layout->storage.denseIndex);
+                LayoutActions.UpdateVersion(ref *layout, tick, layout->storage.denseIndex);
             }
         }
 

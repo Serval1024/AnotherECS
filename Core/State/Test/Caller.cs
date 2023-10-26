@@ -5,6 +5,7 @@ using AnotherECS.Core.Actions;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
+[assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
 namespace AnotherECS.Core.Caller
 {
 #if ENABLE_IL2CPP
@@ -52,7 +53,7 @@ namespace AnotherECS.Core.Caller
         where TAttachDetachStorage : struct, IData, IAttachDetachProvider<TSparse>, IBoolConst
         where TAttach : struct, IAttach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
         where TDetach : struct, IDetach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
-        where TSparseStorage : struct, ISparseProvider<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>, IIterator<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
+        where TSparseStorage : struct, ISparseProvider<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>, IIterator<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst, ISingleDenseFlag
         where TDenseStorage : struct, IStartIndexProvider, IDenseProvider<TSparse, TDense, TDenseIndex, TTickData>, ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>, ISparseResize<TSparse, TDense, TDenseIndex, TTickData>, IDenseResize<TSparse, TDense, TDenseIndex, TTickData>
         where TIsBindToEntity : struct, IBoolConst
         where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
@@ -80,13 +81,19 @@ namespace AnotherECS.Core.Caller
             get => _layout != null && _depencies != null;
         }
 
+        public bool IsSingle
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => default(TSparseStorage).IsSingleDense;
+        }
+
         public bool IsResizable
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => allocator.IsSparseResize<TSparseStorage>();
         }
 
-        public bool IRevert
+        public bool IsRevert
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => default(THistory).IsRevert;
@@ -108,6 +115,18 @@ namespace AnotherECS.Core.Caller
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => default(TSerialize).Is;
+        }
+
+        public bool IsAttach
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => default(TAttach).Is;
+        }
+
+        public bool IsDetach
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => default(TDetach).Is;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -298,14 +317,12 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense Add(EntityId id, ref TDense data)
+        public void Add(EntityId id, ref TDense data)
         {
             ref var component = ref AddInternal(id);
             component = data;
 
             AddPostInternal(id, ref component);
-
-            return ref component;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -442,7 +459,7 @@ namespace AnotherECS.Core.Caller
             }
             sparseStorage.ForEach<DeconstructInjectIterable<TSparse, TDense, TDenseIndex, TTickData>>(ref *_layout, ref *_depencies, dense.GetIndex(), GetCount());
 
-            StorageActions.StorageClear(ref *_layout);
+            LayoutActions.StorageClear(ref *_layout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

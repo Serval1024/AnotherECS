@@ -1,3 +1,4 @@
+using AnotherECS.Core.Caller;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace AnotherECS.Core
 
         public static bool IsOption(Type type, ComponentOptions option)
         {
-            var attribute = type.GetCustomAttribute<ComponentOptionAttribute>();
+            var attribute = type.GetCustomAttribute<CompileComponentOptionAttribute>();
             return (attribute != null) && attribute.Options.HasFlag(option);
         }
 
@@ -98,14 +99,14 @@ namespace AnotherECS.Core
         public static bool IsDetach(Type type)
             => typeof(IDetach).IsAssignableFrom(type);
 
+        public static bool IsDefault(Type type)
+            => typeof(IDefault).IsAssignableFrom(type);
+
         public static bool IsShared(Type type)
             => typeof(IShared).IsAssignableFrom(type);
 
         public static bool IsMarker(Type type)
             => typeof(IMarker).IsAssignableFrom(type);
-
-        public static bool IsStorageLimit255(Type type)
-            => IsOption(type, ComponentOptions.StorageLimit255);
 
         public static bool IsEmpty(Type type)
             => (IsOption(type, ComponentOptions.DataFree) || (type.GetFields(DATA_FREE_FLAGS).Length == 0 && type.GetProperties(DATA_FREE_FLAGS).Length == 0))
@@ -115,10 +116,7 @@ namespace AnotherECS.Core
             => IsOption(type, ComponentOptions.WithoutSparseDirectDense) || GetTypeSize(type) <= 2;
 
         public static bool IsCompileFastAccess(Type type)
-            => !IsOption(type, ComponentOptions.NoCompileFastAccess);
-
-        public static bool IsSortAtLast(Type type)
-            => IsOption(type, ComponentOptions.CompileSortAtLast) && !IsCompileFastAccess(type);
+            => IsOption(type, ComponentOptions.CompileFastAccess);
 
         public static bool IsInjectComponent(Type type)
             => typeof(IInject).IsAssignableFrom(type);

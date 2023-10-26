@@ -65,7 +65,7 @@ namespace AnotherECS.Core
             Unpack(ref reader);
         }
 
-        public override void OnDispose()
+        protected override void OnDispose()
         {
             for (int i = 1; i < _callers.Length; ++i)
             {
@@ -140,10 +140,10 @@ namespace AnotherECS.Core
             _depencies->dArray = _dArray;
             _depencies->injectContainer = new InjectContainer(_dArray);
 
-            _isCustomSerializeCallers = _callers.Select(p => p is ISerialize).ToArray();
-            _tickFinishedCallers = _callers.Where(p => p is ITickFinishedCaller).Cast<ITickFinishedCaller>().ToArray();
-            _resizableCallers = _callers.Where(p => p is IResizableCaller).Cast<IResizableCaller>().ToArray();
-            _revertCallers = _callers.Where(p => p is IRevertCaller).Cast<IRevertCaller>().ToArray();
+            _isCustomSerializeCallers = _callers.Skip(1).Select(p => p.IsSerialize).ToArray();
+            _tickFinishedCallers = _callers.Skip(1).Where(p => p.IsTickFinished).Cast<ITickFinishedCaller>().ToArray();
+            _resizableCallers = _callers.Skip(1).Where(p => p.IsResizable).Cast<IResizableCaller>().ToArray();
+            _revertCallers = _callers.Skip(1).Where(p => p.IsRevert).Cast<IRevertCaller>().ToArray();
         }
         #endregion
 
@@ -153,7 +153,7 @@ namespace AnotherECS.Core
         {
             for (int i = 1; i < _callers.Length; ++i)
             {
-                if (_callers[i] is IAttachCaller callerAttach)
+                if (_callers[i].IsAttach && _callers[i] is IAttachCaller callerAttach)
                 {
                     callerAttach.Attach();
                 }
@@ -218,8 +218,7 @@ namespace AnotherECS.Core
 
             for(int i = 0; i < count; ++i)
             {
-                GetCaller<IMultiCaller>(_componentsBufferTemp[i])
-                    .Remove(id);
+                GetCaller(_componentsBufferTemp[i]).Remove(id);
             }
 
             _entities.Deallocate(id);
@@ -261,7 +260,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            return GetCaller<T, IMultiCaller<T>>().Create();
+            return GetCaller<T>().Create();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -272,7 +271,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller<T>());
 #endif
-            return GetCaller<T, IMultiCaller<T>>().IsHas(id);
+            return GetCaller<T>().IsHas(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,7 +286,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
-            GetCaller<T, IMultiCaller<T>>().Add(id, ref data);
+            GetCaller<T>().Add(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -297,7 +296,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
-            return ref GetCaller<T, IMultiCaller<T>>().Add(id);
+            return ref GetCaller<T>().Add(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -317,16 +316,16 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
-            GetCaller<T, IMultiCaller<T>>().Remove(id);
+            GetCaller<T>().Remove(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(EntityId id, int index)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller<ICaller>(_entities.GetComponentCount(id)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_entities.GetComponentCount(id)));
 #endif
-            return GetCaller<IMultiCaller>(_entities.GetComponentCount(id)).GetCopy(id);
+            return GetCaller(_entities.GetComponentCount(id)).GetCopy(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -336,7 +335,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
-            return ref GetCaller<T, IMultiCaller<T>>().Read(id);
+            return ref GetCaller<T>().Read(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -346,16 +345,16 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
-            return ref GetCaller<T, IMultiCaller<T>>().Get(id);
+            return ref GetCaller<T>().Get(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, int index, IComponent component)
         {
 #if ANOTHERECS_DEBUG
-            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller<ICaller>(_entities.GetComponentCount(id)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_entities.GetComponentCount(id)));
 #endif
-            GetCaller<IMultiCaller>(_entities.GetComponent(id, index)).Set(id, component);
+            GetCaller(_entities.GetComponent(id, index)).Set(id, component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -365,7 +364,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
-            GetCaller<T, IMultiCaller<T>>().Set(id, ref data);
+            GetCaller<T>().Set(id, ref data);
         }
         #endregion
 
@@ -377,7 +376,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
-            return GetCaller<T, ISingleCaller<T>>().IsHas();
+            return GetCaller<T>().IsHas(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -392,7 +391,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
-            GetCaller<T, ISingleCaller<T>>().SetOrAdd(ref data);
+            GetCaller<T>().SetOrAdd(0, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -407,7 +406,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
-            GetCaller<T, ISingleCaller<T>>().Add(ref data);
+            GetCaller<T>().Add(0, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -417,7 +416,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
-            return ref GetCaller<T, ISingleCaller<T>>().Add();
+            return ref GetCaller<T>().Add(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -427,7 +426,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
-            GetCaller<T, ISingleCaller<T>>().Remove();
+            GetCaller<T>().Remove(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -437,7 +436,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
-            return ref GetCaller<T, ISingleCaller<T>>().Read();
+            return ref GetCaller<T>().Read(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -447,7 +446,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
-            return ref GetCaller<T, ISingleCaller<T>>().Get();
+            return ref GetCaller<T>().Get(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -457,7 +456,7 @@ namespace AnotherECS.Core
 #if ANOTHERECS_DEBUG
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
-            GetCaller<T, ISingleCaller<T>>().Set(ref data);
+            GetCaller<T>().Set(0, ref data);
         }
         #endregion
 
@@ -465,7 +464,6 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
         {
-            //_history.TickStarted();
             _events.TickStarted(GetTick());
         }
 
@@ -477,10 +475,7 @@ namespace AnotherECS.Core
                 tickFinished.TickFinished();
             }
 
-            _entities.TickFinished();
-            _dArray.TickFinished();
             //_filters.TickFinished();
-            OnTickFinished();
         }
         #endregion
 
@@ -538,32 +533,26 @@ namespace AnotherECS.Core
             => GetComponentCount() + 3;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ICaller<T> GetCaller<T>(ushort index)
+            where T : unmanaged, IComponent
+#if ANOTHERECS_DEBUG
+            => (ICaller<T>)_callers[index];
+#else
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, ICaller<T>>(ref _callers[index]);
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller<T> GetCaller<T>()
             where T : unmanaged, IComponent
-            => (ICaller<T>)_callers[GetIndex<T>()];
+            => GetCaller<T>(GetIndex<T>());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private U GetCaller<U>(int index)
-            where U : ICaller
-#if ANOTHERECS_DEBUG
-            => (U)_callers[index];
-#else
-            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, U>(ref _callers[index]);
-#endif
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private U GetCaller<T, U>()
-            where T : unmanaged, IComponent
-            where U : ICaller
-#if ANOTHERECS_DEBUG
-            => (U)_callers[GetIndex<T>()];
-#else
-            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, U>(ref _callers[GetIndex<T>()]);
-#endif
+        private ICaller GetCaller(uint index)
+            => _callers[index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UCaller AddLayout<UCaller, TSparse, TDense, TDenseIndex, TTickData>(ComponentFunction<TDense> componentFunction = default)
-            where UCaller : struct, ICaller
+            where UCaller : struct, ICallerReference
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -589,17 +578,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EFastAccess CreateFA<TComponent, UCaller, EFastAccess>()
+        public EFastAccess CreateFA<TComponent, EFastAccess>()
             where TComponent : IComponent
-            where UCaller : ICaller
-            where EFastAccess : struct, IFastAccess<UCaller>
+            where EFastAccess : struct, IFastAccess
         {
             EFastAccess fastAccess = default;
-#if ANOTHERECS_DEBUG
-            fastAccess.Config((UCaller)_callers[GetIndex<TComponent>()]);
-#else
-            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, UCaller>(ref _callers[GetIndex<TComponent>()]);
-#endif
+            fastAccess.Config(_callers[GetIndex<TComponent>()]);
             return fastAccess;
         }
 
@@ -617,7 +601,6 @@ namespace AnotherECS.Core
         protected abstract uint GetComponentCount();
         protected abstract ushort GetIndex<T>()
             where T : IComponent;
-        protected abstract void OnTickFinished();
         #endregion
     }
 }

@@ -5,28 +5,42 @@ using EntityId = System.UInt32;
 [assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
 namespace AnotherECS.Core
 {
-    public interface ICaller
+    public interface ICallerReference { }
+
+    internal interface ICaller : ICallerReference
     {
+        bool IsSingle { get; }
+        bool IsRevert { get; }
+        bool IsTickFinished { get; }
+        bool IsSerialize { get; }
+        bool IsResizable { get; }
+        bool IsAttach { get; }
+        bool IsDetach { get; }
+
         internal unsafe void Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state);
-        internal unsafe void AllocateLayout();
+        internal void AllocateLayout();
         Type GetElementType();
+        void Remove(EntityId id);
+        IComponent GetCopy(EntityId id);
+        void Set(EntityId id, IComponent data);
     }
 
-    public interface IFastAccess<TCaller>
-        where TCaller : ICaller
+    public interface IFastAccess
     {
-        internal unsafe void Config(TCaller caller);
+        internal unsafe void Config(ICaller caller);
     }
 
     internal interface ICaller<TComponent> : ICaller
         where TComponent : unmanaged
     {
         TComponent Create();
-
-        bool IRevert { get; }
-        bool IsTickFinished { get; }
-        bool IsSerialize { get; }
-        bool IsResizable { get; }
+        bool IsHas(EntityId id);
+        void Add(EntityId id, ref TComponent component);
+        ref TComponent Add(EntityId id);
+        ref readonly TComponent Read(EntityId id);
+        ref TComponent Get(EntityId id);
+        void Set(EntityId id, ref TComponent component);
+        void SetOrAdd(EntityId id, ref TComponent component);
     }
 
     internal interface IResizableCaller : ICaller
@@ -34,40 +48,14 @@ namespace AnotherECS.Core
         void Resize(uint capacity);
     }
 
-    internal interface IMultiCaller : ICaller
+    internal interface ITickFinishedCaller
     {
-        IComponent GetCopy(EntityId id);
-        void Set(EntityId id, IComponent component);
-        void Remove(EntityId id);
+        void TickFinished();
     }
 
-    internal interface IMultiCaller<TComponent> : IMultiCaller, ICaller<TComponent>, IResizableCaller
-        where TComponent : unmanaged, IComponent
+    internal interface IRevertFinishedCaller
     {
-        bool IsHas(EntityId id);
-
-        void Add(EntityId id, ref TComponent component);
-        ref TComponent Add(EntityId id);
-
-        ref readonly TComponent Read(EntityId id);
-        ref TComponent Get(EntityId id);
-        void Set(EntityId id, ref TComponent component);
-
-    }
-
-    internal interface ISingleCaller<TComponent> : ICaller<TComponent>
-        where TComponent : unmanaged, IComponent
-    {
-        bool IsHas();
-
-        void Add(ref TComponent component);
-        ref TComponent Add();
-        void SetOrAdd(ref TComponent component);
-        void Remove();
-
-        ref readonly TComponent Read();
-        ref TComponent Get();
-        void Set(ref TComponent component);
+        void RevertFinished();
     }
 
     internal interface IAttachCaller
