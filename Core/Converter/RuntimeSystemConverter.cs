@@ -8,9 +8,7 @@ namespace AnotherECS.Converter
     public class RuntimeSystemConverter : IgnoresTypeToIdConverter<ushort, ISystem>, ITypeToUshort
     {
         public RuntimeSystemConverter(Type[] ignoreTypes) 
-            : base(ignoreTypes)
-        {
-        }
+            : base(ignoreTypes) { }
 
         protected override IEnumerable<Type> GetSortTypes()
             => SystemUtils.GetOrder(

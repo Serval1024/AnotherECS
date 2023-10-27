@@ -1,3 +1,4 @@
+using AnotherECS.Converter;
 using AnotherECS.Core;
 using System;
 using System.IO;
@@ -7,17 +8,16 @@ namespace AnotherECS.Generator
 {
     public class StateGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "_ImplState.gen.cs";
+        public string SaveFilePostfixName => ".gen.cs";
         public string TemplateFileName => "state.template.txt";
 
-        private const string STATE_NAME_POSTFIX =
-            "ImplState";
+        private const string STATE_NAME_POSTFIX = "Compile";
 
         public ContentGenerator[] Compile(GeneratorContext context, bool isForceOverride)
             => context.GetStateTypes()
-            .Select(state => CompileInternal(state, context))
-            .Where(p => p.path != null)
-            .ToArray();
+                .Select(state => CompileInternal(context, state, state.Name))
+                .Where(p => p.path != null)
+                .ToArray();
 
         public DeleteContentGenerator GetUnusedFiles(GeneratorContext context)
             => default;
@@ -25,25 +25,37 @@ namespace AnotherECS.Generator
         public string[] GetSaveFileNames(GeneratorContext context)
             => context
                 .GetStateTypes()
-                .Select(p => GetPathByState(context.GetStatePath(p), p.Name))
+                .Select(p => GetPathByState(context.GetStatePath(p.Name), p.Name))
                 .ExceptDublicates()
                 .ToArray();
 
-        public static string GetStateNameGen(Type stateType)
-            => stateType.Name + STATE_NAME_POSTFIX;
+        public ContentGenerator Compile(GeneratorContext context, string stateName)
+            => CompileInternal(context, stateName);
 
-        private ContentGenerator CompileInternal(Type stateType, GeneratorContext context)
+        public static string GetStateNameGen(string stateName)
+            => GetStateName(stateName, STATE_NAME_POSTFIX);
+
+        public string GetPathByState(string path, string stateName)
+            => Path.Combine(path, GetStateName(stateName, SaveFilePostfixName));
+
+        public static string GetStateName(string stateName, string postfix)
+            => stateName + postfix;
+
+        private ContentGenerator CompileInternal(GeneratorContext context, string stateName)
+            => CompileInternal(context, typeof(MockState), stateName);
+
+        private ContentGenerator CompileInternal(GeneratorContext context, Type state, string stateName)
         {
-            var variables = VariablesConfigGenerator.GetState(stateType, GetStateNameGen(stateType), context.GetComponents(stateType));
+            var variables = VariablesConfigGenerator.GetState(stateName, context.GetComponents(state));
 
             return new ContentGenerator(
-                GetPathByState(context.GetStatePath(stateType), stateType.Name),
+                GetPathByState(context.GetStatePath(stateName), stateName),
                 TemplateParser.Transform(context.GetTemplate(TemplateFileName), variables)
                 );
 
         }
 
-        private string GetPathByState(string path, string stateName)
-            => Path.Combine(path, stateName + SaveFilePostfixName);
+        [IgnoreCompile]
+        private class MockState : IState { }
     }
 }

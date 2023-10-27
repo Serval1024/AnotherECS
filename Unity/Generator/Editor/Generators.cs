@@ -80,7 +80,7 @@ namespace AnotherECS.Unity.Editor.Generator
             {
                 return _generators
                     .Select(p => p.GetUnusedFiles(context))
-                    .Where(p => p.keepFilePostfixName != string.Empty && p.paths != null)
+                    .Where(p => !string.IsNullOrEmpty(p.keepFilePostfixName) && p.paths != null)
                     .ToArray();
             }
             catch

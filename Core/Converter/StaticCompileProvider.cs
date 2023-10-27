@@ -11,10 +11,10 @@ namespace AnotherECS.Converter
     public static class StaticCompileComponentIdProvider<EState>
        where EState : IState
     {
-        public static CompileComponentToIntConverter<EState> componentConverter = new();
+        public static CompileComponentToIdConverter<EState> componentConverter = new();
     }
 
-    public class CompileComponentToIntConverter<EState> : CompileTypeToIdConverter<ushort, IComponent, EState>
+    public class CompileComponentToIdConverter<EState> : CompileTypeToIdConverter<ushort, IComponent, EState>
        where EState : IState
     { }
 }

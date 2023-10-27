@@ -120,6 +120,46 @@ namespace AnotherECS.Unity.Editor.Generator
                 }
             }
         }
+
+        public static string GetSelectedFolder()
+        {
+            foreach (var obj in Selection.GetFiltered(typeof(UnityEngine.Object), SelectionMode.Assets))
+            {
+                var path = AssetDatabase.GetAssetPath(obj);
+                if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
+                {
+                    return GetDirectory(path);
+                }
+            }
+            return "Assets";
+        }
+
+        public static (string path, string subName) FindNoExistsFile(Func<string, string> getPath)
+        {
+            var subName = string.Empty;
+            var path = getPath(subName);
+            int counter = 0;
+            while (File.Exists(path))
+            {
+                subName = (++counter).ToString();
+                path = getPath(subName);
+            }
+            return (path, subName);
+        }
+
+        public static string GetDirectory(string path)
+            => ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
+                ? path
+                : Path.GetDirectoryName(path);
+
+        public static string GetFileNameWithoutExtension(string path)
+        {
+            while (!string.IsNullOrEmpty(Path.GetExtension(path)))
+            {
+                path = Path.GetFileNameWithoutExtension(path);
+            }
+            return path;
+        }
     }
 }    
 

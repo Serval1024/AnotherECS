@@ -70,7 +70,7 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        public static TemplateParser.Variables GetState(Type stateType, string stateGenName, ITypeToUshort components)
+        public static TemplateParser.Variables GetState(string stateGenName, ITypeToUshort components)
         {
             var fastAccessComponents = new CustomTypeToIdConverter<ushort, IComponent>(
                 components.GetAssociationTable().Values.Where(p => new TypeOptions(p).isCompileFastAccess)
@@ -79,7 +79,6 @@ namespace AnotherECS.Generator
             TemplateParser.Variables variables = null;
             variables = new()
                 {
-                    { "STATE:NAME", () => stateType.Name },
                     { "STATE:GEN_NAME", () => stateGenName },
 
                     { "COMPONENT:COUNT", () => components.GetAssociationTable().Count.ToString() },
@@ -102,7 +101,7 @@ namespace AnotherECS.Generator
             variables = new()
             {
                 { "STATE:COUNT", () => states.Count().ToString() },
-                { "STATE:GEN_NAME", () => StateGenerator.GetStateNameGen(states.IdToType(variables.GetIndexAsId(0))) },
+                { "STATE:GEN_NAME", () => states.IdToType(variables.GetIndexAsId(0)).Name },
 
                 { "SYSTEM:COUNT", () => systems.Count().ToString() },
                 { "SYSTEM:NAME", () => GetSystemName(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
@@ -117,7 +116,7 @@ namespace AnotherECS.Generator
             variables = new()
             {
                 { "STATE:COUNT", () => states.Count().ToString() },
-                { "STATE:GEN_NAME", () => StateGenerator.GetStateNameGen(states.IdToType(variables.GetIndexAsId(0))) },
+                { "STATE:GEN_NAME", () => states.IdToType(variables.GetIndexAsId(0)).Name },
 
                 { "COMPONENT:COUNT", () =>
                     context.GetComponents(

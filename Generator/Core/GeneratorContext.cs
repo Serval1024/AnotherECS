@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using AnotherECS.Converter;
 using AnotherECS.Core;
 
@@ -36,9 +37,8 @@ namespace AnotherECS.Generator
             var genericType = type.MakeGenericType(stateType);
             return (ITypeToUshort)Activator.CreateInstance(genericType, new[] { _ignoreTypes });
         }
-
-        public string GetStatePath(Type stateType)
-            => _environmentProvider.GetFilePathToType(stateType);
+        public string GetStatePath(string stateName)
+            => _environmentProvider.GetFilePathByStateName(stateName);
 
         public string GetTemplate(string fileName)
             => _environmentProvider.GetTemplate(fileName);

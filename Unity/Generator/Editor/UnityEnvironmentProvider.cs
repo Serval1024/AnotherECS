@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using AnotherECS.Generator;
 using UnityEditor;
@@ -8,19 +7,20 @@ namespace AnotherECS.Unity.Editor.Generator
 {
     public class UnityEnvironmentProvider : IEnvironmentProvider
     {
-        public string GetFilePathToType(Type stateType)
+        public string GetFilePathByStateName(string stateName)
         {
-            var guid = AssetDatabase.FindAssets($"t:Script {stateType.Name}").FirstOrDefault();
+            var guid = AssetDatabase.FindAssets($"t:Script {stateName}").FirstOrDefault();
             if (!string.IsNullOrEmpty(guid))
             {
                 var fullPath = AssetDatabase.GUIDToAssetPath(guid);
-                var name = Path.GetFileNameWithoutExtension(fullPath);
-                if (name == stateType.Name)
+                var name = UnityGeneratorUtils.GetFileNameWithoutExtension(fullPath);
+
+                if (name == stateName)
                 {
                     return Path.GetDirectoryName(fullPath);
                 }
             }
-            return null;
+            return string.Empty;
         }
 
         public string FindRootGenDirectory()
@@ -31,3 +31,4 @@ namespace AnotherECS.Unity.Editor.Generator
             => UnityGeneratorUtils.GetTemplate(fileName);
     }
 }
+

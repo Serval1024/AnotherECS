@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using AnotherECS.Generator;
 using Logger = AnotherECS.Debug.Logger;
+using AnotherECS.Core;
 
 namespace AnotherECS.Unity.Editor.Generator
 {
@@ -31,6 +32,23 @@ namespace AnotherECS.Unity.Editor.Generator
                 }
             }
         }
+
+        [MenuItem("Assets/AnotherECS/Create State")]
+        private static void CreateState()
+        {
+            if (Selection.activeObject != null)
+            {
+                var stateName = StateGenerator.GetStateNameGen(nameof(State));
+                var folder = UnityGeneratorUtils.GetSelectedFolder();
+                var generator = new StateGenerator();
+                
+                (string path, string subName) = UnityGeneratorUtils.FindNoExistsFile(p => generator.GetPathByState(folder, stateName + p));
+
+                var content = generator.Compile(new GeneratorContext(new UnityEnvironmentProvider()), stateName + subName);
+                UnityGeneratorUtils.SaveFile(path, content.text);
+            }
+        }
+
 
         [MenuItem("Assets/AnotherECS/Compile Template", true)]
         private static bool CompileTemplateVaidate()

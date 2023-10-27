@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace AnotherECS.Converter
 {
-    public class IgnoresTypeToIdConverter<UId, TType> : TypeToIdConverter<UId, TType>
+    public class IgnoresTypeToIdConverter<UId, TType> : TypeToIdConverter<UId>
         where UId : unmanaged
         where TType : class
     {
@@ -20,8 +20,8 @@ namespace AnotherECS.Converter
         protected override void OnInit() { }
 
         protected override IEnumerable<Type> GetSortTypes()
-           => base
-                .GetSortTypes()
+           => TypeUtils.GetRuntimeTypes<TType>()
+                .OrderBy(p => p.Name)
                 .Where(p => p.GetCustomAttribute<IgnoreCompileAttribute>() == null)
                 .Where(p => !_ignoreTypes.Any(p0 => p0 == p));
     }

@@ -9,7 +9,7 @@ using AnotherECS.Gen.Common;
 
 namespace AnotherECS.Gen.Project
 {
-    public sealed class <#STATE:GEN_NAME#> : <#STATE:NAME#>
+    public sealed class <#STATE:GEN_NAME#> : State, IState
     {
         
         private FastAccess _fast;

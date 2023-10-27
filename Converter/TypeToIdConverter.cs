@@ -4,9 +4,8 @@ using System.Linq;
 
 namespace AnotherECS.Converter
 {
-    public class TypeToIdConverter<UId, TType> : ITypeToId<UId>
+    public abstract class TypeToIdConverter<UId> : ITypeToId<UId>
         where UId : unmanaged
-        where TType : class
     {
         private Dictionary<UId, Type> _direct;
         private Dictionary<Type, UId> _reverse;
@@ -34,9 +33,7 @@ namespace AnotherECS.Converter
         protected virtual void OnInit()
             => Init();
 
-        protected virtual IEnumerable<Type> GetSortTypes()
-            => TypeUtils.GetRuntimeTypes<TType>()
-                .OrderBy(p => p.Name);
+        protected abstract IEnumerable<Type> GetSortTypes();
 
         protected Dictionary<UId, Type> GetSortAssociationTableInternal()
         {

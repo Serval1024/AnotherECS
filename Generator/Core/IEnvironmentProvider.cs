@@ -4,7 +4,7 @@ namespace AnotherECS.Generator
 {
     public interface IEnvironmentProvider
     {
-        string GetFilePathToType(Type type);
+        string GetFilePathByStateName(string stateName);
         string GetTemplate(string fileName);
         string FindRootGenDirectory();
         string FindRootGenCommonDirectory();

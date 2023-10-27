@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AnotherECS.Converter
 {
-    public class CustomTypeToIdConverter<UId, TType> : TypeToIdConverter<UId, TType>
+    public class CustomTypeToIdConverter<UId, TType> : TypeToIdConverter<UId>
         where UId : unmanaged
         where TType : class
     {
