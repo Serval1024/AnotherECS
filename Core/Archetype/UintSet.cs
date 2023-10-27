@@ -39,7 +39,7 @@ namespace AnotherECS.Core
 
         public void Add(uint item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (Contains(item))
             {
                 throw new ArgumentException();
@@ -140,7 +140,7 @@ namespace AnotherECS.Core
         private void IncreaseCapacity()
         {
             uint newSize = HashHelpers.GetPrime(((uint)_count) << 1);
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (newSize <= _count)
             {
                 throw new ArgumentException();

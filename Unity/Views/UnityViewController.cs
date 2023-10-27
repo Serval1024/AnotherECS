@@ -104,7 +104,7 @@ namespace AnotherECS.Views
                 where T : IView
             {
                 var id = typeof(T);
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 if (!_byTypes.ContainsKey(id))
                 {
                     throw new Exceptions.ViewNotFoundException(id.Name);
@@ -116,7 +116,7 @@ namespace AnotherECS.Views
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IView Get(string id)
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 if (!_byGUIDs.ContainsKey(id))
                 {
                     throw new Exceptions.ViewNotFoundException(id);
@@ -128,7 +128,7 @@ namespace AnotherECS.Views
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IView Get(uint id)
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 if (id >= _byIds.Length)
                 {
                     throw new Exceptions.ViewNotFoundException(id.ToString());
@@ -142,7 +142,7 @@ namespace AnotherECS.Views
                 where T : IView
             {
                 var id = typeof(T);
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 if (!_byTypeToIds.ContainsKey(id))
                 {
                     throw new Exceptions.ViewNotFoundException(id.Name);

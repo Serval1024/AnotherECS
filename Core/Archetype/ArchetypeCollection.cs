@@ -199,7 +199,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint AddInternal(uint archetypeId, uint id, ushort itemId)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (itemId == _archetypes[archetypeId].itemId)
             {
                 throw new ArgumentException($"Item already added to {nameof(ArchetypeCollection)} '{itemId}'.");
@@ -324,7 +324,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref Node AttachNewNode(ref Node parent, ushort itemId)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (parent.childenCount == Node.ChildenMax)
             {
                 throw new InvalidOperationException();       //TODO SER

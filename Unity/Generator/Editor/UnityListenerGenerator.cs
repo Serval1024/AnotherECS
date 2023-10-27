@@ -5,6 +5,7 @@ using System.Linq;
 using AnotherECS.Debug;
 using System;
 using AnotherECS.Generator;
+using UnityEngine.SocialPlatforms;
 
 namespace AnotherECS.Unity.Editor.Generator
 {
@@ -29,7 +30,12 @@ namespace AnotherECS.Unity.Editor.Generator
         [MenuItem(MENU_NAME_COMPILE, false, 1)]
         public static void Compile()
         {
-            if (_generators.Compile(GetIngoreTypes()))
+            Compile(false);
+        }
+
+        public static void Compile(bool isForce)
+        {
+            if (_generators.Compile(GetIngoreTypes(), isForce))
             {
                 DropDelay();
                 Logger.CompileFinished();

@@ -85,7 +85,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetLength(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
             return _impl.Read(id).count;
@@ -93,7 +93,7 @@ namespace AnotherECS.Core
 
         public void Clear(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
             _impl.Get(id).Clear();
@@ -102,7 +102,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void* Read(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
             return _impl.UnsafeDirectRead(id).data.GetPtr();
@@ -112,7 +112,7 @@ namespace AnotherECS.Core
         public ref T Read<T>(uint id, int index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
 #endif
             return ref _impl.UnsafeDirectRead(id).Read<T>(index);
@@ -122,7 +122,7 @@ namespace AnotherECS.Core
         public ref T Get<T>(uint id, int index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
 #endif
             return ref _impl.Get(id).Get<T>(index);
@@ -132,7 +132,7 @@ namespace AnotherECS.Core
         public void SetRaw<T>(uint id, int index, ref T value)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
 #endif
             _impl.UnsafeDirectRead(id).Set(index, ref value);
@@ -142,7 +142,7 @@ namespace AnotherECS.Core
         public void Set<T>(uint id, int index, ref T value)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
 #endif
             _impl.Get(id).Set(index, ref value);
@@ -151,7 +151,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void MoveRigth(uint id, int index, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
             ThrowIfOutOfRangeIndex(id, count - 1);
 #endif
@@ -175,7 +175,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void MoveLeft(uint id, int index, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeIndex(id, index);
             ThrowIfOutOfRangeIndex(id, count - 1);
 #endif
@@ -199,7 +199,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Copy(uint sourceId, uint destinationId, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(sourceId);
             ThrowIfOutOfRangeId(destinationId);
 #endif
@@ -214,7 +214,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UpdateVersion(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
             _impl.DirectDenseUpdateVersion(id);
@@ -223,7 +223,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetVersion(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
             return _impl.GetVersion(id);

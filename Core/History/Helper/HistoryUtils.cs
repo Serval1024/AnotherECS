@@ -32,7 +32,7 @@ namespace AnotherECS.Core
             where ETickDataDense : unmanaged, ITickData<TDense>
             where TDense : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             var isResized = CheckAndResizeLoopBufferInternal<ETickDataDense, TDense>(ref index, ref buffer, recordHistoryLength);
             if (isResized)
             {

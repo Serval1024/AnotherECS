@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
         private DArray<T> _data;
         private int _count;
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<DArrayCaller>.Construct(DArrayCaller bind)
         { 
@@ -81,7 +81,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int index, ref T item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(index, _count);
 #endif
             _data.Set(index, ref item);
@@ -109,7 +109,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref T item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(index, Capacity);
             if (!_data.IsValide())
             {
@@ -129,7 +129,7 @@ namespace AnotherECS.Collections
 
                 _data.Bind.MoveRigth(_data.Id, index, _count);
                 _data.SetRaw(index, ref item);
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 _data.ApplyVersionRaw();
 #endif
                 ++_count;
@@ -138,7 +138,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(index, Capacity);
             if (!_data.IsValide())
             {
@@ -153,7 +153,7 @@ namespace AnotherECS.Collections
             {
                 _data.Bind.MoveLeft(_data.Id, index, _count);
                 _data.SetRaw(index + _count - 1, default);
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 _data.ApplyVersionRaw();
 #endif
             }
@@ -239,7 +239,7 @@ namespace AnotherECS.Collections
             private readonly DList<T> _data;
             private int _current;
             private readonly int _count;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             private readonly uint _version;
 #endif
             public Enumerator(ref DList<T> data)
@@ -247,7 +247,7 @@ namespace AnotherECS.Collections
                 _data = data;
                 _count = _data.Count;
                 _current = -1;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 _version = _data._data._version;
 #endif
             }
@@ -257,7 +257,7 @@ namespace AnotherECS.Collections
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get
                 {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                     if (_version != _data._data._version)
                     {
                         throw new InvalidOperationException("Collection was modified.");

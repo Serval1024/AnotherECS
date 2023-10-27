@@ -559,7 +559,7 @@ namespace AnotherECS.Core.Caller
             else
             {
                 ref var denseIndex = ref storage.denseIndex;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 LayoutActions.CheckDenseLimit<TSparse, TDense, TDenseIndex, TTickData, TSparse>(ref layout);
 #endif
                 history.PushCount(ref layout, ref depencies, denseIndex);
@@ -621,7 +621,7 @@ namespace AnotherECS.Core.Caller
             where TNumberProvider : struct, INumberProvier<TDenseIndex>
         {
             ref var denseIndex = ref layout.storage.denseIndex;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             LayoutActions.CheckDenseLimit<TSparse, TDense, TDenseIndex, TTickData, TSparse>(ref layout);
 #endif
             THistory history = default;

@@ -18,8 +18,8 @@ namespace AnotherECS.Gen.Project
 
         protected override void BindingCodeGenerationStage(in WorldConfig config)
         {
-            ComponentInstaller_<#STATE:GEN_NAME#>.Install();
-            SystemInstaller_<#STATE:GEN_NAME#>.Install();
+            ComponentInstaller.Install();
+            SystemInstaller.Install();
 
 <#ARRAY [0..COMPONENT:COUNT]#>
             LayoutInstaller.Install_<#COMPONENT:FULL_NAME_AS_TEXT#>(this);
@@ -54,5 +54,10 @@ namespace AnotherECS.Gen.Project
             public <#CALLER:FASTACCESS:TYPE_NAME#>_FA<<#COMPONENT:FASTACCESS:FULL_NAME#>> <#COMPONENT:FASTACCESS:NAME#> { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => _fa<#COMPONENT:FASTACCESS:NAME#>; }
 <#END#>
         }
+
+
+<#EMBENED:ComponentInstallerGenerator.cs#>
+
+<#EMBENED:SystemInstallerGenerator.cs#>
     }
 }

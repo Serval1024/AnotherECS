@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 [assembly: InternalsVisibleTo("AnotherECS.Generator")]
 namespace AnotherECS.Core
@@ -179,7 +180,7 @@ namespace AnotherECS.Core
             return type.FullName;
         }
 
-        static IEnumerable<Type> FindTypeFromTemplateType(Type type)
+        private static IEnumerable<Type> FindTypeFromTemplateType(Type type)
         {
             var interfaces = type.GetInterfaces();
 

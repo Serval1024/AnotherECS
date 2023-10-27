@@ -167,7 +167,7 @@ namespace AnotherECS.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 return _entities.GetCount();
@@ -176,7 +176,7 @@ namespace AnotherECS.Core
 
         public bool IsHas(uint id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _entities.IsHas(id);
@@ -185,7 +185,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityId New()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             if (_entities.TryResizeDense())
@@ -211,7 +211,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete(EntityId id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             var count = _entities.GetComponents(id, _componentsBufferTemp);
@@ -227,7 +227,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Count(EntityId id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return _entities.GetComponentCount(id);
@@ -236,7 +236,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool IsHas(EntityId id, ushort generation)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _entities.IsHas(id) && _entities.GetGeneration(id) == generation;
@@ -245,7 +245,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ushort GetGeneration(EntityId id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return _entities.GetGeneration(id);
@@ -257,7 +257,7 @@ namespace AnotherECS.Core
         public T Create<T>()
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return GetCaller<T>().Create();
@@ -268,7 +268,7 @@ namespace AnotherECS.Core
           where T : unmanaged, IComponent
         {
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller<T>());
 #endif
             return GetCaller<T>().IsHas(id);
@@ -283,7 +283,7 @@ namespace AnotherECS.Core
         public void Add<T>(EntityId id, ref T data)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T>().Add(id, ref data);
@@ -293,7 +293,7 @@ namespace AnotherECS.Core
         public ref T Add<T>(EntityId id)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Add(id);
@@ -303,7 +303,7 @@ namespace AnotherECS.Core
         public void AddVoid<T>(EntityId id)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             Add<T>(id);
@@ -313,7 +313,7 @@ namespace AnotherECS.Core
         public void Remove<T>(EntityId id)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T>().Remove(id);
@@ -322,7 +322,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(EntityId id, int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_entities.GetComponentCount(id)));
 #endif
             return GetCaller(_entities.GetComponentCount(id)).GetCopy(id);
@@ -332,7 +332,7 @@ namespace AnotherECS.Core
         public ref readonly T Read<T>(EntityId id)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(id);
@@ -342,7 +342,7 @@ namespace AnotherECS.Core
         public ref T Get<T>(EntityId id)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(id);
@@ -351,7 +351,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, int index, IComponent component)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_entities.GetComponentCount(id)));
 #endif
             GetCaller(_entities.GetComponent(id, index)).Set(id, component);
@@ -361,7 +361,7 @@ namespace AnotherECS.Core
         public void Set<T>(EntityId id, ref T data)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T>().Set(id, ref data);
@@ -373,7 +373,7 @@ namespace AnotherECS.Core
         public bool IsHas<T>()
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
             return GetCaller<T>().IsHas(0);
@@ -388,7 +388,7 @@ namespace AnotherECS.Core
         public void SetOrAdd<T>(ref T data)
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
             GetCaller<T>().SetOrAdd(0, ref data);
@@ -403,7 +403,7 @@ namespace AnotherECS.Core
         public void Add<T>(ref T data)
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
             GetCaller<T>().Add(0, ref data);
@@ -413,7 +413,7 @@ namespace AnotherECS.Core
         public ref T Add<T>()
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Add(0);
@@ -423,7 +423,7 @@ namespace AnotherECS.Core
         public void Remove<T>()
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
             GetCaller<T>().Remove(0);
@@ -433,7 +433,7 @@ namespace AnotherECS.Core
         public ref readonly T Read<T>()
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(0);
@@ -443,7 +443,7 @@ namespace AnotherECS.Core
         public ref readonly T Get<T>()
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(0);
@@ -453,7 +453,7 @@ namespace AnotherECS.Core
         public void Set<T>(ref T data)
             where T : unmanaged, IShared
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
             GetCaller<T>().Set(0, ref data);
@@ -487,7 +487,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(BaseEvent @event)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             Send(new EventContainer(_depencies->tickProvider.tick + 1, @event));
@@ -496,7 +496,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Send(ITickEvent @event)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             _events.Send(@event);
@@ -517,7 +517,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
             foreach(var revert in _revertCallers)
@@ -535,7 +535,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller<T> GetCaller<T>(ushort index)
             where T : unmanaged, IComponent
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             => (ICaller<T>)_callers[index];
 #else
             => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.As<ICaller, ICaller<T>>(ref _callers[index]);
@@ -558,7 +558,7 @@ namespace AnotherECS.Core
             where TDenseIndex : unmanaged
             where TTickData : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (_layoutCount == GetLayoutCount())
             {
                 throw new InvalidOperationException();

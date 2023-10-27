@@ -33,6 +33,12 @@ namespace AnotherECS.Unity.Editor.Generator
             }
         }
 
+        [MenuItem("Assets/AnotherECS/Compile Template", true)]
+        private static bool CompileTemplateVaidate()
+            => Selection.activeObject != null
+            && Selection.activeObject is TextAsset textAsset
+            && TemplateParser.MetaExpression.Is(textAsset.text);
+
         [MenuItem("Assets/AnotherECS/Create State")]
         private static void CreateState()
         {
@@ -46,14 +52,10 @@ namespace AnotherECS.Unity.Editor.Generator
 
                 var content = generator.Compile(new GeneratorContext(new UnityEnvironmentProvider()), stateName + subName);
                 UnityGeneratorUtils.SaveFile(path, content.text);
+
+                UnityListenerGenerator.Compile(true);
             }
         }
 
-
-        [MenuItem("Assets/AnotherECS/Compile Template", true)]
-        private static bool CompileTemplateVaidate()
-            => Selection.activeObject != null
-            && Selection.activeObject is TextAsset textAsset
-            && TemplateParser.MetaExpression.Is(textAsset.text);
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using AnotherECS.Converter;
 using AnotherECS.Core;
 
@@ -37,6 +36,11 @@ namespace AnotherECS.Generator
             var genericType = type.MakeGenericType(stateType);
             return (ITypeToUshort)Activator.CreateInstance(genericType, new[] { _ignoreTypes });
         }
+
+        public Type[] GetComponents()
+            => new IgnoresTypeToIdConverter<ushort, IComponent>(_ignoreTypes)
+                .GetAssociationTable().Values.ToArray();
+
         public string GetStatePath(string stateName)
             => _environmentProvider.GetFilePathByStateName(stateName);
 
@@ -48,14 +52,7 @@ namespace AnotherECS.Generator
 
         public string FindRootGenCommonDirectory()
             => _environmentProvider.FindRootGenCommonDirectory();
-
-        public Type[] GetComponents()
-             => GetStateTypes()
-                 .Select(p => GetComponents(p).GetAssociationTable().Values)
-                 .SelectMany(p => p)
-                 .ExceptDublicates()
-                 .ToArray();
-
+      
         public Type[] GetAllTypes()
             => GetStateTypes()
                 .Union(GetComponents())

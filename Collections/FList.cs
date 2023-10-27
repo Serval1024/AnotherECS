@@ -49,7 +49,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -66,7 +66,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -99,7 +99,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -143,7 +143,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -172,7 +172,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -219,7 +219,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -233,7 +233,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)
@@ -316,7 +316,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -333,7 +333,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -366,7 +366,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -410,7 +410,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -439,7 +439,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -486,7 +486,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -502,7 +502,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)
@@ -587,7 +587,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -604,7 +604,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -637,7 +637,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -681,7 +681,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -710,7 +710,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -757,7 +757,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -777,7 +777,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)
@@ -866,7 +866,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -883,7 +883,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -916,7 +916,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -960,7 +960,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -989,7 +989,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -1036,7 +1036,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -1064,7 +1064,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)
@@ -1161,7 +1161,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -1178,7 +1178,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -1211,7 +1211,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -1255,7 +1255,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -1284,7 +1284,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -1331,7 +1331,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -1375,7 +1375,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)
@@ -1488,7 +1488,7 @@ namespace AnotherECS.Collections
 
         public void Add(TData value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = value;
@@ -1505,7 +1505,7 @@ namespace AnotherECS.Collections
 
         public void RemoveAt(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             if (index == _count - 1)
@@ -1538,7 +1538,7 @@ namespace AnotherECS.Collections
 
         public void Add(object value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             this[_count++] = (TData)value;
@@ -1582,7 +1582,7 @@ namespace AnotherECS.Collections
 
         public void Insert(int index, ref TData item)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             FListHelper.ThrowIfOutOfRange(_count, Capacity);
 #endif
             for (int i = _count; i < index; --i)
@@ -1611,7 +1611,7 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TData[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (count > _count)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(_count)}': {_count}");
@@ -1658,7 +1658,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 return index switch
@@ -1734,7 +1734,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 FListHelper.ThrowIfOutOfRange(index, Count);
 #endif
                 switch(index)

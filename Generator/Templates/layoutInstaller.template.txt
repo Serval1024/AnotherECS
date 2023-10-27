@@ -19,7 +19,7 @@ namespace AnotherECS.Gen.Project
 
             static void Construct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 ReflectionUtils.ReflectionInjectConstruct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>
@@ -33,7 +33,7 @@ namespace AnotherECS.Gen.Project
 
             static void Deconstruct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 ReflectionUtils.ReflectionInjectDeconstruct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>

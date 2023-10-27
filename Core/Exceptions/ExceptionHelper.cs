@@ -1,4 +1,4 @@
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
 using System;
 using AnotherECS.Core.Collection;
 using EntityId = System.UInt32;

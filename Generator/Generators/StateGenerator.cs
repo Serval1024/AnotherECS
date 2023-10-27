@@ -46,7 +46,7 @@ namespace AnotherECS.Generator
 
         private ContentGenerator CompileInternal(GeneratorContext context, Type state, string stateName)
         {
-            var variables = VariablesConfigGenerator.GetState(stateName, context.GetComponents(state));
+            var variables = VariablesConfigGenerator.GetState(context, stateName, context.GetComponents(state));
 
             return new ContentGenerator(
                 GetPathByState(context.GetStatePath(stateName), stateName),

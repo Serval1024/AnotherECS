@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
         private DArrayCaller _bind;
         private uint _id;
         private int _length;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         internal uint _version;
 #endif
         internal DArray(DArrayCaller bind, ushort id, int length)
@@ -22,13 +22,13 @@ namespace AnotherECS.Collections
             _bind = bind;
             _id = id;
             _length = length;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             _version = 0;
             Validate();
 #endif
         }
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<DArrayCaller>.Construct(DArrayCaller bind)
         {
@@ -76,7 +76,7 @@ namespace AnotherECS.Collections
                 Deallocate();
                 _id = _bind.Add<T>(length);
                 _length = length;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 ++_version;
 #endif
             }
@@ -119,7 +119,7 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read(int index)
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         {
             if (!IsValide())
             {
@@ -132,7 +132,7 @@ namespace AnotherECS.Collections
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get(int index)
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         {
             if (!IsValide())
             {
@@ -154,7 +154,7 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int index, ref T value)
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         {
             if (!IsValide())
             {
@@ -229,7 +229,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void ApplyVersionRaw()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ++_version;
 #endif
         }
@@ -237,7 +237,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe int IndexOf(ref T item, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (!IsValide())
             {
                 throw new Exceptions.DArrayInvalideException(this.GetType());
@@ -259,7 +259,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe void CopyTo(T[] array, int arrayIndex, int count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (!IsValide())
             {
                 throw new Exceptions.DArrayInvalideException(this.GetType());
@@ -316,7 +316,7 @@ namespace AnotherECS.Collections
             get => _id;
         }
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         private void Validate()
         {
             if (!ComponentUtils.IsSimple(typeof(T)))
@@ -332,7 +332,7 @@ namespace AnotherECS.Collections
             private readonly DArray<T> _data;
             private int _current;
             private readonly int _length;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             private readonly uint _version;
 #endif
             public Enumerator(ref DArray<T> data)
@@ -340,7 +340,7 @@ namespace AnotherECS.Collections
                 _data = data;
                 _length = _data.Length;
                 _current = -1;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                 _version = _data._version;
 #endif
             }
@@ -350,7 +350,7 @@ namespace AnotherECS.Collections
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get
                 {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
                     if (_version != _data._version)
                     {
                         throw new InvalidOperationException("Collection was modified.");

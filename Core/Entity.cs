@@ -24,7 +24,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Delete(id);
@@ -33,7 +33,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             return state.Read(id, index);
@@ -42,7 +42,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int index, IComponent component)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Set(id, index, component);
@@ -52,7 +52,7 @@ namespace AnotherECS.Core
         public ref readonly T Read<T>()
           where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             return ref state.Read<T>(id);
@@ -62,7 +62,7 @@ namespace AnotherECS.Core
         public ref T Get<T>()
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             return ref state.Get<T>(id);
@@ -72,7 +72,7 @@ namespace AnotherECS.Core
         public void Set<T>(T data)
           where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Set(id, ref data);
@@ -82,7 +82,7 @@ namespace AnotherECS.Core
         public void Set<T>(ref T data)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Set(id, ref data);
@@ -92,7 +92,7 @@ namespace AnotherECS.Core
         public ref T Add<T>()
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             return ref state.Add<T>(id);
@@ -102,7 +102,7 @@ namespace AnotherECS.Core
         public void Add<T>(T data)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Add(id, ref data);
@@ -112,7 +112,7 @@ namespace AnotherECS.Core
         public void Add<T>(ref T data)
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Add(id, ref data);
@@ -122,7 +122,7 @@ namespace AnotherECS.Core
         public void AddVoid<T>()
           where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.AddVoid<T>(id);
@@ -132,7 +132,7 @@ namespace AnotherECS.Core
         public void Remove<T>()
             where T : unmanaged, IComponent
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
 #endif
             state.Remove<T>(id);
@@ -162,7 +162,7 @@ namespace AnotherECS.Core
         public int CompareTo(Entity other)
             => id.CompareTo(other.id);
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         private void ThrowIfInvalide()
         {
             if (!IsHas())

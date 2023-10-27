@@ -267,7 +267,7 @@ namespace AnotherECS.Core
         {
             var head = caller.UnsafeDirectReadPtr(id);
             var count = head->count;
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (buffer.Length < count)
             {
                 throw new ArgumentException($"There is not enough space in {nameof(buffer)} to copy.");

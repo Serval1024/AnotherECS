@@ -70,7 +70,7 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        public static TemplateParser.Variables GetState(string stateGenName, ITypeToUshort components)
+        public static TemplateParser.Variables GetState(GeneratorContext context, string stateGenName, ITypeToUshort components)
         {
             var fastAccessComponents = new CustomTypeToIdConverter<ushort, IComponent>(
                 components.GetAssociationTable().Values.Where(p => new TypeOptions(p).isCompileFastAccess)
@@ -91,6 +91,9 @@ namespace AnotherECS.Generator
                     { "COMPONENT:FASTACCESS:COUNT", () => fastAccessComponents.GetAssociationTable().Count.ToString() },
                     { "COMPONENT:FASTACCESS:NAME", () => ReflectionUtils.GetUnderLineName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
                     { "COMPONENT:FASTACCESS:FULL_NAME", () => ReflectionUtils.GetDotFullName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
+
+                    { "EMBENED:ComponentInstallerGenerator.cs", () => new ComponentInstallerGenerator().Compile(context, false).First().text },
+                    { "EMBENED:SystemInstallerGenerator.cs", () => new SystemInstallerGenerator().Compile(context, false).First().text },
                 };
             return variables;
         }

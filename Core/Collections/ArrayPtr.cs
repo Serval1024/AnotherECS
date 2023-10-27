@@ -81,7 +81,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void* GetPtr()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             return data;
@@ -91,7 +91,7 @@ namespace AnotherECS.Core.Collection
         public T* GetPtr<T>()
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             return (T*)data;
@@ -101,7 +101,7 @@ namespace AnotherECS.Core.Collection
         public T* GetPtr<T>(uint index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return ((T*)data) + index;
@@ -111,7 +111,7 @@ namespace AnotherECS.Core.Collection
         public ref T GetRef<T>(uint index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return ref *(((T*)data) + index);
@@ -121,7 +121,7 @@ namespace AnotherECS.Core.Collection
         public T Get<T>(uint index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return *(((T*)data) + index);
@@ -131,7 +131,7 @@ namespace AnotherECS.Core.Collection
         public void Set<T>(uint index, T value)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             *(((T*)data) + index) = value;
@@ -141,7 +141,7 @@ namespace AnotherECS.Core.Collection
         public T* GetPtr<T>(int index)
            where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return ((T*)data) + index;
@@ -151,7 +151,7 @@ namespace AnotherECS.Core.Collection
         public ref T GetRef<T>(int index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return ref *(((T*)data) + index);
@@ -161,7 +161,7 @@ namespace AnotherECS.Core.Collection
         public T Get<T>(int index)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             return *(((T*)data) + index);
@@ -171,7 +171,7 @@ namespace AnotherECS.Core.Collection
         public void Set<T>(int index, T value)
             where T : unmanaged
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index, (uint)sizeof(T));
 #endif
             *(((T*)data) + index) = value;
@@ -193,7 +193,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint elementCount, uint elementSize)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             var byteLength = elementCount * elementSize;
@@ -220,7 +220,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreateFrom(in ArrayPtr other, uint count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
             if (count > other.elementCount)
             {
@@ -244,7 +244,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(in ArrayPtr other)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
 #endif
@@ -254,7 +254,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(in ArrayPtr other, uint count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
             if (count > elementCount || count > other.elementCount)
@@ -272,7 +272,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear(uint elementCount)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             var segment = byteLength / this.elementCount;
@@ -282,7 +282,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             UnsafeMemory.Clear(data, byteLength);
@@ -373,7 +373,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T* GetPtr()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             return data;
@@ -385,7 +385,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T* GetPtr(uint index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index);
 #endif
             return data + index;
@@ -394,7 +394,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetRef(uint index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index);
 #endif
             return ref *(data + index);
@@ -403,7 +403,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Get(uint index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index);
 #endif
             return *(data + index);
@@ -412,7 +412,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(uint index, T value)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this, index);
 #endif
             *(data + index) = value;
@@ -421,7 +421,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint elementCount)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
 #endif
             ResizeInternal(elementCount * (uint)sizeof(T));
@@ -436,7 +436,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreateFrom(in ArrayPtr<T> other, uint count)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
             if (count > other.ElementCount)
             {
@@ -455,7 +455,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(in ArrayPtr<T> other)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfArrayPtrBroken(this);
             ExceptionHelper.ThrowIfArrayPtrBroken(other);
 #endif

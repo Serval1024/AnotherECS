@@ -21,9 +21,9 @@ namespace AnotherECS.Converter
 
         protected override IEnumerable<Type> GetSortTypes()
            => TypeUtils.GetRuntimeTypes<TType>()
-                .OrderBy(p => p.Name)
                 .Where(p => p.GetCustomAttribute<IgnoreCompileAttribute>() == null)
-                .Where(p => !_ignoreTypes.Any(p0 => p0 == p));
+                .Where(p => !_ignoreTypes.Any(p0 => p0 == p))
+                .OrderBy(p => p.Name);
     }
 }
 

@@ -99,7 +99,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityId GetEntity(int index)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (index < 1 || index >= Count)
             {
                 throw new Exceptions.EntityNotFoundByIndexException(index);
@@ -199,7 +199,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UnlockForeach()
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (_lockForeach <= 0)
             {
                 throw new Exceptions.FilterForeachException();
@@ -227,7 +227,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool IsMaskCompatible(EntityId id)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             if (_selector != null)
             {
                 return _selector(_state, id);

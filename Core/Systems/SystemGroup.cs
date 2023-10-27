@@ -47,7 +47,7 @@ namespace AnotherECS.Core
 
         public SystemGroup Add(ISystem system)
         {
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
             ThrowIfDisposed();
 #endif
             if (system == null)
@@ -278,7 +278,7 @@ namespace AnotherECS.Core
             Destroy(state);
         }
 
-#if ANOTHERECS_DEBUG
+#if !ANOTHERECS_RELEASE
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
