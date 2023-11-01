@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
@@ -8,34 +9,29 @@ namespace AnotherECS.Core
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe partial struct ArchetypeCollection : ISerialize //TODO internal
+    public unsafe partial struct ArchetypeCollection : ISerialize, IDisposable //TODO SER internal
     {
         private const int FIND_DEEP = 1024;
         private const int ARCHETYPE_COUNT = 1024;
 
-        private int _archetypeCount;
-        private Node[] _archetypes;
+        private uint _archetypeCount;
+        private ArrayPtr<Node> _archetypes;
         private BacketCollection _items;
 
-#if ANOTHERECS_HISTORY_DISABLE
-        public ArchetypeCollection(uint rootItemCount, uint totalItemCapacity)
-#else
-        public ArchetypeCollection(uint rootItemCount, uint totalItemCapacity)
-#endif
+
+        public ArchetypeCollection(uint rootItemCount, uint backetItemCapacity)
         {
-            _archetypeCount = (int)rootItemCount + 1;
-            _archetypes = new Node[_archetypeCount << 1];
-            for (uint i = 0, iMax = (uint)_archetypeCount; i < iMax; i++)
+            _archetypeCount = rootItemCount + 1;
+            _archetypes = new ArrayPtr<Node>(_archetypeCount << 1);
+
+            for (uint i = 0; i < _archetypeCount; i++)
             {
-                ref var archetype = ref _archetypes[i];
+                ref var archetype = ref _archetypes.GetRef(i);
                 archetype.archetypeId = i;
                 archetype.itemId = (ushort)i;
             }
-#if ANOTHERECS_HISTORY_DISABLE
-            _items = new BacketCollection(totalItemCapacity,(uint)_archetypeCount);
-#else
-            _items = new BacketCollection(totalItemCapacity, (uint)_archetypeCount);
-#endif
+
+            _items = new BacketCollection(backetItemCapacity, (uint)_archetypeCount);
         }
 
         public uint Add(uint archetypeId, uint id, ushort itemId)
@@ -50,7 +46,7 @@ namespace AnotherECS.Core
 
         public void Remove(uint archetypeId, uint id)
         {
-            _items.Remove(_archetypes[archetypeId].itemsCollectionId, id);
+            _items.Remove(_archetypes.GetRef(archetypeId).itemsCollectionId, id);
         }
 
         public uint[] Filter(ushort[] items)
@@ -68,10 +64,10 @@ namespace AnotherECS.Core
         public int Filter(ushort[] items, int itemCount, uint* result)
         {
             int resultCount = 0;
-            var items0 = (int)items[0];
-            for(int i = 1; i <= items0; ++i)
+            var items0 = items[0];
+            for(uint i = 1; i <= items0; ++i)
             {
-                FindPattern(ref _archetypes[i], 0, items, itemCount, result, ref resultCount);
+                FindPattern(ref _archetypes.GetRef(i), 0, items, itemCount, result, ref resultCount);
             }
 
             PatternDownExtend(result, ref resultCount);
@@ -87,14 +83,14 @@ namespace AnotherECS.Core
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(_archetypeCount);
-            writer.WriteUnmanagedArray(_archetypes, _archetypeCount);
+            _archetypes.PackBlittable(ref writer);
             _items.Pack(ref writer);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _archetypeCount = reader.ReadInt32();
-            _archetypes = reader.ReadUnmanagedArray<Node>();
+            _archetypeCount = reader.ReadUInt32();
+            _archetypes.UnpackBlittable(ref reader);
             _items.Unpack(ref reader);
         }
 
@@ -104,11 +100,11 @@ namespace AnotherECS.Core
             var count = resultCount;
             for (int i = 0; i < count; ++i)
             {
-                ref var node = ref _archetypes[result[i]];
+                ref var node = ref _archetypes.GetRef(result[i]);
                 int jMax = node.childenCount;
                 for (int j = 0; j < jMax; ++j)
                 {
-                    PatternDownExtend(ref _archetypes[node.childen[j]], result, ref resultCount);
+                    PatternDownExtend(ref _archetypes.GetRef(node.childen[j]), result, ref resultCount);
                 }
             }
         }
@@ -119,7 +115,7 @@ namespace AnotherECS.Core
             int iMax = node.childenCount;
             for (int i = 0; i < iMax; ++i)
             {
-                PatternDownExtend(ref _archetypes[node.childen[i]], result, ref resultCount);
+                PatternDownExtend(ref _archetypes.GetRef(node.childen[i]), result, ref resultCount);
             }
         }
 
@@ -140,7 +136,7 @@ namespace AnotherECS.Core
                     int iMax = node.childenCount;
                     for (int i = 0; i < iMax; ++i)
                     {
-                        FindPattern(ref _archetypes[node.childen[i]], itemIndex + 1, items, itemCount, result, ref resultCount);
+                        FindPattern(ref _archetypes.GetRef(node.childen[i]), itemIndex + 1, items, itemCount, result, ref resultCount);
                     }
                 }
                 else
@@ -148,7 +144,7 @@ namespace AnotherECS.Core
                     int iMax = node.childenCount;
                     for (int i = 0; i < iMax; ++i)
                     {
-                        FindPattern(ref _archetypes[node.childen[i]], itemIndex, items, itemCount, result, ref resultCount);
+                        FindPattern(ref _archetypes.GetRef(node.childen[i]), itemIndex, items, itemCount, result, ref resultCount);
                     }
                 }
             }
@@ -157,10 +153,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint RemoveInternal(uint archetypeId, uint id, ushort itemId)
         {
-            ref var node = ref _archetypes[archetypeId];
+            ref var node = ref _archetypes.GetRef(archetypeId);
             _items.Remove(node.itemsCollectionId, id);
 
-            ref var parent = ref _archetypes[node.parent];
+            ref var parent = ref _archetypes.GetRef(node.parent);
             if (node.itemId == itemId)
             {
                 _items.Add(parent.itemsCollectionId, id);
@@ -174,14 +170,14 @@ namespace AnotherECS.Core
                 var itemNode = MoveUpToItemId(ref node, itemId, itemDeep, ref deep);
                 if (itemNode.parent == 0)
                 {
-                    ref var rootNode = ref _archetypes[itemDeep[deep - 1]];
+                    ref var rootNode = ref _archetypes.GetRef(itemDeep[deep - 1]);
                     ref var childNode = ref DeepAttachNewNode(ref rootNode, itemDeep, deep - 1);
                     _items.Add(childNode.itemsCollectionId, id);
                     return childNode.archetypeId;
                 }
                 else
                 {
-                    ref var rootNode = ref _archetypes[itemNode.parent];
+                    ref var rootNode = ref _archetypes.GetRef(itemNode.parent);
                     ref var childNode = ref DeepAttachNewNode(ref rootNode, itemDeep, deep);
                     _items.Add(childNode.itemsCollectionId, id);
                     return childNode.archetypeId;
@@ -200,12 +196,12 @@ namespace AnotherECS.Core
         private uint AddInternal(uint archetypeId, uint id, ushort itemId)
         {
 #if !ANOTHERECS_RELEASE
-            if (itemId == _archetypes[archetypeId].itemId)
+            if (itemId == _archetypes.GetRef(archetypeId).itemId)
             {
                 throw new ArgumentException($"Item already added to {nameof(ArchetypeCollection)} '{itemId}'.");
             }
 #endif
-            ref var node = ref _archetypes[archetypeId];
+            ref var node = ref _archetypes.GetRef(archetypeId);
             _items.Remove(node.itemsCollectionId, id);
 
             if (itemId > node.itemId)     //Add as node child
@@ -240,7 +236,7 @@ namespace AnotherECS.Core
 
                 itemDeep[deep++] = node.itemId;
 
-                node = ref _archetypes[node.parent];
+                node = ref _archetypes.GetRef(node.parent);
             }
             while (node.itemId != itemId);
 
@@ -263,10 +259,10 @@ namespace AnotherECS.Core
 
                 if (node.parent == 0)
                 {
-                    return ref _archetypes[itemId];
+                    return ref _archetypes.GetRef(itemId);
                 }
 
-                node = ref _archetypes[node.parent];
+                node = ref _archetypes.GetRef(node.parent);
             }
             while (node.itemId > itemId);
 
@@ -289,7 +285,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint AddInternal(uint id, ushort itemId)
         {
-            _items.Add(_archetypes[itemId].itemsCollectionId, id);
+            _items.Add(_archetypes.GetRef(itemId).itemsCollectionId, id);
             
             return itemId;
         }
@@ -311,14 +307,14 @@ namespace AnotherECS.Core
         {
             for (int i = 0; i < node.childenCount; ++i)       //TODO SER OPTIMIZATE
             {
-                ref var childNode = ref _archetypes[node.childen[i]];
+                ref var childNode = ref _archetypes.GetRef(node.childen[i]);
                 if (childNode.itemId == itemId)
                 {
                     return ref childNode;
                 }
             }
             
-            return ref _archetypes[0];
+            return ref _archetypes.GetRef(0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -330,13 +326,13 @@ namespace AnotherECS.Core
                 throw new InvalidOperationException();       //TODO SER
             }
 #endif
-            if (_archetypeCount == _archetypes.Length)
+            if (_archetypeCount == _archetypes.ElementCount)
             {
-                Array.Resize(ref _archetypes, _archetypeCount << 1);
+                _archetypes.Resize(_archetypeCount << 1);
             }
 
             var id = (uint)_archetypeCount;
-            ref var newNode = ref _archetypes[id];
+            ref var newNode = ref _archetypes.GetRef(id);
             newNode.archetypeId = id;
             newNode.itemId = itemId;
             newNode.parent = parent.archetypeId;
@@ -346,6 +342,12 @@ namespace AnotherECS.Core
             ++_archetypeCount;
 
             return ref newNode;
+        }
+
+        public void Dispose()
+        {
+            _archetypes.Dispose();
+            _items.Dispose();
         }
 
         private unsafe struct Node

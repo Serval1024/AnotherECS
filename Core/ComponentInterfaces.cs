@@ -2,10 +2,10 @@ namespace AnotherECS.Core
 {
     public interface IComponent { }
     public interface IShared : IComponent { }
-    public interface IConfig { }
     public interface IVersion : IComponent { }
     public interface IMarker : IComponent { }
     public interface ICopyable : IComponent { }
+    public interface IConfig { }
 
     public interface IDefault : IComponent
     {
@@ -27,5 +27,11 @@ namespace AnotherECS.Core
     public interface IDetach
     {
         void OnDetach(State state);
+    }
+
+    public interface ISegment
+    {
+        void OnPushSegment(uint index);
+        void OnRevertSegment(uint index);
     }
 }

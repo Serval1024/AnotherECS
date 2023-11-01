@@ -1,5 +1,4 @@
-﻿using AnotherECS.Core.Caller;
-using AnotherECS.Core.Collection;
+﻿using AnotherECS.Core.Collection;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Actions

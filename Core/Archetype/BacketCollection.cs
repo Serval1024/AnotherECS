@@ -1,4 +1,5 @@
 ﻿using System;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
@@ -13,10 +14,10 @@ namespace AnotherECS.Core
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-        private struct BacketCollection : ISerialize
+        private struct BacketCollection : ISerialize, IDisposable
         {
             private readonly IdUnitAllocator _allocator;
-            private UintSet[] _items;
+            //private ArrayPtr<UintSet> _items;
 
 #if ANOTHERECS_HISTORY_DISABLE
             public BacketCollection(uint itemCapacity, uint backetCapacity)
@@ -32,51 +33,64 @@ namespace AnotherECS.Core
 #else
                 //_backets = new ChunkMemory(backetCapacity * backetSize, backetSize, 32, args);        //TODO SER
 #endif
-                _items = new UintSet[backetCapacity];
-                for(int i = 0; i < _items.Length; ++i)
+                /*
+                _items = new ArrayPtr<UintSet>(backetCapacity);
+                for(uint i = 0; i < _items.ElementCount; ++i)
                 {
-                    _items[i] = new UintSet(itemCapacity);
-                }
+                    _items.Set(i, new UintSet(itemCapacity));
+                }*/
             }
 
             public void Add(uint backetId, uint item)
             {
-                _items[backetId].Add(item);
+                //_items.GetRef(backetId).Add(item);
             }
 
             public void Remove(uint backetId, uint item)
             {
-                _items[backetId].Remove(item);
+                //_items.GetRef(backetId).Remove(item);
             }
 
             public uint Allocate()
             {
+                /*
                 var backetId = _allocator.Allocate();
-                if (backetId == _items.Length)
+                if (backetId == _items.ElementCount)
                 {
-                    Array.Resize(ref _items, _items.Length << 1);
+                    _items.Resize(_items.ElementCount << 1);
                 }
-
-                return backetId;
+                */
+                return 0;
+                //return backetId;
             }
 
             public void Deallocate(uint backetId)
             {
-                _items[backetId].Clear();
+                //_items.GetRef(backetId).Clear();
                 _allocator.Deallocate(backetId);
             }
 
+            public void Dispose()
+            {
+                /*
+                _allocator.Dispose();
+                for (uint i = 0, iMax = _allocator.GetAllocatedUpperBoundId(); i < iMax; ++i)
+                {
+                    _items.GetRef(i).Dispose();
+                }
+                _items.Dispose();*/
+            }
 
             public void Pack(ref WriterContextSerializer writer)
             {
                 _allocator.Pack(ref writer);
-                writer.WriteArray(_items, (int)_allocator.GetAllocatedUpperBoundId());
+                //_items.Pack(ref writer);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
                 _allocator.Unpack(ref reader);
-                _items = reader.ReadArray<UintSet>();
+                //_items.Unpack(ref reader);
             }
         }
     }

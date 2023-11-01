@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Caller
 {
     public interface ICallerReference { }
 
@@ -16,6 +16,7 @@ namespace AnotherECS.Core
         bool IsResizable { get; }
         bool IsAttach { get; }
         bool IsDetach { get; }
+        bool IsInject { get; }
 
         internal unsafe void Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state);
         internal void AllocateLayout();

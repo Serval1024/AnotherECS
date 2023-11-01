@@ -60,9 +60,9 @@ namespace AnotherECS.Core
 
     public unsafe struct HistoryStorage : IDisposable
     {
-        public ArrayPtr<TickData<uint>> recycleCountBuffer;
-        public ArrayPtr<TickOffsetData<uint>> recycleBuffer;
-        public ArrayPtr<TickData<uint>> countBuffer;
+        public ArrayPtr<TData<uint>> recycleCountBuffer;
+        public ArrayPtr<TOData<uint>> recycleBuffer;
+        public ArrayPtr<TData<uint>> countBuffer;
         public ArrayPtr denseBuffer;
         public ArrayPtr sparseBuffer;
         public ArrayPtr<uint> versionIndexer;
@@ -176,11 +176,11 @@ namespace AnotherECS.Core
         where TDenseIndex : unmanaged
         where WTickDataDense : unmanaged
     {
-        public ArrayPtr<TickData<uint>> recycleCountBuffer;
-        public ArrayPtr<TickOffsetData<TDenseIndex>> recycleBuffer;
-        public ArrayPtr<TickData<uint>> countBuffer;
+        public ArrayPtr<TData<uint>> recycleCountBuffer;
+        public ArrayPtr<TOData<TDenseIndex>> recycleBuffer;
+        public ArrayPtr<TData<uint>> countBuffer;
         public ArrayPtr<WTickDataDense> denseBuffer;
-        public ArrayPtr<TickOffsetData<TSparse>> sparseBuffer;
+        public ArrayPtr<TOData<TSparse>> sparseBuffer;
         public ArrayPtr<uint> versionIndexer;
 
         public uint recycleCountIndex;

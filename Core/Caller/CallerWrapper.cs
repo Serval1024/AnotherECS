@@ -1,4 +1,4 @@
-﻿namespace AnotherECS.Core
+﻿namespace AnotherECS.Core.Caller
 {
     internal static unsafe class CallerWrapper
     {

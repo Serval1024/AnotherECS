@@ -6,23 +6,32 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Core
 {
     using ImplCaller = Caller<
-                uint, EntityHead, uint, TickOffsetData<ushort>, ushort,
+                uint, EntityHead, uint, TOData<ushort>, ushort,
                 UintNumber,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                RecycleStorageFeature<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                NonSparseFeature<EntityHead, TickOffsetData<ushort>, ushort>,
-                EntityDenseFeature<uint, EntityHead, TickOffsetData<ushort>>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                RecycleStorageFeature<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                NonSparseFeature<EntityHead, TOData<ushort>, ushort>,
+                EntityDenseFeature<uint, EntityHead, TOData<ushort>>,
                 Nothing,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+                Nothing<uint, EntityHead, uint, TOData<ushort>, ushort>,
+#if ANOTHERECS_HISTORY_DISABLE
                 Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
-                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>,
+#else
                 BySegmentHistoryFeature<uint, EntityHead, uint, ushort>,
-                BBSerialize<uint, EntityHead, uint, TickOffsetData<ushort>>,
+#endif
+                BBSerialize<uint, EntityHead, uint, TOData<ushort>>,
+#if ANOTHERECS_HISTORY_DISABLE
+                Nothing<uint, EntityHead, uint, TickOffsetData<ushort>, ushort>
+#else
                 BySegmentHistoryFeature<uint, EntityHead, uint, ushort>
+#endif
                 >;
+
 
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
@@ -36,13 +45,14 @@ namespace AnotherECS.Core
         public bool IsValide => _impl.IsValide;
         
         public bool IsSingle => false;
-        public bool IsRevert => true;
+        public bool IsRevert => _impl.IsRevert;
         public bool IsTickFinished => true;
         public bool IsSerialize => false;
         public bool IsResizable => false;
         public bool IsAttach => false;
         public bool IsDetach => false;
-        
+        public bool IsInject => false;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
         {
@@ -95,6 +105,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetCapacity()
             => EntitiesActions.GetCapacity(ref _impl);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNeedResizeDense()
+            => EntitiesActions.IsNeedResizeDense(ref _impl);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryResizeDense()
@@ -185,7 +199,7 @@ namespace AnotherECS.Core
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static EntitiesCaller Install(State state)
-                => state.AddLayout<EntitiesCaller, int, EntityHead, uint, TickOffsetData<EntityHead>>();
+                => state.AddLayout<EntitiesCaller, int, EntityHead, uint, TOData<EntityHead>>();
         }
     }
 
@@ -250,6 +264,10 @@ namespace AnotherECS.Core
                 caller.Remove(idTail);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNeedResizeDense(ref ImplCaller caller)
+            => caller.IsNeedResizeDense();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryResizeDense(ref ImplCaller caller)

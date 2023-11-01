@@ -21,7 +21,7 @@ namespace AnotherECS.Core
             element.tick = tick;
             element.value = count;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>, uint>(ref layout.history.countIndex, ref layout.history.countBuffer, recordLength, nameof(layout.history.countBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TData<uint>, uint>(ref layout.history.countIndex, ref layout.history.countBuffer, recordLength, nameof(layout.history.countBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,12 +37,12 @@ namespace AnotherECS.Core
             element.tick = tick;
             element.value = recycleIndex;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>, uint>(ref layout.history.recycleCountIndex, ref layout.history.recycleCountBuffer, recordLength, nameof(layout.history.recycleCountBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TData<uint>, uint>(ref layout.history.recycleCountIndex, ref layout.history.recycleCountBuffer, recordLength, nameof(layout.history.recycleCountBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static void PushFullDense<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickData<ArrayPtr<TDense>>> layout, uint tick, uint recordLength, ArrayPtr<TDense> data)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<ArrayPtr<TDense>>> layout, uint tick, uint recordLength, ArrayPtr<TDense> data)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -67,12 +67,12 @@ namespace AnotherECS.Core
                 element.value.CreateFrom(data);
             }
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickData<ArrayPtr<TDense>>, ArrayPtr<TDense>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TData<ArrayPtr<TDense>>, ArrayPtr<TDense>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void PushVersionDense<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickIndexerOffsetData<TDense>> layout, uint tick, uint recordLength)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TIOData<TDense>> layout, uint tick, uint recordLength)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -126,12 +126,12 @@ namespace AnotherECS.Core
                     }
                 }
             }
-            HistoryUtils.CheckAndResizeLoopBuffer<TickIndexerOffsetData<TDense>, TDense>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
+            HistoryUtils.CheckAndResizeLoopBuffer<TIOData<TDense>, TDense>(ref denseIndex, ref denseBuffer, recordLength, nameof(denseBufferPtr));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryChangeClear<TSparse, TDense, TDenseIndex, TSegment>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TSegment>> layout)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TOData<TSegment>> layout)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -142,7 +142,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryChangeClear<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TDense>> layout)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TOData<TDense>> layout)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -167,7 +167,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryTickClear<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickData<ArrayPtr<TDense>>> layout)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<ArrayPtr<TDense>>> layout)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -193,7 +193,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryVersionClear<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickIndexerOffsetData<TDense>> layout)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TIOData<TDense>> layout)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -256,7 +256,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void PushDenseSegment<TSparse, TDense, TDenseIndex, TSegment>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TSegment>> layout, uint tick, uint recordLength, TSegment* data)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TOData<TSegment>> layout, uint tick, uint recordLength, TSegment* data)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -267,7 +267,7 @@ namespace AnotherECS.Core
             element.offset = (uint)(data - (TSegment*)layout.storage.dense.GetPtr());
             element.value = *data;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TOData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -284,12 +284,12 @@ namespace AnotherECS.Core
             element.offset = offset;
             element.value = data;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TSparse>, TSparse>(ref layout.history.sparseIndex, ref layout.history.sparseBuffer, recordLength, nameof(layout.history.sparseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TOData<TSparse>, TSparse>(ref layout.history.sparseIndex, ref layout.history.sparseBuffer, recordLength, nameof(layout.history.sparseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushDense<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TDense>> layout, uint tick, uint recordLength, uint offset, ref TDense data)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TOData<TDense>> layout, uint tick, uint recordLength, uint offset, ref TDense data)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -316,12 +316,12 @@ namespace AnotherECS.Core
                 element.value = data;
             }
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TDense>, TDense>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TOData<TDense>, TDense>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushSegmentDense<TSparse, TDense, TDenseIndex, TSegment>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TickOffsetData<TSegment>> layout, uint tick, uint recordLength, uint offset, ref TSegment data)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TOData<TSegment>> layout, uint tick, uint recordLength, uint offset, ref TSegment data)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -333,7 +333,7 @@ namespace AnotherECS.Core
             element.offset = offset;
             element.value = data;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TOData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
 
@@ -351,12 +351,12 @@ namespace AnotherECS.Core
             element.offset = offset;
             element.value = recycle;
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<TDenseIndex>, TDenseIndex>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TOData<TDenseIndex>, TDenseIndex>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToSparseBuffer<TSparse>
-            (uint tick, ref ArrayPtr<TSparse> subject, ref ArrayPtr<TickOffsetData<TSparse>> buffer, ref uint bufferIndex, ref ArrayPtr<TSparse> bufferCopy, ref ArrayPtr<Op> ops)
+            (uint tick, ref ArrayPtr<TSparse> subject, ref ArrayPtr<TOData<TSparse>> buffer, ref uint bufferIndex, ref ArrayPtr<TSparse> bufferCopy, ref ArrayPtr<Op> ops)
            where TSparse : unmanaged, IEquatable<TSparse>
         {
             var bufferPtr = buffer.GetPtr();
@@ -452,7 +452,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueBuffer<TData>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TickOffsetData<TData>> buffer, ref uint bufferIndex)
+            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TOData<TData>> buffer, ref uint bufferIndex)
             where TData : unmanaged
         {
             var bufferPtr = buffer.GetPtr();
@@ -494,7 +494,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueSegmentBuffer<TData, TSegment>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TickOffsetData<TSegment>> buffer, ref uint bufferIndex)
+            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TOData<TSegment>> buffer, ref uint bufferIndex)
             where TData : unmanaged
             where TSegment : unmanaged
         {
@@ -537,7 +537,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueBuffer<TData>
-            (uint tick, ref TData subject, ref ArrayPtr<TickData<TData>> buffer, ref uint bufferIndex)
+            (uint tick, ref TData subject, ref ArrayPtr<TData<TData>> buffer, ref uint bufferIndex)
             where TData : unmanaged
         {
             var bufferPtr = buffer.GetPtr();
@@ -581,7 +581,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueIndexerBuffer<TData>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TickIndexerOffsetData<TData>> buffer, ref ArrayPtr<uint> indexerBuffer, ref uint bufferIndex)
+            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TIOData<TData>> buffer, ref ArrayPtr<uint> indexerBuffer, ref uint bufferIndex)
            where TData : unmanaged
         {
             var indexerBufferPtr = indexerBuffer.GetPtr();

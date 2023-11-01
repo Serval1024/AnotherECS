@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
@@ -10,6 +11,8 @@ namespace AnotherECS.Core
         public InjectContainer injectContainer;
         public EntitiesCaller entities;
         public DArrayCaller dArray;
+        public ArchetypeCaller archetype;
+        public uint componentTypesCount;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)

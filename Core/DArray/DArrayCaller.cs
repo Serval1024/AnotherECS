@@ -8,23 +8,28 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Core
 {
     using ImplCaller = Caller<
-                uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer,
+                uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer,
                 UintNumber,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                RecycleStorageFeature<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                NonSparseFeature<DArrayContainer, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
-                UintDenseFeature<uint, DArrayContainer, TickIndexerOffsetData<DArrayContainer>>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                RecycleStorageFeature<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
+                NonSparseFeature<DArrayContainer, TIOData<DArrayContainer>, DArrayContainer>,
+                UintDenseFeature<uint, DArrayContainer, TIOData<DArrayContainer>>,
                 Nothing,
                 CopyableFeature<DArrayContainer>,
-                UintVersionFeature<uint, DArrayContainer, TickIndexerOffsetData<DArrayContainer>>,
+                UintVersionFeature<uint, DArrayContainer, TIOData<DArrayContainer>>,
+#if ANOTHERECS_HISTORY_DISABLE
+                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
+#else
                 ByVersionHistoryFeature<uint, DArrayContainer, uint>,
-                SSSerialize<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>>,
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>
+#endif
+                SSSerialize<uint, DArrayContainer, uint, TIOData<DArrayContainer>>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>
                 >;
+
 
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
@@ -36,12 +41,13 @@ namespace AnotherECS.Core
 
         public bool IsValide => _impl.IsValide;
         public bool IsSingle => false;
-        public bool IsRevert => true;
+        public bool IsRevert => _impl.IsRevert;
         public bool IsTickFinished => true;
         public bool IsSerialize => true;
         public bool IsResizable => false;
         public bool IsAttach => false;
         public bool IsDetach => false;
+        public bool IsInject => false;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -333,7 +339,7 @@ namespace AnotherECS.Core
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static DArrayCaller Install(State state)
-                => state.AddLayout<DArrayCaller, uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>>();
+                => state.AddLayout<DArrayCaller, uint, DArrayContainer, uint, TIOData<DArrayContainer>>();
         }
     }
 

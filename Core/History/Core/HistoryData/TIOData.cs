@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core
 {
-    public struct TickOffsetData<TDense> : ITickData<TDense>, ISerialize
+    public struct TIOData<TDense> : ITickData<TDense>, ISerialize
     {
         public uint Tick
             => tick;
@@ -11,12 +11,14 @@ namespace AnotherECS.Core
             => value;
 
         public uint tick;
+        public uint index;
         public uint offset;
         public TDense value;
 
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(tick);
+            writer.Write(index);
             writer.Write(offset);
             writer.WriteStruct(value);
         }
@@ -24,6 +26,7 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             tick = reader.ReadUInt32();
+            index = reader.ReadUInt32();
             offset = reader.ReadUInt32();
             value = reader.ReadStruct<TDense>();
         }

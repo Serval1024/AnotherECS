@@ -4,8 +4,9 @@ using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using AnotherECS.Unsafe;
 using AnotherECS.Serializer;
-using EntityId = System.UInt32;
 using AnotherECS.Core.Actions;
+using AnotherECS.Core.Caller;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -15,6 +16,9 @@ namespace AnotherECS.Core
 #endif
     public abstract unsafe class State : BaseState, ISerializeConstructor
     {
+        #region const
+        private const uint CORE_LAYOUT_COUNT = 3;
+        #endregion
         #region data
         private GlobalDepencies* _depencies;
 
@@ -29,6 +33,7 @@ namespace AnotherECS.Core
         #region data cache
         private EntitiesCaller _entities;
         private DArrayCaller _dArray;
+        private ArchetypeCaller _archetype;
 
         private bool[] _isCustomSerializeCallers;
         private ITickFinishedCaller[] _tickFinishedCallers;  //TODO SER MTHREAD
@@ -134,10 +139,13 @@ namespace AnotherECS.Core
         {
             BindingCodeGenerationStage(_depencies->config);
 
+            _depencies->componentTypesCount = GetComponentCount();
             _entities = EntitiesCaller.LayoutInstaller.Install(this);
             _dArray = DArrayCaller.LayoutInstaller.Install(this);
+            _archetype = ArchetypeCaller.LayoutInstaller.Install(this);
             _depencies->entities = _entities;
             _depencies->dArray = _dArray;
+            _depencies->archetype = _archetype;
             _depencies->injectContainer = new InjectContainer(_dArray);
 
             _isCustomSerializeCallers = _callers.Skip(1).Select(p => p.IsSerialize).ToArray();
@@ -156,6 +164,13 @@ namespace AnotherECS.Core
                 if (_callers[i].IsAttach && _callers[i] is IAttachCaller callerAttach)
                 {
                     callerAttach.Attach();
+                }
+            }
+            for (int i = 1; i < _callers.Length; ++i)
+            {
+                if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
+                {
+                    injectCaller.CallConstruct();
                 }
             }
         }
@@ -460,6 +475,35 @@ namespace AnotherECS.Core
         }
         #endregion
 
+        #region other public api
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetTick()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return _depencies->tickProvider.tick;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(BaseEvent @event)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            Send(new EventContainer(_depencies->tickProvider.tick + 1, @event));
+        }
+
+        public uint Filter()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            
+        }
+
+        #endregion
+
         #region events
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
@@ -479,20 +523,7 @@ namespace AnotherECS.Core
         }
         #endregion
 
-        #region ticks api
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetTick()
-            => _depencies->tickProvider.tick;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Send(BaseEvent @event)
-        {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-#endif
-            Send(new EventContainer(_depencies->tickProvider.tick + 1, @event));
-        }
-
+        #region helpers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Send(ITickEvent @event)
         {
@@ -526,11 +557,9 @@ namespace AnotherECS.Core
             }
             _dArray.RevertFinished();
         }
-        #endregion
 
-        #region helpers
         private uint GetLayoutCount()
-            => GetComponentCount() + 3;
+            => GetComponentCount() + 1 + CORE_LAYOUT_COUNT;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller<T> GetCaller<T>(ushort index)

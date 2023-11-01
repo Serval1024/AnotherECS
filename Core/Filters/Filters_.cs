@@ -6,10 +6,10 @@ namespace AnotherECS.Core
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class Filters //: ISerialize
-    {
+    //internal sealed class Filters //: ISerialize
+    //{
 
-    }
+    //}
 
 
 

@@ -420,15 +420,15 @@ namespace AnotherECS.Generator
             {
                 if (option.isHistoryByChange)
                 {
-                    TTickData = $"{typeof(TickOffsetData<>).GetNameWithoutGeneric()}<TComponent>";
+                    TTickData = $"{typeof(TOData<>).GetNameWithoutGeneric()}<TComponent>";
                 }
                 else if (option.isHistoryByTick)
                 {
-                    TTickData = $"{typeof(TickData<>).GetNameWithoutGeneric()}<ArrayPtr<TComponent>>";
+                    TTickData = $"{typeof(TData<>).GetNameWithoutGeneric()}<ArrayPtr<TComponent>>";
                 }
                 else if (option.isHistoryByVersion)
                 {
-                    TTickData = $"{typeof(TickIndexerOffsetData<>).GetNameWithoutGeneric()}<TComponent>";
+                    TTickData = $"{typeof(TIOData<>).GetNameWithoutGeneric()}<TComponent>";
                 }
             }
             else
