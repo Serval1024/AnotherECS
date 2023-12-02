@@ -13,9 +13,9 @@ namespace AnotherECS.Generator
         {
             var callers = components
                 .Select(p => new TypeOptions(p))
-                .Select(p => (typeOption : p, name : TypeOptionsUtils.GetCallerFlags(p)))
+                .Select(p => (typeOption : p, name : TypeOptionsGeneratorUtils.GetCallerFlags(p)))
                 .GroupBy(p => p.name).Select(p => p.First())
-                .Select(p => (p.typeOption, p.name, declaration : TypeOptionsUtils.GetLayoutDeclaration(p.typeOption)))
+                .Select(p => (p.typeOption, p.name, declaration : TypeOptionsGeneratorUtils.GetLayoutDeclaration(p.typeOption)))
                 .ToArray();
 
             TemplateParser.Variables variables = null;
@@ -23,7 +23,7 @@ namespace AnotherECS.Generator
                 {
                     { "CALLER:COUNT", () => callers.Length.ToString() },
                     { "CALLER:TYPE_NAME", () => callers[variables.GetIndex(0)].name },
-                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(callers[variables.GetIndex(0)].typeOption) },
+                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsGeneratorUtils.GetCallerInterfaces(callers[variables.GetIndex(0)].typeOption) },
 
                     { "CALLER:DECLARE", () => GetCallerDeclaration(callers[variables.GetIndex(0)].typeOption)},
 
@@ -39,7 +39,7 @@ namespace AnotherECS.Generator
 
         private static string GetCallerDeclaration(TypeOptions option)
         {
-            var result = TypeOptionsUtils.GetCallerDeclaration(option);
+            var result = TypeOptionsGeneratorUtils.GetCallerDeclaration(option);
             result.Append(Environment.NewLine);
             result.Append(new string('\t', 3));
             return result.ToString();
@@ -57,7 +57,7 @@ namespace AnotherECS.Generator
                     { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components[variables.GetIndex(0)]) },
                     { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components[variables.GetIndex(0)]) },
 
-                    { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)])) },
+                    { "CALLER:TYPE_NAME", () => TypeOptionsGeneratorUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)])) },
 
                     { "INJECT", () => new TypeOptions(components[variables.GetIndex(0)]).isInject },
                     { "INJECT:SELF", () => new TypeOptions(components[variables.GetIndex(0)]).isInjectComponent },
@@ -85,7 +85,7 @@ namespace AnotherECS.Generator
                     { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components.IdToType(variables.GetIndexAsId(0))) },
                     { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components.IdToType(variables.GetIndexAsId(0))) },
 
-                    { "CALLER:FASTACCESS:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(new TypeOptions(fastAccessComponents.IdToType(variables.GetIndexAsId(0)))) },
+                    { "CALLER:FASTACCESS:TYPE_NAME", () => TypeOptionsGeneratorUtils.GetCallerFlags(new TypeOptions(fastAccessComponents.IdToType(variables.GetIndexAsId(0)))) },
 
                     { "COMPONENT:FASTACCESS", () => new TypeOptions(components.IdToType(variables.GetIndexAsId(0))).isCompileFastAccess },
                     { "COMPONENT:FASTACCESS:COUNT", () => fastAccessComponents.GetAssociationTable().Count.ToString() },
@@ -142,9 +142,9 @@ namespace AnotherECS.Generator
             variables = new()
                 {
                     { "MULTI", () => !option.isSingle },
-                    { "CALLER:TYPE_NAME", () => TypeOptionsUtils.GetCallerFlags(option) },
+                    { "CALLER:TYPE_NAME", () => TypeOptionsGeneratorUtils.GetCallerFlags(option) },
                     { "CALLER:DECLARE", () => GetCallerDeclaration(option)},
-                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsUtils.GetCallerInterfaces(option) },
+                    { "GENERIC_CONSTRAINTS:TComponent", () => TypeOptionsGeneratorUtils.GetCallerInterfaces(option) },
                 };
             return variables;
         }

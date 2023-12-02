@@ -4,15 +4,21 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct GlobalDepencies : ISerialize
+    internal unsafe struct GlobalDepencies : ISerialize, IDisposable
     {
-        public WorldConfig config;
+        public StateConfig config;
         public TickProvider tickProvider;
         public InjectContainer injectContainer;
         public EntitiesCaller entities;
         public DArrayCaller dArray;
         public ArchetypeCaller archetype;
+        public Filters filters;
         public uint componentTypesCount;
+
+        public void Dispose()
+        {
+            filters.Dispose();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
@@ -24,7 +30,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            config = reader.ReadStruct<WorldConfig>();
+            config = reader.ReadStruct<StateConfig>();
             tickProvider.Unpack(ref reader);
         }
     }

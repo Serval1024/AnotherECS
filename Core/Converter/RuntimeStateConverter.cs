@@ -13,6 +13,7 @@ namespace AnotherECS.Converter
         protected override IEnumerable<Type> GetSortTypes()
           => base
                 .GetSortTypes()
-                .Where(p => p.BaseType == typeof(State));
+                .Where(p => p.BaseType == typeof(State))
+                .OrderBy(p => p.Name);
     }
 }

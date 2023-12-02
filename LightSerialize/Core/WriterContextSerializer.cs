@@ -67,11 +67,8 @@ namespace AnotherECS.Serializer
             => _serializer.Pack(ref this, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteStruct(Type type, object value)
-            => _serializer.WriteStruct(ref this, type, value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WriteStruct(object value)
+        public void WriteStruct<T>(T value)
+            where T : struct
             => _serializer.WriteStruct(ref this, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

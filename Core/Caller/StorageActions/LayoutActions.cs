@@ -36,7 +36,7 @@ namespace AnotherECS.Core.Actions
             where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
-            if (storage.denseIndex == storage.dense.ElementCount)
+            if (storage.denseIndex == storage.dense.Length)
             {
                 layout.storage.dense.Resize(capacity);
 
@@ -53,7 +53,7 @@ namespace AnotherECS.Core.Actions
             where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
-            if (storage.recycleIndex == storage.recycle.ElementCount)
+            if (storage.recycleIndex == storage.recycle.Length)
             {
                 layout.storage.recycle.Resize(capacity);
 
@@ -80,12 +80,27 @@ namespace AnotherECS.Core.Actions
           where QNumber : unmanaged
           => Type.GetTypeCode(typeof(QNumber)) switch
           {
-              TypeCode.Boolean => 1,
+              TypeCode.Boolean => uint.MaxValue,
               TypeCode.Byte => byte.MaxValue,
               TypeCode.UInt16 => ushort.MaxValue,
               TypeCode.UInt32 => uint.MaxValue,
               _ => throw new ArgumentException(),
           };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SparseClear<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+           where TSparse : unmanaged
+           where TDense : unmanaged
+           where TDenseIndex : unmanaged
+           where TTickData : unmanaged
+        {
+            ref var storage = ref layout.storage;
+
+            if (storage.sparse.IsValide)
+            {
+                storage.sparse.Clear();
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void StorageClear<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
@@ -96,9 +111,22 @@ namespace AnotherECS.Core.Actions
         {
             ref var storage = ref layout.storage;
 
-            storage.sparse.Clear();
-            storage.dense.Clear();
-            storage.version.Clear();
+            if (storage.sparse.IsValide)
+            {
+                storage.sparse.Clear();
+            }
+            if (storage.version.IsValide)
+            {
+                storage.version.Clear();
+            }
+            if (storage.recycle.IsValide)
+            {
+                storage.recycle.Clear();
+            }
+            if (storage.dense.IsValide)
+            {
+                storage.dense.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

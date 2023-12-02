@@ -147,9 +147,9 @@ namespace AnotherECS.Core
 
                 for (int i = 0; i < _systems.Count; ++i)
                 {
-                    if (_systems[i] is IDisposable disposableSystem)
+                    if (_systems[i] is IDisposable disposable)
                     {
-                        disposableSystem.Dispose();
+                        disposable.Dispose();
                     }
                 }
 

@@ -23,8 +23,7 @@ namespace AnotherECS.Converter
                         var bindAttribute = p.GetCustomAttribute<BindStateAttribute>();
                         return bindAttribute == null || bindAttribute.State == typeof(EState);
                     }
-                    )
-                .OrderBy(p => p.Name);
+                    );
     }
 }
 

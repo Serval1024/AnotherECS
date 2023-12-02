@@ -37,7 +37,7 @@ namespace AnotherECS.Core.Actions
                 ref var storage = ref layout.storage;
 
                 var sparse = storage.sparse.GetPtr();
-                var sparseLength = storage.sparse.ElementCount;
+                var sparseLength = storage.sparse.Length;
                 var dense = storage.dense.GetPtr();
 
                 for (uint i = 1; i < sparseLength; ++i)
@@ -55,7 +55,7 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Attach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+        public static unsafe void Attach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, ref NArray<Op> ops)
            where TDense : unmanaged, IAttach
            where TDenseIndex : unmanaged
            where TTickData : unmanaged
@@ -63,7 +63,7 @@ namespace AnotherECS.Core.Actions
             ref var sparse = ref layout.storage.sparse;
             var densePtr = layout.storage.dense.GetPtr();
 
-            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
+            for (uint i = 0, iMax = sparse.Length; i < iMax; ++i)
             {
                 if ((ops.Get(i) & Op.ADD) != 0)
                 {
@@ -73,7 +73,7 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Attach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, ref ArrayPtr<Op> ops)
+        public static unsafe void Attach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, ref NArray<Op> ops)
             where TDense : unmanaged, IAttach
             where TDenseIndex : unmanaged
             where TTickData : unmanaged
@@ -83,7 +83,7 @@ namespace AnotherECS.Core.Actions
             var densePtr = layout.storage.dense.GetPtr();
             var opsPtr = ops.GetPtr();
 
-            for (uint i = 0, iMax = sparse.ElementCount; i < iMax; ++i)
+            for (uint i = 0, iMax = sparse.Length; i < iMax; ++i)
             {
                 if ((opsPtr[i] & Op.ADD) != 0)
                 {

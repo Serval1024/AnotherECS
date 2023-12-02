@@ -22,7 +22,7 @@ namespace AnotherECS.Core
                 CopyableFeature<DArrayContainer>,
                 UintVersionFeature<uint, DArrayContainer, TIOData<DArrayContainer>>,
 #if ANOTHERECS_HISTORY_DISABLE
-                Nothing<uint, DArrayContainer, uint, TickIndexerOffsetData<DArrayContainer>, DArrayContainer>,
+                Nothing<uint, DArrayContainer, uint, TIOData<DArrayContainer>, DArrayContainer>,
 #else
                 ByVersionHistoryFeature<uint, DArrayContainer, uint>,
 #endif
@@ -39,6 +39,7 @@ namespace AnotherECS.Core
     {
         private ImplCaller _impl;
 
+        public ushort ElementId => 0;
         public bool IsValide => _impl.IsValide;
         public bool IsSingle => false;
         public bool IsRevert => _impl.IsRevert;
@@ -48,7 +49,7 @@ namespace AnotherECS.Core
         public bool IsAttach => false;
         public bool IsDetach => false;
         public bool IsInject => false;
-
+        public bool IsTemporary => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICaller.Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state)
@@ -74,7 +75,7 @@ namespace AnotherECS.Core
         public uint Add<T>(int count)
             where T : unmanaged
         {
-            var id = _impl.AllocateForId();
+            var id = _impl.Add();
             ref var component = ref _impl.UnsafeDirectRead(id);
             component.Prepare<T>((uint)count);
 
@@ -88,6 +89,11 @@ namespace AnotherECS.Core
             _impl.DirectDenseUpdateVersion(id);
         }
 
+        public void RemoveRaw(uint id)
+        {
+            Remove(id);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetLength(uint id)
         {
@@ -96,6 +102,22 @@ namespace AnotherECS.Core
 #endif
             return _impl.Read(id).count;
         }
+
+#if !ANOTHERECS_RELEASE
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateComponentVersion(uint id)
+        {
+            ThrowIfOutOfRangeId(id);
+            _impl.Read(id).UpdateVersion();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetComponentVersion(uint id)
+        {
+            ThrowIfOutOfRangeId(id);
+            return _impl.Read(id).version;
+        }
+#endif
 
         public void Clear(uint id)
         {
@@ -106,12 +128,14 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void* Read(uint id)
+        public T* Read<T>(uint id)
+            where T : unmanaged
+
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfOutOfRangeId(id);
 #endif
-            return _impl.UnsafeDirectRead(id).data.GetPtr();
+            return (T*)_impl.UnsafeDirectRead(id).data.GetPtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -122,6 +146,16 @@ namespace AnotherECS.Core
             ThrowIfOutOfRangeIndex(id, index);
 #endif
             return ref _impl.UnsafeDirectRead(id).Read<T>(index);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* Get<T>(uint id)
+            where T : unmanaged
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfOutOfRangeId(id);
+#endif
+            return (T*)_impl.Get(id).data.GetPtr();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -346,8 +380,11 @@ namespace AnotherECS.Core
     [IgnoreCompile]
     internal unsafe struct DArrayContainer : ICopyable<DArrayContainer>, IDisposable, ISerialize
     {
-        public ArrayPtr data;
+        public NArray data;
         public int count;
+#if !ANOTHERECS_RELEASE
+        public int version;
+#endif
 
         public int ByteLength
         {
@@ -361,10 +398,21 @@ namespace AnotherECS.Core
             get => data.IsValide;
         }
 
+#if !ANOTHERECS_RELEASE
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateVersion()
+        {
+            ++version;
+        }
+#endif
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set<T>(int index, ref T value)
             where T : unmanaged
         {
+#if !ANOTHERECS_RELEASE
+            ++version;
+#endif
             data.Set(index, value);
         }
 
@@ -373,6 +421,9 @@ namespace AnotherECS.Core
         public ref T Get<T>(int index)
             where T : unmanaged
         {
+#if !ANOTHERECS_RELEASE
+            ++version;
+#endif
             return ref data.GetRef<T>(index);
         }
 
@@ -395,7 +446,10 @@ namespace AnotherECS.Core
             {
                 if (size > 0)
                 {
-                    data = new ArrayPtr(elementSize * size, size);
+#if !ANOTHERECS_RELEASE
+                    ++version;
+#endif
+                    data = new NArray(elementSize * size, size);
                     count = (int)size;
                 }
             }
@@ -409,7 +463,7 @@ namespace AnotherECS.Core
             {
                 Allocate<T>(sizeMin);
             }
-            else if (data.ElementCount < sizeMin || data.ElementCount > (sizeMin >> 1))
+            else if (data.Length < sizeMin || data.Length > (sizeMin >> 1))
             {
                 Resize(sizeMin, data.ElementSize);
             }
@@ -423,6 +477,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint size, uint elementSize)
         {
+#if !ANOTHERECS_RELEASE
+            ++version;
+#endif
             data.Resize(size, elementSize);
         }
 
@@ -431,12 +488,15 @@ namespace AnotherECS.Core
         {
             if (IsValide)
             {
+#if !ANOTHERECS_RELEASE
+                ++version;
+#endif
                 data.Dispose();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Replace(ArrayPtr data)
+        public void Replace(NArray data)
         {
             if (IsValide)
             {
@@ -450,6 +510,9 @@ namespace AnotherECS.Core
         {
             if (IsValide)
             {
+#if !ANOTHERECS_RELEASE
+                ++version;
+#endif
                 data.Clear();
             }
         }
@@ -462,6 +525,9 @@ namespace AnotherECS.Core
 
         public void CopyFrom(in DArrayContainer other)
         {
+#if !ANOTHERECS_RELEASE
+            ++version;
+#endif
             data.CopyFrom(other.data);
             count = other.count;
         }

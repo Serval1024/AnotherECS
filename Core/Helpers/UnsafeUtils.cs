@@ -1,13 +1,15 @@
-using AnotherECS.Core;
 using System;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Text;
+using Unity.Collections.LowLevel.Unsafe;
+using AnotherECS.Core;
 
 namespace AnotherECS.Unsafe
 {
     internal unsafe static class UnsafeUtils
     {
-        public unsafe static void ValidateConvertToPointer(Delegate function)
+        public unsafe static void ValidateConvertToPointer(Delegate function)// TODO SER REMOVE
         {
             if (function == null)
             {
@@ -49,5 +51,14 @@ namespace AnotherECS.Unsafe
             }
             return "null";
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static void* AddressOf<T>(ref T output)
+            where T : struct
+            => UnsafeUtility.AddressOf(ref output);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T As<U, T>(ref U from)
+            => ref UnsafeUtility.As<U, T>(ref from);
     }
 }

@@ -47,15 +47,9 @@ namespace AnotherECS.Generator
 
             isMarker = ComponentUtils.IsMarker(type);
 
-#if ANOTHERECS_HISTORY_DISABLE
-            isHistoryByChange = false;
-            isHistoryByTick = false;
-            isHistoryByVersion = false;
-#else
             isHistoryByChange = ComponentUtils.IsHistoryByChange(type) && !isMarker;
             isHistoryByTick = ComponentUtils.IsHistoryByTick(type) && !isMarker;
             isHistoryByVersion = ComponentUtils.IsHistoryByVersion(type) && !isMarker;
-#endif
             isHistory = isHistoryByChange || isHistoryByTick || isHistoryByVersion;
 
             isEmpty = ComponentUtils.IsEmpty(type);
@@ -80,7 +74,7 @@ namespace AnotherECS.Generator
 
             isUseISerialize = !isEmpty && (ComponentUtils.IsUseISerialize(type) || !isBlittable);
             isUseRecycle = !isMarker && !isEmpty && !isSingle;
-            isBindToEntity = !isMarker && !isSingle;
+            isBindToEntity = !isSingle;
             isConfig = ComponentUtils.IsConfig(type);
             isDispose = isAttach || isDetach || isCopyable;
 

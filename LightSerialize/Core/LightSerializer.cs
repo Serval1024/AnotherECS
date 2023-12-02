@@ -140,11 +140,9 @@ namespace AnotherECS.Serializer
                 }
             }
         }
-
-        public void WriteStruct(ref WriterContextSerializer writer, object data)
-            => WriteStruct(ref writer, data.GetType(), data);
-
-        public void WriteStruct(ref WriterContextSerializer writer, Type type, object data)
+       
+        public void WriteStruct<T>(ref WriterContextSerializer writer, T data)
+            where T : struct
         {
             if (data is ISerialize serialize)
             {
@@ -152,7 +150,7 @@ namespace AnotherECS.Serializer
             }
             else
             {
-                if (GetSerializer(type, out var serializer))
+                if (GetSerializer(typeof(T), out var serializer))
                 {
                     serializer.Pack(ref writer, data);
                 }
@@ -162,27 +160,25 @@ namespace AnotherECS.Serializer
                 }
             }
         }
-
+       
         public T ReadStruct<T>(ref ReaderContextSerializer reader)
-            => (T)ReadStruct(ref reader, typeof(T));
-
-        public object ReadStruct(ref ReaderContextSerializer reader, Type type)
+            where T : struct
         {
-            if (typeof(ISerialize).IsAssignableFrom(type))
+            if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
             {
-                var serialize = Activator.CreateInstance(type) as ISerialize;
+                var serialize = default(T) as ISerialize;
                 serialize.Unpack(ref reader);
-                return serialize;
+                return (T)serialize;
             }
             else
             {
-                if (GetSerializer(type, out var serializer))
+                if (GetSerializer(typeof(T), out var serializer))
                 {
-                    return serializer.Unpack(ref reader, null);
+                    return (T)serializer.Unpack(ref reader, null);
                 }
                 else
                 {
-                    return _compound.Unpack(ref reader, type);
+                    return (T)_compound.Unpack(ref reader, typeof(T));
                 }
             }
         }

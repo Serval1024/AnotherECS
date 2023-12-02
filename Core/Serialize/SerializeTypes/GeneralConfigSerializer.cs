@@ -5,17 +5,17 @@ namespace AnotherECS.Serializer
 {
     public struct WorldConfigSerializer : IElementSerializer
     {
-        public Type Type => typeof(WorldConfig);
+        public Type Type => typeof(StateConfig);
 
         public void Pack(ref WriterContextSerializer writer, object @value)
         {
-            var worldConfig = (WorldConfig)@value;
+            var worldConfig = (StateConfig)@value;
             writer.WriteStruct(worldConfig.general);
             writer.WriteStruct(worldConfig.history);
         }
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
-            => new WorldConfig()
+            => new StateConfig()
             {
                 general = reader.ReadStruct<GeneralConfig>(),
                 history = reader.ReadStruct<HistoryConfig>(),
@@ -33,7 +33,6 @@ namespace AnotherECS.Serializer
             writer.Write(generalConfig.recycledCapacity);
             writer.Write(generalConfig.componentCapacity);
             writer.Write(generalConfig.dArrayCapacity);
-            writer.Write(generalConfig.gcEntityCheckPerTick);
         }
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
@@ -43,7 +42,6 @@ namespace AnotherECS.Serializer
                 recycledCapacity = reader.ReadUInt32(),
                 componentCapacity = reader.ReadUInt32(),
                 dArrayCapacity = reader.ReadUInt32(),
-                gcEntityCheckPerTick = reader.ReadUInt32(),
             };
     }
 

@@ -5,6 +5,7 @@
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
 using AnotherECS.Core.Caller;
+using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Gen.Common
 {

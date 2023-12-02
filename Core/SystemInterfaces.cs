@@ -1,3 +1,7 @@
+#if ANOTHERECS_RELEASE
+using AnotherECS.Unsafe;
+#endif
+
 namespace AnotherECS.Core
 {
     public interface ISystem { }
@@ -20,7 +24,11 @@ namespace AnotherECS.Core
     {
         void Receive(TState state, UEvent @event);
         void IReceiverSystem<UEvent>.Receive(State state, UEvent @event)
+#if !ANOTHERECS_RELEASE
             => Receive((TState)state, @event);
+#else
+            => Receive(UnsafeUtils.As<State, TState>(ref state), @event);
+#endif
     }
 
     public interface IInitSystem : ISystem
@@ -33,7 +41,11 @@ namespace AnotherECS.Core
     {
         void Init(TState state);
         void IInitSystem.Init(State state)
+#if !ANOTHERECS_RELEASE
             => Init((TState)state);
+#else
+            => Init(UnsafeUtils.As<State, TState>(ref state));
+#endif
     }
 
     public interface ITickSystem : ISystem
@@ -46,7 +58,11 @@ namespace AnotherECS.Core
     {
         void Tick(TState state);
         void ITickSystem.Tick(State state)
+#if !ANOTHERECS_RELEASE
             => Tick((TState)state);
+#else
+            => Tick(UnsafeUtils.As<State, TState>(ref state));
+#endif
     }
 
     public interface IDestroySystem : ISystem

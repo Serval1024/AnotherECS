@@ -7,6 +7,15 @@ namespace AnotherECS.Unsafe
     public unsafe static class UnsafeMemory     //TODO SER +crossplatform
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T* AllocateReplace<T>(T replace)
+            where T : unmanaged
+        {
+            var ptr = Allocate<T>();
+            *ptr = replace;
+            return ptr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* Allocate<T>()
             where T : unmanaged
             => (T*)Allocate(sizeof(T));
@@ -22,6 +31,14 @@ namespace AnotherECS.Unsafe
             var ptr = Malloc(size);
             MemClear(ptr, size);
             return ptr;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DisposeDeallocate<T>(ref T* ptr)
+            where T : unmanaged, IDisposable
+        {
+            ptr->Dispose();
+            Deallocate(ref ptr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,6 +78,7 @@ namespace AnotherECS.Unsafe
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void* Malloc(long size, int alignment)
             => UnsafeUtility.Malloc(size, alignment, Unity.Collections.Allocator.Persistent);
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(void* memory)

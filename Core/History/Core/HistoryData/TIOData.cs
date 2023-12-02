@@ -3,6 +3,7 @@
 namespace AnotherECS.Core
 {
     public struct TIOData<TDense> : ITickData<TDense>, ISerialize
+        where TDense : struct
     {
         public uint Tick
             => tick;

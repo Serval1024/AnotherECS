@@ -44,19 +44,19 @@ namespace AnotherECS.Core
                     OneTick();
                 }
 #else
-                var targetTick = _state.GetTick() + tickCount;
+                var targetTick = _state.Tick + tickCount;
 
                 if (_state.GetNextTickForEvent() < targetTick)
                 {
                     _state.RevertTo(_state.GetNextTickForEvent() - 1);
                 }
 
-                while (_state.GetTick() < targetTick)
+                while (_state.Tick < targetTick)
                 {
                     OneTick();
                 }
-            }
 #endif
+            }
         }
 
         public void Destroy()
@@ -64,8 +64,8 @@ namespace AnotherECS.Core
 
         public void OneTick()
         {
-            _systems.TickStartedInternal(_state);
             _state.TickStarted();
+            _systems.TickStartedInternal(_state);
 
             _eventTemp.Clear();
             _state.GetEvent(_eventTemp);

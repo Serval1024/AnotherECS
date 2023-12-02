@@ -363,7 +363,8 @@ namespace AnotherECS.Generator
                 var result = new StringBuilder();
                 var r = Range.GetRange(variables);
                 var deep = variables.IncDeep();
-                
+                variables.SetLength(deep, r.End.Value);
+
                 for (var index = r.Start.Value; index < r.End.Value; ++index)
                 {
                     variables.SetIndex(deep, index);
@@ -517,8 +518,8 @@ namespace AnotherECS.Generator
             {
                 arrayLength[deep] = length;
 
-                var lenStr = GetIndex().ToString();
-                var lenDeepStr = GetIndex(Deep).ToString();
+                var lenStr = GetLength().ToString();
+                var lenDeepStr = GetLength(Deep).ToString();
                 this[_LEN_TAG] = () => lenStr;
                 this[$"{_LEN_TAG}{Deep}"] = () => lenDeepStr;
             }

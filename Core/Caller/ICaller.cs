@@ -9,6 +9,7 @@ namespace AnotherECS.Core.Caller
 
     internal interface ICaller : ICallerReference
     {
+        ushort ElementId { get; }
         bool IsSingle { get; }
         bool IsRevert { get; }
         bool IsTickFinished { get; }
@@ -17,11 +18,12 @@ namespace AnotherECS.Core.Caller
         bool IsAttach { get; }
         bool IsDetach { get; }
         bool IsInject { get; }
-
+        bool IsTemporary { get; }
         internal unsafe void Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state);
         internal void AllocateLayout();
         Type GetElementType();
         void Remove(EntityId id);
+        void RemoveRaw(EntityId id);
         IComponent GetCopy(EntityId id);
         void Set(EntityId id, IComponent data);
     }
@@ -67,6 +69,18 @@ namespace AnotherECS.Core.Caller
     internal interface IDetachCaller
     {
         void Detach();
+    }
+
+    public interface IInjectCaller
+    {
+        void CallConstruct();
+        void CallDeconstruct();
+    }
+    public unsafe interface IManualHistoryCaller<TTickDataDense>
+        where TTickDataDense : unmanaged
+    {
+        public void DirectPush(TTickDataDense* data);
+        public void DirectPush(uint offset, uint index, TTickDataDense* data);
     }
 }
 

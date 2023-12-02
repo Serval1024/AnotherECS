@@ -26,11 +26,7 @@ namespace AnotherECS.Core
             => typeof(IConfig).IsAssignableFrom(type);
 
         public static bool IsHistory(Type type)
-#if ANOTHERECS_HISTORY_DISABLE
-            => false;
-#else
             => !IsOption(type, ComponentOptions.HistoryNonSync);
-#endif
 
         public static bool IsHistoryByChange(Type type)
             => IsHistory(type) && !IsHistoryByTick(type);

@@ -106,7 +106,7 @@ namespace AnotherECS.Core.Actions
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.PackCommonBlittable(ref writer, ref unknowLayout->storage);
 
-            ArrayPtrEachSerializeStaticSerializer<TDense>.Pack(ref writer, ref layout->storage.dense, layout->storage.denseIndex);
+            NArrayEachSerializeStaticSerializer<TDense>.Pack(ref writer, ref layout->storage.dense, layout->storage.denseIndex);
         }
 
 
@@ -135,7 +135,7 @@ namespace AnotherECS.Core.Actions
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.PackCommonBlittable(ref writer, ref unknowLayout->history);
 
-            ArrayPtrEachSerializeStaticSerializer<TTickData>.Pack(ref writer, ref layout->history.denseBuffer);
+            NArrayEachSerializeStaticSerializer<TTickData>.Pack(ref writer, ref layout->history.denseBuffer);
         }
 
 
@@ -157,14 +157,14 @@ namespace AnotherECS.Core.Actions
         public static void UnpackStorageSerialize<TSparse, TDense, TDenseIndex, TTickData>
             (ref ReaderContextSerializer reader, UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout)
             where TSparse : unmanaged
-            where TDense : unmanaged
+            where TDense : unmanaged, ISerialize
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged, ISerialize
+            where TTickData : unmanaged
         {
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref unknowLayout->storage);
 
-            ArrayPtrEachSerializeStaticSerializer<TTickData>.Unpack(ref reader);
+            NArrayEachSerializeStaticSerializer<TDense>.Unpack(ref reader);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -192,7 +192,7 @@ namespace AnotherECS.Core.Actions
             var unknowLayout = (UnmanagedLayout*)layout;
             PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref unknowLayout->history);
 
-            ArrayPtrEachSerializeStaticSerializer<TTickData>.Unpack(ref reader);
+            NArrayEachSerializeStaticSerializer<TTickData>.Unpack(ref reader);
         }
     }
 }

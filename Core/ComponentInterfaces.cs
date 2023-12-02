@@ -29,9 +29,8 @@ namespace AnotherECS.Core
         void OnDetach(State state);
     }
 
-    public interface ISegment
+    public interface IManualRevert<TSegment>
     {
-        void OnPushSegment(uint index);
-        void OnRevertSegment(uint index);
+        void OnRevert(uint index, TSegment segment);
     }
 }

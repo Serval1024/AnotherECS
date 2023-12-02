@@ -42,7 +42,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static void PushFullDense<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<ArrayPtr<TDense>>> layout, uint tick, uint recordLength, ArrayPtr<TDense> data)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<NArray<TDense>>> layout, uint tick, uint recordLength, NArray<TDense> data)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
@@ -67,7 +67,7 @@ namespace AnotherECS.Core
                 element.value.CreateFrom(data);
             }
 
-            HistoryUtils.CheckAndResizeLoopBuffer<TData<ArrayPtr<TDense>>, ArrayPtr<TDense>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+            HistoryUtils.CheckAndResizeLoopBuffer<TData<NArray<TDense>>, NArray<TDense>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,6 +138,19 @@ namespace AnotherECS.Core
             where TSegment : unmanaged
         {
             layout.history.Clear();
+            HistoryIndexesClear(ref layout);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryChangeClear<TSparse, TDense, TDenseIndex, TSegment>
+           (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TIOData<TSegment>> layout)
+           where TSparse : unmanaged
+           where TDense : unmanaged
+           where TDenseIndex : unmanaged
+           where TSegment : unmanaged
+        {
+            layout.history.Clear();
+            HistoryIndexesClear(ref layout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -149,7 +162,7 @@ namespace AnotherECS.Core
             where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
             var denseBufferPtr = layout.history.denseBuffer.GetPtr();
-            var count = layout.history.denseBuffer.ElementCount;
+            var count = layout.history.denseBuffer.Length;
 
             TCopyable copyable = default;
             if (copyable.Is)
@@ -163,18 +176,19 @@ namespace AnotherECS.Core
                 }
             }
             layout.history.Clear();
+            HistoryIndexesClear(ref layout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryTickClear<TSparse, TDense, TDenseIndex, TCopyable>
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<ArrayPtr<TDense>>> layout)
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TData<NArray<TDense>>> layout)
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
             where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
             var denseBufferPtr = layout.history.denseBuffer.GetPtr();
-            var count = layout.history.denseBuffer.ElementCount;
+            var count = layout.history.denseBuffer.Length;
 
             TCopyable copyable = default;
             if (copyable.Is)
@@ -189,8 +203,10 @@ namespace AnotherECS.Core
                 }
             }
             layout.history.Clear();
+            HistoryIndexesClear(ref layout);
         }
 
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void HistoryVersionClear<TSparse, TDense, TDenseIndex, TCopyable>
             (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TIOData<TDense>> layout)
@@ -200,7 +216,7 @@ namespace AnotherECS.Core
             where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
             var denseBufferPtr = layout.history.denseBuffer.GetPtr();
-            var count = layout.history.denseBuffer.ElementCount;
+            var count = layout.history.denseBuffer.Length;
 
             TCopyable copyable = default;
             if (copyable.Is)
@@ -214,17 +230,34 @@ namespace AnotherECS.Core
                 }
             }
             layout.history.Clear();
+            HistoryIndexesClear(ref layout);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void HistoryIndexesClear<TSparse, TDense, TDenseIndex, TTickDataDense>
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickDataDense> layout)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TTickDataDense : unmanaged
+        {
+            layout.history.recycleCountIndex = 0;
+            layout.history.recycleIndex = 0;
+            layout.history.countIndex = 0;
+            layout.history.denseIndex = 0;
+            layout.history.sparseIndex = 0;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe static void CopyFrom<TDense, TCopyable>
-            (ref ArrayPtr<TDense> destination, ref ArrayPtr<TDense> source, uint denseIndex)
+            (ref NArray<TDense> destination, ref NArray<TDense> source, uint denseIndex)
             where TDense : unmanaged
             where TCopyable : struct, IDenseCopyable<TDense>
         {
-            if (!destination.IsValide || destination.ElementCount != source.ElementCount)
+            if (!destination.IsValide || destination.Length != source.Length)
             {
-                destination.Resize(source.ElementCount);
+                destination.Resize(source.Length);
             }
 
             TCopyable copyable = default;
@@ -239,7 +272,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe void CallRecycle<TDense, TCopyable>
-            (ref ArrayPtr<TDense> element)
+            (ref NArray<TDense> element)
             where TDense : unmanaged
             where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
         {
@@ -247,7 +280,7 @@ namespace AnotherECS.Core
             var dense = element;
             var densePtr = element.GetPtr();
 
-            for (uint j = 0, jMax = dense.ElementCount; j < jMax; j++)
+            for (uint j = 0, jMax = dense.Length; j < jMax; j++)
             {
                 copyable.Recycle(ref densePtr[j]);
             }
@@ -268,6 +301,23 @@ namespace AnotherECS.Core
             element.value = *data;
 
             HistoryUtils.CheckAndResizeLoopBuffer<TOData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void PushDenseSegment<TSparse, TDense, TDenseIndex, TSegment>
+            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TIOData<TSegment>> layout, uint tick, uint recordLength, uint offset, uint index, TSegment* data)
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            where TSegment : unmanaged
+        {
+            ref var element = ref layout.history.denseBuffer.GetRef(layout.history.denseIndex++);
+            element.tick = tick;
+            element.offset = offset;
+            element.index = index;
+            element.value = *data;
+
+            HistoryUtils.CheckAndResizeLoopBuffer<TIOData<TSegment>, TSegment>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -356,7 +406,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToSparseBuffer<TSparse>
-            (uint tick, ref ArrayPtr<TSparse> subject, ref ArrayPtr<TOData<TSparse>> buffer, ref uint bufferIndex, ref ArrayPtr<TSparse> bufferCopy, ref ArrayPtr<Op> ops)
+            (uint tick, ref NArray<TSparse> subject, ref NArray<TOData<TSparse>> buffer, ref uint bufferIndex, ref NArray<TSparse> bufferCopy, ref NArray<Op> ops)
            where TSparse : unmanaged, IEquatable<TSparse>
         {
             var bufferPtr = buffer.GetPtr();
@@ -368,9 +418,9 @@ namespace AnotherECS.Core
             var bufferCopyPtr = bufferCopy.GetPtr();
             TSparse zero = default;
 
-            if (ops.ElementCount != subject.ElementCount)
+            if (ops.Length != subject.Length)
             {
-                ops.Resize(subject.ElementCount);
+                ops.Resize(subject.Length);
             }
             else
             {
@@ -415,7 +465,7 @@ namespace AnotherECS.Core
             }
 
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
             {
                 var frame = bufferPtr[i];
 
@@ -444,7 +494,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    bufferIndex = (i + 1) % buffer.Length;
                     return;
                 }
             }
@@ -452,7 +502,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueBuffer<TData>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TOData<TData>> buffer, ref uint bufferIndex)
+            (uint tick, ref NArray<TData> subject, ref NArray<TOData<TData>> buffer, ref uint bufferIndex)
             where TData : unmanaged
         {
             var bufferPtr = buffer.GetPtr();
@@ -476,7 +526,7 @@ namespace AnotherECS.Core
                 }
             }
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
             {
                 var frame = bufferPtr[i];
 
@@ -486,7 +536,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    bufferIndex = (i + 1) % buffer.Length;
                     return;
                 }
             }
@@ -494,7 +544,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueSegmentBuffer<TData, TSegment>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TOData<TSegment>> buffer, ref uint bufferIndex)
+            (uint tick, ref NArray<TData> subject, ref NArray<TOData<TSegment>> buffer, ref uint bufferIndex)
             where TData : unmanaged
             where TSegment : unmanaged
         {
@@ -519,7 +569,7 @@ namespace AnotherECS.Core
                 }
             }
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
             {
                 var frame = bufferPtr[i];
 
@@ -529,7 +579,93 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    bufferIndex = (i + 1) % buffer.Length;
+                    return;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertToManualValueSegmentBuffer<TData, TSegment>
+            (uint tick, ref NArray<TData> subject, ref NArray<TIOData<TSegment>> buffer, ref uint bufferIndex)
+            where TData : unmanaged, IManualRevert<TSegment>
+            where TSegment : unmanaged
+        {
+            var bufferPtr = buffer.GetPtr();
+            var subjectPtr = subject.GetPtr();
+
+            if (bufferIndex != 0)
+            {
+                for (uint i = bufferIndex - 1; i >= 0; --i)
+                {
+                    var frame = bufferPtr[i];
+
+                    if (frame.tick > tick)
+                    {
+                        subjectPtr[frame.offset].OnRevert(frame.index, frame.value);
+                    }
+                    else
+                    {
+                        bufferIndex = i + 1;
+                        return;
+                    }
+                }
+            }
+
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
+            {
+                var frame = bufferPtr[i];
+
+                if (frame.tick > tick)
+                {
+                    subjectPtr[frame.offset].OnRevert(frame.index, frame.value);
+                }
+                else
+                {
+                    bufferIndex = (i + 1) % buffer.Length;
+                    return;
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void RevertToValueSegmentBuffer<TData, TSegment>
+            (uint tick, ref NArray<TData> subject, ref NArray<TIOData<TSegment>> buffer, ref uint bufferIndex)
+            where TData : unmanaged
+            where TSegment : unmanaged
+        {
+            var bufferPtr = buffer.GetPtr();
+            var subjectPtr = (TSegment*)subject.GetPtr();
+
+            if (bufferIndex != 0)
+            {
+                for (uint i = bufferIndex - 1; i >= 0; --i)
+                {
+                    var frame = bufferPtr[i];
+
+                    if (frame.tick > tick)
+                    {
+                        subjectPtr[frame.offset] = frame.value;
+                    }
+                    else
+                    {
+                        bufferIndex = i + 1;
+                        return;
+                    }
+                }
+            }
+
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
+            {
+                var frame = bufferPtr[i];
+
+                if (frame.tick > tick)
+                {
+                    subjectPtr[frame.offset] = frame.value;
+                }
+                else
+                {
+                    bufferIndex = (i + 1) % buffer.Length;
                     return;
                 }
             }
@@ -537,7 +673,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueBuffer<TData>
-            (uint tick, ref TData subject, ref ArrayPtr<TData<TData>> buffer, ref uint bufferIndex)
+            (uint tick, ref TData subject, ref NArray<TData<TData>> buffer, ref uint bufferIndex)
             where TData : unmanaged
         {
             var bufferPtr = buffer.GetPtr();
@@ -561,12 +697,12 @@ namespace AnotherECS.Core
             }
 
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
             {
                 if (bufferPtr[i].tick <= tick)
                 {
                     var lastIndex = i + 1;
-                    if (lastIndex < buffer.ElementCount)
+                    if (lastIndex < buffer.Length)
                     {
                         subject = bufferPtr[lastIndex].value;
                         bufferIndex = lastIndex;
@@ -581,7 +717,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToValueIndexerBuffer<TData>
-            (uint tick, ref ArrayPtr<TData> subject, ref ArrayPtr<TIOData<TData>> buffer, ref ArrayPtr<uint> indexerBuffer, ref uint bufferIndex)
+            (uint tick, ref NArray<TData> subject, ref NArray<TIOData<TData>> buffer, ref NArray<uint> indexerBuffer, ref uint bufferIndex)
            where TData : unmanaged
         {
             var indexerBufferPtr = indexerBuffer.GetPtr();
@@ -611,7 +747,7 @@ namespace AnotherECS.Core
                 }
             }
 
-            for (uint i = buffer.ElementCount - 1; i >= bufferIndex; --i)
+            for (uint i = buffer.Length - 1; i >= bufferIndex; --i)
             {
                 var frame = bufferPtr[i];
 
@@ -626,7 +762,7 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    bufferIndex = (i + 1) % buffer.ElementCount;
+                    bufferIndex = (i + 1) % buffer.Length;
                     return;
                 }
             }

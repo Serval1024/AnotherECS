@@ -3,10 +3,10 @@ using System;
 
 namespace AnotherECS.Exceptions
 {
-    public class MaskIsEmptyException : Exception   //TODO SER REMOVE?
+    public class MaskIsEmptyException : Exception
     {
         public MaskIsEmptyException()
-            : base($"{DebugConst.TAG}Mask have not any include or exclude components.")
+            : base($"{DebugConst.TAG}Mask have not any include components.")
         { }
     }
 }

@@ -31,7 +31,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IComponent Read(int index)
+        public IComponent Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfInvalide();
@@ -40,7 +40,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(int index, IComponent component)
+        public void Set(uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfInvalide();

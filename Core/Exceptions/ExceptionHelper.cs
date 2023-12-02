@@ -61,7 +61,7 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfDontExists(State state, uint id, int index, uint count, ICaller caller)
+        public static void ThrowIfDontExists(State state, uint id, uint index, uint count, ICaller caller)
         {
             ThrowIfDisposed(state);
             ThrowIfNotMultiAccess(state, id, caller);
@@ -107,49 +107,89 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfArrayPtrBroken(ArrayPtr arrayPtr, uint index, uint segmentSize)
+        public static void ThrowIfNArrayBroken(NArray narray, ulong index, uint segmentSize)
         {
-            ThrowIfArrayPtrBroken(arrayPtr);
-            if (index < 0 || index * segmentSize >= arrayPtr.ByteLength)
+            ThrowIfNArrayBroken(narray);
+            if (index * segmentSize >= narray.ByteLength)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
         }
 
-        public static void ThrowIfArrayPtrBroken(ArrayPtr arrayPtr, int index, uint segmentSize)
+        public static void ThrowIfNArrayBroken(NArray narray, uint index, uint segmentSize)
         {
-            ThrowIfArrayPtrBroken(arrayPtr);
+            ThrowIfNArrayBroken(narray);
+            if (index * segmentSize >= narray.ByteLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+        }
+
+        public static void ThrowIfNArrayBroken(NArray narray, int index, uint segmentSize)
+        {
+            ThrowIfNArrayBroken(narray);
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
-            ThrowIfArrayPtrBroken(arrayPtr, (uint)index, segmentSize);
+            ThrowIfNArrayBroken(narray, (uint)index, segmentSize);
         }
 
-        public static void ThrowIfArrayPtrBroken<T>(ArrayPtr<T> arrayPtr, uint index)
+        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, ulong index)
+        where T : unmanaged
+        {
+            ThrowIfNArrayBroken(narray);
+            if (index < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+            ThrowIfNArrayBroken(narray, (uint)index);
+        }
+
+        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, int index)
+           where T : unmanaged
+        {
+            ThrowIfNArrayBroken(narray);
+            if (index < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+            ThrowIfNArrayBroken(narray, (uint)index);
+        }
+
+        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, uint index)
             where T : unmanaged
         {
-            ThrowIfArrayPtrBroken(arrayPtr);
-            if (index < 0 || index >= arrayPtr.ElementCount)
+            ThrowIfNArrayBroken(narray);
+            if (index >= narray.Length)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
         }
 
-        public static void ThrowIfArrayPtrBroken(ArrayPtr arrayPtr)
+        public static void ThrowIfNArrayBroken(NArray narray)
         {
-            if (!arrayPtr.IsValide)
+            if (!narray.IsValide)
             {
-                throw new InvalidOperationException(nameof(arrayPtr.IsValide));
+                throw new InvalidOperationException(nameof(narray.IsValide));
             }
         }
 
-        public static void ThrowIfArrayPtrBroken<T>(ArrayPtr<T> arrayPtr)
+        public static void ThrowIfNArrayBroken<T>(NArray<T> narray)
             where T : unmanaged
         {
-            if (!arrayPtr.IsValide)
+            if (!narray.IsValide)
             {
-                throw new InvalidOperationException(nameof(arrayPtr.IsValide));
+                throw new InvalidOperationException(nameof(narray.IsValide));
+            }
+        }
+
+        public static void ThrowIfNContainerBroken<T>(NContainer<T> container)
+            where T : unmanaged
+        {
+            if (!container.IsValide)
+            {
+                throw new InvalidOperationException(nameof(container.IsValide));
             }
         }
     }

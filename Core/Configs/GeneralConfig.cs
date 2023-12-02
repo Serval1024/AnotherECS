@@ -7,8 +7,7 @@
         public uint componentCapacity;
         public uint recycledCapacity;
         public uint dArrayCapacity;
-
-        public uint gcEntityCheckPerTick;
+        public uint filterCapacity;
 
         public static GeneralConfig Create()
            => new()
@@ -18,8 +17,7 @@
 
                componentCapacity = 64,
                dArrayCapacity = 32,
-
-               gcEntityCheckPerTick = 8,
+               filterCapacity = 32,
            };
     }
 }

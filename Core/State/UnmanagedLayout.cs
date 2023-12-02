@@ -5,8 +5,8 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    [StructLayout(LayoutKind.Sequential, Size = 208)]
-    public unsafe struct UnmanagedLayout     // Union ComponetLayout and ComponetLayout<TComponent> 192
+    [StructLayout(LayoutKind.Sequential, Size = 208)]   //208
+    public unsafe struct UnmanagedLayout     // Union UnmanagedLayout and UnmanagedLayout<,,,>
     {
         public ComponetStorage storage;
         public HistoryStorage history;
@@ -26,12 +26,13 @@ namespace AnotherECS.Core
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct ComponetStorage : IDisposable
     {
-        public ArrayPtr sparse;
-        public ArrayPtr dense;
-        public ArrayPtr<uint> version;
-        public ArrayPtr<uint> recycle;
+        public NArray sparse;
+        public NArray dense;
+        public NArray<uint> version;
+        public NArray<uint> recycle;
 
         public uint denseIndex;
         public uint recycleIndex;
@@ -58,14 +59,15 @@ namespace AnotherECS.Core
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct HistoryStorage : IDisposable
     {
-        public ArrayPtr<TData<uint>> recycleCountBuffer;
-        public ArrayPtr<TOData<uint>> recycleBuffer;
-        public ArrayPtr<TData<uint>> countBuffer;
-        public ArrayPtr denseBuffer;
-        public ArrayPtr sparseBuffer;
-        public ArrayPtr<uint> versionIndexer;
+        public NArray<TData<uint>> recycleCountBuffer;
+        public NArray<TOData<uint>> recycleBuffer;
+        public NArray<TData<uint>> countBuffer;
+        public NArray denseBuffer;
+        public NArray sparseBuffer;
+        public NArray<uint> versionIndexer;
 
         public uint recycleCountIndex;
         public uint recycleIndex;
@@ -129,22 +131,24 @@ namespace AnotherECS.Core
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct ComponentFunction<TDense>
         where TDense : unmanaged
     {
         public delegate*<ref InjectContainer, ref TDense, void> construct;
         public delegate*<ref InjectContainer, ref TDense, void> deconstruct;
     }
-  
+
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct ComponetStorage<TSparse, TDense, TDenseIndex> : IDisposable
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        public ArrayPtr<TSparse> sparse;
-        public ArrayPtr<TDense> dense;
-        public ArrayPtr<uint> version;
-        public ArrayPtr<TDenseIndex> recycle;
+        public NArray<TSparse> sparse;
+        public NArray<TDense> dense;
+        public NArray<uint> version;
+        public NArray<TDenseIndex> recycle;
 
         public uint denseIndex;
         public uint recycleIndex;
@@ -171,17 +175,18 @@ namespace AnotherECS.Core
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct HistoryStorage<TSparse, TDenseIndex, WTickDataDense> : IDisposable
         where TSparse: unmanaged
         where TDenseIndex : unmanaged
         where WTickDataDense : unmanaged
     {
-        public ArrayPtr<TData<uint>> recycleCountBuffer;
-        public ArrayPtr<TOData<TDenseIndex>> recycleBuffer;
-        public ArrayPtr<TData<uint>> countBuffer;
-        public ArrayPtr<WTickDataDense> denseBuffer;
-        public ArrayPtr<TOData<TSparse>> sparseBuffer;
-        public ArrayPtr<uint> versionIndexer;
+        public NArray<TData<uint>> recycleCountBuffer;
+        public NArray<TOData<TDenseIndex>> recycleBuffer;
+        public NArray<TData<uint>> countBuffer;
+        public NArray<WTickDataDense> denseBuffer;
+        public NArray<TOData<TSparse>> sparseBuffer;
+        public NArray<uint> versionIndexer;
 
         public uint recycleCountIndex;
         public uint recycleIndex;
@@ -192,12 +197,30 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            recycleCountBuffer.Clear();
-            recycleBuffer.Clear();
-            countBuffer.Clear();
-            denseBuffer.Clear();
-            sparseBuffer.Clear();
-            versionIndexer.Clear();
+            if (recycleCountBuffer.IsValide)
+            {
+                recycleCountBuffer.Clear();
+            }
+            if (recycleBuffer.IsValide)
+            {
+                recycleBuffer.Clear();
+            }
+            if (countBuffer.IsValide)
+            {
+                countBuffer.Clear();
+            }
+            if (denseBuffer.IsValide)
+            {
+                denseBuffer.Clear();
+            }
+            if (sparseBuffer.IsValide)
+            {
+                sparseBuffer.Clear();
+            }
+            if (versionIndexer.IsValide)
+            {
+                versionIndexer.Clear();
+            }
 
             recycleCountIndex = 0;
             recycleIndex = 0;

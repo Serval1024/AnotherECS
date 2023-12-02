@@ -72,11 +72,8 @@ namespace AnotherECS.Serializer
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public object ReadStruct(Type type)
-            => _serializer.ReadStruct(ref this, type);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T ReadStruct<T>()
+            where T : struct
             => _serializer.ReadStruct<T>(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

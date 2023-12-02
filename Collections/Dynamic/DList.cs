@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
+using AnotherECS.Exceptions;
 using AnotherECS.Serializer;
+using UnityEngine.UIElements;
 
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<T> : IInject<DArrayCaller>, IEnumerable<T>, IList<T>, ISerialize
+    public struct DList<T> : IInject<DArrayCaller>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize
         where T : unmanaged
     {
         private DArray<T> _data;
@@ -27,17 +29,24 @@ namespace AnotherECS.Collections
             InjectUtils.Decontruct(ref _data);
         }
 #else
-        public void Construct(DArrayStorage bind)
-            => _data.Construct(bind);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Construct(DArrayCaller bind)
+        {
+            _data.Construct(bind);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct()
-            => _data.Deconstruct();
+        {
+            _data.Deconstruct();
+        }
 #endif
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsValide()
-            => _data.IsValide();
+        public bool IsValide
+        { 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.IsValide;
+        }
 
         public int Capacity
         {
@@ -48,7 +57,8 @@ namespace AnotherECS.Collections
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (int)_count;
+            get => _count;
+            internal set => _count = value;
         }
 
         public bool IsReadOnly
@@ -82,7 +92,7 @@ namespace AnotherECS.Collections
         public void Set(int index, ref T item)
         {
 #if !ANOTHERECS_RELEASE
-            FListHelper.ThrowIfOutOfRange(index, _count);
+            FArrayHelper.ThrowIfOutOfRange(index, _count);
 #endif
             _data.Set(index, ref item);
         }
@@ -110,10 +120,10 @@ namespace AnotherECS.Collections
         public void Insert(int index, ref T item)
         {
 #if !ANOTHERECS_RELEASE
-            FListHelper.ThrowIfOutOfRange(index, Capacity);
-            if (!_data.IsValide())
+            FArrayHelper.ThrowIfOutOfRange(index, Capacity);
+            if (!_data.IsValide)
             {
-                throw new Exceptions.DArrayInvalideException(_data.GetType());
+                throw new DArrayInvalideException(_data.GetType());
             }
 #endif
             if (index == _count - 1)
@@ -130,7 +140,7 @@ namespace AnotherECS.Collections
                 _data.Bind.MoveRigth(_data.Id, index, _count);
                 _data.SetRaw(index, ref item);
 #if !ANOTHERECS_RELEASE
-                _data.ApplyVersionRaw();
+                _data.ApplyComponentVersion();
 #endif
                 ++_count;
             }
@@ -139,10 +149,10 @@ namespace AnotherECS.Collections
         public void RemoveAt(int index)
         {
 #if !ANOTHERECS_RELEASE
-            FListHelper.ThrowIfOutOfRange(index, Capacity);
-            if (!_data.IsValide())
+            FArrayHelper.ThrowIfOutOfRange(index, Capacity);
+            if (!_data.IsValide)
             {
-                throw new Exceptions.DArrayInvalideException(_data.GetType());
+                throw new DArrayInvalideException(_data.GetType());
             }
 #endif
             if (index == _count - 1)
@@ -154,7 +164,7 @@ namespace AnotherECS.Collections
                 _data.Bind.MoveLeft(_data.Id, index, _count);
                 _data.SetRaw(index + _count - 1, default);
 #if !ANOTHERECS_RELEASE
-                _data.ApplyVersionRaw();
+                _data.ApplyComponentVersion();
 #endif
             }
         }
@@ -216,23 +226,67 @@ namespace AnotherECS.Collections
             _data.Resize(capacity);
         }
 
+        public void ExtendToCapacity()
+        {
+            while (_count != Capacity)
+            {
+                _data.Set(_count++, default);
+            }
+        }
+
         public IEnumerator<T> GetEnumerator()
           => new Enumerator(ref this);
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
             _data.Pack(ref writer);
             writer.Write(_count);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
             _data.Unpack(ref reader);
             _count = reader.ReadInt32();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe Span<T> AsSpan()
+            => _data.AsSpan()[.._count];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe T* ReadUnsafe()
+            => _data.ReadUnsafe();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetRaw(int index, ref T value)
+        {
+            _data.SetRaw(index, ref value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetRaw(int index, T value)
+        {
+            _data.SetRaw(index, ref value);
+        }
+
+        object ICList.Get(int index)
+            => this[index];
+
+        void ICList.Set(int index, object value)
+        {
+            this[index] = (T)value;
+        }
+
+        void ICList.Add(object value)
+        {
+            Add((T)value);
+        }
+
 
         public struct Enumerator : IEnumerator<T>
         {
@@ -240,7 +294,7 @@ namespace AnotherECS.Collections
             private int _current;
             private readonly int _count;
 #if !ANOTHERECS_RELEASE
-            private readonly uint _version;
+            private readonly int _version;
 #endif
             public Enumerator(ref DList<T> data)
             {
@@ -248,7 +302,7 @@ namespace AnotherECS.Collections
                 _count = _data.Count;
                 _current = -1;
 #if !ANOTHERECS_RELEASE
-                _version = _data._data._version;
+                _version = _data._data.GetComponentVersion();
 #endif
             }
 
@@ -258,9 +312,9 @@ namespace AnotherECS.Collections
                 get
                 {
 #if !ANOTHERECS_RELEASE
-                    if (_version != _data._data._version)
+                    if (_version != _data._data.GetComponentVersion())
                     {
-                        throw new InvalidOperationException("Collection was modified.");
+                        throw new CollectionWasModifiedException();
                     }
 #endif
                     return _data[_current];
@@ -284,9 +338,4 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-
-
 }
-
-
-

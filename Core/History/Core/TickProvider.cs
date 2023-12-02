@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core
 {
-    public struct TickProvider : ISerialize
+    internal struct TickProvider : ISerialize
     {
         public uint tick;
 

@@ -16,7 +16,7 @@ namespace AnotherECS.Gen.Project
         public ref readonly FastAccess Fast => ref _fast;
 
 
-        protected override void BindingCodeGenerationStage(in WorldConfig config)
+        protected override void BindingCodeGenerationStage(in StateConfig config)
         {
             ComponentInstaller.Install();
             SystemInstaller.Install();

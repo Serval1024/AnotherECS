@@ -62,6 +62,6 @@ namespace AnotherECS.Generator
                 );
 
         private string GetPathByOptions(GeneratorContext context, TypeOptions typeOptions)
-            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsUtils.GetCallerFlags(typeOptions) + SaveFilePostfixName);
+            => Path.Combine(context.FindRootGenCommonDirectory(), TypeOptionsGeneratorUtils.GetCallerFlags(typeOptions) + SaveFilePostfixName);
     }
 }

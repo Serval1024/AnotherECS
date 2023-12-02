@@ -48,6 +48,12 @@ namespace AnotherECS.Gen.Common
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(<#IF MULTI#>EntityId id, <#END#>TComponent data)
+        {
+            _caller.Add(<#IF MULTI#>id, <#END#>ref data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TComponent Add(<#IF MULTI#>EntityId id<#END#>)
             => ref _caller.Add(<#IF MULTI#>id<#END#>);
             
