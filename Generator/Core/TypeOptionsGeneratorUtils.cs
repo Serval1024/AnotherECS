@@ -59,10 +59,6 @@ namespace AnotherECS.Generator
             {
                 result.Append("Empty");
             }
-            if (option.isUseISerialize)
-            {
-                result.Append("Ser");
-            }
             if (option.isInject)
             {
                 result.Append("Inj");
@@ -96,11 +92,6 @@ namespace AnotherECS.Generator
             {
                 result.Append(", ");
                 result.Append(nameof(ISingle));
-            }
-            if (option.isUseISerialize)
-            {
-                result.Append(", ");
-                result.Append(nameof(ISerialize));
             }
             
             return result.ToString();
