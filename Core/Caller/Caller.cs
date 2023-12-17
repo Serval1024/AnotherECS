@@ -224,8 +224,7 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                TDenseStorage dense = default;
-                _sparseStorage.ForEach<ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, dense.GetIndex(), GetCount());
+                _sparseStorage.ForEach<ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -234,8 +233,7 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                TDenseStorage dense = default;
-                _sparseStorage.ForEach<DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, dense.GetIndex(), GetCount());
+                _sparseStorage.ForEach<DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 

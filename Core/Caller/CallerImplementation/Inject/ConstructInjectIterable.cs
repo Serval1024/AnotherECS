@@ -11,8 +11,8 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, ref TDense component)
         {
-            InjectFeature<TAllocator, TSparse, TDense, TDenseIndex> injectFeature = default;
-            injectFeature.Construct(ref layout, ref depencies, ref component);
+            default(InjectFeature<TAllocator, TSparse, TDense, TDenseIndex>)
+                .Construct(ref layout, ref depencies, ref component);
         }
     }
 }

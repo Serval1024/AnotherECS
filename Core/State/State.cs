@@ -105,7 +105,7 @@ namespace AnotherECS.Core
 
             _layouts.Pack(ref writer);
 
-            for(uint i = 1; i < _callers.Length; ++i)
+            for (uint i = 1; i < _callers.Length; ++i)
             {
                 _callers[i].Pack(ref writer);
             }
@@ -134,6 +134,17 @@ namespace AnotherECS.Core
             {
                 _callers[i].Unpack(ref reader);
             }
+
+            for (uint i = 1; i < _callers.Length; ++i)
+            {
+                if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
+                {
+                    injectCaller.CallConstruct();
+                }
+            }
+
+            RebindMemoryHandles();
+            CallConstruct();
         }
 
         private void CommonInit()
@@ -210,7 +221,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeStorages(uint capacity)
         {
-            for(int i = 0; i < _resizableCallers.Length; ++i)
+            for (int i = 0; i < _resizableCallers.Length; ++i)
             {
                 _layouts.Dirty(_resizableCallers[i].callerIndex);
                 _resizableCallers[i].caller.Resize(capacity);
@@ -235,7 +246,7 @@ namespace AnotherECS.Core
             var archetypeId = _depencies->entities.ReadArchetypeId(id);
             var count = _depencies->archetype.GetItemIds(archetypeId, componentIds, COMPONENT_ENTITY_MAX);
 
-            for(int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 GetCaller(componentIds[i]).RemoveRaw(id);
             }
@@ -586,7 +597,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ref readonly IdCollection<HAllocator> GetEntitiesByArchetype(uint archetypeId)
-        { 
+        {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
@@ -614,13 +625,40 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void GetEvent(uint tick, List<ITickEvent> result)
             => _events.Find(tick, result);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint GetNextTickForEvent()
             => _events.NextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RebindMemoryHandles()
+        internal void RevertTo(uint tick)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            if (_depencies->hAllocator.RevertTo(tick))
+            {
+                RebindMemoryHandles();
+                CallConstruct();
+            }
+
+            Tick = tick;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallConstruct()
+        {
+            for (uint i = 1; i < _callers.Length; ++i)
+            {
+                if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
+                {
+                    injectCaller.CallConstruct();
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RebindMemoryHandles()
         {
             var memoryRebinder = MemoryRebinderUtils.Create(&_depencies->bAllocator, &_depencies->hAllocator);
             _depencies->currentMemoryRebinder = memoryRebinder;
@@ -635,20 +673,6 @@ namespace AnotherECS.Core
 
             _depencies->currentMemoryRebinder = default;
             memoryRebinder.Dispose();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RevertTo(uint tick)
-        {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-#endif
-            if (_depencies->hAllocator.RevertTo(tick))
-            {
-                RebindMemoryHandles();
-            }
-
-            Tick = tick;
         }
 
         private NArray<BAllocator, ushort> GetTemporaryIndexes()
