@@ -35,7 +35,6 @@ namespace AnotherECS.Generator
         public bool isUnmanaged;
         public bool isBlittable;
 
-        public bool isUseISerialize;
         public bool isUseRecycle;
         public bool isBindToEntity;
         public bool isDispose;
@@ -73,7 +72,6 @@ namespace AnotherECS.Generator
             isUnmanaged = ComponentUtils.IsUnmanaged(type);
             isBlittable = ComponentUtils.IsBlittable(type);
 
-            isUseISerialize = !isEmpty && (ComponentUtils.IsUseISerialize(type) || !isBlittable);
             isUseRecycle = !isMarker && !isEmpty && !isSingle;
             isBindToEntity = !isSingle;
             isConfig = ComponentUtils.IsConfig(type);

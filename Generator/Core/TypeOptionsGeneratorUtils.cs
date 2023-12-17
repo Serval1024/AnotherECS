@@ -327,22 +327,8 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isUseISerialize || !option.isBlittable)
-            {
-                result.Append($"{typeof(SSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                if (option.isBlittable)
-                {
-                    result.Append($"{typeof(BSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-                }
-                else
-                {
-                    result.Append($"{typeof(CSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-                }
-            }
-
+            result.Append($"{typeof(BSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+            
             result.Append(",");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
