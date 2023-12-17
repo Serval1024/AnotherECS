@@ -9,11 +9,11 @@ namespace AnotherECS.Core.Caller
             => ++number;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint ConverToDI(uint number)
+        public uint ToNumber(uint number)
             => number;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint ConverToNumber(uint number)
+        public uint ToGeneric(uint number)
             => number;
     }
 }

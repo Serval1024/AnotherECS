@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using AnotherECS.Converter;
 using AnotherECS.Core;
@@ -27,9 +28,9 @@ namespace AnotherECS.Generator
 
                     { "CALLER:DECLARE", () => GetCallerDeclaration(callers[variables.GetIndex(0)].typeOption)},
 
+                    { "LAYOUT:TAllocator", () => callers[variables.GetIndex(0)].declaration.TAllocator },
                     { "LAYOUT:TSparse", () => callers[variables.GetIndex(0)].declaration.TSparse },
                     { "LAYOUT:TDenseIndex", () => callers[variables.GetIndex(0)].declaration.TDenseIndex },
-                    { "LAYOUT:TTickData", () => callers[variables.GetIndex(0)].declaration.TTickData },
 
                     { "INJECT", () => callers[variables.GetIndex(0)].typeOption.isInject },
 
@@ -66,6 +67,13 @@ namespace AnotherECS.Generator
                     { "INJECT:FIELD:COUNT", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers.Length.ToString() },
                     { "INJECT:FIELD:NAME", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].fieldName },
                     { "INJECT:FIELD:ARGS", () => GetInjectArguments(new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].argumentTypes) },
+
+                    { "REBINDMEMORY", () => new TypeOptions(components[variables.GetIndex(0)]).isRebindMemory },
+                    { "REBINDMEMORY:SELF", () => new TypeOptions(components[variables.GetIndex(0)]).isRebindMemoryComponent },
+
+                    { "REBINDMEMORY:FIELD:COUNT", () => new TypeOptions(components[variables.GetIndex(0)]).rebindMemoryMembers.Length.ToString() },
+                    { "REBINDMEMORY:FIELD:NAME", () => new TypeOptions(components[variables.GetIndex(0)]).rebindMemoryMembers[variables.GetIndex(1)].fieldName },
+
                 };
             return variables;
         }
@@ -171,17 +179,20 @@ namespace AnotherECS.Generator
         private static string GetInjectArguments(Type type)
            => GetInjectArguments(
                ReflectionUtils.ExtractGenericFromInterface<IInject>(type)
-               .Select(p => p.Name)
                .ToArray()
                );
 
-        private static string GetInjectArguments(string[] types)
+        private static string GetInjectArguments(Type[] types)
         {
             var result = new StringBuilder();
 
+            var injectContainer = typeof(InjectContainer);
+            var icMembers =  injectContainer.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
             for (int i = 0; i < types.Length; ++i)
             {
-                result.Append($"injectContainer.{types[i]}");
+                var icMember = icMembers.First(p => p.GetMemberType() == types[i]);
+                result.Append($"injectContainer.{icMember.GetMemberName()}");
                 if (i < types.Length - 1)
                 {
                     result.Append(",");

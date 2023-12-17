@@ -1,5 +1,5 @@
-#if !ANOTHERECS_RELEASE
 using System;
+using System.Runtime.CompilerServices;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using EntityId = System.UInt32;
@@ -73,7 +73,7 @@ namespace AnotherECS.Core
         }
 
         public static void ThrowIfDontExists<T>(State state, ICaller<T> caller)
-            where T : unmanaged, IShared
+            where T : unmanaged, ISingle
         {
             ThrowIfDisposed(state);
             ThrowIfNotSingleAccess(state, caller);
@@ -85,7 +85,7 @@ namespace AnotherECS.Core
         }
 
         public static void ThrowIfExists<T>(State state, ICaller<T> caller)
-            where T : unmanaged, IShared
+            where T : unmanaged, ISingle
         {
             ThrowIfDisposed(state);
             ThrowIfNotSingleAccess(state, caller);
@@ -103,71 +103,57 @@ namespace AnotherECS.Core
 
             if (caller.IsSingle)
             {
-                throw new Exceptions.ComponentNotSharedException(typeof(T));
+                throw new Exceptions.ComponentNotSingleException(typeof(T));
             }
         }
 
-        public static void ThrowIfNArrayBroken(NArray narray, ulong index, uint segmentSize)
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, int index)
+           where TNArray : struct, INArray
+        {
+            ThrowIfNArrayBroken(narray, (ulong)index);
+        }
+
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, uint index, uint count)
+            where TNArray : struct, INArray
+        {
+            ThrowIfNArrayBroken(narray, (ulong)index, (ulong)count);
+        }
+
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, int index, uint count)
+            where TNArray : struct, INArray
+        {
+            ThrowIfNArrayBroken(narray, (ulong)index, (ulong)count);
+        }
+
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, uint index)
+            where TNArray : struct, INArray
+        {
+            ThrowIfNArrayBroken(narray, (ulong)index);
+        }
+
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, ulong index)
+            where TNArray : struct, INArray
         {
             ThrowIfNArrayBroken(narray);
-            if (index * segmentSize >= narray.ByteLength)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
+            ThrowIfNArrayBroken(narray, index, narray.ByteLength / narray.ElementSize);
         }
 
-        public static void ThrowIfNArrayBroken(NArray narray, uint index, uint segmentSize)
-        {
-            ThrowIfNArrayBroken(narray);
-            if (index * segmentSize >= narray.ByteLength)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-        }
-
-        public static void ThrowIfNArrayBroken(NArray narray, int index, uint segmentSize)
-        {
-            ThrowIfNArrayBroken(narray);
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-            ThrowIfNArrayBroken(narray, (uint)index, segmentSize);
-        }
-
-        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, ulong index)
-        where T : unmanaged
-        {
-            ThrowIfNArrayBroken(narray);
-            if (index < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-            ThrowIfNArrayBroken(narray, (uint)index);
-        }
-
-        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, int index)
-           where T : unmanaged
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, ulong index, ulong count)
+            where TNArray : struct, INArray
         {
             ThrowIfNArrayBroken(narray);
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
-            ThrowIfNArrayBroken(narray, (uint)index);
-        }
-
-        public static void ThrowIfNArrayBroken<T>(NArray<T> narray, uint index)
-            where T : unmanaged
-        {
-            ThrowIfNArrayBroken(narray);
-            if (index >= narray.Length)
+            if (index >= count)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
         }
 
-        public static void ThrowIfNArrayBroken(NArray narray)
+        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray)
+            where TNArray : struct, INArray
         {
             if (!narray.IsValide)
             {
@@ -175,23 +161,22 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfNArrayBroken<T>(NArray<T> narray)
-            where T : unmanaged
-        {
-            if (!narray.IsValide)
-            {
-                throw new InvalidOperationException(nameof(narray.IsValide));
-            }
-        }
-
-        public static void ThrowIfNContainerBroken<T>(NContainer<T> container)
-            where T : unmanaged
+        public static void ThrowIfNContainerBroken<TNative>(TNative container)
+            where TNative : struct, INative
         {
             if (!container.IsValide)
             {
                 throw new InvalidOperationException(nameof(container.IsValide));
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowIfChange(bool isChange)
+        {
+            if (isChange)
+            {
+                throw new Exceptions.CollectionWasModifiedException();
+            }
+        }
     }
 }
-#endif

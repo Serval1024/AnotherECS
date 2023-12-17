@@ -1,12 +1,14 @@
-﻿namespace AnotherECS.Core
+﻿using AnotherECS.Core.Collection;
+
+namespace AnotherECS.Core
 {
     public struct InjectContainer
     {
-        public DArrayCaller DArrayCaller { get; private set; }
+        public NPtr<HAllocator> HAllocator { get; private set; }
 
-        public InjectContainer(DArrayCaller dArrayCaller)
+        public InjectContainer(NPtr<HAllocator> hAllocator)
         {
-            DArrayCaller = dArrayCaller;
+            HAllocator = hAllocator;
         }
     }
 }

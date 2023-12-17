@@ -4,6 +4,7 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct ByTickHistoryFeature<TSparse, TDense, TDenseIndex> :
         ILayoutAllocator<TSparse, TDense, TDenseIndex, TData<NArray<TDense>>>,
         ISparseResize<TSparse, TDense, TDenseIndex, TData<NArray<TDense>>>,
@@ -113,5 +114,5 @@ namespace AnotherECS.Core.Caller
                 HistoryActions.RevertToValueBuffer(tick, ref layout.storage.dense, ref layout.history.denseBuffer, ref layout.history.denseIndex);
             }
         }
-    }
+    }*/
 }

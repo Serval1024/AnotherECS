@@ -2,17 +2,17 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal struct EmptyFeature<TSparse, TDense, TDenseIndex, TTickData> :
-        ILayoutAllocator<TSparse, TDense, TDenseIndex, TTickData>,
-        ISparseResize<TSparse, TDense, TDenseIndex, TTickData>,
-        IDenseResize<TSparse, TDense, TDenseIndex, TTickData>,
-        IDenseProvider<TSparse, TDense, TDenseIndex, TTickData>,
+    internal unsafe struct EmptyFeature<TAllocator, TSparse, TDense, TDenseIndex> :
+        ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>,
+        ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>,
+        IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
+        IDenseProvider<TAllocator, TSparse, TDense, TDenseIndex>,
         IStartIndexProvider
 
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
-        where TTickData : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<JSparseBoolConst>()
@@ -20,10 +20,10 @@ namespace AnotherECS.Core.Caller
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDepencies depencies)
+        public void Allocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDepencies depencies)
         {
             ref var storage = ref layout.storage;
-            storage.dense.Allocate(1);
+            storage.dense.Allocate(allocator, 1);
             storage.denseIndex = GetIndex();
         }
 
@@ -32,26 +32,26 @@ namespace AnotherECS.Core.Caller
             => 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity)
+        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
             where JSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity) { }
+        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense GetDense(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, TDenseIndex index)
+        public ref TDense GetDense(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
             => ref layout.storage.dense.GetRef(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe TDense* GetDensePtr(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, TDenseIndex index)
+        public unsafe TDense* GetDensePtr(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
             => layout.storage.dense.GetPtr(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetCapacity(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+        public uint GetCapacity(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             => 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetAllocated(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+        public uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             => 0;
     }
 }

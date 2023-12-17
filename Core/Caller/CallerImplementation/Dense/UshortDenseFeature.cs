@@ -2,16 +2,16 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal struct UshortDenseFeature<TSparse, TDense, TTickData> :
-        ILayoutAllocator<TSparse, TDense, ushort, TTickData>,
-        ISparseResize<TSparse, TDense, ushort, TTickData>,
-        IDenseResize<TSparse, TDense, ushort, TTickData>,
+    internal unsafe struct UshortDenseFeature<TAllocator, TSparse, TDense> :
+        ILayoutAllocator<TAllocator, TSparse, TDense, ushort>,
+        ISparseResize<TAllocator, TSparse, TDense, ushort>,
+        IDenseResize<TAllocator, TSparse, TDense, ushort>,
         IStartIndexProvider,
-        IDenseProvider<TSparse, TDense, ushort, TTickData>
+        IDenseProvider<TAllocator, TSparse, TDense, ushort>
 
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
-        where TDense : unmanaged
-        where TTickData : unmanaged
+        where TDense : unmanaged        
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<JSparseBoolConst>()
@@ -19,15 +19,15 @@ namespace AnotherECS.Core.Caller
             => default(JSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout, ref GlobalDepencies depencies)
+        public void Allocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, TAllocator* allocator, ref GlobalDepencies depencies)
         {
             ref var storage = ref layout.storage;
-            storage.dense.Allocate(depencies.config.general.componentCapacity);
+            storage.dense.Allocate(allocator, depencies.config.general.componentCapacity);
             storage.denseIndex = GetIndex();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout, uint capacity)
+        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint capacity)
             where JSparseBoolConst : struct, IBoolConst
         {
             JSparseBoolConst sparseBoolConst = default;
@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout, uint capacity)
+        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint capacity)
         {
             layout.storage.dense.Resize(capacity);
         }
@@ -48,19 +48,19 @@ namespace AnotherECS.Core.Caller
             => 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense GetDense(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout, ushort index)
+        public ref TDense GetDense(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, ushort index)
             => ref layout.storage.dense.GetRef(index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe TDense* GetDensePtr(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout, ushort index)
+        public unsafe TDense* GetDensePtr(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, ushort index)
             => layout.storage.dense.GetPtr(index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetCapacity(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout)
+        public uint GetCapacity(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout)
             => layout.storage.dense.Length;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetAllocated(ref UnmanagedLayout<TSparse, TDense, ushort, TTickData> layout)
+        public uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout)
             => layout.storage.denseIndex;
     }
 }

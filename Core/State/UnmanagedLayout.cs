@@ -5,129 +5,42 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    [StructLayout(LayoutKind.Sequential, Size = 208)]   //208
-    public unsafe struct UnmanagedLayout     // Union UnmanagedLayout and UnmanagedLayout<,,,>
+    [StructLayout(LayoutKind.Sequential, Size = 192)]
+    public unsafe struct UnmanagedLayout
     {
-        public ComponetStorage storage;
-        public HistoryStorage history;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
-        {
-            storage.Clear();
-            history.Clear();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            storage.Dispose();
-            history.Dispose();
-        }
+        public static uint GetSize()
+            => (uint)sizeof(UnmanagedLayout);
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ComponetStorage : IDisposable
-    {
-        public NArray sparse;
-        public NArray dense;
-        public NArray<uint> version;
-        public NArray<uint> recycle;
-
-        public uint denseIndex;
-        public uint recycleIndex;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
-        {
-            sparse.Clear();
-            dense.Clear();
-            version.Clear();
-            recycle.Clear();
-
-            denseIndex = 0;
-            recycleIndex = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            sparse.Dispose();
-            dense.Dispose();
-            version.Dispose();
-            recycle.Dispose();
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct HistoryStorage : IDisposable
-    {
-        public NArray<TData<uint>> recycleCountBuffer;
-        public NArray<TOData<uint>> recycleBuffer;
-        public NArray<TData<uint>> countBuffer;
-        public NArray denseBuffer;
-        public NArray sparseBuffer;
-        public NArray<uint> versionIndexer;
-
-        public uint recycleCountIndex;
-        public uint recycleIndex;
-        public uint countIndex;
-        public uint denseIndex;
-        public uint sparseIndex;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
-        {
-            recycleCountBuffer.Clear();
-            recycleBuffer.Clear();
-            countBuffer.Clear();
-            denseBuffer.Clear();
-            sparseBuffer.Clear();
-            versionIndexer.Clear();
-
-            recycleCountIndex = 0;
-            recycleIndex = 0;
-            countIndex = 0;
-            denseIndex = 0;
-            sparseIndex = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            recycleCountBuffer.Dispose();
-            recycleBuffer.Dispose();
-            countBuffer.Dispose();
-            denseBuffer.Dispose();
-            sparseBuffer.Dispose();
-            versionIndexer.Dispose();
-        }
-    }
-
-
-    [StructLayout(LayoutKind.Sequential, Size = 208)]
-    public unsafe struct UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>     // Union ComponetLayout and ComponetLayout<TComponent>
+    [StructLayout(LayoutKind.Sequential, Size = 192)]
+    public unsafe struct UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> : IRebindMemoryHandle
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
-        where TTickData : unmanaged
     {
-        public ComponetStorage<TSparse, TDense, TDenseIndex> storage;
-        public HistoryStorage<TSparse, TDenseIndex, TTickData> history;
+        public ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage;
         public ComponentFunction<TDense> componentFunction;
+
+        public static uint GetSize()
+            => (uint)sizeof(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
             storage.Clear();
-            history.Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             storage.Dispose();
-            history.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        {
+            MemoryRebinderCaller.Rebind(ref storage, ref rebinder);
         }
     }
 
@@ -137,18 +50,20 @@ namespace AnotherECS.Core
     {
         public delegate*<ref InjectContainer, ref TDense, void> construct;
         public delegate*<ref InjectContainer, ref TDense, void> deconstruct;
+        public delegate*<ref MemoryRebinderContext, ref TDense, void> memoryRebind;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ComponetStorage<TSparse, TDense, TDenseIndex> : IDisposable
+    public unsafe struct ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> : IDisposable, IRebindMemoryHandle
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        public NArray<TSparse> sparse;
-        public NArray<TDense> dense;
-        public NArray<uint> version;
-        public NArray<TDenseIndex> recycle;
+        public NArray<TAllocator, TSparse> sparse;
+        public NArray<TAllocator, TDense> dense;
+        public NArray<TAllocator, uint> version;
+        public NArray<TAllocator, TDenseIndex> recycle;
 
         public uint denseIndex;
         public uint recycleIndex;
@@ -173,71 +88,26 @@ namespace AnotherECS.Core
             version.Dispose();
             recycle.Dispose();
         }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct HistoryStorage<TSparse, TDenseIndex, WTickDataDense> : IDisposable
-        where TSparse: unmanaged
-        where TDenseIndex : unmanaged
-        where WTickDataDense : unmanaged
-    {
-        public NArray<TData<uint>> recycleCountBuffer;
-        public NArray<TOData<TDenseIndex>> recycleBuffer;
-        public NArray<TData<uint>> countBuffer;
-        public NArray<WTickDataDense> denseBuffer;
-        public NArray<TOData<TSparse>> sparseBuffer;
-        public NArray<uint> versionIndexer;
-
-        public uint recycleCountIndex;
-        public uint recycleIndex;
-        public uint countIndex;
-        public uint denseIndex;
-        public uint sparseIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
+        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (recycleCountBuffer.IsValide)
+            if (sparse.IsValide)
             {
-                recycleCountBuffer.Clear();
+                MemoryRebinderCaller.Rebind(ref sparse, ref rebinder);
             }
-            if (recycleBuffer.IsValide)
+            if (dense.IsValide)
             {
-                recycleBuffer.Clear();
+                MemoryRebinderCaller.Rebind(ref dense, ref rebinder);
             }
-            if (countBuffer.IsValide)
+            if (version.IsValide)
             {
-                countBuffer.Clear();
+                MemoryRebinderCaller.Rebind(ref version, ref rebinder);
             }
-            if (denseBuffer.IsValide)
+            if (recycle.IsValide)
             {
-                denseBuffer.Clear();
+                MemoryRebinderCaller.Rebind(ref recycle, ref rebinder);
             }
-            if (sparseBuffer.IsValide)
-            {
-                sparseBuffer.Clear();
-            }
-            if (versionIndexer.IsValide)
-            {
-                versionIndexer.Clear();
-            }
-
-            recycleCountIndex = 0;
-            recycleIndex = 0;
-            countIndex = 0;
-            denseIndex = 0;
-            sparseIndex = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            recycleCountBuffer.Dispose();
-            recycleBuffer.Dispose();
-            countBuffer.Dispose();
-            denseBuffer.Dispose();
-            sparseBuffer.Dispose();
-            versionIndexer.Dispose();
         }
     }
 }

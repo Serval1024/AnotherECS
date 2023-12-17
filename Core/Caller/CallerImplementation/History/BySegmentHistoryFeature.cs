@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct BySegmentHistoryFeature<TSparse, TDense, TDenseIndex, TSegment> :
         ILayoutAllocator<TSparse, TDense, TDenseIndex, TOData<TSegment>>,
         ISparseResize<TSparse, TDense, TDenseIndex, TOData<TSegment>>,
@@ -106,5 +107,5 @@ namespace AnotherECS.Core.Caller
                 HistoryActions.RevertToValueSegmentBuffer(tick, ref layout.storage.dense, ref layout.history.denseBuffer, ref layout.history.denseIndex);
             }
         }
-    }
+    }*/
 }

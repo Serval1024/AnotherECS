@@ -93,6 +93,12 @@ namespace AnotherECS.Unsafe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void MemSet(void* destination, byte value, long size)
+        {
+            UnsafeUtility.MemSet(destination, value, size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MemCopy(void* destination, void* source, long size)
         {
             UnsafeUtility.MemCpy(destination, source, size);

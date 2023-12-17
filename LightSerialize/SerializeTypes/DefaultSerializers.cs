@@ -169,10 +169,10 @@ namespace AnotherECS.Serializer
         public Type Type => typeof(string);
 
         public void Pack(ref WriterContextSerializer writer, object @value)
-            => writer.WriteUTF8((string)value);
+            => writer.Write((string)value);
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
-            => reader.ReadUTF8();
+            => reader.ReadString();
     }
 
     public struct BooleanSerializer : IElementSerializer

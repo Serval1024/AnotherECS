@@ -1,5 +1,6 @@
 using System;
 using AnotherECS.Core.Collection;
+using Unity.Collections;
 
 namespace AnotherECS.Core
 {
@@ -37,11 +38,13 @@ namespace AnotherECS.Core
             where T : IEquatable<T>, IComparable<T>
             => span.BinarySearch(element) != -1;
 
-        public static NArray<T> ToNArray<T>(this Span<T> span)
+        public static unsafe NArray<TAllocator, T> ToNArray<TAllocator, T>(this Span<T> span, TAllocator* allocator)
+            where TAllocator : unmanaged, IAllocator
             where T : unmanaged
-            => ToNArray(span, (uint)span.Length);
+            => ToNArray(span, allocator, (uint)span.Length);
 
-        public static NArray<T> ToNArray<T>(this Span<T> span, uint count)
+        public static unsafe NArray<TAllocator, T> ToNArray<TAllocator, T>(this Span<T> span, TAllocator* allocator, uint count)
+            where TAllocator : unmanaged, IAllocator
             where T : unmanaged
         {
             if (count > span.Length)
@@ -49,7 +52,7 @@ namespace AnotherECS.Core
                 throw new ArgumentOutOfRangeException(nameof(count));
             }
 
-            var result = new NArray<T>(count);
+            var result = new NArray<TAllocator, T>(allocator, count);
             for(int i = 0; i < count; ++i)
             {
                 result.GetRef(i) = span[i];

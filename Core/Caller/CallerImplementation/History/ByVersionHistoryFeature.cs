@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct ByVersionHistoryFeature<TSparse, TDense, TDenseIndex> :
         ILayoutAllocator<TSparse, TDense, TDenseIndex, TIOData<TDense>>,
         ISparseResize<TSparse, TDense, TDenseIndex, TIOData<TDense>>,
@@ -120,5 +121,5 @@ namespace AnotherECS.Core.Caller
                 HistoryActions.RevertToValueIndexerBuffer(tick, ref layout.storage.dense, ref layout.history.denseBuffer, ref layout.history.versionIndexer, ref layout.history.denseIndex);
             }
         }
-    }
+    }*/
 }

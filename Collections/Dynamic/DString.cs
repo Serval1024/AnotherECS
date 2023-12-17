@@ -4,20 +4,21 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using AnotherECS.Core;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<DArrayCaller>, ICString<char>, IEnumerable<char>, ISerialize
+    public struct DString : IInject<NPtr<HAllocator>>, ICString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
     {
         private DList<char> _data;
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<DArrayCaller>.Construct(DArrayCaller bind)
+        void IInject<NPtr<HAllocator>>.Construct(NPtr<HAllocator> allocator)
         {
-            InjectUtils.Contruct(ref _data, bind);
+            InjectUtils.Contruct(ref _data, allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -25,11 +26,17 @@ namespace AnotherECS.Collections
         {
             InjectUtils.Decontruct(ref _data);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        {
+            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+        }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(DArrayCaller bind)
+        public void Construct(NPtr<HAllocator> allocator)
         {
-            _data.Construct(bind);
+            _data.Construct(allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,15 +44,21 @@ namespace AnotherECS.Collections
         {
             _data.Deconstruct();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        {
+            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+        }
 #endif
 
-        public int Capacity
+        public uint Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data.Capacity;
         }
 
-        public int Length
+        public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data.Count;
@@ -59,7 +72,7 @@ namespace AnotherECS.Collections
         public static bool operator !=(DString a, DString b)
             => !a.Equals(ref b);
 
-        public char this[int index]
+        public char this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data[index];
@@ -71,43 +84,47 @@ namespace AnotherECS.Collections
         {
             if (str.Length > Capacity)
             {
-                _data.Resize(str.Length);
+                _data.Resize((uint)str.Length);
             }
-            var dataPtr = _data.ReadUnsafe();
+            var dataPtr = _data.GetPtr();
             for (int i = 0; i < str.Length; ++i)
             {
                 dataPtr[i] = str[i];
             }
-            _data.Count = str.Length;
+            _data.Count = (uint)str.Length;
         }
 
         public unsafe void Concat(string str)
         {
-            var max = Length + str.Length;
+            var offset = (int)Length;
+            var max = offset + str.Length;
             if (max > Capacity)
             {
-                _data.Resize(max);
+                _data.Resize((uint)max);
             }
-            var dataPtr = _data.ReadUnsafe();
-            for (int i = Length; i < max; ++i)
+            var dataPtr = _data.GetPtr();
+            for (int i = (int)Length; i < max; ++i)
             {
-                dataPtr[i] = str[i];
+                dataPtr[i + offset] = str[i];
             }
-            _data.Count = max;
+            _data.Count = (uint)max;
         }
 
         public unsafe void Concat(DString str)
         {
+            var offset = Length;
             var max = Length + str.Length;
             if (max > Capacity)
             {
                 _data.Resize(max);
             }
-            var dataPtr = _data.ReadUnsafe();
-            var strPtr = str._data.ReadUnsafe();
-            for (int i = Length; i < max; ++i)
+
+            var dataPtr = _data.GetPtr();
+            var strPtr = str._data.ReadPtr();
+
+            for (uint i = Length; i < max; ++i)
             {
-                dataPtr[i] = str[i];
+                dataPtr[i + offset] = strPtr[i];
             }
             _data.Count = max;
         }
@@ -118,8 +135,8 @@ namespace AnotherECS.Collections
             if (Capacity <= 16)
             {
                 var text = string.Empty;
-                var dataPtr = _data.ReadUnsafe();
-                for (int i = 0; i < Length; ++i)
+                var dataPtr = _data.ReadPtr();
+                for (uint i = 0; i < Length; ++i)
                 {
                     text += dataPtr[i];
                 }
@@ -128,8 +145,8 @@ namespace AnotherECS.Collections
             else
             {
                 var stringBuilder = new StringBuilder();
-                var dataPtr = _data.ReadUnsafe();
-                for (int i = 0; i < Length; ++i)
+                var dataPtr = _data.ReadPtr();
+                for (uint i = 0; i < Length; ++i)
                 {
                     stringBuilder.Append(dataPtr[i]);
                 }
@@ -154,9 +171,9 @@ namespace AnotherECS.Collections
         {
             if (Length == other.Length)
             {
-                var dataPtr = _data.ReadUnsafe();
-                var otherDataPtr = other._data.ReadUnsafe();
-                for (int i = 0; i < Length; ++i)
+                var dataPtr = _data.ReadPtr();
+                var otherDataPtr = other._data.ReadPtr();
+                for (uint i = 0; i < Length; ++i)
                 {
                     if (dataPtr[i] != otherDataPtr[i])
                     {
@@ -172,7 +189,7 @@ namespace AnotherECS.Collections
         {
             HashCode hash = default;
             hash.Add(Length);
-            var dataPtr = _data.ReadUnsafe();
+            var dataPtr = _data.ReadPtr();
             for (int i = 0; i < Length; ++i)
             {
                 hash.Add(dataPtr[i]);
@@ -205,15 +222,25 @@ namespace AnotherECS.Collections
         public unsafe Span<char> AsSpan()
            => _data.AsSpan();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void EnterCheckChanges()
+         => _data.EnterCheckChanges();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool ExitCheckChanges()
+            => _data.ExitCheckChanges();
+
+
         public struct Enumerator : IEnumerator<char>
         {
             private readonly DString _data;
-            private int _current;
+            private uint _current;
 
             public Enumerator(ref DString data)
             {
                 _data = data;
-                _current = -1;
+                _current = uint.MaxValue;
+                _data.EnterCheckChanges();
             }
 
             public char Current
@@ -232,11 +259,14 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset()
             {
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
+            public void Dispose() 
+            {
+                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+            }
         }
     }
 }

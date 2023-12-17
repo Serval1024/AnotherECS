@@ -2,6 +2,7 @@
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct CopyableFeature<TDense> : IDenseCopyable<TDense>, IBoolConst
         where TDense : unmanaged, ICopyable<TDense>
     {
@@ -31,5 +32,5 @@ namespace AnotherECS.Core.Caller
         {
             default(TSparseStorage).ForEach<RecycleIterable<TSparse, TDense, TDenseIndex, TTickData>>(ref layout, ref depencies, startIndex, count);
         }
-    }
+    }*/
 }

@@ -23,18 +23,6 @@ namespace AnotherECS.Generator
         private static StringBuilder GetDefaultStorageFlags(in TypeOptions option)
         {
             var result = new StringBuilder();
-            if (option.isHistoryByChange)
-            {
-                result.Append("H");
-            }
-            if (option.isHistoryByTick)
-            {
-                result.Append("T");
-            }
-            if (option.isCopyable)
-            {
-                result.Append("C");
-            }
             if (option.isUnmanaged)
             {
                 result.Append("B");
@@ -94,12 +82,6 @@ namespace AnotherECS.Generator
         public static string GetCallerInterfaces(in TypeOptions option)
         {
             var result = new StringBuilder();
-            if (option.isCopyable)
-            {
-                result.Append(", ");
-                result.Append(nameof(ICopyable));
-                result.Append("<TComponent>");
-            }
             if (option.isAttach)
             {
                 result.Append(", ");
@@ -113,7 +95,7 @@ namespace AnotherECS.Generator
             if (option.isSingle)
             {
                 result.Append(", ");
-                result.Append(nameof(IShared));
+                result.Append(nameof(ISingle));
             }
             if (option.isUseISerialize)
             {
@@ -126,28 +108,51 @@ namespace AnotherECS.Generator
 
         public static StringBuilder GetCallerDeclaration(in TypeOptions option)
         {
-            var (TSparse, TDenseIndex, TTickData, TTickDataDense) = GetLayoutDeclaration(option);
-            var layoutSCDTI = $"{TSparse}, TComponent, {TDenseIndex}, {TTickData}, {TTickDataDense}";
-            var layoutSCDT = $"{TSparse}, TComponent, {TDenseIndex}, {TTickData}";
-            var layoutSCT = $"{TSparse}, TComponent, {TTickData}";
-            var layoutSCD = $"{TSparse}, TComponent, {TDenseIndex}";
-            var layoutCTI = $"TComponent, {TTickData}, {TTickDataDense}";
+            var (TAllocator, TSparse, TDenseIndex) = GetLayoutDeclaration(option);
+            var layoutASCD = $"{TAllocator}, {TSparse}, TComponent, {TDenseIndex}";
+            var layoutASC = $"{TAllocator}, {TSparse}, TComponent";
+            var layoutAC = $"{TAllocator}, TComponent";
             var layoutC = $"TComponent";
             var layoutS = $"{TSparse}";
 
             var extraSpace = new string('\t', 4);
 
             var nothing = nameof(Nothing);
-            var nothingSCDTC = $"{typeof(Nothing<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTI}>";
-            var singleFeature = $"{typeof(SingleFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>";
+            var nothingSCDTC = $"{typeof(Nothing<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
+            var singleFeature = $"{typeof(SingleFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
 
 
             var result = new StringBuilder();
             result.Append("Caller<");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            result.Append(layoutSCDTI);
+            result.Append(layoutASCD);
             result.Append(", ");
+
+            result.Append(Environment.NewLine);
+            result.Append("#if ANOTHERECS_HISTORY_DISABLE");
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            result.Append(nameof(NoHistoryAllocatorProvider));
+            result.Append(",");
+            result.Append(Environment.NewLine);
+            result.Append("#else");
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isHistory)
+            {
+                result.Append(nameof(HistoryAllocatorProvider));
+            }
+            else
+            {
+                result.Append(nameof(NoHistoryAllocatorProvider));
+            }
+            result.Append(",");
+            result.Append(Environment.NewLine);
+            result.Append("#endif");
+
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
 
             if (option.isSingle || (option.isMarker && option.isEmpty))
             {
@@ -163,7 +168,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isInject)
             {
-                result.Append($"{typeof(InjectFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                result.Append($"{typeof(InjectFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -175,15 +180,15 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isUseRecycle)
             {
-                result.Append($"{typeof(RecycleStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTI}>");
+                result.Append($"{typeof(RecycleStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else if (option.isSingle)
             {
-                result.Append($"{typeof(SingleStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTI}>");
+                result.Append($"{typeof(SingleStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
-                result.Append($"{typeof(IncrementStorageFeature<,,,,>).GetNameWithoutGeneric()}<{layoutSCDTI}>");
+                result.Append($"{typeof(IncrementStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             result.Append(",");
 
@@ -215,7 +220,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach)
             {
-                result.Append($"{typeof(AttachFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                result.Append($"{typeof(AttachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -227,7 +232,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isDetach)
             {
-                result.Append($"{typeof(DetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                result.Append($"{typeof(DetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -240,7 +245,7 @@ namespace AnotherECS.Generator
 
             if (option.isSingle)
             {
-                result.Append($"{typeof(SingleSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTI}>");
+                result.Append($"{typeof(SingleSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
             }
             else
             {
@@ -248,16 +253,16 @@ namespace AnotherECS.Generator
                 {
                     if (option.isMarker)
                     {
-                        result.Append($"{typeof(TempSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTI}>");
+                        result.Append($"{typeof(NonSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
                     }
                     else
                     {
-                        result.Append($"{typeof(BoolSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTI}>");
+                        result.Append($"{typeof(BoolSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
                     }
                 }
                 else if (option.sparseMode == TypeOptions.SparseMode.Ushort)
                 {   
-                    result.Append($"{typeof(UshortSparseFeature<,,>).GetNameWithoutGeneric()}<{layoutCTI}>");
+                    result.Append($"{typeof(UshortSparseFeature<,>).GetNameWithoutGeneric()} < {layoutAC}>");
                 }
             }
             
@@ -267,7 +272,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isEmpty)
             {
-                result.Append($"{typeof(EmptyFeature<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                result.Append($"{typeof(EmptyFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -277,7 +282,7 @@ namespace AnotherECS.Generator
                 }
                 else
                 {
-                    result.Append($"{typeof(UshortDenseFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                    result.Append($"{typeof(UshortDenseFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
             }
             result.Append(",");
@@ -303,27 +308,15 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isCopyable)
-            {
-                result.Append($"{typeof(CopyableFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
             if (option.isVersion)
             {
                 if (option.isSingle)
                 {
-                    result.Append($"{typeof(UintVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                    result.Append($"{typeof(UintVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
                 else
                 {
-                    result.Append($"{typeof(UshortVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutSCT}>");
+                    result.Append($"{typeof(UshortVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
             }
             else
@@ -331,62 +324,37 @@ namespace AnotherECS.Generator
                 result.Append(nothingSCDTC);
             }
             result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append("#if ANOTHERECS_HISTORY_DISABLE");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            result.Append(nothingSCDTC);
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append("#else");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isHistory)
-            {
-                if (option.isHistoryByChange)
-                {
-                    result.Append($"{typeof(ByChangeHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
-                }
-                else if (option.isHistoryByTick)
-                {
-                    result.Append($"{typeof(ByTickHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
-                }
-                else if (option.isHistoryByVersion)
-                {
-                    result.Append($"{typeof(ByVersionHistoryFeature<,,>).GetNameWithoutGeneric()}<{layoutSCD}>");
-                }
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append("#endif");
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
             if (option.isUseISerialize || !option.isBlittable)
             {
-                result.Append($"{typeof(SSSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                result.Append($"{typeof(SSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
-                if (option.isHistoryByTick)
+                if (option.isBlittable)
                 {
-                    result.Append($"{typeof(BSSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                    result.Append($"{typeof(BSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
                 }
                 else
                 {
-                    result.Append($"{typeof(BBSerialize<,,,>).GetNameWithoutGeneric()}<{layoutSCDT}>");
+                    result.Append($"{typeof(CSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
                 }
             }
-            result.Append(",");
 
+            result.Append(",");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            result.Append(nothingSCDTC);
+            if (option.isRebindMemory)
+            {
+                result.Append($"{typeof(RebindMemoryFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+            }
+            else
+            {
+                result.Append(nothingSCDTC);
+            }
+
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
             result.Append(">");
@@ -394,15 +362,12 @@ namespace AnotherECS.Generator
             return result;
         }
 
-        public static (string TSparse, string TDenseIndex, string TTickData, string TTickDataDense) GetLayoutDeclaration(in TypeOptions option)
+        public static (string TAllocator, string TSparse, string TDenseIndex) GetLayoutDeclaration(in TypeOptions option)
         {
-            const string tQComponentQ = "<TComponent>";
-            const string tComponent = "TComponent";
-
+            string TAllocator = string.Empty;
             string TSparse = string.Empty;
             string TDenseIndex = string.Empty;
-            string TTickData = string.Empty;
-            string TTickDataDense = tComponent;
+
 
             switch (option.sparseMode)
             {
@@ -429,28 +394,14 @@ namespace AnotherECS.Generator
 
             if (option.isHistory)
             {
-                if (option.isHistoryByChange)
-                {
-                    TTickData = $"{typeof(TOData<>).GetNameWithoutGeneric()}{tQComponentQ}";
-                    TTickDataDense = tComponent;
-                }
-                else if (option.isHistoryByTick)
-                {
-                    TTickData = $"{typeof(TData<>).GetNameWithoutGeneric()}<NArray{tQComponentQ}>";
-                    TTickDataDense = $"NArray{tQComponentQ}";
-                }
-                else if (option.isHistoryByVersion)
-                {
-                    TTickData = $"{typeof(TIOData<>).GetNameWithoutGeneric()}{tQComponentQ}";
-                    TTickDataDense = tComponent;
-                }
+                TAllocator = nameof(HAllocator);
             }
             else
             {
-                TTickData = $"{nameof(Nothing)}{tQComponentQ}";
+                TAllocator = nameof(BAllocator);
             }
 
-            return (TSparse, TDenseIndex, TTickData, TTickDataDense);
+            return (TAllocator, TSparse, TDenseIndex);
         }
     }
 

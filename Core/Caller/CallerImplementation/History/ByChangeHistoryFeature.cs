@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct ByChangeHistoryFeature<TSparse, TDense, TDenseIndex> :
         ILayoutAllocator<TSparse, TDense, TDenseIndex, TOData<TDense>>,
         ISparseResize<TSparse, TDense, TDenseIndex, TOData<TDense>>,
@@ -56,7 +57,7 @@ namespace AnotherECS.Core.Caller
         {
             TUintNextNumber uintNextNumber = default;
             HistoryActions.PushDense<TSparse, TDense, TDenseIndex, TCopyable>
-                (ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, uintNextNumber.ConverToDI(offset), ref data);
+                (ref layout, depencies.tickProvider.tick, depencies.config.history.recordTickLength, uintNextNumber.ToNumber(offset), ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,5 +111,5 @@ namespace AnotherECS.Core.Caller
                 HistoryActions.RevertToValueBuffer(tick, ref layout.storage.dense, ref layout.history.denseBuffer, ref layout.history.denseIndex);
             }
         }
-    }
+    }*/
 }

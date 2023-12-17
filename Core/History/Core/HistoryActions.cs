@@ -6,6 +6,7 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
+    /*
     internal static class HistoryActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -832,7 +833,7 @@ namespace AnotherECS.Core
 
         
 
-        /*
+        
        [MethodImpl(MethodImplOptions.AggressiveInlining)]
        public static void AllocateDense(ref UnmanagedLayout<T> layout, uint buffersAddRemoveCapacity, uint buffersChangeCapacity)
        {
@@ -895,10 +896,10 @@ namespace AnotherECS.Core
 
            history.versionIndexer.Resize<uint>(capacity);
        }
-       */
+       
 
 
-        /*
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushRecycle(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint recycleIndex, uint recycle)
         {
@@ -909,8 +910,8 @@ namespace AnotherECS.Core
 
             HistoryUtils.CheckAndResizeLoopBuffer<TickData<uint>>(ref layout.history.recycleIndex, ref layout.history.recycleBuffer, recordLength, nameof(layout.history.recycleBuffer));
         }
-*/
-        /*
+
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PushDense(ref UnmanagedLayout<T> layout, uint tick, uint recordLength, uint offset, ref T data)
         {
@@ -922,11 +923,11 @@ namespace AnotherECS.Core
 
             HistoryUtils.CheckAndResizeLoopBuffer<TickOffsetData<T>>(ref layout.history.denseIndex, ref layout.history.denseBuffer, recordLength, nameof(layout.history.denseBuffer));
         }
-        */
+        
 
 
 
-        /*
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToSingleSparseBuffer(uint tick, ref bool subject, ref ArrayPtr buffer, ref uint bufferIndex, out Op op)
         {
@@ -999,14 +1000,14 @@ namespace AnotherECS.Core
                 }
             }
         }
-        */
+        
 
 
 
 
 
 
-        /*
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void RevertToSingleValueBufferPtr<TTickDataTypeData>(uint tick, ref ArrayPtr subject, ref ArrayPtr buffer, ref uint bufferIndex)
@@ -1050,8 +1051,8 @@ namespace AnotherECS.Core
 
             subject = bufferPtr[bufferIndex].value;
         }
-        */
+        
 
 
-    }
+    }*/
 }

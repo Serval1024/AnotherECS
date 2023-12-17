@@ -9,11 +9,11 @@ namespace AnotherECS.Core.Caller
             => (ushort)++number;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint ConverToDI(ushort number)
+        public uint ToNumber(ushort number)
             => number;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort ConverToNumber(uint number)
+        public ushort ToGeneric(uint number)
             => (ushort)number;
     }
 }

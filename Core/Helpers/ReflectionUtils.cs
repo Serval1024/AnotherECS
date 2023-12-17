@@ -1,3 +1,4 @@
+using AnotherECS.Core.Collection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,9 +44,39 @@ namespace AnotherECS.Core
             => GetGenericFullName(type, map)
             .Replace('+', '.');
 
+        public static void ReflectionRebindMemoryHandle<T>(ref T component, ref MemoryRebinderContext rebinder)
+            where T : struct
+        {
+            var methodName = nameof(IRebindMemoryHandle.RebindMemoryHandle);
+            var args = new object[] { rebinder };
+            if (typeof(IRebindMemoryHandle).IsAssignableFrom(typeof(T)))
+            {
+                var boxing = (IRebindMemoryHandle)component;
+                var method = GetMethod(typeof(T), methodName);
+                method.Invoke(boxing, args);
+                component = (T)boxing;
+            }
+
+            foreach (var member in
+                typeof(T)
+                .GetFieldsAndProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()))
+                )
+            {
+                var memberOfComponent = member.GetValue(component);
+                var method = GetMethod(member.GetMemberType(), methodName);
+
+                method.Invoke(memberOfComponent, args);
+
+                object copy = component;
+                member.SetValue(copy, memberOfComponent);
+                component = (T)copy;
+            }
+        }
+
         public static void ReflectionInjectConstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct
-            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<DArrayCaller>.Construct));
+            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<NPtr<HAllocator>>.Construct));
 
         public static void ReflectionInjectDeconstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct
@@ -93,11 +124,10 @@ namespace AnotherECS.Core
                 }
                 return args;
             }
-
-            static MethodInfo GetMethod(Type type, string methodName)
-                => type.GetInterfaces().Select(p => p.GetMethod(methodName)).First(p => p != null);
         }
 
+        private static MethodInfo GetMethod(Type type, string methodName)
+                => type.GetInterfaces().Select(p => p.GetMethod(methodName)).First(p => p != null);
 
         public static IEnumerable<MemberInfo> GetFieldsAndProperties(this Type type, BindingFlags bindingFlags)
             => type

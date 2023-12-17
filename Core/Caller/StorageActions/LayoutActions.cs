@@ -6,34 +6,34 @@ namespace AnotherECS.Core.Actions
     internal static unsafe class LayoutActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetCount<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout)
+        public static uint GetCount<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex> layout)
+            where TAllocator : unmanaged, IAllocator
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
-            => layout.storage.sparse.Get(0) ? (uint)1 : 0;
+            => layout.storage.sparse.Get(0) ? 1u : 0u;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetCount<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint startIndex)
+        public static uint GetCount<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
             => GetSpaceCount(ref layout, startIndex) - layout.storage.recycleIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetSpaceCount<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint startIndex)
+        public static uint GetSpaceCount<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
             => layout.storage.denseIndex - startIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryResizeDense<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity)
+        public static bool TryResizeDense<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
             if (storage.denseIndex == storage.dense.Length)
@@ -46,11 +46,11 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryResizeRecycle<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint capacity)
+        public static bool TryResizeRecycle<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
             if (storage.recycleIndex == storage.recycle.Length)
@@ -63,36 +63,47 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CheckDenseLimit<TSparse, TDense, TDenseIndex, TTickData, RNumber>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+        public static void CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TNumber>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
-            where RNumber : unmanaged
+            where TNumber : unmanaged
         {
-            if (layout.storage.denseIndex == GetMaxValue<RNumber>())
+            if (layout.storage.denseIndex == GetMaxValue<TNumber>())
             {
-                throw new Exceptions.ReachedLimitComponentException(GetMaxValue<RNumber>());
+                throw new Exceptions.ReachedLimitComponentException(GetMaxValue<TNumber>());
             }
         }
 
-        public static uint GetMaxValue<QNumber>()
-          where QNumber : unmanaged
-          => Type.GetTypeCode(typeof(QNumber)) switch
-          {
-              TypeCode.Boolean => uint.MaxValue,
-              TypeCode.Byte => byte.MaxValue,
-              TypeCode.UInt16 => ushort.MaxValue,
-              TypeCode.UInt32 => uint.MaxValue,
-              _ => throw new ArgumentException(),
-          };
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CheckLimit<TNumber, TNumberProvider>(uint value)
+            where TNumber : unmanaged
+        {
+            if (value == GetMaxValue<TNumber>())
+            {
+                throw new Exceptions.ReachedLimitComponentException(GetMaxValue<TNumber>());
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SparseClear<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
-           where TSparse : unmanaged
-           where TDense : unmanaged
-           where TDenseIndex : unmanaged
-           where TTickData : unmanaged
+        public static uint GetMaxValue<TNumber>()
+            where TNumber : unmanaged
+            => Type.GetTypeCode(typeof(TNumber)) switch 
+            {
+                TypeCode.Boolean => uint.MaxValue,
+                TypeCode.Byte => byte.MaxValue,
+                TypeCode.UInt16 => ushort.MaxValue,
+                TypeCode.UInt32 => uint.MaxValue,
+                  _ => throw new ArgumentException(),
+            };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SparseClear<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where TAllocator : unmanaged, IAllocator
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
         {
             ref var storage = ref layout.storage;
 
@@ -103,11 +114,11 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StorageClear<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
+        public static void StorageClear<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
 
@@ -130,11 +141,11 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UpdateVersion<TSparse, TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, uint tick, uint count)
+        public static void UpdateVersion<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint tick, uint count)
+            where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
         {
             var version = layout.storage.version.GetPtr();
             for (uint i = 0; i < count; ++i)

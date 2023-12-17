@@ -2,16 +2,16 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct ConstructInjectIterable<TSparse, TDense, TDenseIndex, TTickData> : IIterable<TSparse, TDense, TDenseIndex, TTickData>
+    internal unsafe struct ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex> : IIterable<TAllocator, TSparse, TDense, TDenseIndex>
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
-        where TTickData : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDepencies depencies, ref TDense component)
+        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, ref TDense component)
         {
-            InjectFeature<TSparse, TDense, TDenseIndex, TTickData> injectFeature = default;
+            InjectFeature<TAllocator, TSparse, TDense, TDenseIndex> injectFeature = default;
             injectFeature.Construct(ref layout, ref depencies, ref component);
         }
     }

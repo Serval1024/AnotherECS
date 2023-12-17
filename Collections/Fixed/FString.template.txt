@@ -21,13 +21,13 @@ namespace AnotherECS.Collections
 	
 		private FList<#ELEMENT_COUNT#><char> _data;
 
-		public int Capacity
+		public uint Capacity
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => _data.Capacity;
 		}
 		
-		public int Length
+		public uint Length
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => _data.Count;
@@ -41,7 +41,7 @@ namespace AnotherECS.Collections
                 throw new ArgumentException($"{nameof(text)} is longer than capacity. Capacity: '{Capacity}'. text length '{text.Length}'");
             }
 
-            for (int i = 0; i < text.Length; ++i)
+            for (uint i = 0; i < text.Length; ++i)
             {
                 _data[i] = text[i];
             }
@@ -60,7 +60,7 @@ namespace AnotherECS.Collections
 
             FString<#ELEMENT_COUNT#> result = a;
             var offset = a.Length;
-            for (int i = 0; i < b.Length; ++i)
+            for (uint i = 0; i < b.Length; ++i)
             {
                 result._data[i + offset] = b._data[i];
             }
@@ -75,7 +75,7 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString<#ELEMENT_COUNT#> a, FString<#ELEMENT_COUNT#> b)
             => !a.Equals(ref b);
 
-        public char this[int index]
+        public char this[uint index]
         {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data[index];
@@ -89,7 +89,7 @@ namespace AnotherECS.Collections
             if (Capacity <= 16)
             {
                 var text = string.Empty;
-                for (int i = 0; i < Length; ++i)
+                for (uint i = 0; i < Length; ++i)
                 {
                     text += _data[i];
                 }
@@ -98,7 +98,7 @@ namespace AnotherECS.Collections
             else
             {
                 var stringBuilder = new StringBuilder();
-                for (int i = 0; i < Length; ++i)
+                for (uint i = 0; i < Length; ++i)
                 {
                     stringBuilder.Append(_data[i]);
                 }
@@ -123,7 +123,7 @@ namespace AnotherECS.Collections
         {
             if (Length == other.Length)
             {
-                for (int i = 0; i < Length; ++i)
+                for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
                     {
@@ -139,7 +139,7 @@ namespace AnotherECS.Collections
         {
             HashCode hash = default;
             hash.Add(Length);
-            for(int i = 0; i < Length; ++i)
+            for(uint i = 0; i < Length; ++i)
             {
                 hash.Add(_data[i]);
             }
@@ -159,12 +159,12 @@ namespace AnotherECS.Collections
         public struct Enumerator : IEnumerator<char>
         {
             private readonly FString<#ELEMENT_COUNT#> _data;
-            private int _current;
+            private uint _current;
 
             public Enumerator(ref FString<#ELEMENT_COUNT#> data)
             {
                 _data = data;
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             public char Current
@@ -183,7 +183,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset()
             {
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

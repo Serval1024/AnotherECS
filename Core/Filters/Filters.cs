@@ -1,24 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    internal struct Filters : IDisposable
+    internal unsafe struct Filters : IDisposable
     {
-        private ArchetypeCaller _archetype;
+        private GlobalDepencies* _depencies;
         private FilterUpdater _filterUpdater;
-        private NDictionary<Mask, uint, Mask> _maskTofilters;
+        private NDictionary<BAllocator, Mask, uint, Mask> _maskTofilters;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Filters(ArchetypeCaller caller, uint capacity)
+        public Filters(GlobalDepencies* depencies, uint capacity)
         {
-            _archetype = caller;
-            _filterUpdater = FilterUpdater.Create(capacity);
-            _maskTofilters = new NDictionary<Mask, uint, Mask>(capacity);
+            _depencies  = depencies;
+            _filterUpdater = FilterUpdater.Create(&depencies->bAllocator, capacity);
+            _maskTofilters = new NDictionary<BAllocator, Mask, uint, Mask>(&depencies->bAllocator, capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,12 +28,12 @@ namespace AnotherECS.Core
                 var includes = mask.includes.ValuesAsSpan();
                 var excludes = mask.excludes.ValuesAsSpan();
 
-                _archetype.Create(ref _filterUpdater, includes);
+                _depencies->archetype.Create(ref _filterUpdater, includes);
 
                 var filterData = new FilterData()
                 {
                     mask = mask,
-                    archetypeIds = NList<uint>.CreateWrapper(_archetype.Filter(includes, excludes))
+                    archetypeIds = NList<BAllocator, uint>.CreateWrapper(_depencies->archetype.Filter(&_depencies->bAllocator, includes, excludes))
                 };
 
                 filterId = _filterUpdater.filters.Count;
@@ -53,11 +52,11 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(uint id, ushort elementId, bool isTemporary)
-            => _archetype.Add(ref _filterUpdater, id, elementId, isTemporary);
+            => _depencies->archetype.Add(ref _filterUpdater, id, elementId, isTemporary);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(uint id, ushort elementId)
-            => _archetype.Remove(ref _filterUpdater, id, elementId);
+            => _depencies->archetype.Remove(ref _filterUpdater, id, elementId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
@@ -69,26 +68,27 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Lock()
         {
-            _archetype.Lock();
+            _depencies->archetype.Lock();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unlock()
         {
-            _archetype.Unlock(ref _filterUpdater);
+            _depencies->archetype.Unlock(ref _filterUpdater);
         }
     }
 
     internal struct FilterData : IDisposable
     {
         public Mask mask;
-        public NList<uint> archetypeIds;
+        public NList<BAllocator, uint> archetypeIds;
 
-        public void Add(ref NArray<Node> archetypes, uint archetypeId, ushort itemId)
+        public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, ushort itemId)
+            where TNArray : struct, INArray<Node>
         {
             if (!mask.excludes.Contains(itemId))
             {
-                ArchetypeComparer comparer = default;
+                ArchetypeComparer<TNArray> comparer = default;
                 comparer.archetypes = archetypes;
                 archetypeIds.AddSort(ref comparer, archetypeId);
             }
@@ -100,14 +100,15 @@ namespace AnotherECS.Core
         }
 
 
-        private struct ArchetypeComparer : IComparer<uint>
+        private struct ArchetypeComparer<TNArray> : IComparer<uint>
+             where TNArray : struct, INArray<Node>
         {
-            public NArray<Node> archetypes;
+            public TNArray archetypes;
 
             public int Compare(uint x, uint y)
             {
-                var hash0 = archetypes.GetRef(x).hash;
-                var hash1 = archetypes.GetRef(y).hash;
+                var hash0 = archetypes.ReadRef(x).hash;
+                var hash1 = archetypes.ReadRef(y).hash;
                 if (hash0 > hash1)
                 {
                     return 1;
@@ -121,24 +122,36 @@ namespace AnotherECS.Core
         }
     }
 
-    internal struct FilterUpdater : IDisposable
+
+    internal interface IFilterUpdater
     {
-        public NMultiDictionary<uint, uint, U4U4HashProvider> archetypeIdToFilterId;
-        public NList<FilterData> filters;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, ushort itemId)
+           where TNArray : struct, INArray<Node>;
 
-        private NHashSet<uint, U4U4HashProvider> _temp;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void EndToFilterData();
+    }
 
-        public static FilterUpdater Create(uint capacity)
+    internal struct FilterUpdater : IDisposable, IFilterUpdater
+    {
+        public NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider> archetypeIdToFilterId;
+        public NList<BAllocator, FilterData> filters;
+
+        private NHashSet<BAllocator, uint, U4U4HashProvider> _temp;
+
+        public static unsafe FilterUpdater Create(BAllocator* allocator, uint capacity)
         {
             FilterUpdater inst = default;
-            inst.archetypeIdToFilterId = new NMultiDictionary<uint, uint, U4U4HashProvider>(capacity);
-            inst.filters = new NList<FilterData>(capacity);
-            inst._temp = new NHashSet<uint, U4U4HashProvider>(capacity);
+            inst.archetypeIdToFilterId = new NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider>(allocator, capacity);
+            inst.filters = new NList<BAllocator, FilterData>(allocator, capacity);
+            inst._temp = new NHashSet<BAllocator, uint, U4U4HashProvider>(allocator, capacity);
             return inst;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddToFilterData(ref NArray<Node> archetypes, uint archetypeId, uint toAddArchetypeId, ushort itemId)
+        public void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, ushort itemId)
+            where TNArray : struct, INArray<Node>
         {
             foreach (var filterId in archetypeIdToFilterId.GetValues(archetypeId))
             {

@@ -1,12 +1,11 @@
 ﻿using System.Runtime.InteropServices;
-using AnotherECS.Converter;
 
 namespace AnotherECS.Core
 {
-    [IgnoreCompile]
-    internal unsafe struct EntityData : IComponent
+    [StructLayout(LayoutKind.Explicit, Size = 6)]
+    internal unsafe struct EntityData
     {
-        public uint archetypeId;
-        public ushort generation;
+        [FieldOffset(0)] public uint archetypeId;
+        [FieldOffset(4)] public ushort generation;
     }
 }

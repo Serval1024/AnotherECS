@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
@@ -7,11 +9,10 @@ namespace AnotherECS.Core.Caller
 {
     public interface ICallerReference { }
 
-    internal interface ICaller : ICallerReference
+    internal interface ICaller : ICallerReference, ISerialize, IRebindMemoryHandle
     {
         ushort ElementId { get; }
         bool IsSingle { get; }
-        bool IsRevert { get; }
         bool IsTickFinished { get; }
         bool IsSerialize { get; }
         bool IsResizable { get; }
@@ -19,7 +20,7 @@ namespace AnotherECS.Core.Caller
         bool IsDetach { get; }
         bool IsInject { get; }
         bool IsTemporary { get; }
-        internal unsafe void Config(UnmanagedLayout* layout, GlobalDepencies* depencies, ushort id, State state);
+        internal unsafe void Config(void* layout, GlobalDepencies* depencies, ushort id, DirtyHandler<HAllocator> dirtyHandler, State state);
         internal void AllocateLayout();
         Type GetElementType();
         void Remove(EntityId id);
@@ -75,12 +76,6 @@ namespace AnotherECS.Core.Caller
     {
         void CallConstruct();
         void CallDeconstruct();
-    }
-    public unsafe interface IManualHistoryCaller<TTickDataDense>
-        where TTickDataDense : unmanaged
-    {
-        public void DirectPush(TTickDataDense* data);
-        public void DirectPush(uint offset, uint index, TTickDataDense* data);
     }
 }
 

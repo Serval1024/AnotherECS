@@ -24,7 +24,7 @@ namespace AnotherECS.Views
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read<T>()
-            where T : unmanaged, IShared
+            where T : unmanaged, ISingle
             => _state.Read<T>();
 
         public void Destroyed()

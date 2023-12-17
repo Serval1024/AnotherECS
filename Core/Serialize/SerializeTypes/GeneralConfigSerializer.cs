@@ -30,18 +30,20 @@ namespace AnotherECS.Serializer
         {
             var generalConfig = (GeneralConfig)@value;
             writer.Write(generalConfig.entityCapacity);
-            writer.Write(generalConfig.recycledCapacity);
             writer.Write(generalConfig.componentCapacity);
-            writer.Write(generalConfig.dArrayCapacity);
+            writer.Write(generalConfig.recycleCapacity);
+            writer.Write(generalConfig.archetypeCapacity);
+            writer.Write(generalConfig.chunkLimit);
         }
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
             => new GeneralConfig()
             {
                 entityCapacity = reader.ReadUInt32(),
-                recycledCapacity = reader.ReadUInt32(),
                 componentCapacity = reader.ReadUInt32(),
-                dArrayCapacity = reader.ReadUInt32(),
+                recycleCapacity = reader.ReadUInt32(),
+                archetypeCapacity = reader.ReadUInt32(),
+                chunkLimit = reader.ReadUInt32(),
             };
     }
 
@@ -52,21 +54,15 @@ namespace AnotherECS.Serializer
         public void Pack(ref WriterContextSerializer writer, object @value)
         {
             var historyConfig = (HistoryConfig)@value;
-            writer.Write(historyConfig.buffersChangeCapacity);
-            writer.Write(historyConfig.buffersAddRemoveCapacity);
-            writer.Write(historyConfig.dArrayBuffersCapacity);
             writer.Write(historyConfig.recordTickLength);
-            writer.Write(historyConfig.byTickArrayExtraSize);
+            writer.Write(historyConfig.buffersCapacity);
         }
 
         public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
             => new HistoryConfig()
             {
-                buffersChangeCapacity = reader.ReadUInt32(),
-                buffersAddRemoveCapacity = reader.ReadUInt32(),
-                dArrayBuffersCapacity = reader.ReadUInt32(),
                 recordTickLength = reader.ReadUInt32(),
-                byTickArrayExtraSize = reader.ReadUInt32(),
+                buffersCapacity = reader.ReadUInt32(),
             };
     }
 }

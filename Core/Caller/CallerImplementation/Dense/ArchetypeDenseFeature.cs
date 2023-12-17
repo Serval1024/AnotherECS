@@ -2,6 +2,7 @@
 
 namespace AnotherECS.Core.Caller
 {
+    /*
     internal struct ArchetypeDenseFeature<TSparse, TDense, TTickData> :
         ILayoutAllocator<TSparse, TDense, uint, TTickData>,
         ISparseResize<TSparse, TDense, uint, TTickData>,
@@ -56,5 +57,5 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetAllocated(ref UnmanagedLayout<TSparse, TDense, uint, TTickData> layout)
             => layout.storage.denseIndex;
-    }
+    }*/
 }

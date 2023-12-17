@@ -1,86 +1,67 @@
 using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core;
 using AnotherECS.Core.Collection;
-using AnotherECS.Unsafe;
 
 namespace AnotherECS.Serializer
 {
-    internal unsafe struct NArraySerializer
-    {
-        private NArrayMeta _meta;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Pack(ref WriterContextSerializer writer, ref NArray data)
-        {
-            _meta.Pack(ref writer, ref data);
-            if (data.GetPtr() != null)
-            {
-                writer.Write(data.GetPtr(), data.ByteLength);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unpack(ref ReaderContextSerializer reader, ref NArray data)
-        {   
-            var (byteLength, elementCount) = _meta.Unpack(ref reader);
-            if (byteLength != uint.MaxValue)
-            {
-                var buffer = byteLength != 0 ? UnsafeMemory.Malloc(byteLength) : null;
-                reader.Read(buffer, byteLength);
-
-                data = new NArray(buffer, byteLength, elementCount);
-                return;
-            }
-            data = default;
-        }
-    }
-
-
-    internal unsafe struct NArraySerializer<T> : IElementSerializer
+    internal unsafe struct NArraySerializer<TAllocator, T>
+        where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
         private NArrayMeta _meta;
         private CompoundMeta _compound;
 
-        public Type Type => typeof(NArray<>);
+        public Type Type => typeof(NArray<,>);
 
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PackBlittable(ref WriterContextSerializer writer, ref NArray<T> data)
+        public void PackBlittable(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data)
         {
             _meta.Pack(ref writer, ref data);
-            if (data.GetPtr() != null)
+            if (data.IsValide)
             {
-                writer.Write(data.GetPtr(), data.ByteLength);
+                data.GetMemoryHandle().Pack(ref writer);
+                //writer.Write(data.ReadPtr(), data.ByteLength);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnpackBlittable(ref ReaderContextSerializer reader, ref NArray<T> data)
+        public void UnpackBlittable(ref ReaderContextSerializer reader, ref NArray<TAllocator, T> data)
         {
-            var (byteLength, elementCount) = _meta.Unpack(ref reader);
-            if (byteLength != uint.MaxValue)
+            var elementCount = _meta.Unpack(ref reader);
+            if (elementCount != uint.MaxValue)
             {
-                var buffer = byteLength != 0 ? (T*)UnsafeMemory.Malloc(byteLength) : null;
-                reader.Read(buffer, byteLength);
+                MemoryHandle memoryHandle = default;
+                memoryHandle.Unpack(ref reader);
 
-                data = new NArray<T>(buffer, elementCount);
+                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
+                //reader.Read(data.ReadPtr(), elementCount * (uint)sizeof(T));      //TODO SER
                 return;
             }
             data = default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Pack(ref WriterContextSerializer writer, ref NArray<T> data)
+        public void Pack(ref WriterContextSerializer writer, NArray<TAllocator, T> data)
+        {
+            Pack(ref writer, ref data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Pack(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data)
         {
             _meta.Pack(ref writer, ref data);
 
-            if (data.GetPtr() != null)
+            if (data.IsValide)
             {
+                data.GetMemoryHandle().Pack(ref writer);
+                
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
                     for (uint i = 0; i < data.Length; ++i)
                     {
-                        var value = data.Get(i);
+                        ref var value = ref data.ReadRef(i);
                         ((ISerialize)value).Pack(ref writer);
                     }
                 }
@@ -90,14 +71,14 @@ namespace AnotherECS.Serializer
                     {
                         for (uint i = 0; i < data.Length; ++i)
                         {
-                            serializer.Pack(ref writer, data.Get(i));
+                            serializer.Pack(ref writer, data.Read(i));
                         }
                     }
                     else
                     {
                         for (uint i = 0; i < data.Length; ++i)
                         {
-                            _compound.Pack(ref writer, data.Get(i));
+                            _compound.Pack(ref writer, data.Read(i));
                         }
                     }
                 }
@@ -105,14 +86,23 @@ namespace AnotherECS.Serializer
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unpack(ref ReaderContextSerializer reader, ref NArray<T> data)
+        public void Unpack(ref ReaderContextSerializer reader, NArray<TAllocator, T> data)
         {
-            (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
+            Unpack(ref reader, ref data);
+        }
 
-            if (byteLength != uint.MaxValue)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Unpack(ref ReaderContextSerializer reader, ref NArray<TAllocator, T> data)
+        {
+            var elementCount = _meta.Unpack(ref reader);
+
+            if (elementCount != uint.MaxValue)
             {
-                data.Resize(elementCount);
-
+                MemoryHandle memoryHandle = default;
+                memoryHandle.Unpack(ref reader);
+                
+                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
+                
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
                     for (uint i = 0; i < data.Length; ++i)
@@ -141,43 +131,31 @@ namespace AnotherECS.Serializer
                 }
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Pack(ref WriterContextSerializer writer, object value)
-        {
-            var concreteValue = (NArray<T>)value;
-            Pack(ref writer, ref concreteValue);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public object Unpack(ref ReaderContextSerializer reader, object[] constructArgs)
-        {
-            NArray<T> concreteValue = default;
-            Unpack(ref reader, ref concreteValue);
-            return concreteValue;
-        }
     }
-
-    internal unsafe struct NArrayEachSerializeStaticSerializer<T>
-       where T : unmanaged, ISerialize
+    
+    internal unsafe struct NArrayEachSerializeStaticSerializer<TAllocator, T>
+        where TAllocator : unmanaged, IAllocator
+        where T : unmanaged, ISerialize
     {
         private static readonly NArrayMeta _meta;
         private static readonly CountMeta _count;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Pack(ref WriterContextSerializer writer, ref NArray<T> arrayPtr)
+        public static void Pack(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data)
         {
-            Pack(ref writer, ref arrayPtr, arrayPtr.Length);
+            Pack(ref writer, ref data, data.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Pack(ref WriterContextSerializer writer, ref NArray<T> arrayPtr, uint count)
+        public static void Pack(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data, uint count)
         {
-            _meta.Pack(ref writer, ref arrayPtr);
-            var ptr = arrayPtr.GetPtr();
-            if (ptr != null)
+            _meta.Pack(ref writer, ref data);
+            if (data.IsValide)
             {
+                var ptr = data.GetPtr();
                 _count.Pack(ref writer, count);
+
+                data.GetMemoryHandle().Pack(ref writer);
 
                 for (uint i = 0; i < count; i++)
                 {
@@ -187,22 +165,28 @@ namespace AnotherECS.Serializer
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NArray<T> Unpack(ref ReaderContextSerializer reader)
+        public static NArray<TAllocator, T> Unpack(ref ReaderContextSerializer reader)
         {
-            (uint byteLength, uint elementCount) = _meta.Unpack(ref reader);
+            var elementCount = _meta.Unpack(ref reader);
 
-            if (byteLength != uint.MaxValue)
+            if (elementCount != uint.MaxValue)
             {
                 var count = _count.Unpack(ref reader);
 
-                var buffer = (T*)UnsafeMemory.Malloc(byteLength);
+                MemoryHandle memoryHandle = default;
+                memoryHandle.Unpack(ref reader);
+
+                var nArray = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
+                var buffer = nArray.ReadPtr();
+
                 T element = default;
                 for (uint i = 0; i < count; i++)
                 {
                     element.Unpack(ref reader);
                     buffer[i] = element;
                 }
-                return new NArray<T>(buffer, elementCount);
+
+                return nArray;
             }
             else
             {

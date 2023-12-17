@@ -19,7 +19,7 @@ namespace AnotherECS.Collections
     { 
         public TData <#ARRAY [0..ELEMENT_COUNT]#>p<#INDEX1#><#SEPARATOR1:,#><#END#>;
 
-		public const int LENGTH = <#ELEMENT_COUNT#>;
+		public const uint LENGTH = <#ELEMENT_COUNT#>;
         public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
         public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
@@ -31,7 +31,7 @@ namespace AnotherECS.Collections
     {
 		private Data<#ELEMENT_COUNT#><TData> _data;
 
-        public int Length
+        public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data<#ELEMENT_COUNT#><TData>.LENGTH;
@@ -46,24 +46,24 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int IndexOf(TData item)
+        public uint IndexOf(TData item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int IndexOf(ref TData item)
+        public uint IndexOf(ref TData item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal int IndexOf(ref TData item, int count)
+        internal uint IndexOf(ref TData item, uint count)
         {
-            for (int i = 0; i < Length; ++i)
+            for (uint i = 0; i < count; ++i)
             {
                 if (EqualityComparer<TData>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
             }
-            return -1;
+            return uint.MaxValue;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,20 +72,20 @@ namespace AnotherECS.Collections
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(ref TData item)
-            => IndexOf(ref item) != -1;
+            => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(int index, TData item)
+        public void Insert(uint index, TData item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(int index, ref TData item)
+        public void Insert(uint index, ref TData item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
-            for (int i = Length - 1; i > index; --i)
+            for (uint i = Length - 1; i > index; --i)
             {
                 this[i] = this[i - 1];
             }
@@ -95,7 +95,7 @@ namespace AnotherECS.Collections
         public bool Remove(TData item)
         {
             var index = IndexOf(ref item);
-            if (index != -1)
+            if (index != uint.MaxValue)
             {
                 RemoveAt(index);
                 return true;
@@ -103,17 +103,17 @@ namespace AnotherECS.Collections
             return false;
         }
 
-		public void RemoveAt(int index)
+		public void RemoveAt(uint index)
         {
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, int arrayIndex)
+        public void CopyTo(TData[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, int arrayIndex, int count)
+		public void CopyTo(TData[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -130,7 +130,7 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[int index]
+        public TData this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -162,7 +162,7 @@ namespace AnotherECS.Collections
             }
 		}
 		
-		internal void CopyTo(TData[] array, int arrayIndex, int count, int capacity)
+		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -188,21 +188,21 @@ namespace AnotherECS.Collections
             }
 
             var iMax = Math.Min(array.Length - arrayIndex, count);
-            for (int i = 0; i < iMax; ++i)
+            for (uint i = 0; i < iMax; ++i)
             {
                 array[i + arrayIndex] = this[i];
             }
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void RemoveAtInternal(int index, int capacity)
+		internal void RemoveAtInternal(uint index, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, capacity);
 #endif
             if (index != capacity - 1)
             {
-                for (int i = index; i < capacity - 1; ++i)
+                for (uint i = index; i < capacity - 1; ++i)
                 {
                     this[i] = this[i + 1];
                 }
@@ -212,11 +212,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(int index)
+        object ICArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(int index, object @value)
+        void ICArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -233,13 +233,13 @@ namespace AnotherECS.Collections
         public struct Enumerator : IEnumerator<TData>
         {
             private readonly FArray<#ELEMENT_COUNT#><TData> _data;
-            private int _current;
+            private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public Enumerator(ref FArray<#ELEMENT_COUNT#><TData> data)
             {
                 _data = data;
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             public TData Current
@@ -261,7 +261,7 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset()
             {
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

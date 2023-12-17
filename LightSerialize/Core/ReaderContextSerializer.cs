@@ -9,24 +9,45 @@ namespace AnotherECS.Serializer
     public struct ReaderContextSerializer : IDisposable
     {
         private readonly LightSerializer _serializer;
-        private readonly MemoryStream _stream;
-        private readonly BinaryReader _reader;
+        private Stream _stream;
+        private List<object> _depencies;
 
-        public ReaderContextSerializer(LightSerializer serializer, byte[] data)
+        public ReaderContextSerializer(LightSerializer serializer, byte[] data, List<object> depencies)
         {
             _serializer = serializer;
-            _stream = new MemoryStream(data);
-            _reader = new BinaryReader(_stream);
+            _stream = new Stream(data);
+            _depencies = depencies;
         }
 
         public void Dispose()
         {
-            _reader.BaseStream.Dispose();
-            _reader.Dispose();
+            _stream.Dispose();
         }
 
-        public long Position
-            => _reader.BaseStream.Position;
+        public uint Position
+            => _stream.Position;
+
+        public void AddDepency<T>(ref T depency)
+        {
+            _depencies.Add(depency);
+        }
+
+        public void AddDepency<T>(T depency)
+        {
+            AddDepency(ref depency);
+        }
+
+        public T GetDepency<T>()
+        {
+            for (int i = 0; i < _depencies.Count; ++i)
+            {
+                if (typeof(T).IsAssignableFrom(_depencies[i].GetType()))
+                {
+                    return (T)_depencies[i];
+                }
+            }
+            throw new ArgumentException(typeof(T).Name);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Type IdToType(uint id)
@@ -77,88 +98,64 @@ namespace AnotherECS.Serializer
             => _serializer.ReadStruct<T>(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Read()
-            => _reader.Read();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadBoolean()
-            => _reader.ReadBoolean();
+            => _stream.ReadBoolean();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte ReadByte()
-            => _reader.ReadByte();
+            => _stream.ReadByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sbyte ReadSByte()
-            => _reader.ReadSByte();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public char ReadChar()
-            => _reader.ReadChar();
+            => _stream.ReadSByte();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public short ReadInt16()
-            => _reader.ReadInt16();
+            => _stream.ReadInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ushort ReadUInt16()
-            => _reader.ReadUInt16();
+            => _stream.ReadUInt16();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int ReadInt32()
-            => _reader.ReadInt32();
+            => _stream.ReadInt32();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint ReadUInt32()
-            => _reader.ReadUInt32();
+            => default(UInt32Serializer).UnpackConcrete(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public long ReadInt64()
-            => _reader.ReadInt64();
+            => _stream.ReadInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong ReadUInt64()
-            => _reader.ReadUInt64();
+            => _stream.ReadUInt64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ReadSingle()
-            => _reader.ReadSingle();
+            => _stream.ReadSingle();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double ReadDouble()
-            => _reader.ReadDouble();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public decimal ReadDecimal()
-            => _reader.ReadDecimal();
+            => _stream.ReadDouble();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string ReadString()
-            => _reader.ReadString();
+            => _stream.ReadString();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Read(char[] buffer, int index, int count)
-            => _reader.Read(buffer, index, count);
+        public void Read(byte[] buffer, uint index, uint count)
+            => _stream.Read(buffer, index, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public char[] ReadChars(int count)
-            => _reader.ReadChars(count);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Read(byte[] buffer, int index, int count)
-            => _reader.Read(buffer, index, count);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public byte[] ReadBytes(int count)
-            => ReadBytes(count);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string ReadUTF8()
-           => _reader.ReadUTF8();
+        public byte[] ReadBytes(uint count)
+            => _stream.ReadBytes(count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Read(void* buffer, uint length)
-           => _reader.ReadBytePtr((byte*)buffer, length);
+           => _stream.Read((byte*)buffer, length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ReadUnmanagedArray<T>()

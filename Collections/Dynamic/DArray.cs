@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
+using AnotherECS.Core.Collection;
 using AnotherECS.Exceptions;
 using AnotherECS.Serializer;
 
@@ -13,18 +14,22 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public struct DArray<T> : IInject<DArrayCaller>, IEnumerable<T>, ISerialize, ICArray
+    public unsafe struct DArray<T> : IInject<NPtr<HAllocator>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
         where T : unmanaged
     {
-        private DArrayCaller _bind;
-        private uint _id;
-        private int _length;
+        private NArray<HAllocator, T> _data;
+        private HAllocator* _allocator;
 
-        internal DArray(DArrayCaller bind, uint id, int length)
+        internal bool IsDirty
         {
-            _bind = bind;
-            _id = id;
-            _length = length;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.IsDirty;
+        }
+
+        internal DArray(HAllocator* allocator)
+        {
+            _data = default;
+            _allocator = allocator;
 #if !ANOTHERECS_RELEASE
             Validate();
 #endif
@@ -32,10 +37,10 @@ namespace AnotherECS.Collections
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<DArrayCaller>.Construct(DArrayCaller bind)
+        void IInject<NPtr<HAllocator>>.Construct(NPtr<HAllocator> allocator)
         {
+            _allocator = allocator.Value;
             Validate();
-            _bind = bind;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,11 +48,20 @@ namespace AnotherECS.Collections
         { 
             Deallocate();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        {
+            if (_data.IsValide)
+            {
+                MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            }
+        }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(DArrayCaller bind)
+        public void Construct(NPtr<HAllocator> allocator)
         {
-            _bind = bind;
+            _allocator = allocator.Value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,22 +69,29 @@ namespace AnotherECS.Collections
         {
             Deallocate();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        {
+            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+        }
 #endif
-        public int Length
+        public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _length;
+            get => _data.Length;
         }
 
         public bool IsValide
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _id != 0;
+            get => _data.IsValide;
         }
 
-        public void Allocate(int length)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate(uint length)
         {
-            if (!_bind.IsValide)
+            if (!_allocator->IsValide)
             {
                 throw new MissInjectException(typeof(DArray<T>));
             }
@@ -78,8 +99,7 @@ namespace AnotherECS.Collections
             if (length >= 0)
             {
                 Deallocate();
-                _id = _bind.Add<T>(length);
-                _length = length;
+                _data.Allocate(_allocator, length);
             }
             else
             {
@@ -87,101 +107,85 @@ namespace AnotherECS.Collections
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate()
         {
-            if (IsValide)
+            if (_data.IsValide)
             {
-                _bind.Remove(_id);
-                _id = 0;
-                _length = 0;
-            }
-        }
-
-        public void Resize(int capacity)
-        {
-            if (_length != capacity)
-            {
-                if (IsValide)
-                {
-                    var newId = _bind.Add<T>(capacity);
-
-                    _bind.Copy(_id, newId, Math.Min(_length, capacity));
-
-                    _bind.Remove(_id);
-                    _id = newId;
-                    _length = capacity;
-                }
-                else
-                {
-                    Allocate(capacity);
-                }
+                _data.Dispose();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(int index)
+        public void Resize(uint capacity)
+        {
+            _data.Resize(capacity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read(uint index)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValide)
             {
                 throw new DArrayInvalideException(this.GetType());
             }
-            return ref _bind.Read<T>(_id, index);
+            return ref _data.ReadRef(index);
         }
 #else
-            => ref _bind.Read<T>(_id, index);
+            => ref _data.ReadRef(index);
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(int index)
+        public ref T Get(uint index)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValide)
             {
                 throw new DArrayInvalideException(GetType());
             }
-            return ref _bind.Get<T>(_id, index);
+            return ref _data.GetRef(index);
         }
 #else
-            => ref _bind.Get<T>(_id, index);
+            => ref _data.GetRef(index);
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(int index, T value)
+        public void Set(uint index, T value)
         {
             Set(index, ref value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(int index, ref T value)
+        public void Set(uint index, ref T value)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValide)
             {
                 throw new DArrayInvalideException(GetType());
             }
-            _bind.Set(_id, index, ref value);
+            _data.Set(index, ref value);
         }
 #else
-            => _bind.Set(_id, index, ref value);
+            => _data.Set(index, ref value);
 #endif
 
         public int IndexOf(T item)
-            => IndexOf(ref item, _length);
+            => IndexOf(ref item, _data.Length);
         
         public bool Contains(T item)
-            => IndexOf(ref item, _length) != -1;
+            => IndexOf(ref item, _data.Length) != -1;
 
         public void CopyTo(T[] array)
         {
             CopyTo(array, 0, Length);
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
+        public void CopyTo(T[] array, uint arrayIndex)
         {
-            CopyTo(array, arrayIndex, Length);
+            CopyTo(array, arrayIndex, _data.Length);
         }
 
-        public T this[int index]
+        public T this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Read(index);
@@ -189,33 +193,32 @@ namespace AnotherECS.Collections
             set => Set(index, ref value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            _bind.Clear(_id);
+            _data.Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<T> AsSpan()
-            => new(GetUnsafe(), Length);
+            => new(ReadPtr(), (int)Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Write(_id);
-            writer.Write(_length);
+            _data.Pack(ref writer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _id = reader.ReadUInt32();
-            _length = reader.ReadInt32();
+            _data.Unpack(ref reader);
         }
 
-        object ICArray.Get(int index)
+        object ICArray.Get(uint index)
             => Get(index);
 
-        void ICArray.Set(int index, object value)
+        void ICArray.Set(uint index, object value)
         {
             Set(index, (T)value);
         }
@@ -229,31 +232,17 @@ namespace AnotherECS.Collections
             => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetRaw(int index, ref T value)
+        public T[] ToArray()
+            => _data.ToArray();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void CopyTo(T[] array, uint startIndex, uint count)
         {
-            _bind.SetRaw(_id, index, ref value);
+            _data.CopyTo(array, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetRaw(int index, T value)
-        {
-            _bind.SetRaw(_id, index, ref value);
-        }
-
-#if !ANOTHERECS_RELEASE
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void ApplyComponentVersion()
-        {
-            _bind.UpdateComponentVersion(_id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal int GetComponentVersion()
-            => _bind.GetComponentVersion(_id);
-#endif
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe int IndexOf(ref T item, int count)
+        internal unsafe int IndexOf(ref T item, uint count)
         {
 #if !ANOTHERECS_RELEASE
             if (!IsValide)
@@ -261,7 +250,7 @@ namespace AnotherECS.Collections
                 throw new DArrayInvalideException(this.GetType());
             }
 #endif
-            var array = ReadUnsafe();
+            var array = ReadPtr();
 
             var comparer = EqualityComparer<T>.Default;
             for (int i = 0; i < count; ++i)
@@ -275,68 +264,21 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe void CopyTo(T[] array, int arrayIndex, int count)
-        {
-#if !ANOTHERECS_RELEASE
-            if (!IsValide)
-            {
-                throw new DArrayInvalideException(this.GetType());
-            }
-            if (count > Length)
-            {
-                throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(Length)}': {Length}");
-            }
-#endif
-            if (array == null)
-            {
-                throw new NullReferenceException(nameof(array));
-            }
-            if (arrayIndex < 0)
-            {
-                throw new IndexOutOfRangeException(nameof(arrayIndex));
-            }
-            if (count <= 0)
-            {
-                throw new IndexOutOfRangeException(nameof(count));
-            }
-            if (array.Length - arrayIndex < count)
-            {
-                throw new ArgumentException($"There is not enough space in {nameof(array)} to copy.");
-            }
-
-            var data = ReadUnsafe();
-            var iMax = Math.Min(array.Length - arrayIndex, count);
-            for (int i = 0; i < iMax; ++i)
-            {
-                array[i + arrayIndex] = data[i];
-            }
-        }
+        internal unsafe T* ReadPtr()
+            => _data.ReadPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void UpdateVersion()
-        {
-            _bind.UpdateVersion(_id);
-        }
+        internal unsafe T* GetPtr()
+            => _data.GetPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe T* ReadUnsafe()
-            => _bind.Read<T>(_id);
+        internal void EnterCheckChanges()
+            => _data.EnterCheckChanges();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe T* GetUnsafe()
-            => _bind.Get<T>(_id);
+        internal bool ExitCheckChanges()
+            => _data.ExitCheckChanges();
 
-        internal DArrayCaller Bind
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _bind;
-        }
-
-        internal uint Id
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _id;
-        }
 
 #if !ANOTHERECS_RELEASE
         private void Validate()
@@ -352,34 +294,22 @@ namespace AnotherECS.Collections
         public struct Enumerator : IEnumerator<T>
         {
             private readonly DArray<T> _data;
-            private int _current;
-            private readonly int _length;
-#if !ANOTHERECS_RELEASE
-            private readonly int _version;
-#endif
+            private uint _current;
+            private readonly uint _length;
+
             public Enumerator(ref DArray<T> data)
             {
                 _data = data;
                 _length = _data.Length;
-                _current = -1;
-#if !ANOTHERECS_RELEASE
-                _version = _data.GetComponentVersion();  //TODO SER error
-#endif
+                _current = uint.MaxValue;
+
+                _data.EnterCheckChanges();
             }
 
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get
-                {
-#if !ANOTHERECS_RELEASE
-                    if (_version != _data.GetComponentVersion())
-                    {
-                        throw new CollectionWasModifiedException();
-                    }
-#endif
-                    return _data[_current];
-                }
+                get => _data.Read(_current);
             }
 
             object IEnumerator.Current
@@ -392,11 +322,14 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Reset()
             {
-                _current = -1;
+                _current = uint.MaxValue;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Dispose() { }
+            public void Dispose()
+            {
+                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+            }
         }
     }
 }

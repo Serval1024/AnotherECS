@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
+using Unity.Collections;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
@@ -22,7 +23,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ref readonly IdCollection GetEntities(uint archetypeId)
+        internal ref readonly IdCollection<HAllocator> GetEntities(uint archetypeId)
             => ref _state.GetEntitiesByArchetype(archetypeId);
 
         public IEnumerator<uint> GetEnumerator()
@@ -49,7 +50,7 @@ namespace AnotherECS.Core
             private readonly FilterData* _filterData;
 
             private int _current;
-            private NHashSetUintId.Enumerator _currentCollection;
+            private NHashSet<HAllocator, uint, U4U4HashProvider>.Enumerator _currentCollection;
 
             public Enumerator(BFilter filter)
             {

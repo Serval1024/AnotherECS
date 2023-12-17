@@ -18,13 +18,11 @@ namespace AnotherECS.Core
     public enum ComponentOptions
     {
         HistoryNonSync = 1 << 1,
-        HistoryByChange = 1 << 2,
-        HistoryByTick = 1 << 3,
-        HistoryByVersion = 1 << 4,
-        DataFree = 1 << 5,
-        NotDataFree = 1 << 6,
-        WithoutSparseDirectDense = 1 << 9,
-        CompileFastAccess = 1 << 10,
-        UseISerialize = 1 << 112,
+        HistoryByVersion = 1 << 2,
+        DataFree = 1 << 3,
+        NotDataFree = 1 << 4,
+        WithoutSparseDirectDense = 1 << 5,
+        CompileFastAccess = 1 << 6,
+        UseISerialize = 1 << 7,
     }
 }

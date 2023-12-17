@@ -11,11 +11,11 @@ namespace AnotherECS.Gen.Project
     public static class LayoutInstaller
     {
 <#ARRAY [0..COMPONENT:COUNT]#>
----<#IF INJECT#>
+---<#IF INJECT || REBINDMEMORY#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Install_<#COMPONENT:FULL_NAME_AS_TEXT#>(State state)
         {
-            CommonLayoutInstaller.Install_<#CALLER:TYPE_NAME#><<#COMPONENT:FULL_NAME#>>(state, new ComponentFunction<<#COMPONENT:FULL_NAME#>>() { construct = &Construct, deconstruct = &Deconstruct });
+            CommonLayoutInstaller.Install_<#CALLER:TYPE_NAME#><<#COMPONENT:FULL_NAME#>>(state, new ComponentFunction<<#COMPONENT:FULL_NAME#>>() { <#IF INJECT#>construct = &Construct, deconstruct = &Deconstruct, <#END#><#IF REBINDMEMORY#>memoryRebind = &MemoryRebind <#END#>});
 
             static void Construct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
@@ -41,6 +41,20 @@ namespace AnotherECS.Gen.Project
 ------<#END#>
 ------<#ARRAY [0..INJECT:FIELD:COUNT]#>
                 component.<#INJECT:FIELD:NAME#>.Deconstruct();
+------<#END#>
+#endif
+            }
+
+            static void MemoryRebind(ref MemoryRebinderContext rebinder, ref TEST.TestSet2 component)
+            {
+#if !ANOTHERECS_RELEASE
+                ReflectionUtils.ReflectionRebindMemoryHandle(ref component, ref rebinder);
+#else
+------<#IF REBINDMEMORY:SELF#>
+                component.RebindMemoryHandle(ref rebinder);
+------<#END#>
+------<#ARRAY [0..REBINDMEMORY:FIELD:COUNT]#>
+                component.<#REBINDMEMORY:FIELD:NAME#>.RebindMemoryHandle(ref rebinder);
 ------<#END#>
 #endif
             }

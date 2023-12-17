@@ -5,19 +5,21 @@
         public uint entityCapacity;
 
         public uint componentCapacity;
-        public uint recycledCapacity;
-        public uint dArrayCapacity;
-        public uint filterCapacity;
+        public uint recycleCapacity;
+        public uint archetypeCapacity;
+
+        public uint chunkLimit;
 
         public static GeneralConfig Create()
            => new()
            {
                entityCapacity = 16,
-               recycledCapacity = 256,
+               recycleCapacity = 256,
 
                componentCapacity = 64,
-               dArrayCapacity = 32,
-               filterCapacity = 32,
+               archetypeCapacity = 32,
+
+               chunkLimit = 32,
            };
     }
 }

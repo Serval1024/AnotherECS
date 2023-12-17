@@ -3,21 +3,21 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Caller
 {
-    internal struct AttachDetachFeature<TSparse> : IData, IAttachDetachProvider<TSparse>, IBoolConst
+    internal unsafe struct AttachDetachFeature<TSparse> : IData, IAttachDetachProvider<TSparse>, IBoolConst
         where TSparse : unmanaged
     {
         public State state;
-        public NArray<TSparse> bufferCopyTemp;
-        public NArray<Op> opsTemp;
+        public NArray<BAllocator, TSparse> bufferCopyTemp;
+        public NArray<BAllocator, Op> opsTemp;
 
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(State state, ref GlobalDepencies depencies)
+        public void Allocate(State state, GlobalDepencies* depencies)
         {
             this.state = state;
-            bufferCopyTemp.Allocate(depencies.config.general.entityCapacity);
-            opsTemp.Allocate(depencies.config.general.entityCapacity);
+            bufferCopyTemp.Allocate(&depencies->bAllocator, depencies->config.general.entityCapacity);
+            opsTemp.Allocate(&depencies->bAllocator, depencies->config.general.entityCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,11 +28,11 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<TSparse> GetSparseTempBuffer()
+        public NArray<BAllocator, TSparse> GetSparseTempBuffer()
             => bufferCopyTemp;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<Op> GetOps()
+        public NArray<BAllocator, Op> GetOps()
             => opsTemp;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

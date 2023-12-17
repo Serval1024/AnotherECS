@@ -4,18 +4,18 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct NonSparseFeature<TDense, TTickData, TTickDataDense> :
-        ILayoutAllocator<uint, TDense, uint, TTickData>,
-        ISparseResize<uint, TDense, uint, TTickData>,
-        IDenseResize<uint, TDense, uint, TTickData>,
-        ISparseProvider<uint, TDense, uint, TTickData, TTickDataDense>,
-        IIterator<uint, TDense, uint, TTickData>,
+    /*
+    internal unsafe struct NonSparseFeature2<TAllocator, TDense> :
+        ILayoutAllocator<TAllocator, uint, TDense, uint>,
+        ISparseResize<TAllocator, uint, TDense, uint>,
+        IDenseResize<TAllocator, uint, TDense, uint>,
+        ISparseProvider<TAllocator, uint, TDense, uint>,
+        IIterator<TAllocator, uint, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag
 
+        where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
-        where TTickData : unmanaged, ITickData<TTickDataDense>
-        where TTickDataDense : unmanaged
     {
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
@@ -30,26 +30,26 @@ namespace AnotherECS.Core.Caller
            => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, ref GlobalDepencies depencies) { }
+        public void Allocate(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, uint capacity)
+        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint capacity)
             where JSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, uint capacity) { }
+        public void DenseResize(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint ConvertToDenseIndex(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, uint id)
+        public uint ConvertToDenseIndex(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
             => id;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsHas(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, uint id)
+        public bool IsHas(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
            => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<uint, TDense, uint, TTickData>
+        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
+            where AIterable : struct, IIterable<TAllocator, uint, TDense, uint>
         {
             if (count != 0)
             {
@@ -66,11 +66,10 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse<THistory>(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex)
-            where THistory : struct, IHistory<uint, TDense, uint, TTickData, TTickDataDense> { }
+        public void SetSparse(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref uint GetSparse(ref UnmanagedLayout<uint, TDense, uint, TTickData> layout, uint id)
+        public ref uint GetSparse(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
             => throw new NotSupportedException();
-    }
+    }*/
 }

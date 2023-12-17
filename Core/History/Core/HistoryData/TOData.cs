@@ -2,7 +2,8 @@
 
 namespace AnotherECS.Core
 {
-    public struct TOData<TDense> : ITickData<TDense>, ISerialize
+    /*
+    public struct TOData<TDense> : ILoopBuffer<TDense>, ISerialize
         where TDense : struct
     {
         public uint Tick
@@ -29,4 +30,5 @@ namespace AnotherECS.Core
             value = reader.ReadStruct<TDense>();
         }
     }
+    */
 }

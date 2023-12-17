@@ -1,15 +1,15 @@
-﻿using AnotherECS.Core.Collection;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Actions
 {
     internal static unsafe class DetachLayoutActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, uint startIndex)
+        public static void Detach_bool<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex> layout, State state, uint startIndex)
+            where TAllocator : unmanaged, IAllocator
             where TDenseIndex : unmanaged
             where TDense : unmanaged, IDetach
-            where TTickData : unmanaged
         {
             ref var storage = ref layout.storage;
 
@@ -27,10 +27,10 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Detach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, uint count)
+        public static void Detach_ushort<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex> layout, State state, uint count)
+            where TAllocator : unmanaged, IAllocator
             where TDenseIndex : unmanaged
             where TDense : unmanaged, IDetach
-            where TTickData : unmanaged
         {
             if (count != 0)
             {
@@ -55,10 +55,10 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Detach_bool<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<bool, TDense, TDenseIndex, TTickData> layout, State state, ref NArray<Op> ops)
-          where TDense : unmanaged, IDetach
-          where TDenseIndex : unmanaged
-          where TTickData : unmanaged
+        public static unsafe void Detach_bool<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex> layout, State state, ref NArray<BAllocator, Op> ops)
+            where TAllocator : unmanaged, IAllocator
+            where TDense : unmanaged, IDetach
+            where TDenseIndex : unmanaged
         {
             ref var sparse = ref layout.storage.sparse;
             var densePtr = layout.storage.dense.GetPtr();
@@ -73,10 +73,10 @@ namespace AnotherECS.Core.Actions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Detach_ushort<TDense, TDenseIndex, TTickData>(ref UnmanagedLayout<ushort, TDense, TDenseIndex, TTickData> layout, State state, ref NArray<Op> ops)
+        public static unsafe void Detach_ushort<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex> layout, State state, ref NArray<BAllocator, Op> ops)
+            where TAllocator : unmanaged, IAllocator
             where TDense : unmanaged, IDetach
             where TDenseIndex : unmanaged
-            where TTickData : unmanaged
         {
             ref var sparse = ref layout.storage.sparse;
             var sparsePtr = sparse.GetPtr();

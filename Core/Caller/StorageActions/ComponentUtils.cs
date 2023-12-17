@@ -1,3 +1,5 @@
+using AnotherECS.Core.Caller;
+using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +18,6 @@ namespace AnotherECS.Core
             return (attribute != null) && attribute.Options.HasFlag(option);
         }
 
-        public static bool IsCopyable(Type type)
-            => typeof(ICopyable).IsAssignableFrom(type);
-
         public static bool IsVersion(Type type)
             => typeof(IVersion).IsAssignableFrom(type);
 
@@ -27,15 +26,6 @@ namespace AnotherECS.Core
 
         public static bool IsHistory(Type type)
             => !IsOption(type, ComponentOptions.HistoryNonSync);
-
-        public static bool IsHistoryByChange(Type type)
-            => IsHistory(type) && !IsHistoryByTick(type);
-
-        public static bool IsHistoryByTick(Type type)
-            => IsHistory(type) && IsOption(type, ComponentOptions.HistoryByTick);
-
-        public static bool IsHistoryByVersion(Type type)
-            => IsHistory(type) && IsOption(type, ComponentOptions.HistoryByVersion);
 
         public static bool IsUnmanaged(Type type)
         {
@@ -97,8 +87,8 @@ namespace AnotherECS.Core
         public static bool IsDefault(Type type)
             => typeof(IDefault).IsAssignableFrom(type);
 
-        public static bool IsShared(Type type)
-            => typeof(IShared).IsAssignableFrom(type);
+        public static bool IsSingle(Type type)
+            => typeof(ISingle).IsAssignableFrom(type);
 
         public static bool IsMarker(Type type)
             => typeof(IMarker).IsAssignableFrom(type);
@@ -123,21 +113,28 @@ namespace AnotherECS.Core
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
 
+        public static bool IsRebindMemory(Type type)
+            => typeof(IRebindMemoryHandle).IsAssignableFrom(type);
+
+        public static bool IsRebindMemoryMembers(Type type)
+            => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
+            .Any(p => typeof(IRebindMemoryHandle).IsAssignableFrom(p.GetMemberType()));
+
         public static int GetTypeSize(Type type)            
             => System.Runtime.InteropServices.Marshal.SizeOf(type);
 
-        public static InjectData[] GetInjectToMembers(Type type)
+        public static FieldData[] GetFieldToMembers<T>(Type type)
         {
-            var result = new List<InjectData>();
+            var result = new List<FieldData>();
 
             foreach (var member in type.GetFieldsAndProperties(DATA_FREE_FLAGS))
             {
                 if (typeof(IInject).IsAssignableFrom(member.GetMemberType()))
                 {
-                    result.Add(new InjectData
+                    result.Add(new FieldData
                     {
                         fieldName = member.GetMemberName(),
-                        argumentTypes = ReflectionUtils.ExtractGenericFromInterface<IInject>(member.GetMemberType()).Select(p => p.Name).ToArray(),
+                        argumentTypes = ReflectionUtils.ExtractGenericFromInterface<T>(member.GetMemberType()).ToArray(),
                     });
                 }
             }
@@ -146,10 +143,10 @@ namespace AnotherECS.Core
         }
 
 
-        public struct InjectData
+        public struct FieldData
         {
             public string fieldName;
-            public string[] argumentTypes;
+            public Type[] argumentTypes;
         }
     }
 }

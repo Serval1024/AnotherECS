@@ -1,20 +1,8 @@
-﻿using AnotherECS.Serializer;
-
-namespace AnotherECS.Core
+﻿namespace AnotherECS.Core
 {
-    internal struct TickProvider : ISerialize
+    internal struct TickProvider
     {
         public uint tick;
-
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            writer.Write(tick);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            tick = reader.ReadUInt32();
-        }
     }
 }
 
