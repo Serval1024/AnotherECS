@@ -239,7 +239,6 @@ namespace AnotherECS.Core
         public void Pack(ref WriterContextSerializer writer)
         {
             _isNeedRefreshReference = true;
-            _notReadyToUse = new NArray<BAllocator, bool>(writer.GetDepency<NPtr<BAllocator>>().Value, _meta.Length);
 
             _meta.PackBlittable(ref writer);
             _buffer.PackBlittable(ref writer);
@@ -253,6 +252,8 @@ namespace AnotherECS.Core
             _buffer.UnpackBlittable(ref reader);
             _recordHistoryLength = reader.ReadUInt32();
             _current = reader.ReadUInt32();
+
+            _notReadyToUse = new NArray<BAllocator, bool>(_meta.GetAllocator(), _meta.Length);
         }
 
         private struct Meta

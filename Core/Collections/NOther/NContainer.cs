@@ -145,6 +145,8 @@ namespace AnotherECS.Core.Collection
 
             if (_data.IsValide)
             {
+                writer.Write(_allocator->GetId());
+
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
                     ((ISerialize)ReadRef()).Pack(ref writer);
@@ -172,7 +174,8 @@ namespace AnotherECS.Core.Collection
 
             if (memoryHandle.segment != 0 && memoryHandle.chunk != 0 )
             {
-                this = new NContainer<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle);
+                uint allocatorId = reader.ReadUInt32();
+                this = new NContainer<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {

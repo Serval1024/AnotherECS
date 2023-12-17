@@ -21,8 +21,8 @@ namespace AnotherECS.Serializer
             _meta.Pack(ref writer, ref data);
             if (data.IsValide)
             {
+                writer.Write(data.GetAllocator()->GetId());
                 data.GetMemoryHandle().Pack(ref writer);
-                //writer.Write(data.ReadPtr(), data.ByteLength);
             }
         }
 
@@ -32,11 +32,11 @@ namespace AnotherECS.Serializer
             var elementCount = _meta.Unpack(ref reader);
             if (elementCount != uint.MaxValue)
             {
+                uint allocatorId = reader.ReadUInt32();
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
 
-                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
-                //reader.Read(data.ReadPtr(), elementCount * (uint)sizeof(T));      //TODO SER
+                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 return;
             }
             data = default;
@@ -55,6 +55,7 @@ namespace AnotherECS.Serializer
 
             if (data.IsValide)
             {
+                writer.Write(data.GetAllocator()->GetId());
                 data.GetMemoryHandle().Pack(ref writer);
                 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
@@ -98,10 +99,11 @@ namespace AnotherECS.Serializer
 
             if (elementCount != uint.MaxValue)
             {
+                uint allocatorId = reader.ReadUInt32();
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
                 
-                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
+                data = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
@@ -155,6 +157,7 @@ namespace AnotherECS.Serializer
                 var ptr = data.GetPtr();
                 _count.Pack(ref writer, count);
 
+                writer.Write(data.GetAllocator()->GetId());
                 data.GetMemoryHandle().Pack(ref writer);
 
                 for (uint i = 0; i < count; i++)
@@ -173,10 +176,11 @@ namespace AnotherECS.Serializer
             {
                 var count = _count.Unpack(ref reader);
 
+                uint allocatorId = reader.ReadUInt32();
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
 
-                var nArray = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>().Value, ref memoryHandle, elementCount);
+                var nArray = new NArray<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 var buffer = nArray.ReadPtr();
 
                 T element = default;

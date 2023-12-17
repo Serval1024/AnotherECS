@@ -12,8 +12,6 @@ namespace AnotherECS.Serializer
         internal const byte CODE_NULL = 0;
         internal const byte CODE_ARRAY = 1;
 
-        private List<object> _depencies;
-
         private readonly Dictionary<Type, IElementSerializer> _serializerByTypes = new();
         private readonly ITypeToUInt _converter;
 
@@ -28,7 +26,7 @@ namespace AnotherECS.Serializer
         {
             _converter = typeToUIntProvider;
             _typeArrayPool = new ArrayPool<object>(4);
-            _depencies = new List<object>();
+
             Init(Create(typeToUIntProvider.GetISerializeres()));
         }
 
@@ -43,7 +41,7 @@ namespace AnotherECS.Serializer
 
         public byte[] Pack(object data)
         {
-            var context = new WriterContextSerializer(this, _depencies);
+            var context = new WriterContextSerializer(this, null);
 
             Pack(ref context, data);
             var result = context.ToArray();
@@ -59,7 +57,7 @@ namespace AnotherECS.Serializer
 
         public object Unpack(byte[] data, params object[] constructArgs)
         {
-            var context = new ReaderContextSerializer(this, data, _depencies);
+            var context = new ReaderContextSerializer(this, data, null);
             var result = Unpack(ref context, constructArgs);
             context.Dispose();
             return result;

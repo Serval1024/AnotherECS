@@ -97,8 +97,11 @@ namespace AnotherECS.Core
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.AddDepency(new NPtr<GlobalDepencies>(_depencies));
-            writer.AddDepency(new NPtr<BAllocator>(&_depencies->bAllocator));
-            writer.AddDepency(new NPtr<HAllocator>(&_depencies->hAllocator));
+            writer.AddDepency(_depencies->bAllocator.GetId(), new NPtr<BAllocator>(&_depencies->bAllocator));
+            writer.AddDepency(_depencies->hAllocator.GetId(), new NPtr<HAllocator>(&_depencies->hAllocator));
+
+            writer.Write(_depencies->bAllocator.GetId());
+            writer.Write(_depencies->hAllocator.GetId());
 
             _depencies->Pack(ref writer);
             _events.Pack(ref writer);
@@ -115,9 +118,13 @@ namespace AnotherECS.Core
         {
             _depencies = CreateGlobalDepencies();
 
+            var bAllocatorId = reader.ReadUInt32();
+            var hAllocatorId = reader.ReadUInt32();
+
             reader.AddDepency(new NPtr<GlobalDepencies>(_depencies));
-            reader.AddDepency(new NPtr<BAllocator>(&_depencies->bAllocator));
-            reader.AddDepency(new NPtr<HAllocator>(&_depencies->hAllocator));
+            reader.AddDepency(bAllocatorId, new NPtr<BAllocator>(&_depencies->bAllocator));
+            reader.AddDepency(hAllocatorId, new NPtr<HAllocator>(&_depencies->hAllocator));
+
 
             _depencies->Unpack(ref reader);
             _depencies->filters = new Filters(_depencies, FILTER_INIT_CAPACITY);

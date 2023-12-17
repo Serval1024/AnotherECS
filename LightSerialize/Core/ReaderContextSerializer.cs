@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using AnotherECS.Serializer.Exceptions;
 
@@ -10,13 +9,21 @@ namespace AnotherECS.Serializer
     {
         private readonly LightSerializer _serializer;
         private Stream _stream;
-        private List<object> _depencies;
+        private Dictionary<Type, Dictionary<uint, object>> _depencies;
 
-        public ReaderContextSerializer(LightSerializer serializer, byte[] data, List<object> depencies)
+        public ReaderContextSerializer(LightSerializer serializer, byte[] data, IEnumerable<(uint, object)> depencies)
         {
             _serializer = serializer;
             _stream = new Stream(data);
-            _depencies = depencies;
+
+            _depencies = new Dictionary<Type, Dictionary<uint, object>>();
+            if (depencies != null)
+            {
+                foreach (var depency in depencies)
+                {
+                    AddDepency(depency.Item1, depency.Item2);
+                }
+            }
         }
 
         public void Dispose()
@@ -27,27 +34,36 @@ namespace AnotherECS.Serializer
         public uint Position
             => _stream.Position;
 
-        public void AddDepency<T>(ref T depency)
-        {
-            _depencies.Add(depency);
-        }
-
         public void AddDepency<T>(T depency)
         {
-            AddDepency(ref depency);
+            AddDepencyInternal(typeof(T), 0, depency);
         }
 
-        public T GetDepency<T>()
+        public void AddDepency<T>(uint depencyId, T depency)
         {
-            for (int i = 0; i < _depencies.Count; ++i)
-            {
-                if (typeof(T).IsAssignableFrom(_depencies[i].GetType()))
-                {
-                    return (T)_depencies[i];
-                }
-            }
-            throw new ArgumentException(typeof(T).Name);
+            AddDepencyInternal(typeof(T), depencyId, depency);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddDepencyInternal(Type type, uint depencyId, object depency)
+        {
+            if (_depencies.TryGetValue(type, out var dict))
+            {
+                dict.Add(depencyId, depency);
+            }
+            else
+            {
+                _depencies.Add(type, new Dictionary<uint, object>() { { depencyId, depency } });
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetDepency<T>(uint depencyId)
+            => (T)_depencies[typeof(T)][depencyId];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetDepency<T>()
+            => (T)_depencies[typeof(T)][0];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Type IdToType(uint id)

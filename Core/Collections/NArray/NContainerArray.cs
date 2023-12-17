@@ -494,8 +494,9 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _allocator = reader.GetDepency<NPtr<TAllocator>>().Value;
             _data.UnpackBlittable(ref reader);
+            _allocator = _data.GetAllocator();
+
             for(uint i = 0; i < _data.Length; ++i)
             {
                 _allocator->Repair(ref _data.GetRef(i));

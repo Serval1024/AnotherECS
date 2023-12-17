@@ -269,6 +269,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
+            writer.Write(_allocator->GetId());
             writer.Write(_id);
             writer.Write(_chunkAllocated);
             writer.Write(_multiplier);
@@ -283,7 +284,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _allocator = reader.GetDepency<NPtr<BAllocator>>().Value;
+            var allocatorId = reader.ReadUInt32();
+            _allocator = reader.GetDepency<NPtr<BAllocator>>(allocatorId).Value;
 #if !ANOTHERECS_RELEASE
             _memoryChecker = new MemoryChecker<BAllocator>(_allocator);
 #endif
