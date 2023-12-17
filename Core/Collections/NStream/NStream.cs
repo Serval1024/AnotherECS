@@ -346,7 +346,7 @@ namespace AnotherECS.Core.Collection
         {
             if (_position + typeSize > _data.Length)
             {
-                throw new EndOfStreamException();
+                throw new System.IO.EndOfStreamException();
             }
         }
 

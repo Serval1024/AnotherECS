@@ -676,7 +676,7 @@ namespace AnotherECS.Core
         {
             if (resultCount == result.Length)
             {
-                throw new Exceptions.FilterPatternException(result.Length);
+                throw new Exceptions.ArchetypePatternException(result.Length);
             }
             result[resultCount++] = node.archetypeId;
             PatternFindInChild(ref node, result, ref resultCount, excludes);
@@ -695,7 +695,7 @@ namespace AnotherECS.Core
                     {
                         if (resultCount == result.Length)
                         {
-                            throw new Exceptions.FilterPatternException(result.Length);
+                            throw new Exceptions.ArchetypePatternException(result.Length);
                         }
                         result[resultCount++] = node.archetypeId;
                     }

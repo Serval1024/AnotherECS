@@ -41,11 +41,11 @@ namespace AnotherECS.Collections
                 throw new ArgumentException($"{nameof(text)} is longer than capacity. Capacity: '{Capacity}'. text length '{text.Length}'");
             }
 
-            for (uint i = 0; i < text.Length; ++i)
+            for (int i = 0; i < text.Length; ++i)
             {
                 _data[i] = text[i];
             }
-            _data.Count = text.Length;
+            _data.Count = (uint)text.Length;
         }
 
         public static implicit operator string(FString<#ELEMENT_COUNT#> fstring) => fstring.ToString();
