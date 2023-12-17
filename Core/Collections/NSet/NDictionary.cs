@@ -10,7 +10,7 @@ namespace AnotherECS.Core.Collection
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
-        where THashProvider : struct, IHash<TKey, ulong>
+        where THashProvider : struct, IHash<TKey, uint>
     {
         private NArray<TAllocator, int> _buckets;
         private NArray<TAllocator, Entry> _entries;
@@ -58,7 +58,7 @@ namespace AnotherECS.Core.Collection
 #if ANOTHERECS_RELEASE
                 return default;
 #else
-                throw new System.Collections.Generic.KeyNotFoundException();
+                throw new KeyNotFoundException();
 #endif
             }
             set

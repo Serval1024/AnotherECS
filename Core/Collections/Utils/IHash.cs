@@ -47,6 +47,6 @@ namespace AnotherECS.Core.Collection
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetHash(ref ulong key)
-            => (uint)key;
+            => (uint)((key >> 32) ^ (key));
     }
 }

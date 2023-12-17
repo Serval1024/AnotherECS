@@ -9,12 +9,12 @@ namespace AnotherECS.Core
     {
         private const uint INIT_CAPACITY = 32;
 
-        private NDictionary<TAllocator, ulong, CheckEntry, U8U8HashProvider> _memoryChecks;
+        private NDictionary<TAllocator, ulong, CheckEntry, U8U4HashProvider> _memoryChecks;
 
 
         public MemoryChecker(TAllocator* allocator)
         {
-            _memoryChecks = new NDictionary<TAllocator, ulong, CheckEntry, U8U8HashProvider>(allocator, INIT_CAPACITY);
+            _memoryChecks = new NDictionary<TAllocator, ulong, CheckEntry, U8U4HashProvider>(allocator, INIT_CAPACITY);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

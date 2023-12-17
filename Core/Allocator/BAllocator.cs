@@ -12,8 +12,8 @@ namespace AnotherECS.Core
         private MemoryChecker<RawAllocator> _memoryChecker;
 #endif
         private RawAllocator* _rawAllocator;
-        private NDictionary<RawAllocator, ulong, MemEntry, U8U8HashProvider> _pointerToSize;
-        private NDictionary<RawAllocator, uint, ulong, U4U8HashProvider> _idToPointer;
+        private NDictionary<RawAllocator, ulong, MemEntry, U8U4HashProvider> _pointerToSize;
+        private NDictionary<RawAllocator, uint, ulong, U4U4HashProvider> _idToPointer;
         private uint _counter;
 
         public ulong TotalBytesAllocated

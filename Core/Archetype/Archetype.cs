@@ -26,8 +26,8 @@ namespace AnotherECS.Core
         private NContainerList<BAllocator, IdCollection<HAllocator>> _collections;
         private NList<BAllocator, MoveCollection> _temporaries;
 
-        private NDictionary<BAllocator, ulong, uint, U8U8HashProvider> _transitionAddCache;
-        private NDictionary<BAllocator, ulong, uint, U8U8HashProvider> _transitionRemoveCache;
+        private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionAddCache;
+        private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionRemoveCache;
         private NBuffer<BAllocator, BufferEntry> _bufferChange;
         private NHashSet<BAllocator, ushort, U2U4HashProvider> _isTemporaries;
 
@@ -46,8 +46,8 @@ namespace AnotherECS.Core
             _nodes = new NList<BAllocator, Node>(&_depencies->bAllocator, _depencies->componentTypesCount + 1);
             _collections = new NContainerList<BAllocator, IdCollection<HAllocator>>(&_depencies->bAllocator, _nodes.Length);
 
-            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U8HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U8HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
+            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
+            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
             _bufferChange = new NBuffer<BAllocator, BufferEntry>(&_depencies->bAllocator, CHANGE_INIT_CAPACITY);
 
             _isTemporaries = new NHashSet<BAllocator, ushort, U2U4HashProvider>(&_depencies->bAllocator, isTemporaries);

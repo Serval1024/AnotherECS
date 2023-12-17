@@ -5,17 +5,17 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct Mask : IHash<Mask, ulong>, IEquatable<Mask>
+    internal unsafe struct Mask : IHash<Mask, uint>, IEquatable<Mask>
     {
         public Items includes;
         public Items excludes;
 
-        private ulong _hash;
+        private uint _hash;
 
         public bool IsValide
             => includes.count != 0;
 
-        public ulong Hash
+        public uint Hash
         {
             get
             {
@@ -52,11 +52,11 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ulong GetHash()
+        private uint GetHash()
             => includes.GetHash() ^ excludes.GetHash();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ulong IHash<Mask, ulong>.GetHash(ref Mask key)
+        uint IHash<Mask, uint>.GetHash(ref Mask key)
             => key.Hash;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -133,9 +133,9 @@ namespace AnotherECS.Core
             public Span<ushort> ValuesAsSpan()
                 => new(UnsafeUtils.AddressOf(ref values[0]), count);
 
-            public ulong GetHash()
+            public uint GetHash()
             {
-                ulong hash = count;
+                uint hash = count;
                 for(int i = 0; i < FILTER_COMPONENT_MAX; ++i)
                 {
                     hash = unchecked(hash * 314159 + values[i]);       
