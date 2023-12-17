@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using AnotherECS.Core.Actions;
+using static UnityEditor.Experimental.GraphView.Port;
 
 namespace AnotherECS.Core.Caller
 {
@@ -60,10 +61,14 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void DeallocateId(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, TDenseIndex id)
         {
-            LayoutActions.TryResizeDense(ref layout, layout.storage.recycle.Length << 1);
             ref var recycleIndex = ref layout.storage.recycleIndex;
-            var recycle = layout.storage.recycle.GetPtr();
-            recycle[recycleIndex++] = id;
+            ref var recycle = ref layout.storage.recycle;
+            if (recycleIndex == recycle.Length)
+            {
+                recycle.Resize(recycle.Length << 1);
+            }
+
+            recycle.GetRef(recycleIndex++) = id;
         }
     }
 }

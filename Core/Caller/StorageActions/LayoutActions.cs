@@ -29,40 +29,6 @@ namespace AnotherECS.Core.Actions
             => layout.storage.denseIndex - startIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryResizeDense<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            ref var storage = ref layout.storage;
-            if (storage.denseIndex == storage.dense.Length)
-            {
-                layout.storage.dense.Resize(capacity);
-
-                return true;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryResizeRecycle<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            ref var storage = ref layout.storage;
-            if (storage.recycleIndex == storage.recycle.Length)
-            {
-                layout.storage.recycle.Resize(capacity);
-
-                return true;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TNumber>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
@@ -137,20 +103,6 @@ namespace AnotherECS.Core.Actions
             if (storage.dense.IsValide)
             {
                 storage.dense.Clear();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UpdateVersion<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint tick, uint count)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            var version = layout.storage.version.GetPtr();
-            for (uint i = 0; i < count; ++i)
-            {
-                version[i] = tick;
             }
         }
     }

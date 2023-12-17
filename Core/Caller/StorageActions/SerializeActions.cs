@@ -3,70 +3,6 @@ using AnotherECS.Serializer;
  
 namespace AnotherECS.Core.Actions
 {
-    /*
-    internal static unsafe class LayoutSerializer
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PackBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref WriterContextSerializer writer, ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            PartialLayoutSerializer.PackCommonBlittable(ref writer, ref layout.storage);
-            layout.storage.dense.Pack(ref writer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UnpackBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref ReaderContextSerializer reader, ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            PartialLayoutSerializer.UnpackCommonBlittable(ref reader, ref layout.storage);
-            layout.storage.dense.Unpack(ref reader);
-        }
-    }
-    */
-    internal static unsafe class PartialLayoutSerializer
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void PackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref WriterContextSerializer writer, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            storage.sparse.Pack(ref writer);
-            storage.version.Pack(ref writer);
-            storage.recycle.Pack(ref writer);
-
-            writer.Write(storage.denseIndex);
-            writer.Write(storage.recycleIndex);
-        }
-
-     
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UnpackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref ReaderContextSerializer reader, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            storage.sparse.Unpack(ref reader);
-            storage.version.Unpack(ref reader);
-            storage.recycle.Unpack(ref reader);
-
-            storage.denseIndex = reader.ReadUInt32();
-            storage.recycleIndex = reader.ReadUInt32();
-        }
-    }
-
     internal static unsafe class SerializeActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,5 +84,42 @@ namespace AnotherECS.Core.Actions
             layout->storage.dense.Unpack(ref reader);
         }
     }
+
+    internal static unsafe class PartialLayoutSerializer
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
+            (ref WriterContextSerializer writer, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
+            where TAllocator : unmanaged, IAllocator
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+        {
+            storage.sparse.Pack(ref writer);
+            storage.version.Pack(ref writer);
+            storage.recycle.Pack(ref writer);
+
+            writer.Write(storage.denseIndex);
+            writer.Write(storage.recycleIndex);
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void UnpackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
+            (ref ReaderContextSerializer reader, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
+            where TAllocator : unmanaged, IAllocator
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+        {
+            storage.sparse.Unpack(ref reader);
+            storage.version.Unpack(ref reader);
+            storage.recycle.Unpack(ref reader);
+
+            storage.denseIndex = reader.ReadUInt32();
+            storage.recycleIndex = reader.ReadUInt32();
+        }
+    }
+
 }
 

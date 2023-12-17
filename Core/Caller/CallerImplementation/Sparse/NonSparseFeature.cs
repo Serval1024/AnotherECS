@@ -4,52 +4,58 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller
 {
-    /*
-    internal unsafe struct NonSparseFeature2<TAllocator, TDense> :
-        ILayoutAllocator<TAllocator, uint, TDense, uint>,
-        ISparseResize<TAllocator, uint, TDense, uint>,
-        IDenseResize<TAllocator, uint, TDense, uint>,
-        ISparseProvider<TAllocator, uint, TDense, uint>,
-        IIterator<TAllocator, uint, TDense, uint>,
+    internal unsafe struct NonSparseFeature<TAllocator, TDense> :
+        ILayoutAllocator<TAllocator, bool, TDense, uint>,
+        ISparseResize<TAllocator, bool, TDense, uint>,
+        IDenseResize<TAllocator, bool, TDense, uint>,
+        ISparseProvider<TAllocator, bool, TDense, uint>,
+        IIterator<TAllocator, bool, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag
 
         where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
     {
+        private ushort _itemId;
+        private GlobalDepencies* _depencies;
+
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(GlobalDepencies* depencies, ushort callerId) { }
+        public void Config(GlobalDepencies* depencies, ushort callerId)
+        {
+            _depencies = depencies;
+            _itemId = callerId;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<JSparseBoolConst>()
            where JSparseBoolConst : struct, IBoolConst
-           => false;
+           => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies) { }
+        public void Allocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint capacity)
+        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity)
             where JSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint capacity) { }
+        public void DenseResize(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint ConvertToDenseIndex(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
+        public uint ConvertToDenseIndex(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint id)
             => id;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsHas(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
-           => false;
+        public bool IsHas(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint id)
+            => _depencies->archetype.IsHasItem(_depencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, uint, TDense, uint>
+        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
+            where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
             {
@@ -58,18 +64,19 @@ namespace AnotherECS.Core.Caller
                 ref var storage = ref layout.storage;
                 var dense = storage.dense;
 
+                dense.Dirty();
                 for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
                 {
-                    iterable.Each(ref layout, ref depencies, ref dense.GetRef(i));
+                    iterable.Each(ref layout, ref depencies, ref dense.ReadRef(i));
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex) { }
+        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref uint GetSparse(ref UnmanagedLayout<TAllocator, uint, TDense, uint> layout, uint id)
+        public ref bool GetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, EntityId id)
             => throw new NotSupportedException();
-    }*/
+    }
 }

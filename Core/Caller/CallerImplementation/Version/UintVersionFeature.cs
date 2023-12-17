@@ -49,7 +49,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Change(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDepencies depencies, uint index)
         {
-            layout.storage.version.Set(index, depencies.tickProvider.tick);
+            layout.storage.version.GetRef(index) = depencies.tickProvider.tick;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
