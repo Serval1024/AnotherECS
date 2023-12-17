@@ -172,20 +172,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void FirstStartup() //TODO SER inter
         {
-            for (int i = 1; i < _callers.Length; ++i)
-            {
-                if (_callers[i].IsAttach && _callers[i] is IAttachCaller callerAttach)
-                {
-                    callerAttach.Attach();
-                }
-            }
-            for (int i = 1; i < _callers.Length; ++i)
-            {
-                if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
-                {
-                    injectCaller.CallConstruct();
-                }
-            }
+            CallConstruct();
+            CallAttach();
         }
         #endregion
 
@@ -656,6 +644,18 @@ namespace AnotherECS.Core
             }
 
             Tick = tick;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallAttach()
+        {
+            for (int i = 1; i < _callers.Length; ++i)
+            {
+                if (_callers[i].IsAttach && _callers[i] is IAttachCaller callerAttach)
+                {
+                    callerAttach.Attach();
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

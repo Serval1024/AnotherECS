@@ -16,8 +16,7 @@ namespace AnotherECS.Core.Caller
         public void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, uint startIndex, uint count)
             where JSparseBoolConst : struct, IBoolConst
         {
-            JSparseBoolConst sparseBoolConst = default;
-            if (sparseBoolConst.Is)
+            if (default(JSparseBoolConst).Is)
             {
                 var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
                 AttachLayoutActions.Attach_bool(ref *layoutBool, state, startIndex);
@@ -33,8 +32,7 @@ namespace AnotherECS.Core.Caller
         public void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, ref NArray<BAllocator, Op> ops)
             where JSparseBoolConst : struct, IBoolConst
         {
-            JSparseBoolConst sparseBoolConst = default;
-            if (sparseBoolConst.Is)
+            if (default(JSparseBoolConst).Is)
             {
                 var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
                 AttachLayoutActions.Attach_bool(ref *layoutBool, state, ref ops);
