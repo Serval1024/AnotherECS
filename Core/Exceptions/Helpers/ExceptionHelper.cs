@@ -178,5 +178,14 @@ namespace AnotherECS.Core
                 throw new Exceptions.CollectionWasModifiedException();
             }
         }
+
+        public static void ThrowIfEmpty<T>(ICaller<T> caller)
+            where T : unmanaged, IComponent
+        {
+            if (caller.GetDenseMemoryAllocated == 0u)
+            {
+                throw new Exceptions.ComponentHasNoDataException(typeof(T));
+            }
+        }
     }
 }

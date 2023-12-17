@@ -138,7 +138,14 @@ namespace AnotherECS.Core.Caller
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => default(TInject).Is;
         }
-        
+
+        public uint GetDenseMemoryAllocated
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _layout->storage.dense.IsValide
+                ? (_layout->storage.dense.Length * (uint)sizeof(TDense))
+                : 0u;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* GetLayout()

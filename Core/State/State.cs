@@ -372,6 +372,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(id);
         }
@@ -382,6 +383,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(id);
         }
@@ -391,6 +393,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_depencies->archetype.GetItemId(_depencies->entities.ReadArchetypeId(id), index)));
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller(_depencies->archetype.GetItemId(_depencies->entities.ReadArchetypeId(id), index)).Set(id, component);
         }
@@ -401,6 +404,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller<T>().Set(id, ref data);
         }
@@ -473,6 +477,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(0);
         }
@@ -483,6 +488,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(0);
         }
@@ -493,6 +499,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller<T>().Set(0, ref data);
         }

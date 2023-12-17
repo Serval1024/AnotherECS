@@ -20,6 +20,7 @@ namespace AnotherECS.Core.Caller
         bool IsDetach { get; }
         bool IsInject { get; }
         bool IsTemporary { get; }
+        uint GetDenseMemoryAllocated { get; }
         internal unsafe void Config(void* layout, GlobalDepencies* depencies, ushort id, DirtyHandler<HAllocator> dirtyHandler, State state);
         internal void AllocateLayout();
         Type GetElementType();
