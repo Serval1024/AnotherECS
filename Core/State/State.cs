@@ -393,7 +393,6 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_depencies->archetype.GetItemId(_depencies->entities.ReadArchetypeId(id), index)));
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller(_depencies->archetype.GetItemId(_depencies->entities.ReadArchetypeId(id), index)).Set(id, component);
         }
