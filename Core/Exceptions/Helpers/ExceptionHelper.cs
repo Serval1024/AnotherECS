@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
+using AnotherECS.Exceptions;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
@@ -22,7 +23,7 @@ namespace AnotherECS.Core
 
             if (!state.IsHas(id))
             {
-                throw new Exceptions.EntityNotFoundException(id);
+                throw new EntityNotFoundException(id);
             }
         }
 
@@ -34,7 +35,7 @@ namespace AnotherECS.Core
 
             if (!state.IsHas<T>(id))
             {
-                throw new Exceptions.ComponentNotFoundException(typeof(T));
+                throw new ComponentNotFoundException(typeof(T));
             }
         }
 
@@ -46,7 +47,7 @@ namespace AnotherECS.Core
 
             if (state.IsHas<T>(id))
             {
-                throw new Exceptions.ComponentExistsException(typeof(T));
+                throw new ComponentExistsException(typeof(T));
             }
         }
 
@@ -57,7 +58,7 @@ namespace AnotherECS.Core
 
             if (caller.IsSingle)
             {
-                throw new Exceptions.ComponentNotMultiException(caller.GetElementType());
+                throw new ComponentNotMultiException(caller.GetElementType());
             }
         }
 
@@ -80,7 +81,7 @@ namespace AnotherECS.Core
 
             if (!state.IsHas<T>())
             {
-                throw new Exceptions.ComponentNotFoundException(caller.GetElementType());
+                throw new ComponentNotFoundException(caller.GetElementType());
             }
         }
 
@@ -92,7 +93,7 @@ namespace AnotherECS.Core
 
             if (state.IsHas<T>())
             {
-                throw new Exceptions.ComponentExistsException(caller.GetElementType());
+                throw new ComponentExistsException(caller.GetElementType());
             }
         }
 
@@ -103,7 +104,7 @@ namespace AnotherECS.Core
 
             if (caller.IsSingle)
             {
-                throw new Exceptions.ComponentNotSingleException(typeof(T));
+                throw new ComponentNotSingleException(typeof(T));
             }
         }
 
@@ -175,7 +176,7 @@ namespace AnotherECS.Core
         {
             if (isChange)
             {
-                throw new Exceptions.CollectionWasModifiedException();
+                throw new CollectionWasModifiedException();
             }
         }
 
@@ -184,7 +185,29 @@ namespace AnotherECS.Core
         {
             if (caller.GetDenseMemoryAllocated == 0u)
             {
-                throw new Exceptions.ComponentHasNoDataException(typeof(T));
+                throw new ComponentHasNoDataException(typeof(T));
+            }
+        }
+
+        public static void ThrowIfExists<T>(State state, uint id, IConfig[] configs)
+           where T : IConfig
+        {
+            ThrowIfDisposed(state);
+
+            if (configs[id] != null)
+            {
+                throw new ConfigExistsException(typeof(T));
+            }
+        }
+
+        public static void ThrowIfDontExists<T>(State state, uint id, IConfig[] configs)
+           where T : IConfig
+        {
+            ThrowIfDisposed(state);
+
+            if (configs[id] == null)
+            {
+                throw new ConfigNotFoundException(typeof(T));
             }
         }
     }

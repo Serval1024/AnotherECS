@@ -38,6 +38,12 @@ namespace AnotherECS.Gen.Project
         protected override ushort GetIndex<T>()
             => CompileComponentIdProvider<<#STATE:GEN_NAME#>, T>.ID;
 
+        protected override uint GetConfigCount()
+            => <#CONFIG:COUNT#>;
+
+        protected override ushort GetConfigIndex<T>()
+            => CompileConfigIdProvider<<#STATE:GEN_NAME#>, T>.ID;
+
 
         public struct FastAccess
         {

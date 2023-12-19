@@ -5,6 +5,7 @@ using AnotherECS.Serializer;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using EntityId = System.UInt32;
+using System;
 
 namespace AnotherECS.Core
 {
@@ -26,6 +27,7 @@ namespace AnotherECS.Core
         private uint _layoutCount;
 
         private ICaller[] _callers;
+        private IConfig[] _configs;
 
         private Events _events;
         #endregion
@@ -47,6 +49,7 @@ namespace AnotherECS.Core
             _layoutCount = 1;
             _layouts = new NContainerArray<HAllocator, UnmanagedLayout>(&_depencies->hAllocator, GetLayoutCount());
             _callers = new ICaller[GetLayoutCount()];
+            _configs = new IConfig[GetConfigArrayCount()];
 
             _events = new Events(config.history.recordTickLength);
 
@@ -97,6 +100,15 @@ namespace AnotherECS.Core
         {
             _depencies->bAllocator.Dispose();    //Free all memory.
             _allocator.Deallocate(_depencies);
+
+            foreach(var config in _configs)
+            {
+                if (config is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+             
         }
         #endregion
 
@@ -121,6 +133,8 @@ namespace AnotherECS.Core
             {
                 _callers[i].Pack(ref writer);
             }
+
+            writer.Pack(_configs);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
@@ -152,6 +166,8 @@ namespace AnotherECS.Core
             {
                 _callers[i].Unpack(ref reader);
             }
+
+            _configs = reader.Unpack<IConfig[]>();
 
             for (uint i = 1; i < _callers.Length; ++i)
             {
@@ -505,6 +521,72 @@ namespace AnotherECS.Core
         }
         #endregion
 
+        #region config
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHasConfig<T>()
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return _configs[GetConfigIndex<T>()] != null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetOrAddConfig<T>(T data)
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            _configs[GetConfigIndex<T>()] = data;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddConfig<T>(T data)
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfExists<T>(this, GetConfigIndex<T>(), _configs);
+#endif
+            _configs[GetConfigIndex<T>()] = data;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveConfig<T>()
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+#endif
+            _configs[GetConfigIndex<T>()] = null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetConfig<T>()
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+#endif
+            return (T)_configs[GetConfigIndex<T>()];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetConfig<T>(T data)
+            where T : IConfig
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+#endif
+            _configs[GetConfigIndex<T>()] = data;
+        }
+        #endregion
+
         #region other public api
         public uint Tick
         {
@@ -777,6 +859,9 @@ namespace AnotherECS.Core
         private uint GetLayoutCount()
             => GetComponentCount() + 1 + CORE_LAYOUT_COUNT;
 
+        private uint GetConfigArrayCount()
+            => GetConfigCount() + 1;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller<T> GetCaller<T>(ushort index)
             where T : unmanaged, IComponent
@@ -864,6 +949,10 @@ namespace AnotherECS.Core
         protected abstract uint GetComponentCount();
         protected abstract ushort GetIndex<T>()
             where T : IComponent;
+
+        protected abstract uint GetConfigCount();
+        protected abstract ushort GetConfigIndex<T>()
+            where T : IConfig;
         #endregion
 
         #region declarations

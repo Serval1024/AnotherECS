@@ -2,10 +2,10 @@ using System.IO;
 
 namespace AnotherECS.Generator
 {
-    public class ComponentInstallerGenerator : IFileGenerator
+    public class ElementsInstallerGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "ComponentInstaller.gen.cs";
-        public string TemplateFileName => "componentinstaller.template.txt";
+        public string SaveFilePostfixName => "ElementsInstaller.gen.cs";
+        public string TemplateFileName => "elementsinstaller.template.txt";
 
         public ContentGenerator[] Compile(GeneratorContext context, bool isForceOverride)
             => new[] { CompileInternal(context) };
@@ -18,7 +18,7 @@ namespace AnotherECS.Generator
 
         private ContentGenerator CompileInternal(GeneratorContext context)
         {
-            var variables = VariablesConfigGenerator.GetComponent(context);
+            var variables = VariablesConfigGenerator.GetElements(context);
 
             return new ContentGenerator(
                 GetPath(context),

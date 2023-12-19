@@ -78,7 +78,7 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        public static TemplateParser.Variables GetState(GeneratorContext context, string stateGenName, ITypeToUshort components)
+        public static TemplateParser.Variables GetState(GeneratorContext context, string stateGenName, ITypeToUshort components, ITypeToUshort configs)
         {
             var fastAccessComponents = new CustomTypeToIdConverter<ushort, IComponent>(
                 components.GetAssociationTable().Values.Where(p => new TypeOptions(p).isCompileFastAccess)
@@ -90,6 +90,8 @@ namespace AnotherECS.Generator
                     { "STATE:GEN_NAME", () => stateGenName },
 
                     { "COMPONENT:COUNT", () => components.GetAssociationTable().Count.ToString() },
+                    { "CONFIG:COUNT", () => configs.GetAssociationTable().Count.ToString() },
+                    
                     { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components.IdToType(variables.GetIndexAsId(0))) },
                     { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components.IdToType(variables.GetIndexAsId(0))) },
 
@@ -100,7 +102,7 @@ namespace AnotherECS.Generator
                     { "COMPONENT:FASTACCESS:NAME", () => ReflectionUtils.GetUnderLineName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
                     { "COMPONENT:FASTACCESS:FULL_NAME", () => ReflectionUtils.GetDotFullName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
 
-                    { "EMBENED:ComponentInstallerGenerator.cs", () => new ComponentInstallerGenerator().Compile(context, false).First().text },
+                    { "EMBENED:ComponentInstallerGenerator.cs", () => new ElementsInstallerGenerator().Compile(context, false).First().text },
                     { "EMBENED:SystemInstallerGenerator.cs", () => new SystemInstallerGenerator().Compile(context, false).First().text },
                 };
             return variables;
@@ -120,7 +122,7 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        public static TemplateParser.Variables GetComponent(GeneratorContext context)
+        public static TemplateParser.Variables GetElements(GeneratorContext context)
         {
             var states = context.GetStates();
             TemplateParser.Variables variables = null;
@@ -134,8 +136,22 @@ namespace AnotherECS.Generator
                         states.IdToType(variables.GetIndexAsId(0))
                     ).Count().ToString()
                 },
+
                 { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(
                     context.GetComponents(
+                        states.IdToType(variables.GetIndexAsId(0))
+                        )
+                    .IdToType(variables.GetIndexAsId(1)))
+                },
+
+                 { "CONFIG:COUNT", () =>
+                    context.GetConfigs(
+                        states.IdToType(variables.GetIndexAsId(0))
+                    ).Count().ToString()
+                },
+
+                { "CONFIG:FULL_NAME", () => ReflectionUtils.GetDotFullName(
+                    context.GetConfigs(
                         states.IdToType(variables.GetIndexAsId(0))
                         )
                     .IdToType(variables.GetIndexAsId(1)))

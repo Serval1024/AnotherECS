@@ -7,7 +7,7 @@ namespace AnotherECS.Views.Core
     [CompileComponentOption(ComponentOptions.HistoryNonSync)]
     public struct ViewSystemReference : IConfig
     {
-        public IViewSystem system;
+        internal IViewSystem system;
     }
 
     public struct ViewHandle : IComponent, IAttach, IDetach, ISerialize
@@ -17,12 +17,12 @@ namespace AnotherECS.Views.Core
 
         public void OnAttach(State state)
         {
-            //state.Get<ViewSystemReference>().system.Create(state, ownerId, viewId);
+            state.GetConfig<ViewSystemReference>().system.Create(state, ownerId, viewId);
         }
 
         public void OnDetach(State state)
         {
-            //state.Get<ViewSystemReference>().system.Destroy(ownerId);
+            state.GetConfig<ViewSystemReference>().system.Destroy(ownerId);
         }
 
         public void Pack(ref WriterContextSerializer writer)

@@ -37,6 +37,13 @@ namespace AnotherECS.Generator
             return (ITypeToUshort)Activator.CreateInstance(genericType, new[] { _ignoreTypes });
         }
 
+        public ITypeToUshort GetConfigs(Type stateType)
+        {
+            var type = typeof(RuntimeConfigConverter<>);
+            var genericType = type.MakeGenericType(stateType);
+            return (ITypeToUshort)Activator.CreateInstance(genericType, new[] { _ignoreTypes });
+        }
+
         public Type[] GetComponents()
             => new IgnoresTypeToIdConverter<ushort, IComponent>(_ignoreTypes)
                 .GetAssociationTable().Values.ToArray();
