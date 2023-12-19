@@ -16,7 +16,7 @@ namespace AnotherECS.Views.Core
         internal uint viewId;
 
         public void OnAttach(State state)
-        { 
+        {
             //state.Get<ViewSystemReference>().system.Create(state, ownerId, viewId);
         }
 

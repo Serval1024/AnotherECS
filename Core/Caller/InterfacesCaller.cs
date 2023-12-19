@@ -6,11 +6,15 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe interface IAllocaterProvider<TAllocator>
+    internal unsafe interface IAllocaterProvider<TAllocator, TAltAllocator>
         where TAllocator : unmanaged, IAllocator
+        where TAltAllocator : unmanaged, IAllocator
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         TAllocator* Get(GlobalDepencies* depencies);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        TAltAllocator* GetAlt(GlobalDepencies* depencies);
     }
 
     internal unsafe interface IData : IDisposable
@@ -34,14 +38,20 @@ namespace AnotherECS.Core.Caller
         public void Remove(ref GlobalDepencies depencies, uint id, ushort elementId);
     }
 
-    internal interface IAttachDetachProvider<TSparse> : IStateProvider
+    internal interface IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex> : IStateProvider
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
+        where TDense : unmanaged
+        where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        NArray<BAllocator, TSparse> GetSparseTempBuffer();
+        NArray<BAllocator, byte> GetAddRemoveVersion();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        NArray<BAllocator, Op> GetOps();
+        void RevertStage1(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint denseAllocated);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void AddRemoveEvent(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id);
     }
 
     internal interface IStartIndexProvider
@@ -111,7 +121,7 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Allocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDepencies depencies);
+        void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDepencies depencies);
     }
 
     internal interface IInject<TAllocator, TSparse, TDense, TDenseIndex>
@@ -134,12 +144,12 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool IsSparseResize<JSparseBoolConst>()
-            where JSparseBoolConst : struct, IBoolConst;
+        bool IsSparseResize<TSparseBoolConst>()
+            where TSparseBoolConst : struct, IBoolConst;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
-            where JSparseBoolConst : struct, IBoolConst;
+        void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+            where TSparseBoolConst : struct, IBoolConst;
     }
 
     internal interface IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
@@ -194,34 +204,7 @@ namespace AnotherECS.Core.Caller
     {
         bool IsRevertFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
     }
-    /*
-    internal interface IDenseRevert<TAllocator, TSparse, TDense, TDenseIndex>
-        where TAllocator : unmanaged, IAllocator
-        where TSparse : unmanaged
-        where TDense : unmanaged
-        where TDenseIndex : unmanaged
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RevertDense(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint tick);
-    }*/
-    /*
-    internal interface IDenseCopyable<TDense>
-        where TDense : unmanaged
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void CopyFrom(ref TDense source, ref TDense destination);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Recycle(ref TDense component);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Recycle<TAllocator, TSparse, TDenseIndex, TSparseStorage>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDenseIndex : unmanaged
-            where TSparseStorage : struct, IIterator<TAllocator, TSparse, TDense, TDenseIndex>;
-    }
-    */
+   
     internal interface IVersion<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
@@ -249,12 +232,12 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, uint startIndex, uint count)
-            where JSparseBoolConst : struct, IBoolConst;
+        void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, ref NArray<BAllocator, Op> ops)
-            where JSparseBoolConst : struct, IBoolConst;
+        void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Attach(State state, ref TDense component);
@@ -267,12 +250,12 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Detach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, uint startIndex, uint count)
-            where JSparseBoolConst : struct, IBoolConst;
+        void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Detach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, ref NArray<BAllocator, Op> ops)
-            where JSparseBoolConst : struct, IBoolConst;
+        void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Detach(State state, ref TDense component);
@@ -297,6 +280,30 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, ref TDense component);
     }
+
+    internal unsafe interface IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
+      where TAllocator : unmanaged, IAllocator
+      where TSparse : unmanaged
+      where TDense : unmanaged
+      where TDenseIndex : unmanaged
+    {
+        void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
+            where AIterable : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, TEachData>
+            where TEachData : struct, IEachData;
+    }
+
+    internal unsafe interface IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, TEachData>
+        where TAllocator : unmanaged, IAllocator
+        where TSparse : unmanaged
+        where TDense : unmanaged
+        where TDenseIndex : unmanaged
+        where TEachData : struct
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void Each(ref TEachData data, uint index, ref TDense component);
+    }
+
+    internal unsafe interface IEachData { }
 
     internal unsafe interface ICustomSerialize<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
@@ -382,12 +389,12 @@ namespace AnotherECS.Core.Caller
             where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RevertTo<TAttachDetachStorage, TAttach, TDetach, JSparseBoolConst, TVersion, TIsUseSparse>
+        void RevertTo<TAttachDetachStorage, TAttach, TDetach, TSparseBoolConst, TVersion, TIsUseSparse>
             (UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout, ref TAttachDetachStorage attachDetachStorage, uint tick)
             where TAttachDetachStorage : struct, IAttachDetachProvider<TSparse>, IBoolConst
             where TAttach : struct, IAttach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
             where TDetach : struct, IDetach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
-            where JSparseBoolConst : struct, IBoolConst
+            where TSparseBoolConst : struct, IBoolConst
             where TVersion : struct, IBoolConst
             where TIsUseSparse : struct, IUseSparse;
     }

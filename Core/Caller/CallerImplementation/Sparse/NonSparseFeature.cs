@@ -10,6 +10,7 @@ namespace AnotherECS.Core.Caller
         IDenseResize<TAllocator, bool, TDense, uint>,
         ISparseProvider<TAllocator, bool, TDense, uint>,
         IIterator<TAllocator, bool, TDense, uint>,
+        IDataIterator<TAllocator, bool, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag
 
@@ -31,16 +32,16 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSparseResize<JSparseBoolConst>()
-           where JSparseBoolConst : struct, IBoolConst
+        public bool IsSparseResize<TSparseBoolConst>()
+           where TSparseBoolConst : struct, IBoolConst
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies) { }
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity)
-            where JSparseBoolConst : struct, IBoolConst { }
+        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity)
+            where TSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DenseResize(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity) { }
@@ -68,6 +69,26 @@ namespace AnotherECS.Core.Caller
                 for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
                 {
                     iterable.Each(ref layout, ref depencies, ref dense.ReadRef(i));
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
+            where AIterable : struct, IDataIterable<TAllocator, bool, TDense, uint, TEachData>
+            where TEachData : struct, IEachData
+        {
+            if (count != 0)
+            {
+                AIterable iterable = default;
+
+                ref var storage = ref layout.storage;
+                var dense = storage.dense;
+
+                dense.Dirty();
+                for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
+                {
+                    iterable.Each(ref data, i, ref dense.ReadRef(i));
                 }
             }
         }

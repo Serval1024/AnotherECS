@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using AnotherECS.Core.Actions;
 using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Caller
@@ -13,41 +12,61 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, uint startIndex, uint count)
-            where JSparseBoolConst : struct, IBoolConst
+        public void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            if (default(JSparseBoolConst).Is)
-            {
-                var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
-                DetachLayoutActions.Detach_bool(ref *layoutBool, state, startIndex);
-            }
-            else
-            {
-                var layoutUshort = (UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex>*)layout;
-                DetachLayoutActions.Detach_ushort(ref *layoutUshort, state, count);
-            }
+            default(TSparseProvider).ForEach<DetachIterable, DetachData>(ref layout, new DetachData() { state = state }, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, ref NArray<BAllocator, Op> ops)
-            where JSparseBoolConst : struct, IBoolConst
+        public void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            if (default(JSparseBoolConst).Is)
-            {
-                var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
-                DetachLayoutActions.Detach_bool(ref *layoutBool, state, ref ops);
-            }
-            else
-            {
-                var layoutUshort = (UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex>*)layout;
-                DetachLayoutActions.Detach_ushort(ref *layoutUshort, state, ref ops);
-            }
+            default(TSparseProvider).ForEach<VersionDetachIterable, VersionDetachData>(
+                ref layout,
+                new VersionDetachData() { state = state, version = version, newVersion = layout.storage.addRemoveVersion },
+                startIndex,
+                count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Detach(State state, ref TDense component)
         {
             component.OnDetach(state);
+        }
+
+
+        private struct VersionDetachData : IEachData
+        {
+            public State state;
+            public NArray<BAllocator, byte> version;
+            public NArray<TAllocator, byte> newVersion;
+        }
+
+        private struct VersionDetachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, VersionDetachData>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Each(ref VersionDetachData data, uint index, ref TDense component)
+            {
+                if (data.version.Read(index) != data.newVersion.Read(index))
+                {
+                    component.OnDetach(data.state);
+                }
+            }
+        }
+
+        private struct DetachData : IEachData
+        {
+            public State state;
+        }
+
+        private struct DetachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, DetachData>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Each(ref DetachData data, uint index, ref TDense component)
+            {
+                component.OnDetach(data.state);
+            }
         }
     }
 }

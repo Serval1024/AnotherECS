@@ -32,6 +32,7 @@ namespace AnotherECS.Core
 
         #region data cache
         private ITickFinishedCaller[] _tickFinishedCallers;  //TODO SER MTHREAD
+        private IRevertStages[] _revertStagesCallers;  //TODO SER MTHREAD
         private ResizableData[] _resizableCallers;  //TODO SER MTHREAD
         #endregion
 
@@ -79,6 +80,12 @@ namespace AnotherECS.Core
                 _depencies->config.general.chunkLimit,
                 _depencies->config.history.buffersCapacity,
                 _depencies->config.history.recordTickLength);
+            _depencies->altHAllocator = new HAllocator(
+                &_depencies->bAllocator,
+                3,
+                _depencies->config.general.chunkLimit,
+                _depencies->config.history.buffersCapacity,
+                _depencies->config.history.recordTickLength);
 
             _depencies->componentTypesCount = GetComponentCount();
             _depencies->entities = new Entities(_depencies);
@@ -99,9 +106,11 @@ namespace AnotherECS.Core
             writer.AddDepency(new NPtr<GlobalDepencies>(_depencies));
             writer.AddDepency(_depencies->bAllocator.GetId(), new NPtr<BAllocator>(&_depencies->bAllocator));
             writer.AddDepency(_depencies->hAllocator.GetId(), new NPtr<HAllocator>(&_depencies->hAllocator));
+            writer.AddDepency(_depencies->altHAllocator.GetId(), new NPtr<HAllocator>(&_depencies->altHAllocator));
 
             writer.Write(_depencies->bAllocator.GetId());
             writer.Write(_depencies->hAllocator.GetId());
+            writer.Write(_depencies->altHAllocator.GetId());
 
             _depencies->Pack(ref writer);
             _events.Pack(ref writer);
@@ -120,10 +129,12 @@ namespace AnotherECS.Core
 
             var bAllocatorId = reader.ReadUInt32();
             var hAllocatorId = reader.ReadUInt32();
+            var altHAllocatorId = reader.ReadUInt32();
 
             reader.AddDepency(new NPtr<GlobalDepencies>(_depencies));
             reader.AddDepency(bAllocatorId, new NPtr<BAllocator>(&_depencies->bAllocator));
             reader.AddDepency(hAllocatorId, new NPtr<HAllocator>(&_depencies->hAllocator));
+            reader.AddDepency(altHAllocatorId, new NPtr<HAllocator>(&_depencies->altHAllocator));
 
 
             _depencies->Unpack(ref reader);
@@ -165,6 +176,8 @@ namespace AnotherECS.Core
                 .Cast<IResizableCaller>()
                 .Select((p, i) => new ResizableData() { caller = p, callerIndex = (uint)i + 1u })
                 .ToArray();
+
+            _revertStagesCallers = _callers.Skip(1).Where(p => p.IsCallRevertStages && p is IRevertStages).Cast<IRevertStages>().ToArray();
         }
         #endregion
 
@@ -558,6 +571,7 @@ namespace AnotherECS.Core
             ++Tick;
             _events.TickStarted(Tick);
             _depencies->hAllocator.TickStarted(Tick);
+            _depencies->altHAllocator.TickStarted(Tick);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -632,18 +646,43 @@ namespace AnotherECS.Core
             => _events.NextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RevertTo(uint tick)
+        public void RevertTo(uint tick) //TODO SER inter
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (_depencies->hAllocator.RevertTo(tick))
+            if (tick < Tick)
             {
-                RebindMemoryHandles();
-                CallConstruct();
-            }
+                if (IsNeedCallRevertByStages())
+                {
+                    CallRevertStage1();
 
-            Tick = tick;
+                    if (_depencies->altHAllocator.RevertTo(tick))
+                    {
+                        RebindMemoryHandles();
+                    }
+
+                    CallRevertStage2();
+
+                    if (_depencies->hAllocator.RevertTo(tick))
+                    {
+                        RebindMemoryHandles();
+                        CallConstruct();
+                    }
+
+                    CallRevertStage3();
+                }
+                else
+                {
+                    if (_depencies->hAllocator.RevertTo(tick))
+                    {
+                        RebindMemoryHandles();
+                        CallConstruct();
+                    }
+                }
+
+                Tick = tick;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -667,6 +706,37 @@ namespace AnotherECS.Core
                 {
                     injectCaller.CallConstruct();
                 }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsNeedCallRevertByStages()
+            => _revertStagesCallers.Length != 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallRevertStage1()
+        {
+            for (uint i = 0; i < _revertStagesCallers.Length; ++i)
+            {
+                _revertStagesCallers[i].RevertStage1();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallRevertStage2()
+        {
+            for (uint i = 0; i < _revertStagesCallers.Length; ++i)
+            {
+                _revertStagesCallers[i].RevertStage2();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallRevertStage3()
+        {
+            for (uint i = 0; i < _revertStagesCallers.Length; ++i)
+            {
+                _revertStagesCallers[i].RevertStage3();
             }
         }
 
@@ -762,7 +832,7 @@ namespace AnotherECS.Core
                 _layouts.GetPtr(_layoutCount),
                 _depencies,
                 (ushort)_layoutCount,
-                _layouts.GetDirtyHandler(_layoutCount),
+                new CallerDirtyHandler(_layouts.GetDirtyHandler(_layoutCount)),
                 this);
 
             ++_layoutCount;

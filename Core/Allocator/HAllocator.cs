@@ -9,7 +9,7 @@ namespace AnotherECS.Core
     public unsafe struct HAllocator : IAllocator, IDisposable, ISerialize
     {
         private const int CHUNK_PREALLOCATION_COUNT = 1;
-        private const int SEGMENT_POWER_2 = 7;
+        private const int SEGMENT_POWER_2 = 8;
         private const int SEGMENT_SIZE_BYTE = 1 << SEGMENT_POWER_2;
         private const uint SEGMENT_LIMIT = ushort.MaxValue;
 

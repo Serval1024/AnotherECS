@@ -199,7 +199,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach || option.isDetach)
             {
-                result.Append($"{typeof(AttachDetachFeature<>).GetNameWithoutGeneric()}<{layoutS}>");
+                result.Append($"{typeof(AttachDetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {

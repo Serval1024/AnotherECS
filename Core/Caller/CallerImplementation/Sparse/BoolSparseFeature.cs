@@ -9,6 +9,7 @@ namespace AnotherECS.Core.Caller
         IDenseResize<TAllocator, bool, TDense, ushort>,
         ISparseProvider<TAllocator, bool, TDense, ushort>,
         IIterator<TAllocator, bool, TDense, ushort>,
+        IDataIterator<TAllocator, bool, TDense, ushort>,
         IBoolConst,
         ISingleDenseFlag
 
@@ -23,19 +24,19 @@ namespace AnotherECS.Core.Caller
         public void Config(GlobalDepencies* depencies, ushort callerId) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSparseResize<JSparseBoolConst>()
-           where JSparseBoolConst : struct, IBoolConst
+        public bool IsSparseResize<TSparseBoolConst>()
+           where TSparseBoolConst : struct, IBoolConst
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref GlobalDepencies depencies)
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref GlobalDepencies depencies)
         {
             layout.storage.sparse.Allocate(allocator, depencies.config.general.entityCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint capacity)
-            where JSparseBoolConst : struct, IBoolConst
+        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint capacity)
+            where TSparseBoolConst : struct, IBoolConst
         {
             layout.storage.sparse.Resize(capacity);
         }
@@ -67,6 +68,27 @@ namespace AnotherECS.Core.Caller
                 if (sparse[i])
                 {
                     iterable.Each(ref layout, ref depencies, ref dense[i]);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
+            where AIterable : struct, IDataIterable<TAllocator, bool, TDense, ushort, TEachData>
+            where TEachData : struct, IEachData
+        {
+            AIterable iterable = default;
+            ref var storage = ref layout.storage;
+
+            var sparse = storage.sparse.ReadPtr();
+            var dense = storage.dense.GetPtr();
+            var denseIndex = storage.denseIndex;
+
+            for (uint i = startIndex; i < denseIndex; ++i)
+            {
+                if (sparse[i])
+                {
+                    iterable.Each(ref data, i, ref dense[i]);
                 }
             }
         }

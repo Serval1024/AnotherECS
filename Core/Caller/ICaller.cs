@@ -20,8 +20,10 @@ namespace AnotherECS.Core.Caller
         bool IsDetach { get; }
         bool IsInject { get; }
         bool IsTemporary { get; }
+        bool IsCallRevertStages { get; }
+        
         uint GetDenseMemoryAllocated { get; }
-        internal unsafe void Config(void* layout, GlobalDepencies* depencies, ushort id, DirtyHandler<HAllocator> dirtyHandler, State state);
+        internal unsafe void Config(void* layout, GlobalDepencies* depencies, ushort id, CallerDirtyHandler dirtyHandler, State state);
         internal void AllocateLayout();
         Type GetElementType();
         void Remove(EntityId id);
@@ -56,6 +58,13 @@ namespace AnotherECS.Core.Caller
     internal interface ITickFinishedCaller
     {
         void TickFinished();
+    }
+
+    internal interface IRevertStages
+    {
+        void RevertStage1();
+        void RevertStage2();
+        void RevertStage3();
     }
 
     internal interface IRevertFinishedCaller

@@ -10,6 +10,7 @@ namespace AnotherECS.Core
         public StateConfig config;
         public BAllocator bAllocator;
         public HAllocator hAllocator;
+        public HAllocator altHAllocator;
         public TickProvider tickProvider;
         public InjectContainer injectContainer;
 
@@ -22,7 +23,8 @@ namespace AnotherECS.Core
         {
             bAllocator.Pack(ref writer);
             hAllocator.Pack(ref writer);
-            
+            altHAllocator.Pack(ref writer);
+
             entities.Pack(ref writer);
             archetype.Pack(ref writer);
             writer.WriteStruct(config);
@@ -34,7 +36,8 @@ namespace AnotherECS.Core
         {
             bAllocator.Unpack(ref reader);
             hAllocator.Unpack(ref reader);
-            
+            altHAllocator.Unpack(ref reader);
+
             entities.Unpack(ref reader);
             archetype.Unpack(ref reader);
             config = reader.ReadStruct<StateConfig>();

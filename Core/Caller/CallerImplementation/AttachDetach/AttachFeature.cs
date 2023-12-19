@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using AnotherECS.Core.Actions;
 using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core.Caller
@@ -13,41 +12,60 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, uint startIndex, uint count)
-            where JSparseBoolConst : struct, IBoolConst
+        public void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            if (default(JSparseBoolConst).Is)
-            {
-                var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
-                AttachLayoutActions.Attach_bool(ref *layoutBool, state, startIndex);
-            }
-            else
-            {
-                var layoutUshort = (UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex>*)layout;
-                AttachLayoutActions.Attach_ushort(ref *layoutUshort, state, count);
-            }
+            default(TSparseProvider).ForEach<AttachIterable, AttachData>(ref layout, new AttachData() { state = state }, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Attach<JSparseBoolConst>(UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout, State state, ref NArray<BAllocator, Op> ops)
-            where JSparseBoolConst : struct, IBoolConst
+        public void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            if (default(JSparseBoolConst).Is)
-            {
-                var layoutBool = (UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex>*)layout;
-                AttachLayoutActions.Attach_bool(ref *layoutBool, state, ref ops);
-            }
-            else
-            {
-                var layoutUshort = (UnmanagedLayout<TAllocator, ushort, TDense, TDenseIndex>*)layout;
-                AttachLayoutActions.Attach_ushort(ref *layoutUshort, state, ref ops);
-            }
+            default(TSparseProvider).ForEach<VersionAttachIterable, VersionAttachData>(
+                ref layout,
+                new VersionAttachData() { state = state, version = version, newVersion = layout.storage.addRemoveVersion },
+                startIndex,
+                count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Attach(State state, ref TDense component)
         {
             component.OnAttach(state);
+        }
+
+
+        private struct VersionAttachData : IEachData
+        {
+            public State state;
+            public NArray<BAllocator, byte> version;
+            public NArray<TAllocator, byte> newVersion;
+        }
+
+        private struct VersionAttachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, VersionAttachData>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Each(ref VersionAttachData data, uint index, ref TDense component)
+            {
+                if (data.version.Read(index) != data.newVersion.Read(index))
+                {
+                    component.OnAttach(data.state);
+                }
+            }
+        }
+        private struct AttachData : IEachData
+        {
+            public State state;
+        }
+
+        private struct AttachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, AttachData>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Each(ref AttachData data, uint index, ref TDense component)
+            {
+                component.OnAttach(data.state);
+            }
         }
     }
 }

@@ -78,33 +78,6 @@ namespace AnotherECS.Core.Actions
                 storage.sparse.Clear();
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StorageClear<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-        {
-            ref var storage = ref layout.storage;
-
-            if (storage.sparse.IsValide)
-            {
-                storage.sparse.Clear();
-            }
-            if (storage.version.IsValide)
-            {
-                storage.version.Clear();
-            }
-            if (storage.recycle.IsValide)
-            {
-                storage.recycle.Clear();
-            }
-            if (storage.dense.IsValide)
-            {
-                storage.dense.Clear();
-            }
-        }
     }
 }
 

@@ -19,48 +19,48 @@ namespace AnotherECS.Core.Caller
         public bool IsRevertFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSparseResize<JSparseBoolConst>()
-            where JSparseBoolConst : struct, IBoolConst
-            => default(JSparseBoolConst).Is;
+        public bool IsSparseResize<TSparseBoolConst>()
+            where TSparseBoolConst : struct, IBoolConst
+            => default(TSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, TAllocator* allocator, ref GlobalDepencies depencies)
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, TAllocator* allocator, ref GlobalDepencies depencies)
         {
-            layout.storage.version.Allocate(allocator, layout.storage.dense.Length);
+            layout.storage.tickVersion.Allocate(allocator, layout.storage.dense.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<JSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint capacity)
-            where JSparseBoolConst : struct, IBoolConst
+        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint capacity)
+            where TSparseBoolConst : struct, IBoolConst
         {
-            JSparseBoolConst sparseBoolConst = default;
+            TSparseBoolConst sparseBoolConst = default;
             if (sparseBoolConst.Is)
             {
-                layout.storage.version.Resize(capacity);
+                layout.storage.tickVersion.Resize(capacity);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint capacity)
         {
-            layout.storage.version.Resize(capacity);
+            layout.storage.tickVersion.Resize(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Change(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, ref GlobalDepencies depencies, ushort index)
         {
-            layout.storage.version.Set(index, depencies.tickProvider.tick);
+            layout.storage.tickVersion.Set(index, depencies.tickProvider.tick);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, uint id)
-            => layout.storage.version.Get(id);
+            => layout.storage.tickVersion.Get(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void DropChange(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
         {
             var tick = depencies.tickProvider.tick;
-            var versionPtr = layout.storage.version.GetPtr();
+            var versionPtr = layout.storage.tickVersion.GetPtr();
             for (uint i = startIndex; i < count; ++i)
             {
                 versionPtr[i] = tick;

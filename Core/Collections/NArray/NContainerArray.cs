@@ -430,11 +430,14 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            for (uint i = 0; i < _data.Length; ++i)
+            if (_data.IsValide)
             {
-                _allocator->Deallocate(ref _data.GetRef(i));
+                for (uint i = 0; i < _data.Length; ++i)
+                {
+                    _allocator->Deallocate(ref _data.ReadRef(i));
+                }
+                _data.Dispose();
             }
-            _data.Dispose();
         }
 
         public NArray<TAllocator, T> ToNArray()

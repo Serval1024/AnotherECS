@@ -463,9 +463,12 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            DisposeElement(0, Length);
-            _allocator->Deallocate(ref _data);
-            _length = 0;
+            if (_data.IsValide)
+            {
+                DisposeElement(0, Length);
+                _allocator->Deallocate(ref _data);
+                _length = 0;
+            }
         }
 
         public NArray<TAllocator, T> ToNArray()
@@ -592,9 +595,10 @@ namespace AnotherECS.Core.Collection
         {
             if (typeof(T) is IDisposable)
             {
+                Dirty();
                 for (uint i = start; i < elementCount; ++i)
                 {
-                    ((IDisposable)GetRef(i)).Dispose();
+                    ((IDisposable)ReadRef(i)).Dispose();
                 }
             }
         }

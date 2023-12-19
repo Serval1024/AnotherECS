@@ -18,7 +18,7 @@ namespace AnotherECS.Core
         public bool IsDirty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => *isNotDirty;
+            get => !*isNotDirty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

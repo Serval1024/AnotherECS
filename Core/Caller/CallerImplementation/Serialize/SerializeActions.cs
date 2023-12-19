@@ -96,8 +96,9 @@ namespace AnotherECS.Core.Actions
             where TDenseIndex : unmanaged
         {
             storage.sparse.Pack(ref writer);
-            storage.version.Pack(ref writer);
             storage.recycle.Pack(ref writer);
+            storage.tickVersion.Pack(ref writer);
+            storage.addRemoveVersion.Pack(ref writer);
 
             writer.Write(storage.denseIndex);
             writer.Write(storage.recycleIndex);
@@ -113,8 +114,9 @@ namespace AnotherECS.Core.Actions
             where TDenseIndex : unmanaged
         {
             storage.sparse.Unpack(ref reader);
-            storage.version.Unpack(ref reader);
             storage.recycle.Unpack(ref reader);
+            storage.tickVersion.Unpack(ref reader);
+            storage.addRemoveVersion.Unpack(ref reader);
 
             storage.denseIndex = reader.ReadUInt32();
             storage.recycleIndex = reader.ReadUInt32();

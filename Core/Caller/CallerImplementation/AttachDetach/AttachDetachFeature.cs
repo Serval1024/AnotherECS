@@ -1,14 +1,17 @@
-﻿using System.Runtime.CompilerServices;
-using AnotherECS.Core.Collection;
+﻿using AnotherECS.Core.Collection;
+using AnotherECS.Unsafe;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct AttachDetachFeature<TSparse> : IData, IAttachDetachProvider<TSparse>, IBoolConst
+    internal unsafe struct AttachDetachFeature<TAllocator, TSparse, TDense, TDenseIndex> : IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>, IData, IBoolConst, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
+        where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
+        where TDense : unmanaged
+        where TDenseIndex : unmanaged
     {
-        public State state;
-        public NArray<BAllocator, TSparse> bufferCopyTemp;
-        public NArray<BAllocator, Op> opsTemp;
+        private State state;
+        private NArray<BAllocator, byte> _temp;
 
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
@@ -16,27 +19,62 @@ namespace AnotherECS.Core.Caller
         public void Allocate(State state, GlobalDepencies* depencies)
         {
             this.state = state;
-            bufferCopyTemp.Allocate(&depencies->bAllocator, depencies->config.general.entityCapacity);
-            opsTemp.Allocate(&depencies->bAllocator, depencies->config.general.entityCapacity);
+            _temp = new NArray<BAllocator, byte>(&depencies->bAllocator, depencies->config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDepencies depencies)
         {
-            bufferCopyTemp.Dispose();
-            opsTemp.Dispose();
+            layout.storage.addRemoveVersion.Allocate(allocator, depencies.config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<BAllocator, TSparse> GetSparseTempBuffer()
-            => bufferCopyTemp;
+        public bool IsSparseResize<TSparseBoolConst>()
+            where TSparseBoolConst : struct, IBoolConst
+            => default(TSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<BAllocator, Op> GetOps()
-            => opsTemp;
+        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+            where TSparseBoolConst : struct, IBoolConst
+        {
+            if (default(TSparseBoolConst).Is)
+            {
+                layout.storage.addRemoveVersion.Resize(capacity);
+                _temp.Resize(capacity);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+        {
+            layout.storage.addRemoveVersion.Resize(capacity);
+            _temp.Resize(capacity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public State GetState()
             => state;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddRemoveEvent(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id)
+        {
+            unchecked
+            {
+                ++layout.storage.addRemoveVersion.GetRef(id);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertStage1(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint denseAllocated)
+        {
+            UnsafeMemory.MemCopy(_temp.ReadPtr(), layout.storage.addRemoveVersion.ReadPtr(), denseAllocated * sizeof(byte));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NArray<BAllocator, byte> GetAddRemoveVersion()
+            => _temp;
     }
 }

@@ -5,14 +5,14 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    [StructLayout(LayoutKind.Sequential, Size = 192)]
+    [StructLayout(LayoutKind.Sequential, Size = 232)]
     public unsafe struct UnmanagedLayout
     {
         public static uint GetSize()
             => (uint)sizeof(UnmanagedLayout);
     }
 
-    [StructLayout(LayoutKind.Sequential, Size = 192)]
+    [StructLayout(LayoutKind.Sequential, Size = 232)]
     public unsafe struct UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> : IRebindMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
@@ -62,8 +62,9 @@ namespace AnotherECS.Core
     {
         public NArray<TAllocator, TSparse> sparse;
         public NArray<TAllocator, TDense> dense;
-        public NArray<TAllocator, uint> version;
         public NArray<TAllocator, TDenseIndex> recycle;
+        public NArray<TAllocator, uint> tickVersion;
+        public NArray<TAllocator, byte> addRemoveVersion;
 
         public uint denseIndex;
         public uint recycleIndex;
@@ -71,13 +72,26 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            sparse.Clear();
-            dense.Clear();
-            version.Clear();
-            recycle.Clear();
-
-            denseIndex = 0;
-            recycleIndex = 0;
+            if (sparse.IsValide)
+            {
+                sparse.Clear();
+            }
+            if (dense.IsValide)
+            {
+                dense.Clear();
+            }
+            if (recycle.IsValide)
+            {
+                recycle.Clear();
+            }
+            if (tickVersion.IsValide)
+            {
+                tickVersion.Clear();
+            }
+            if (addRemoveVersion.IsValide)
+            {
+                addRemoveVersion.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,8 +99,9 @@ namespace AnotherECS.Core
         {
             sparse.Dispose();
             dense.Dispose();
-            version.Dispose();
             recycle.Dispose();
+            tickVersion.Dispose();
+            addRemoveVersion.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,13 +115,17 @@ namespace AnotherECS.Core
             {
                 MemoryRebinderCaller.Rebind(ref dense, ref rebinder);
             }
-            if (version.IsValide)
-            {
-                MemoryRebinderCaller.Rebind(ref version, ref rebinder);
-            }
             if (recycle.IsValide)
             {
                 MemoryRebinderCaller.Rebind(ref recycle, ref rebinder);
+            }
+            if (tickVersion.IsValide)
+            {
+                MemoryRebinderCaller.Rebind(ref tickVersion, ref rebinder);
+            }
+            if (addRemoveVersion.IsValide)
+            {
+                MemoryRebinderCaller.Rebind(ref addRemoveVersion, ref rebinder);
             }
         }
     }
