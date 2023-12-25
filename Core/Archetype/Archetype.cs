@@ -250,7 +250,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly IdCollection<HAllocator> GetIdCollection(uint archetypeId)
+        public ref readonly IdCollection<HAllocator> ReadIdCollection(uint archetypeId)
             => ref _collections.ReadRef(_nodes.ReadRef(archetypeId).collectionId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -759,7 +759,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _depencies = reader.GetDepency<NPtr<GlobalDepencies>>().Value;
+            _depencies = reader.GetDepency<WPtr<GlobalDepencies>>().Value;
             _nodes.UnpackBlittable(ref reader);
             _collections.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);

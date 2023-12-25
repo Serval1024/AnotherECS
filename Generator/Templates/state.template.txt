@@ -63,7 +63,5 @@ namespace AnotherECS.Gen.Project
 
 
 <#EMBENED:ComponentInstallerGenerator.cs#>
-
-<#EMBENED:SystemInstallerGenerator.cs#>
     }
 }

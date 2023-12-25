@@ -11,6 +11,11 @@
         DeleteContentGenerator GetUnusedFiles(GeneratorContext context);
     }
 
+    public interface IArgumentGenerator
+    {
+        void SetArgs(object ags);
+    }
+
     public struct ContentGenerator
     {
         public string path;

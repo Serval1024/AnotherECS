@@ -36,11 +36,11 @@ namespace AnotherECS.Core
     {
         private bool _isValide;
         private int _segmentSizePower2;
-        private NArray<BAllocator, NPtr<bool>> _isDirties;
-        private NArray<BAllocator, NPtr<byte>> _memories;
+        private NArray<BAllocator, WPtr<bool>> _isDirties;
+        private NArray<BAllocator, WPtr<byte>> _memories;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public MemoryRebinder(int segmentSizePower2, NArray<BAllocator, NPtr<bool>> isDirties, NArray<BAllocator, NPtr<byte>> memories)
+        public MemoryRebinder(int segmentSizePower2, NArray<BAllocator, WPtr<bool>> isDirties, NArray<BAllocator, WPtr<byte>> memories)
         {
             _segmentSizePower2 = segmentSizePower2;
 

@@ -5,6 +5,7 @@ namespace AnotherECS.Core
 {
     internal interface IGroupSystemInternal : IDisposable
     {
+        void Prepend(ISystem system);
         void PrepareInternal();
         void ConstructInternal(State state);
         void TickStartedInternal(State state);

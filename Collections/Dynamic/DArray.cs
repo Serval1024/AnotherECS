@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<T> : IInject<NPtr<HAllocator>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
+    public unsafe struct DArray<T> : IInject<WPtr<HAllocator>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
         where T : unmanaged
     {
         private NArray<HAllocator, T> _data;
@@ -37,7 +37,7 @@ namespace AnotherECS.Collections
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<NPtr<HAllocator>>.Construct(NPtr<HAllocator> allocator)
+        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
         {
             _allocator = allocator.Value;
             Validate();
@@ -59,7 +59,7 @@ namespace AnotherECS.Collections
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(NPtr<HAllocator> allocator)
+        public void Construct(WPtr<HAllocator> allocator)
         {
             _allocator = allocator.Value;
         }

@@ -10,13 +10,13 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<NPtr<HAllocator>>, ICString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
+    public struct DString : IInject<WPtr<HAllocator>>, ICString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
     {
         private DList<char> _data;
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<NPtr<HAllocator>>.Construct(NPtr<HAllocator> allocator)
+        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
         {
             InjectUtils.Contruct(ref _data, allocator);
         }
@@ -34,7 +34,7 @@ namespace AnotherECS.Collections
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(NPtr<HAllocator> allocator)
+        public void Construct(WPtr<HAllocator> allocator)
         {
             _data.Construct(allocator);
         }

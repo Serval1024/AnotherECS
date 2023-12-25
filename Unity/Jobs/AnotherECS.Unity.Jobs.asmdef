@@ -1,0 +1,19 @@
+{
+    "name": "AnotherECS.Unity.Jobs",
+    "rootNamespace": "",
+    "references": [
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:e95cae816c3572d4f860aff8b4579eb0",
+        "GUID:10da87c2b052553459d757eb5f6b4790",
+        "GUID:185412ded22da324b997fab2a6989df0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

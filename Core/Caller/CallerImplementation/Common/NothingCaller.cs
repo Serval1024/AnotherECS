@@ -89,6 +89,10 @@ namespace AnotherECS.Core.Caller
             => 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            => default;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetupDefault(ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

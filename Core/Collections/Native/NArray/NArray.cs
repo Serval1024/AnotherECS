@@ -593,7 +593,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DisposeElement(uint start, uint elementCount)
         {
-            if (typeof(T) is IDisposable)
+            if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
             {
                 Dirty();
                 for (uint i = start; i < elementCount; ++i)

@@ -84,7 +84,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DisposeElement()
         {
-            if (typeof(T) is IDisposable)
+            if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
             {
                 Dirty();
                 ((IDisposable)GetRef()).Dispose();
@@ -179,7 +179,7 @@ namespace AnotherECS.Core.Collection
             if (memoryHandle.segment != 0 && memoryHandle.chunk != 0 )
             {
                 uint allocatorId = reader.ReadUInt32();
-                this = new NContainer<TAllocator, T>(reader.GetDepency<NPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
+                this = new NContainer<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {

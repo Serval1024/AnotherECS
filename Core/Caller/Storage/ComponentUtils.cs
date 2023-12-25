@@ -97,8 +97,11 @@ namespace AnotherECS.Core
             => (IsOption(type, ComponentOptions.DataFree) || (type.GetFields(DATA_FREE_FLAGS).Length == 0 && type.GetProperties(DATA_FREE_FLAGS).Length == 0))
             && !IsOption(type, ComponentOptions.NotDataFree);
 
+        public static bool IsForceUseSparse(Type type)
+            => IsOption(type, ComponentOptions.ForceUseSparse);
+
         public static bool IsWithoutSparseDirectDense(Type type)
-            => IsOption(type, ComponentOptions.WithoutSparseDirectDense) || GetTypeSize(type) <= 2;
+            => !IsForceUseSparse(type) && (IsOption(type, ComponentOptions.WithoutSparseDirectDense) || GetTypeSize(type) <= 2);
 
         public static bool IsCompileFastAccess(Type type)
             => IsOption(type, ComponentOptions.CompileFastAccess);

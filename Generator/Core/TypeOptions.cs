@@ -1,6 +1,5 @@
 ﻿using System;
 using AnotherECS.Core;
-using AnotherECS.Core.Caller;
 
 namespace AnotherECS.Generator
 {
@@ -81,14 +80,9 @@ namespace AnotherECS.Generator
         }
 
         private static SparseMode GetSparseMode(Type type)
-        {
-            if (ComponentUtils.IsWithoutSparseDirectDense(type) || ComponentUtils.IsSingle(type) || ComponentUtils.IsEmpty(type))
-            {
-                return SparseMode.Bool;
-            }
-            
-            return SparseMode.Ushort;
-        }
+            => (ComponentUtils.IsWithoutSparseDirectDense(type) || ComponentUtils.IsSingle(type) || ComponentUtils.IsEmpty(type))
+            ? SparseMode.Bool
+            : SparseMode.Ushort;
 
         private void Validate()
         {

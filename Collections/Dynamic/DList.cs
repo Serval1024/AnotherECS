@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<T> : IInject<NPtr<HAllocator>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRebindMemoryHandle
+    public struct DList<T> : IInject<WPtr<HAllocator>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRebindMemoryHandle
         where T : unmanaged
     {
         private DArray<T> _data;
@@ -18,7 +18,7 @@ namespace AnotherECS.Collections
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<NPtr<HAllocator>>.Construct(NPtr<HAllocator> allocator)
+        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
         { 
             InjectUtils.Contruct(ref _data, allocator);
         }
@@ -36,7 +36,7 @@ namespace AnotherECS.Collections
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(NPtr<HAllocator> allocator)
+        public void Construct(WPtr<HAllocator> allocator)
         {
             _data.Construct(allocator);
         }

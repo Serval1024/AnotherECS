@@ -25,6 +25,11 @@ namespace AnotherECS.Core
 
         public void Init()
         {
+            foreach(var system in SystemAutoAttachGlobalRegister.Gets())
+            {
+                _systems.Prepend((ISystem)Activator.CreateInstance(system));
+            }
+
             _systems.PrepareInternal();
             _systems.ConstructInternal(_state);
             _state.FirstStartup();

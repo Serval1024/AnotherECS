@@ -30,6 +30,12 @@ namespace AnotherECS.Core.Caller
         void RemoveRaw(EntityId id);
         IComponent GetCopy(EntityId id);
         void Set(EntityId id, IComponent data);
+
+        WArray<T> ReadSparse<T>()
+            where T : unmanaged;
+        WArray<T> GetDense<T>()
+            where T : unmanaged, IComponent;
+        WArray<uint> ReadVersion();
     }
 
     public interface IFastAccess

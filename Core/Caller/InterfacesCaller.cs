@@ -82,6 +82,10 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> GetDense<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where T : unmanaged, IComponent;
     }
 
     internal interface IUseSparse
@@ -112,6 +116,10 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetSparse(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, EntityId id, TDenseIndex denseIndex);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        WArray<T> ReadSparse<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where T : unmanaged;
     }
 
     internal unsafe interface ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>
@@ -213,6 +221,8 @@ namespace AnotherECS.Core.Caller
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         uint GetVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
     }
 
     internal interface IBoolConst

@@ -22,7 +22,8 @@ namespace AnotherECS.Core
         DataFree = 1 << 3,
         NotDataFree = 1 << 4,
         WithoutSparseDirectDense = 1 << 5,
-        CompileFastAccess = 1 << 6,
-        UseISerialize = 1 << 7,
+        ForceUseSparse = 1 << 6,
+        CompileFastAccess = 1 << 7,
+        UseISerialize = 1 << 8,
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
@@ -55,6 +56,7 @@ namespace AnotherECS.Core.Caller
         public uint GetVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, uint id)
             => layout.storage.tickVersion.Get(id);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void DropChange(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
         {
             var tick = depencies.tickProvider.tick;
@@ -64,5 +66,9 @@ namespace AnotherECS.Core.Caller
                 versionPtr[i] = tick;
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout)
+            => new(layout.storage.tickVersion.ReadPtr(), layout.storage.tickVersion.Length);
     }
 }

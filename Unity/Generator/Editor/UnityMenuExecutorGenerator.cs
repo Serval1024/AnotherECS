@@ -20,7 +20,12 @@ namespace AnotherECS.Unity.Editor.Generator
                 {
                     var sourcePath = Path.Combine(Path.GetDirectoryName(AssetDatabase.GetAssetPath(textAsset)), metaExpression.FileName);
                     var generator = (IGenerator)System.Activator.CreateInstance(metaExpression.GeneratorType, new[] { sourcePath, textAsset.text });
+                    if (generator is IArgumentGenerator argumentGenerator)
+                    {
+                        argumentGenerator.SetArgs(metaExpression.N);
+                    }
                     var contentGenerator = generator.Compile(null, true).First();
+                    
                     var destinationPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), contentGenerator.path);
 
                     UnityGeneratorUtils.SaveFile(destinationPath, contentGenerator.text);

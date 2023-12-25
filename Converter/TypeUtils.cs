@@ -33,6 +33,11 @@ namespace AnotherECS.Converter
                    p => p.GetCustomAttributes(typeof(T), false).Length != 0
                    )
                .ToArray();
+
+        public static Type FindType(string fullName)
+            => AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(domainAssembly => domainAssembly.GetTypes())
+                .First(p => p.FullName == fullName);
     }
 }
 

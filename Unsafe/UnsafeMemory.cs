@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unsafe
 {
-    public unsafe static class UnsafeMemory     //TODO SER +crossplatform
+    public unsafe static class UnsafeMemory
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T* AllocateReplace<T>(T replace)
@@ -67,7 +66,10 @@ namespace AnotherECS.Unsafe
         {
             if (destination != null)
             {
-                UnsafeUtility.MemClear(destination, size);
+#if UNITY_5_3_OR_NEWER
+                Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear(destination, size);
+#else
+#endif
             }
         }
 
@@ -77,31 +79,55 @@ namespace AnotherECS.Unsafe
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void* Malloc(long size, int alignment)
-            => UnsafeUtility.Malloc(size, alignment, Unity.Collections.Allocator.Persistent);
-        
+#if UNITY_5_3_OR_NEWER
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Malloc(size, alignment, Unity.Collections.Allocator.Persistent);
+#else
+            => System.Runtime.InteropServices.Marshal.AllocHGlobal((int)size).ToPointer();
+#endif
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Free(void* memory)
         {
-            UnsafeUtility.Free(memory, Unity.Collections.Allocator.Persistent);
+#if UNITY_5_3_OR_NEWER
+            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Free(memory, Unity.Collections.Allocator.Persistent);
+#else
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(new IntPtr(memory));
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MemClear(void* destination, long size)
         {
-            UnsafeUtility.MemClear(destination, size);
+#if UNITY_5_3_OR_NEWER
+            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear(destination, size);
+#else
+            MemSet(destination, 0, size);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MemSet(void* destination, byte value, long size)
         {
-            UnsafeUtility.MemSet(destination, value, size);
+#if UNITY_5_3_OR_NEWER
+            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemSet(destination, value, size);
+#else
+            var ptr = (byte*)destination;
+            for (int i = 0; i < size; ++i)
+            {
+                ptr[i] = value;
+            }
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MemCopy(void* destination, void* source, long size)
         {
-            UnsafeUtility.MemCpy(destination, source, size);
+#if UNITY_5_3_OR_NEWER
+            Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemCpy(destination, source, size);
+#else
+            Buffer.MemoryCopy(source, destination, size, size);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

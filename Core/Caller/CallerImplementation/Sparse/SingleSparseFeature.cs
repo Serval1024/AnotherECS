@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using EntityId = System.UInt32;
 
@@ -81,5 +82,19 @@ namespace AnotherECS.Core.Caller
         public ref bool GetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, EntityId id)
             => ref layout.storage.sparse.GetRef(0);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> ReadSparse<T>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout)
+            where T : unmanaged
+        {
+#if !ANOTHERECS_RELEASE
+            if (typeof(T) == typeof(bool))
+#endif
+            {
+                return new WArray<T>((T*)layout.storage.sparse.ReadPtr(), layout.storage.sparse.Length);
+            }
+#if !ANOTHERECS_RELEASE
+            throw new System.ArgumentException(nameof(T));
+#endif
+        }
     }
 }

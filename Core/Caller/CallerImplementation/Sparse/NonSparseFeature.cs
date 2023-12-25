@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -98,6 +99,11 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref bool GetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, EntityId id)
+            => throw new NotSupportedException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> ReadSparse<T>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout)
+            where T : unmanaged
             => throw new NotSupportedException();
     }
 }

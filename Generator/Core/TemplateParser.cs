@@ -1,4 +1,6 @@
-﻿using Mono.Cecil.Cil;
+﻿using AnotherECS.Converter;
+using AnotherECS.Serializer;
+using Mono.Cecil.Cil;
 using PlasticGui.WorkspaceWindow.Replication;
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,7 @@ using System.Text.RegularExpressions;
 using static AnotherECS.Generator.TemplateParser;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Editor.Generator")]
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs.Editor.Generator")]
 namespace AnotherECS.Generator
 {
     internal static class TemplateParser
@@ -304,7 +307,7 @@ namespace AnotherECS.Generator
             }
 
             public override string ToText(Variables variables)    
-                => Transform((string)variables[Head](), variables);
+                => Transform(variables[Head]().ToString(), variables);
         }
 
         public class IntVariableExpression : VariableExpression, IExpressionToInt
@@ -443,6 +446,7 @@ namespace AnotherECS.Generator
             public string Head { get; private set; }
             public string FileName { get; private set; }
             public Type GeneratorType { get; private set; }
+            public int N { get; private set; }
 
             public MetaExpression(string head)
             {
@@ -456,7 +460,13 @@ namespace AnotherECS.Generator
                 var generatorArgument = Regex.Match(head, @"(?<=GENERATOR)\s*=\s*[\w|.]*[^#\s]");
                 if (generatorArgument.Success)
                 {
-                    GeneratorType = Type.GetType(generatorArgument.Value.Trim(' ', '='));
+                    GeneratorType = TypeUtils.FindType(generatorArgument.Value.Trim(' ', '='));
+                }
+
+                var nArgument = Regex.Match(head, @"(?<=N)\s*=\s*[\w|.]*[^#\s]");
+                if (nArgument.Success && int.TryParse(nArgument.Value.Trim(' ', '='), out int number))
+                {
+                    N = number;
                 }
             }
 

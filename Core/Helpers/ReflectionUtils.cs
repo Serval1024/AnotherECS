@@ -76,7 +76,7 @@ namespace AnotherECS.Core
 
         public static void ReflectionInjectConstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct
-            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<NPtr<HAllocator>>.Construct));
+            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<WPtr<HAllocator>>.Construct));
 
         public static void ReflectionInjectDeconstruct<T>(ref T component, ref InjectContainer injectContainer)
             where T : struct

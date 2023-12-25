@@ -205,6 +205,8 @@ namespace AnotherECS.Core
                 {
                     chunk.LockSegments(segment + currentSegmentCount, deltaCount);
                     chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+
+                    UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
                     return true;
                 }
                 
@@ -285,7 +287,7 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             var allocatorId = reader.ReadUInt32();
-            _allocator = reader.GetDepency<NPtr<BAllocator>>(allocatorId).Value;
+            _allocator = reader.GetDepency<WPtr<BAllocator>>(allocatorId).Value;
 #if !ANOTHERECS_RELEASE
             _memoryChecker = new MemoryChecker<BAllocator>(_allocator);
 #endif
@@ -303,8 +305,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal MemoryRebinder GetMemoryRebinder()
         {
-            var dirties = new NArray<BAllocator, NPtr<bool>>(_allocator, _chunkAllocated);
-            var memories = new NArray<BAllocator, NPtr<byte>>(_allocator, _chunkAllocated);
+            var dirties = new NArray<BAllocator, WPtr<bool>>(_allocator, _chunkAllocated);
+            var memories = new NArray<BAllocator, WPtr<byte>>(_allocator, _chunkAllocated);
             for(uint i = ChunkDownBound; i < _chunkAllocated; ++i)
             {
                 dirties.GetRef(i) = new(_chunks.GetRef(i).GetIsDirtyPtr());
@@ -425,10 +427,10 @@ namespace AnotherECS.Core
 
             public void Allocate(BAllocator* allocator, uint capacity)
             {
-                _isDirty = new NArray<BAllocator, bool>(allocator, capacity);
-                _sizeSegments = new NArray<BAllocator, ushort>(allocator, capacity);
-                _freeSegments = new NArray<BAllocator, bool>(allocator, capacity);
-                _memory = new NArray<BAllocator, byte>(allocator, capacity << SEGMENT_POWER_2);
+                _isDirty = new NArray<BAllocator, bool>(allocator, capacity + 1);
+                _sizeSegments = new NArray<BAllocator, ushort>(allocator, capacity + 1);
+                _freeSegments = new NArray<BAllocator, bool>(allocator, capacity + 1);
+                _memory = new NArray<BAllocator, byte>(allocator, (capacity + 1) << SEGMENT_POWER_2);
                 _freeSegmentSizeMax = uint.MaxValue;
                 _segmentUpBound = SegmentDownBound;
                 _startSearch = SegmentDownBound;
@@ -473,7 +475,7 @@ namespace AnotherECS.Core
                             {
                                 _startSearch = i + 1;
                             }
-                            return i - size + 1;
+                            return i + 1 - size;
                         }
                     }
                     _freeSegmentSizeMax = size - 1;

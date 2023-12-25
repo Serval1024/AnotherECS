@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
@@ -66,5 +67,9 @@ namespace AnotherECS.Core.Caller
                 versionPtr[i] = tick;
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, ushort> layout)
+            => new(layout.storage.tickVersion.ReadPtr(), layout.storage.tickVersion.Length);
     }
 }

@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
-using Unity.Collections;
 using EntityId = System.UInt32;
 
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
@@ -33,16 +33,36 @@ namespace AnotherECS.Core
             => GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal State GetState()
+            => _state;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal FilterData* GetFilterData()
+            => _filterData;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Lock()
         {
-            _state.Lock();
+            _state.LockFilter();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Unlock()
         {
-            _state.Unlock();
+            _state.UnlockFilter();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetUserData<TUserData>(uint id, TUserData data)
+            where TUserData : struct, IModuleData
+        {
+            _state.SetModuleData(id, data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal TUserData GetUserData<TUserData>(uint id)
+            where TUserData : struct, IModuleData
+            => _state.GetModuleData<TUserData>(id);
 
         public struct Enumerator : IEnumerator<EntityId>
         {
@@ -128,5 +148,40 @@ namespace AnotherECS.Core
         where T1 : IComponent
         where T2 : IComponent
         where T3 : IComponent
+    { }
+
+    public class Filter<T0, T1, T2, T3, T4> : BFilter
+        where T0 : IComponent
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T4 : IComponent
+    { }
+
+    public class Filter<T0, T1, T2, T3, T4, T5> : BFilter
+        where T0 : IComponent
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T5 : IComponent
+    { }
+
+    public class Filter<T0, T1, T2, T3, T4, T5, T6> : BFilter
+        where T0 : IComponent
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T5 : IComponent
+        where T6 : IComponent
+    { }
+
+    public class Filter<T0, T1, T2, T3, T4, T5, T6, T7> : BFilter
+        where T0 : IComponent
+        where T1 : IComponent
+        where T2 : IComponent
+        where T3 : IComponent
+        where T5 : IComponent
+        where T6 : IComponent
+        where T7 : IComponent
     { }
 }

@@ -21,6 +21,7 @@ namespace AnotherECS.Unity.Editor.Generator
                 new LayoutInstallerGenerator(),
                 new FastAccessGenerator(),
                 new StateGenerator(),
+                new SystemInstallerGenerator(),
             };
         }
 

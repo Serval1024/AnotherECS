@@ -4,16 +4,17 @@ using System.Collections.Generic;
 using AnotherECS.Serializer;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
-using EntityId = System.UInt32;
 using System;
+using EntityId = System.UInt32;
 
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public abstract unsafe class State : BaseState, ISerialize
+    public abstract unsafe class State : BaseState, ISerialize, ISerializeConstructor
     {
         #region const
         private const uint CORE_LAYOUT_COUNT = 0;
@@ -25,6 +26,8 @@ namespace AnotherECS.Core
         private GlobalDepencies* _depencies;
         private NContainerArray<HAllocator, UnmanagedLayout> _layouts;
         private uint _layoutCount;
+
+        private IModuleData[] _moduleDates;
 
         private ICaller[] _callers;
         private IConfig[] _configs;
@@ -92,33 +95,40 @@ namespace AnotherECS.Core
 
             _depencies->componentTypesCount = GetComponentCount();
             _depencies->entities = new Entities(_depencies);
-            _depencies->injectContainer = new InjectContainer(new NPtr<HAllocator>(&_depencies->hAllocator));
+            _depencies->injectContainer = new InjectContainer(new WPtr<HAllocator>(&_depencies->hAllocator));
             _depencies->filters = new Filters(_depencies, 32);
         }
 
         protected override void OnDispose()
         {
-            _depencies->bAllocator.Dispose();    //Free all memory.
-            _allocator.Deallocate(_depencies);
-
-            foreach(var config in _configs)
+            foreach (var config in _configs)
             {
                 if (config is IDisposable disposable)
                 {
                     disposable.Dispose();
                 }
             }
-             
+
+            foreach (var data in _moduleDates)
+            {
+                if (data is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            _depencies->bAllocator.Dispose();    //Free all memory.
+            _allocator.Deallocate(_depencies);
         }
         #endregion
 
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.AddDepency(new NPtr<GlobalDepencies>(_depencies));
-            writer.AddDepency(_depencies->bAllocator.GetId(), new NPtr<BAllocator>(&_depencies->bAllocator));
-            writer.AddDepency(_depencies->hAllocator.GetId(), new NPtr<HAllocator>(&_depencies->hAllocator));
-            writer.AddDepency(_depencies->altHAllocator.GetId(), new NPtr<HAllocator>(&_depencies->altHAllocator));
+            writer.AddDepency(new WPtr<GlobalDepencies>(_depencies));
+            writer.AddDepency(_depencies->bAllocator.GetId(), new WPtr<BAllocator>(&_depencies->bAllocator));
+            writer.AddDepency(_depencies->hAllocator.GetId(), new WPtr<HAllocator>(&_depencies->hAllocator));
+            writer.AddDepency(_depencies->altHAllocator.GetId(), new WPtr<HAllocator>(&_depencies->altHAllocator));
 
             writer.Write(_depencies->bAllocator.GetId());
             writer.Write(_depencies->hAllocator.GetId());
@@ -145,10 +155,10 @@ namespace AnotherECS.Core
             var hAllocatorId = reader.ReadUInt32();
             var altHAllocatorId = reader.ReadUInt32();
 
-            reader.AddDepency(new NPtr<GlobalDepencies>(_depencies));
-            reader.AddDepency(bAllocatorId, new NPtr<BAllocator>(&_depencies->bAllocator));
-            reader.AddDepency(hAllocatorId, new NPtr<HAllocator>(&_depencies->hAllocator));
-            reader.AddDepency(altHAllocatorId, new NPtr<HAllocator>(&_depencies->altHAllocator));
+            reader.AddDepency(new WPtr<GlobalDepencies>(_depencies));
+            reader.AddDepency(bAllocatorId, new WPtr<BAllocator>(&_depencies->bAllocator));
+            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_depencies->hAllocator));
+            reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_depencies->altHAllocator));
 
 
             _depencies->Unpack(ref reader);
@@ -183,6 +193,8 @@ namespace AnotherECS.Core
 
         private void CommonInit()
         {
+            _moduleDates = Array.Empty<IModuleData>();
+
             BindingCodeGenerationStage(_depencies->config);
 
             _tickFinishedCallers = _callers.Skip(1).Where(p => p.IsTickFinished && p is ITickFinishedCaller).Cast<ITickFinishedCaller>().ToArray();
@@ -199,7 +211,7 @@ namespace AnotherECS.Core
 
         #region init
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void FirstStartup() //TODO SER inter
+        internal void FirstStartup()
         {
             CallConstruct();
             CallAttach();
@@ -499,7 +511,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Get<T>()
+        public ref T Get<T>()
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
@@ -623,24 +635,13 @@ namespace AnotherECS.Core
             => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Filter<T0> Filter<T0>()
-            where T0 : IComponent
-            => CreateFilterBuilder().With<T0>().Build();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Filter<T0, T1> Filter<T0, T1>()
-            where T0 : IComponent
-            where T1 : IComponent
-            => CreateFilterBuilder().With<T0>().With<T1>().Build();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Lock()
+        internal void LockFilter()
         {
             _depencies->filters.Lock();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Unlock()
+        internal void UnlockFilter()
         {
             _depencies->filters.Unlock();
         }
@@ -648,7 +649,7 @@ namespace AnotherECS.Core
 
         #region events
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TickStarted() //TODO SER internal
+        internal void TickStarted()
         {
             ++Tick;
             _events.TickStarted(Tick);
@@ -657,7 +658,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TickFinished() //TODO SER internal
+        internal void TickFinished()
         {
             foreach (var tickFinished in _tickFinishedCallers)
             {
@@ -698,7 +699,36 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            return ref _depencies->archetype.GetIdCollection(archetypeId);
+            return ref _depencies->archetype.ReadIdCollection(archetypeId);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetModuleData<TModuleData>(uint id, TModuleData data)
+            where TModuleData : IModuleData
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            if (id >= _moduleDates.Length)
+            {
+                Array.Resize(ref _moduleDates, (int)id + 1);
+            }
+
+            _moduleDates[id] = data;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal TModuleData GetModuleData<TModuleData>(uint id)
+            where TModuleData : IModuleData
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            if (id >= _moduleDates.Length || _moduleDates[id] is not TModuleData)
+            {
+                throw new ArgumentException(nameof(id));
+            }
+#endif
+            return (TModuleData)_moduleDates[id];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -728,7 +758,7 @@ namespace AnotherECS.Core
             => _events.NextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick) //TODO SER inter
+        internal void RevertTo(uint tick)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
@@ -766,7 +796,31 @@ namespace AnotherECS.Core
                 Tick = tick;
             }
         }
+        #endregion
 
+        #region raw api
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<TSparse> GetSparse<T, TSparse>()
+            where T : unmanaged, IComponent
+            where TSparse : unmanaged
+            => GetCaller<T>().ReadSparse<TSparse>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<T> GetDense<T>()
+            where T : unmanaged, IComponent
+            => GetCaller<T>().GetDense<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<uint> GetVersion<T>()
+            where T : unmanaged, IComponent
+            => GetCaller<T>().ReadVersion();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal GlobalDepencies* GetGlobalDepencies()
+            => _depencies;
+        #endregion
+
+        #region private
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CallAttach()
         {
@@ -853,9 +907,7 @@ namespace AnotherECS.Core
             }
             return list.ToNArray();
         }
-        #endregion
-
-        #region helpers
+        
         private uint GetLayoutCount()
             => GetComponentCount() + 1 + CORE_LAYOUT_COUNT;
 

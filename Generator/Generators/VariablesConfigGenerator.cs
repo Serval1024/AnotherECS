@@ -110,14 +110,23 @@ namespace AnotherECS.Generator
 
         public static TemplateParser.Variables GetSystem(ITypeToUshort states, ITypeToUshort systems)
         {
+            var autoAttaches = systems.GetAssociationTable()
+                .Select(p => p.Value)
+                .Where(p => p.GetCustomAttribute<ModuleAutoAttachAttribute>() != null)
+                .ToArray();
+
             TemplateParser.Variables variables = null;
             variables = new()
             {
-                { "STATE:COUNT", () => states.Count().ToString() },
+                { "STATE:COUNT", () => states.Count() },
                 { "STATE:GEN_NAME", () => states.IdToType(variables.GetIndexAsId(0)).Name },
 
-                { "SYSTEM:COUNT", () => systems.Count().ToString() },
-                { "SYSTEM:NAME", () => GetSystemName(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
+                { "SYSTEM:COUNT", () => systems.Count() },
+                //{ "SYSTEM:NAME", () => GetSystemNameByState(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
+                { "SYSTEM:NAME", () => ReflectionUtils.GetDotFullName(systems.IdToType(variables.GetIndexAsId(0))) },
+
+                { "SYSTEM:AUTO_ATTACH:COUNT", () => autoAttaches.Length },
+                { "SYSTEM:AUTO_ATTACH:NAME", () => autoAttaches[variables.GetIndex(0)] },
             };
             return variables;
         }
@@ -173,7 +182,7 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        private static string GetSystemName(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
+        private static string GetSystemNameByState(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
         {
             try
             {

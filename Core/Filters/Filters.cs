@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Core
 {
@@ -30,12 +31,12 @@ namespace AnotherECS.Core
 
                 _depencies->archetype.Create(ref _filterUpdater, includes);
 
-                var filterData = new FilterData()
-                {
-                    mask = mask,
-                    archetypeIds = NList<BAllocator, uint>.CreateWrapper(_depencies->archetype.Filter(&_depencies->bAllocator, includes, excludes))
-                };
-
+                var filterData = new FilterData(
+                    _depencies,
+                    mask,
+                    NList<BAllocator, uint>.CreateWrapper(_depencies->archetype.Filter(&_depencies->bAllocator, includes, excludes))
+                    );
+                
                 filterId = _filterUpdater.filters.Count;
 
                 _filterUpdater.filters.Add(filterData);
@@ -78,11 +79,25 @@ namespace AnotherECS.Core
         }
     }
 
-    internal struct FilterData : IDisposable
+    internal unsafe struct FilterData : IDisposable
     {
-        public Mask mask;
-        public NList<BAllocator, uint> archetypeIds;
+        private GlobalDepencies* _depencies;
+        private Mask mask;
 
+        internal NList<BAllocator, uint> archetypeIds;
+        internal NArray<BAllocator, uint> entities;
+        internal uint entityCount;
+
+        public FilterData(GlobalDepencies* depencies, in Mask mask, in NList<BAllocator, uint> archetypeIds)
+        {
+            _depencies = depencies;
+            this.mask = mask;
+            this.archetypeIds = archetypeIds;
+            entities = new NArray<BAllocator, uint>(&depencies->bAllocator, 16);
+            entityCount = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, ushort itemId)
             where TNArray : struct, INArray<Node>
         {
@@ -94,9 +109,41 @@ namespace AnotherECS.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NArray<BAllocator, EntityId> GetEntities()
+        {
+            Update();
+            return entities;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Update()
+        {
+            entityCount = 0;
+            for (uint i = 0; i < archetypeIds.Length; ++i)
+            {
+                entityCount += _depencies->archetype.ReadIdCollection(archetypeIds.Read(i)).Count;
+            }
+
+            if (entities.Length < entityCount)
+            {
+                entities.Resize(entityCount);
+            }
+
+            uint counter = 0;
+            for (uint i = 0; i < archetypeIds.Length; ++i)
+            {
+                foreach (var id in _depencies->archetype.ReadIdCollection(archetypeIds.Read(i)))
+                {
+                    entities.GetRef(counter++) = id;
+                }
+            }
+        }
+
         public void Dispose()
         {
             archetypeIds.Dispose();
+            entities.Dispose();
         }
 
 
@@ -105,6 +152,7 @@ namespace AnotherECS.Core
         {
             public TNArray archetypes;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int Compare(uint x, uint y)
             {
                 var hash0 = archetypes.ReadRef(x).hash;
@@ -120,6 +168,7 @@ namespace AnotherECS.Core
                 return 0;
             }
         }
+
     }
 
 

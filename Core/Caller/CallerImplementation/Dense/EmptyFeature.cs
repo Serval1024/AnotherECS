@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
@@ -53,5 +54,20 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             => 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> GetDense<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+            where T : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            if (typeof(T) == typeof(TDense))
+#endif
+            {
+                return new WArray<T>((T*)layout.storage.dense.GetPtr(), layout.storage.dense.Length);
+            }
+#if !ANOTHERECS_RELEASE
+            throw new System.ArgumentException(nameof(T));
+#endif
+        }
     }
 }

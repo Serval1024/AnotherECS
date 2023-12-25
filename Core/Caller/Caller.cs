@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Converter;
 using AnotherECS.Core.Actions;
+using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
@@ -468,6 +469,20 @@ namespace AnotherECS.Core.Caller
             TDenseStorage dense = default;
             default(TVersion).DropChange(ref *_layout, ref *_depencies, dense.GetIndex(), dense.GetAllocated(ref *_layout));
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> ReadSparse<T>()
+            where T : unmanaged
+            => _sparseStorage.ReadSparse<T>(ref *_layout);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> GetDense<T>()
+            where T : unmanaged, IComponent
+            => default(TDenseStorage).GetDense<T>(ref *_layout);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<uint> ReadVersion()
+            => default(TVersion).ReadVersion(ref *_layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
