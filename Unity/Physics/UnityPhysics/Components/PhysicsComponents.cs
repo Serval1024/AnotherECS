@@ -20,13 +20,13 @@ namespace AnotherECS.Physics
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
-    public struct Position : IVersion
+    public struct Position : IComponent, IVersion
     {
         public float3 value;
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
-    public struct Rotation : IVersion
+    public struct Rotation : IComponent, IVersion
     {
         public quaternion value;
     }
