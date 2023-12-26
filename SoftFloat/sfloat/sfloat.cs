@@ -52,7 +52,11 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
         return new sfloat(raw);
     }
 
-    public uint RawValue => rawValue;
+    public uint RawValue
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => rawValue;
+    }
 
     private uint RawMantissa { get { return rawValue & 0x7FFFFF; } }
     private int Mantissa
@@ -72,8 +76,17 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
         }
     }
 
-    private sbyte Exponent => (sbyte)(RawExponent - ExponentBias);
-    private byte RawExponent => (byte)(rawValue >> MantissaBits);
+    private sbyte Exponent
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (sbyte)(RawExponent - ExponentBias);
+    }
+
+    private byte RawExponent
+    { 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (byte) (rawValue >> MantissaBits);
+    }
 
 
     private const uint SignMask = 0x80000000;
@@ -95,17 +108,18 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     private const uint RawLog2OfE = 0;
 
 
-    public static sfloat Zero => new sfloat(0);
-    public static sfloat PositiveInfinity => new sfloat(RawPositiveInfinity);
-    public static sfloat NegativeInfinity => new sfloat(RawNegativeInfinity);
-    public static sfloat NaN => new sfloat(RawNaN);
-    public static sfloat One => new sfloat(RawOne);
-    public static sfloat Two => new sfloat(RawTwo);
-    public static sfloat Half => new sfloat(RawHalf);
-    public static sfloat MinusOne => new sfloat(RawMinusOne);
+    public static readonly sfloat zero = new sfloat(0u);
+    public static readonly sfloat positiveInfinity = new sfloat(RawPositiveInfinity);
+    public static readonly sfloat negativeInfinity = new sfloat(RawNegativeInfinity);
+    public static readonly sfloat nan = new sfloat(RawNaN);
+    public static readonly sfloat one = new sfloat(RawOne);
+    public static readonly sfloat two = new sfloat(RawTwo);
+    public static readonly sfloat half = new sfloat(RawHalf);
+    public static readonly sfloat minusOne = new sfloat(RawMinusOne);
+    public static readonly sfloat epsilon = new sfloat(RawEpsilon);
+
     public static sfloat MaxValue => new sfloat(RawMaxValue);
     public static sfloat MinValue => new sfloat(RawMinValue);
-    public static sfloat Epsilon => new sfloat(RawEpsilon);
 
     public override string ToString() => ((float)this).ToString();
 
@@ -164,7 +178,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     {
         if (value == 0)
         {
-            return Zero;
+            return zero;
         }
 
         if (value == int.MinValue)
@@ -205,6 +219,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     /// <summary>
     /// Returns the leading zero count of the given 32-bit unsigned integer
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint clz(uint x)
     {
         if (x == 0)
@@ -225,6 +240,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static sfloat operator -(sfloat f) => new sfloat(f.rawValue ^ 0x80000000);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static sfloat InternalAdd(sfloat f1, sfloat f2)
     {
         byte rawExp1 = f1.RawExponent;
@@ -273,7 +289,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
             uint absMan = (uint)Math.Abs(man);
             if (absMan == 0)
             {
-                return Zero;
+                return zero;
             }
 
             uint msb = absMan >> MantissaBits;
@@ -298,7 +314,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (rawExp >= 255)
                 {
                     //Overflow
-                    return man >= 0 ? PositiveInfinity : NegativeInfinity;
+                    return man >= 0 ? positiveInfinity : negativeInfinity;
                 }
 
                 if (rawExp >= -24)
@@ -307,7 +323,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                     return new sfloat(raw);
                 }
 
-                return Zero;
+                return zero;
             }
         }
         else
@@ -321,7 +337,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
             }
 
             // Both not finite
-            return f1.rawValue == f2.rawValue ? f1 : NaN;
+            return f1.rawValue == f2.rawValue ? f1 : nan;
         }
     }
 
@@ -355,7 +371,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 {
                     // 0 * Infinity
                     // 0 * NaN
-                    return NaN;
+                    return nan;
                 }
             }
 
@@ -383,24 +399,24 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f2.IsZero())
                 {
                     // Infinity * 0
-                    return NaN;
+                    return nan;
                 }
 
                 if (f2.IsNaN())
                 {
                     // Infinity * NaN
-                    return NaN;
+                    return nan;
                 }
 
                 if ((int)f2.rawValue >= 0)
                 {
                     // Infinity * f
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // Infinity * -f
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else if (f1.rawValue == RawNegativeInfinity)
@@ -409,18 +425,18 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 {
                     // -Infinity * 0
                     // -Infinity * NaN
-                    return NaN;
+                    return nan;
                 }
 
                 if ((int)f2.rawValue < 0)
                 {
                     // -Infinity * -f
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // -Infinity * f
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else
@@ -447,7 +463,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 {
                     // Infinity * 0
                     // NaN * 0
-                    return NaN;
+                    return nan;
                 }
             }
 
@@ -474,18 +490,18 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f1.IsZero())
                 {
                     // 0 * Infinity
-                    return NaN;
+                    return nan;
                 }
 
                 if ((int)f1.rawValue >= 0)
                 {
                     // f * Infinity
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // -f * Infinity
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else if (f2.rawValue == RawNegativeInfinity)
@@ -493,18 +509,18 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f1.IsZero())
                 {
                     // 0 * -Infinity
-                    return NaN;
+                    return nan;
                 }
 
                 if ((int)f1.rawValue < 0)
                 {
                     // -f * -Infinity
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // f * -Infinity
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else
@@ -552,7 +568,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     {
         if (f1.IsNaN() || f2.IsNaN())
         {
-            return NaN;
+            return nan;
         }
 
         int man1;
@@ -569,7 +585,7 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f2.IsZero())
                 {
                     // 0 / 0
-                    return NaN;
+                    return nan;
                 }
                 else
                 {
@@ -602,22 +618,22 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f2.IsZero())
                 {
                     // Infinity / 0
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
 
                 // +-Infinity / Infinity
-                return NaN;
+                return nan;
             }
             else if (f1.rawValue == RawNegativeInfinity)
             {
                 if (f2.IsZero())
                 {
                     // -Infinity / 0
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
 
                 // -Infinity / +-Infinity
-                return NaN;
+                return nan;
             }
             else
             {
@@ -663,18 +679,18 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if (f1.IsZero())
                 {
                     // 0 / Infinity
-                    return Zero;
+                    return zero;
                 }
 
                 if ((int)f1.rawValue >= 0)
                 {
                     // f / Infinity
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // -f / Infinity
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else if (f2.rawValue == RawNegativeInfinity)
@@ -688,12 +704,12 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
                 if ((int)f1.rawValue < 0)
                 {
                     // -f / -Infinity
-                    return PositiveInfinity;
+                    return positiveInfinity;
                 }
                 else
                 {
                     // f / -Infinity
-                    return NegativeInfinity;
+                    return negativeInfinity;
                 }
             }
             else

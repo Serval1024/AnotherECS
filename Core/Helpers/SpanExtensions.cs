@@ -36,7 +36,7 @@ namespace AnotherECS.Core
 
         public static bool SortContains<T>(this Span<T> span, T element)
             where T : IEquatable<T>, IComparable<T>
-            => span.BinarySearch(element) != -1;
+            => span.BinarySearch(element) >= 0;
 
         public static unsafe NArray<TAllocator, T> ToNArray<TAllocator, T>(this Span<T> span, TAllocator* allocator)
             where TAllocator : unmanaged, IAllocator

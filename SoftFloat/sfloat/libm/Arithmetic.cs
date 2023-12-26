@@ -172,7 +172,7 @@ public static partial class libm
             if (uxi << 1 == uyi << 1)
             {
                 //return 0.0 * x;
-                return sfloat.Zero;
+                return sfloat.zero;
             }
 
             return x;
@@ -222,7 +222,7 @@ public static partial class libm
                 if (i == 0)
                 {
                     //return 0.0 * x;
-                    return sfloat.Zero;
+                    return sfloat.zero;
                 }
 
                 uxi = i;
@@ -239,7 +239,7 @@ public static partial class libm
             if (i == 0)
             {
                 //return 0.0 * x;
-                return sfloat.Zero;
+                return sfloat.zero;
             }
 
             uxi = i;
@@ -286,7 +286,7 @@ public static partial class libm
         {
             //force_eval!(x + TOINT);
             //return 0.0 * x;
-            return sfloat.Zero;
+            return sfloat.zero;
         }
 
         if (i >> 31 != 0)
@@ -298,11 +298,11 @@ public static partial class libm
 
         if (y > (sfloat)0.5f)
         {
-            y = y + x - sfloat.One;
+            y = y + x - sfloat.one;
         }
         else if (y <= (sfloat)(-0.5f))
         {
-            y = y + x + sfloat.One;
+            y = y + x + sfloat.one;
         }
         else
         {
@@ -387,7 +387,7 @@ public static partial class libm
             }
             else if (ui << 1 != 0)
             {
-                return sfloat.One;
+                return sfloat.one;
             }
         }
 
@@ -445,11 +445,11 @@ public static partial class libm
             //return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */
             if (x.IsNaN() || x.IsNegativeInfinity())
             {
-                return sfloat.NaN;
+                return sfloat.nan;
             }
             else // if (x.IsPositiveInfinity())
             {
-                return sfloat.PositiveInfinity;
+                return sfloat.positiveInfinity;
             }
         }
 
@@ -464,7 +464,7 @@ public static partial class libm
             if (ix < 0)
             {
                 //return (x - x) / (x - x); /* sqrt(-ve) = sNaN */
-                return sfloat.NaN;
+                return sfloat.nan;
             }
         }
 

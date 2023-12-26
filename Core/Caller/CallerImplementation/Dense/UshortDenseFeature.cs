@@ -75,7 +75,7 @@ namespace AnotherECS.Core.Caller
                 return new WArray<T>((T*)layout.storage.dense.GetPtr(), layout.storage.dense.Length);
             }
 #if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(nameof(T));
+            throw new System.ArgumentException(typeof(T).Name);
 #endif
         }
     }

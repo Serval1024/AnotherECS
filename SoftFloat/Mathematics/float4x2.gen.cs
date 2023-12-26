@@ -53,16 +53,16 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4x2(bool v)
         {
-            this.c0 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
-            this.c1 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
+            this.c0 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
+            this.c1 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
         }
 
         /// <summary>Constructs a float4x2 matrix from a bool4x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4x2(bool4x2 v)
         {
-            this.c0 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c0);
-            this.c1 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c1);
+            this.c0 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c0);
+            this.c1 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c1);
         }
 
         /// <summary>Constructs a float4x2 matrix from a single int value by converting it to float and assigning it to every component.</summary>

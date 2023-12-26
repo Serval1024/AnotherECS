@@ -27,7 +27,7 @@ namespace AnotherECS.Core
         private NContainerArray<HAllocator, UnmanagedLayout> _layouts;
         private uint _layoutCount;
 
-        private IModuleData[] _moduleDates;
+        private IModuleData[] _moduleDatas;
 
         private ICaller[] _callers;
         private IConfig[] _configs;
@@ -109,7 +109,7 @@ namespace AnotherECS.Core
                 }
             }
 
-            foreach (var data in _moduleDates)
+            foreach (var data in _moduleDatas)
             {
                 if (data is IDisposable disposable)
                 {
@@ -193,7 +193,7 @@ namespace AnotherECS.Core
 
         private void CommonInit()
         {
-            _moduleDates = Array.Empty<IModuleData>();
+            _moduleDatas = Array.Empty<IModuleData>();
 
             BindingCodeGenerationStage(_depencies->config);
 
@@ -709,12 +709,12 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (id >= _moduleDates.Length)
+            if (id >= _moduleDatas.Length)
             {
-                Array.Resize(ref _moduleDates, (int)id + 1);
+                Array.Resize(ref _moduleDatas, (int)id + 1);
             }
 
-            _moduleDates[id] = data;
+            _moduleDatas[id] = data;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -723,12 +723,12 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
-            if (id >= _moduleDates.Length || _moduleDates[id] is not TModuleData)
+            if (id >= _moduleDatas.Length || _moduleDatas[id] is not TModuleData)
             {
                 throw new ArgumentException(nameof(id));
             }
 #endif
-            return (TModuleData)_moduleDates[id];
+            return (TModuleData)_moduleDatas[id];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

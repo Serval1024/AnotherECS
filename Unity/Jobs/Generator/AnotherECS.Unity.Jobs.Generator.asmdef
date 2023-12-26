@@ -1,0 +1,18 @@
+{
+    "name": "AnotherECS.Unity.Jobs.Generator",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4d6162c50c10b7d4eb0a8f235f6ea73a"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

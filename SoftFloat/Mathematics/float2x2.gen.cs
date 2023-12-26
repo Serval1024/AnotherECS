@@ -20,7 +20,7 @@ namespace AnotherECS.Mathematics
         public float2 c1;
 
         /// <summary>float2x2 identity transform.</summary>
-        public static readonly float2x2 identity = new float2x2(sfloat.One, sfloat.Zero,   sfloat.Zero, sfloat.One);
+        public static readonly float2x2 identity = new float2x2(sfloat.one, sfloat.zero,   sfloat.zero, sfloat.one);
 
         /// <summary>float2x2 zero value.</summary>
         public static readonly float2x2 zero;
@@ -54,16 +54,16 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2x2(bool v)
         {
-            this.c0 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
-            this.c1 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
+            this.c0 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
+            this.c1 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
         }
 
         /// <summary>Constructs a float2x2 matrix from a bool2x2 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2x2(bool2x2 v)
         {
-            this.c0 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c0);
-            this.c1 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c1);
+            this.c0 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c0);
+            this.c1 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c1);
         }
 
         /// <summary>Constructs a float2x2 matrix from a single int value by converting it to float and assigning it to every component.</summary>
@@ -382,7 +382,7 @@ namespace AnotherECS.Mathematics
 
             sfloat det = a * d - b * c;
 
-            return float2x2(d, -b, -c, a) * (sfloat.One / det);
+            return float2x2(d, -b, -c, a) * (sfloat.one / det);
         }
 
         /// <summary>Returns the determinant of a float2x2 matrix.</summary>

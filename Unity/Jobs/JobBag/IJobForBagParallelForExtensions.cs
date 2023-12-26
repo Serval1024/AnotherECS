@@ -4,22 +4,22 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unity.Jobs
 {    
-    [JobProducerType(typeof(IFilterBagJobParallelForExtensions.JobProcess<,>))]
-    public interface IJobParallelFilterBag<T>
+    [JobProducerType(typeof(IJobForBagParallelForExtensions.JobProcess<,>))]
+    public interface IJobParallelForBag<T>
         where T : struct, IJobBag
     {
         void Execute(ref T bag, int index);
     }
 
-    public static class IFilterBagJobParallelForExtensions
+    public static class IJobForBagParallelForExtensions
     {    
         public static JobHandle Schedule<T, TBag>(this T jobData, TBag bag, JobHandle inputDeps = default)
-            where T : struct, IJobParallelFilterBag<TBag>
+            where T : struct, IJobParallelForBag<TBag>
             where TBag : struct, IJobBag
             => ScheduleJob(jobData, bag, inputDeps);
 
         internal static unsafe JobHandle ScheduleJob<T, TBag>(T jobData, TBag bag, JobHandle inputDeps)
-            where T : struct, IJobParallelFilterBag<TBag>
+            where T : struct, IJobParallelForBag<TBag>
             where TBag : struct, IJobBag
         {
             
@@ -39,7 +39,7 @@ namespace AnotherECS.Unity.Jobs
             public TBag bag;
         }
 
-        internal struct JobProcess<T, TBag> where T : struct, IJobParallelFilterBag<TBag>
+        internal struct JobProcess<T, TBag> where T : struct, IJobParallelForBag<TBag>
             where TBag : struct, IJobBag
         {
             private static System.IntPtr jobReflectionData;
@@ -57,8 +57,8 @@ namespace AnotherECS.Unity.Jobs
 
             public static void Execute(ref JobData<T, TBag> jobData, System.IntPtr additionalData, System.IntPtr bufferRangePatchData, ref JobRanges ranges, int jobIndex)
             {
-                while (JobsUtility.GetWorkStealingRange(ref ranges, jobIndex, out var begin, out var end) == true) {
-                    
+                while (JobsUtility.GetWorkStealingRange(ref ranges, jobIndex, out var begin, out var end) == true)
+                {    
                     for (int i = begin; i < end; ++i)
                     {
                         jobData.bag.BeginForEachIndex(i);

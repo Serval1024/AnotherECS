@@ -7,22 +7,27 @@ namespace AnotherECS.Core
 
         internal FilterBuilder(State state)
         {
+            this = new FilterBuilder(state, default);
+        }
+
+        internal FilterBuilder(State state, in Mask mask)
+        {
             _state = state;
-            _mask = default;
+            _mask = mask;
         }
 
         public FilterBuilder<T> With<T>()
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T>(_state, ref _mask);
+            return new FilterBuilder<T>(_state, _mask);
         }
 
-        public FilterBuilder<T> Without<T>()
+        public FilterBuilder Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T>(_state, ref _mask);
+            return new FilterBuilder(_state, _mask);
         }
     }
 
@@ -32,7 +37,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;
@@ -42,14 +47,14 @@ namespace AnotherECS.Core
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T>(_state, _mask);
         }
 
-        public FilterBuilder<T0, T> Without<T>()
+        public FilterBuilder<T0> Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T>(_state, ref _mask);
+            return new FilterBuilder<T0>(_state, _mask);
         }
 
         public Filter<T0> Build()
@@ -63,7 +68,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;
@@ -73,14 +78,14 @@ namespace AnotherECS.Core
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T>(_state, _mask);
         }
 
-        public FilterBuilder<T0, T1, T> Without<T>()
+        public FilterBuilder<T0, T1> Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1>(_state, _mask);
         }
 
         public Filter<T0, T1> Build()
@@ -95,7 +100,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;
@@ -105,14 +110,14 @@ namespace AnotherECS.Core
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2, T>(_state, _mask);
         }
 
-        public FilterBuilder<T0, T1, T2, T> Without<T>()
+        public FilterBuilder<T0, T1, T2> Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2>(_state, _mask);
         }
 
         public Filter<T0, T1, T2> Build()
@@ -128,7 +133,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;
@@ -138,14 +143,14 @@ namespace AnotherECS.Core
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T3, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2, T3, T>(_state, _mask);
         }
 
-        public FilterBuilder<T0, T1, T2, T3, T> Without<T>()
+        public FilterBuilder<T0, T1, T2, T3> Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T3, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2, T3>(_state, _mask);
         }
 
         public Filter<T0, T1, T2, T3> Build()
@@ -162,7 +167,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;
@@ -172,14 +177,14 @@ namespace AnotherECS.Core
             where T : IComponent
         {
             _mask.AddInclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T3, T4, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2, T3, T4, T>(_state, _mask);
         }
 
-        public FilterBuilder<T0, T1, T2, T3, T4, T> Without<T>()
+        public FilterBuilder<T0, T1, T2, T3, T4> Without<T>()
             where T : IComponent
         {
             _mask.AddExclude(_state.GetIdByType<T>());
-            return new FilterBuilder<T0, T1, T2, T3, T4, T>(_state, ref _mask);
+            return new FilterBuilder<T0, T1, T2, T3, T4>(_state, _mask);
         }
 
         public Filter<T0, T1, T2, T3, T4> Build()
@@ -197,7 +202,7 @@ namespace AnotherECS.Core
         private readonly State _state;
         private Mask _mask;
 
-        internal FilterBuilder(State state, ref Mask mask)
+        internal FilterBuilder(State state, in Mask mask)
         {
             _state = state;
             _mask = mask;

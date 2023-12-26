@@ -91,7 +91,7 @@ namespace AnotherECS.Mathematics
         /// <summary>
         /// Single precision constant for positive infinity.
         /// </summary>
-        public static sfloat INFINITY => sfloat.PositiveInfinity;
+        public static sfloat INFINITY => sfloat.positiveInfinity;
 
         /// <summary>
         /// Single precision constant for Not a Number.
@@ -102,7 +102,7 @@ namespace AnotherECS.Mathematics
         /// Additionally, there are multiple bit representations for Not a Number, so if you must test if your value
         /// is NAN, use isnan().
         /// </summary>
-        public static sfloat NAN => sfloat.NaN;
+        public static sfloat NAN => sfloat.nan;
 
         /// <summary>Returns the bit pattern of a uint as an int.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -699,19 +699,19 @@ namespace AnotherECS.Mathematics
 
         /// <summary>Returns the result of clamping the float value x into the interval [0, 1].</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat saturate(sfloat x) { return clamp(x, sfloat.Zero, sfloat.One); }
+        public static sfloat saturate(sfloat x) { return clamp(x, sfloat.zero, sfloat.one); }
 
         /// <summary>Returns the result of a componentwise clamping of the float2 vector x into the interval [0, 1].</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 saturate(float2 x) { return clamp(x, new float2(sfloat.Zero), new float2(sfloat.One)); }
+        public static float2 saturate(float2 x) { return clamp(x, new float2(sfloat.zero), new float2(sfloat.one)); }
 
         /// <summary>Returns the result of a componentwise clamping of the float3 vector x into the interval [0, 1].</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 saturate(float3 x) { return clamp(x, new float3(sfloat.Zero), new float3(sfloat.One)); }
+        public static float3 saturate(float3 x) { return clamp(x, new float3(sfloat.zero), new float3(sfloat.one)); }
 
         /// <summary>Returns the result of a componentwise clamping of the float4 vector x into the interval [0, 1].</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 saturate(float4 x) { return clamp(x, new float4(sfloat.Zero), new float4(sfloat.One)); }
+        public static float4 saturate(float4 x) { return clamp(x, new float4(sfloat.zero), new float4(sfloat.one)); }
 
 
         /// <summary>Returns the absolute value of a int value.</summary>
@@ -1009,24 +1009,24 @@ namespace AnotherECS.Mathematics
 
         /// <summary>Returns the reciprocal a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat rcp(sfloat x) { return sfloat.One / x; }
+        public static sfloat rcp(sfloat x) { return sfloat.one / x; }
 
         /// <summary>Returns the componentwise reciprocal a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 rcp(float2 x) { return sfloat.One / x; }
+        public static float2 rcp(float2 x) { return sfloat.one / x; }
 
         /// <summary>Returns the componentwise reciprocal a float3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 rcp(float3 x) { return sfloat.One / x; }
+        public static float3 rcp(float3 x) { return sfloat.one / x; }
 
         /// <summary>Returns the componentwise reciprocal a float4 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 rcp(float4 x) { return sfloat.One / x; }
+        public static float4 rcp(float4 x) { return sfloat.one / x; }
 
 
         /// <summary>Returns the sign of a float value. -1.0f if it is less than zero, 0.0f if it is zero and 1.0f if it greater than zero.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat sign(sfloat x) { return x > sfloat.Zero ? sfloat.One : x < sfloat.Zero ? -sfloat.One : sfloat.Zero; }
+        public static sfloat sign(sfloat x) { return x > sfloat.zero ? sfloat.one : x < sfloat.zero ? -sfloat.one : sfloat.zero; }
 
         /// <summary>Returns the componentwise sign of a float2 value. 1.0f for positive components, 0.0f for zero components and -1.0f for negative components.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1222,19 +1222,19 @@ namespace AnotherECS.Mathematics
 
         /// <summary>Returns the reciprocal square root of a float value.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat rsqrt(sfloat x) { return sfloat.One / sqrt(x); }
+        public static sfloat rsqrt(sfloat x) { return sfloat.one / sqrt(x); }
 
         /// <summary>Returns the componentwise reciprocal square root of a float2 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 rsqrt(float2 x) { return sfloat.One / sqrt(x); }
+        public static float2 rsqrt(float2 x) { return sfloat.one / sqrt(x); }
 
         /// <summary>Returns the componentwise reciprocal square root of a float3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 rsqrt(float3 x) { return sfloat.One / sqrt(x); }
+        public static float3 rsqrt(float3 x) { return sfloat.one / sqrt(x); }
 
         /// <summary>Returns the componentwise reciprocal square root of a float4 vector</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 rsqrt(float4 x) { return sfloat.One / sqrt(x); }
+        public static float4 rsqrt(float4 x) { return sfloat.one / sqrt(x); }
 
 
         /// <summary>Returns a normalized version of the float2 vector x by scaling it by 1 / length(x).</summary>
@@ -1622,19 +1622,19 @@ namespace AnotherECS.Mathematics
 
         /// <summary>Computes a step function. Returns 1.0f when x >= y, 0.0f otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sfloat step(sfloat y, sfloat x) { return select(sfloat.Zero, sfloat.One, x >= y); }
+        public static sfloat step(sfloat y, sfloat x) { return select(sfloat.zero, sfloat.one, x >= y); }
 
         /// <summary>Returns the result of a componentwise step function where each component is 1.0f when x >= y and 0.0f otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 step(float2 y, float2 x) { return select(float2(sfloat.Zero), float2(sfloat.One), x >= y); }
+        public static float2 step(float2 y, float2 x) { return select(float2(sfloat.zero), float2(sfloat.one), x >= y); }
 
         /// <summary>Returns the result of a componentwise step function where each component is 1.0f when x >= y and 0.0f otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 step(float3 y, float3 x) { return select(float3(sfloat.Zero), float3(sfloat.One), x >= y); }
+        public static float3 step(float3 y, float3 x) { return select(float3(sfloat.zero), float3(sfloat.one), x >= y); }
 
         /// <summary>Returns the result of a componentwise step function where each component is 1.0f when x >= y and 0.0f otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 step(float4 y, float4 x) { return select(float4(sfloat.Zero), float4(sfloat.One), x >= y); }
+        public static float4 step(float4 y, float4 x) { return select(float4(sfloat.zero), float4(sfloat.one), x >= y); }
 
 
         /// <summary>Given an incident vector i and a normal vector n, returns the reflection vector r = i - 2.0f * dot(i, n) * n.</summary>
@@ -1655,8 +1655,8 @@ namespace AnotherECS.Mathematics
         public static float2 refract(float2 i, float2 n, sfloat eta)
         {
             sfloat ni = dot(n, i);
-            sfloat k = sfloat.One - eta * eta * (sfloat.One - ni * ni);
-            return select(sfloat.Zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.Zero);
+            sfloat k = sfloat.one - eta * eta * (sfloat.one - ni * ni);
+            return select(sfloat.zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.zero);
         }
 
         /// <summary>Returns the refraction vector given the incident vector i, the normal vector n and the refraction index eta.</summary>
@@ -1664,8 +1664,8 @@ namespace AnotherECS.Mathematics
         public static float3 refract(float3 i, float3 n, sfloat eta)
         {
             sfloat ni = dot(n, i);
-            sfloat k = sfloat.One - eta * eta * (sfloat.One - ni * ni);
-            return select(sfloat.Zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.Zero);
+            sfloat k = sfloat.one - eta * eta * (sfloat.one - ni * ni);
+            return select(sfloat.zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.zero);
         }
 
         /// <summary>Returns the refraction vector given the incident vector i, the normal vector n and the refraction index eta.</summary>
@@ -1673,8 +1673,8 @@ namespace AnotherECS.Mathematics
         public static float4 refract(float4 i, float4 n, sfloat eta)
         {
             sfloat ni = dot(n, i);
-            sfloat k = sfloat.One - eta * eta * (sfloat.One - ni * ni);
-            return select(sfloat.Zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.Zero);
+            sfloat k = sfloat.one - eta * eta * (sfloat.one - ni * ni);
+            return select(sfloat.zero, eta * i - (eta * ni + sqrt(k)) * n, k >= sfloat.zero);
         }
 
 
@@ -1798,15 +1798,15 @@ namespace AnotherECS.Mathematics
 
         /// <summary>Conditionally flips a vector n to face in the direction of i. Returns n if dot(i, ng) &lt; 0, -n otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 faceforward(float2 n, float2 i, float2 ng) { return select(n, -n, dot(ng, i) >= sfloat.Zero); }
+        public static float2 faceforward(float2 n, float2 i, float2 ng) { return select(n, -n, dot(ng, i) >= sfloat.zero); }
 
         /// <summary>Conditionally flips a vector n to face in the direction of i. Returns n if dot(i, ng) &lt; 0, -n otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 faceforward(float3 n, float3 i, float3 ng) { return select(n, -n, dot(ng, i) >= sfloat.Zero); }
+        public static float3 faceforward(float3 n, float3 i, float3 ng) { return select(n, -n, dot(ng, i) >= sfloat.zero); }
 
         /// <summary>Conditionally flips a vector n to face in the direction of i. Returns n if dot(i, ng) &lt; 0, -n otherwise.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 faceforward(float4 n, float4 i, float4 ng) { return select(n, -n, dot(ng, i) >= sfloat.Zero); }
+        public static float4 faceforward(float4 n, float4 i, float4 ng) { return select(n, -n, dot(ng, i) >= sfloat.zero); }
 
 
         /// <summary>Returns the sine and cosine of the input float value x through the out parameters s and c.</summary>
@@ -2865,7 +2865,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-up.html](https://docs.unity3d.com/ScriptReference/Vector3-up.html)</remarks>
         /// <returns>The up axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 up() { return new float3(sfloat.Zero, sfloat.One, sfloat.Zero); }  // for compatibility
+        public static float3 up() { return new float3(sfloat.zero, sfloat.one, sfloat.zero); }  // for compatibility
 
         /// <summary>
         /// Unity's down axis (0, -1, 0).
@@ -2873,7 +2873,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-down.html](https://docs.unity3d.com/ScriptReference/Vector3-down.html)</remarks>
         /// <returns>The down axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 down() { return new float3(sfloat.Zero, -sfloat.One, sfloat.Zero); }
+        public static float3 down() { return new float3(sfloat.zero, -sfloat.one, sfloat.zero); }
 
         /// <summary>
         /// Unity's forward axis (0, 0, 1).
@@ -2881,7 +2881,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-forward.html](https://docs.unity3d.com/ScriptReference/Vector3-forward.html)</remarks>
         /// <returns>The forward axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 forward() { return new float3(sfloat.Zero, sfloat.Zero, sfloat.One); }
+        public static float3 forward() { return new float3(sfloat.zero, sfloat.zero, sfloat.one); }
 
         /// <summary>
         /// Unity's back axis (0, 0, -1).
@@ -2889,7 +2889,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-back.html](https://docs.unity3d.com/ScriptReference/Vector3-back.html)</remarks>
         /// <returns>The back axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 back() { return new float3(sfloat.Zero, sfloat.Zero, -sfloat.One); }
+        public static float3 back() { return new float3(sfloat.zero, sfloat.zero, -sfloat.one); }
 
         /// <summary>
         /// Unity's left axis (-1, 0, 0).
@@ -2897,7 +2897,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-left.html](https://docs.unity3d.com/ScriptReference/Vector3-left.html)</remarks>
         /// <returns>The left axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 left() { return new float3(-sfloat.One, sfloat.Zero, sfloat.Zero); }
+        public static float3 left() { return new float3(-sfloat.one, sfloat.zero, sfloat.zero); }
 
         /// <summary>
         /// Unity's right axis (1, 0, 0).
@@ -2905,7 +2905,7 @@ namespace AnotherECS.Mathematics
         /// <remarks>Matches [https://docs.unity3d.com/ScriptReference/Vector3-right.html](https://docs.unity3d.com/ScriptReference/Vector3-right.html)</remarks>
         /// <returns>The right axis.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 right() { return new float3(sfloat.One, sfloat.Zero, sfloat.Zero); }
+        public static float3 right() { return new float3(sfloat.one, sfloat.zero, sfloat.zero); }
 
 
         // Internal

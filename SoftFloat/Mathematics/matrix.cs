@@ -19,16 +19,16 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float2x2 Scale(sfloat s)
         {
-            return float2x2(s,    sfloat.Zero,
-                            sfloat.Zero, s);
+            return float2x2(s,    sfloat.zero,
+                            sfloat.zero, s);
         }
 
         /// <summary>Returns a float2x2 matrix representing a non-uniform axis scaling by x and y.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float2x2 Scale(sfloat x, sfloat y)
         {
-            return float2x2(x, sfloat.Zero,
-                            sfloat.Zero, y);
+            return float2x2(x, sfloat.zero,
+                            sfloat.zero, y);
         }
 
         /// <summary>Returns a float2x2 matrix representing a non-uniform axis scaling by the components of the float2 vector v.</summary>
@@ -61,9 +61,9 @@ namespace AnotherECS.Mathematics
             uint3 npn = uint3(0x80000000, 0x00000000, 0x80000000);
             uint3 nnp = uint3(0x80000000, 0x80000000, 0x00000000);
             uint3 pnn = uint3(0x00000000, 0x80000000, 0x80000000);
-            c0 = v2.y * asfloat(asuint(v.yxw) ^ npn) - v2.z * asfloat(asuint(v.zwx) ^ pnn) + float3(sfloat.One, sfloat.Zero, sfloat.Zero);
-            c1 = v2.z * asfloat(asuint(v.wzy) ^ nnp) - v2.x * asfloat(asuint(v.yxw) ^ npn) + float3(sfloat.Zero, sfloat.One, sfloat.Zero);
-            c2 = v2.x * asfloat(asuint(v.zwx) ^ pnn) - v2.y * asfloat(asuint(v.wzy) ^ nnp) + float3(sfloat.Zero, sfloat.Zero, sfloat.One);
+            c0 = v2.y * asfloat(asuint(v.yxw) ^ npn) - v2.z * asfloat(asuint(v.zwx) ^ pnn) + float3(sfloat.one, sfloat.zero, sfloat.zero);
+            c1 = v2.z * asfloat(asuint(v.wzy) ^ nnp) - v2.x * asfloat(asuint(v.yxw) ^ npn) + float3(sfloat.zero, sfloat.one, sfloat.zero);
+            c2 = v2.x * asfloat(asuint(v.zwx) ^ pnn) - v2.y * asfloat(asuint(v.wzy) ^ nnp) + float3(sfloat.zero, sfloat.zero, sfloat.one);
         }
 
         /// <summary>
@@ -324,9 +324,9 @@ namespace AnotherECS.Mathematics
             // {{1, 0, 0}, {0, c_0, -s_0}, {0, s_0, c_0}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float3x3(sfloat.One, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, c,    -s,
-                            sfloat.Zero, s,    c);
+            return float3x3(sfloat.one, sfloat.zero, sfloat.zero,
+                            sfloat.zero, c,    -s,
+                            sfloat.zero, s,    c);
         }
 
         /// <summary>Returns a float4x4 matrix that rotates around the y-axis by a given number of radians.</summary>
@@ -337,9 +337,9 @@ namespace AnotherECS.Mathematics
             // {{c_1, 0, s_1}, {0, 1, 0}, {-s_1, 0, c_1}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float3x3(c, sfloat.Zero, s,
-                            sfloat.Zero, sfloat.One, sfloat.Zero,
-                            -s, sfloat.Zero, c);
+            return float3x3(c, sfloat.zero, s,
+                            sfloat.zero, sfloat.one, sfloat.zero,
+                            -s, sfloat.zero, c);
         }
 
         /// <summary>Returns a float4x4 matrix that rotates around the z-axis by a given number of radians.</summary>
@@ -350,27 +350,27 @@ namespace AnotherECS.Mathematics
             // {{c_2, -s_2, 0}, {s_2, c_2, 0}, {0, 0, 1}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float3x3(c,    -s, sfloat.Zero,
-                            s,    c, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float3x3(c,    -s, sfloat.zero,
+                            s,    c, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.one);
         }
 
         //<summary>Returns a float3x3 matrix representing a uniform scaling of all axes by s.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x3 Scale(sfloat s)
         {
-            return float3x3(s, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, s, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, s);
+            return float3x3(s, sfloat.zero, sfloat.zero,
+                            sfloat.zero, s, sfloat.zero,
+                            sfloat.zero, sfloat.zero, s);
         }
 
         /// <summary>Returns a float3x3 matrix representing a non-uniform axis scaling by x, y and z.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x3 Scale(sfloat x, sfloat y, sfloat z)
         {
-            return float3x3(x, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, y, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, z);
+            return float3x3(x, sfloat.zero, sfloat.zero,
+                            sfloat.zero, y, sfloat.zero,
+                            sfloat.zero, sfloat.zero, z);
         }
 
         /// <summary>Returns a float3x3 matrix representing a non-uniform axis scaling by the components of the float3 vector v.</summary>
@@ -419,9 +419,9 @@ namespace AnotherECS.Mathematics
 
             bool accept = mn > sfloat.FromRaw(smallValue) && mx < sfloat.FromRaw(bigValue) && isfinite(forwardLengthSq) && isfinite(upLengthSq) && isfinite(tLengthSq);
             return float3x3(
-                select(float3(sfloat.One, sfloat.Zero, sfloat.Zero), t, accept),
-                select(float3(sfloat.Zero, sfloat.One, sfloat.Zero), cross(forward, t), accept),
-                select(float3(sfloat.Zero, sfloat.Zero, sfloat.One), forward, accept));
+                select(float3(sfloat.one, sfloat.zero, sfloat.zero), t, accept),
+                select(float3(sfloat.zero, sfloat.one, sfloat.zero), cross(forward, t), accept),
+                select(float3(sfloat.zero, sfloat.zero, sfloat.one), forward, accept));
         }
 
         public static explicit operator float3x3(float4x4 f4x4) => new float3x3(f4x4);
@@ -432,30 +432,30 @@ namespace AnotherECS.Mathematics
         /// <summary>Constructs a float4x4 from a float3x3 rotation matrix and a float3 translation vector.</summary>
         public float4x4(float3x3 rotation, float3 translation)
         {
-            c0 = float4(rotation.c0, sfloat.Zero);
-            c1 = float4(rotation.c1, sfloat.Zero);
-            c2 = float4(rotation.c2, sfloat.Zero);
-            c3 = float4(translation, sfloat.One);
+            c0 = float4(rotation.c0, sfloat.zero);
+            c1 = float4(rotation.c1, sfloat.zero);
+            c2 = float4(rotation.c2, sfloat.zero);
+            c3 = float4(translation, sfloat.one);
         }
 
         /// <summary>Constructs a float4x4 from a quaternion and a float3 translation vector.</summary>
         public float4x4(quaternion rotation, float3 translation)
         {
             float3x3 rot = float3x3(rotation);
-            c0 = float4(rot.c0, sfloat.Zero);
-            c1 = float4(rot.c1, sfloat.Zero);
-            c2 = float4(rot.c2, sfloat.Zero);
-            c3 = float4(translation, sfloat.One);
+            c0 = float4(rot.c0, sfloat.zero);
+            c1 = float4(rot.c1, sfloat.zero);
+            c2 = float4(rot.c2, sfloat.zero);
+            c3 = float4(translation, sfloat.one);
         }
 
         /// <summary>Constructs a float4x4 from a RigidTransform.</summary>
         public float4x4(RigidTransform transform)
         {
             float3x3 rot = float3x3(transform.rot);
-            c0 = float4(rot.c0, sfloat.Zero);
-            c1 = float4(rot.c1, sfloat.Zero);
-            c2 = float4(rot.c2, sfloat.Zero);
-            c3 = float4(transform.pos, sfloat.One);
+            c0 = float4(rot.c0, sfloat.zero);
+            c1 = float4(rot.c1, sfloat.zero);
+            c2 = float4(rot.c2, sfloat.zero);
+            c3 = float4(transform.pos, sfloat.one);
         }
 
         /// <summary>
@@ -468,7 +468,7 @@ namespace AnotherECS.Mathematics
             sfloat sina, cosa;
             math.sincos(angle, out sina, out cosa);
 
-            float4 u = float4(axis, sfloat.Zero);
+            float4 u = float4(axis, sfloat.zero);
             float4 u_yzx = u.yzxx;
             float4 u_zxy = u.zxyx;
             float4 u_inv_cosa = u - u * cosa;  // u * (1.0f - cosa);
@@ -483,7 +483,7 @@ namespace AnotherECS.Mathematics
                 u.x * u_inv_cosa + asfloat((asuint(t.wzyx) ^ ppnp) & mask),
                 u.y * u_inv_cosa + asfloat((asuint(t.zwxx) ^ nppp) & mask),
                 u.z * u_inv_cosa + asfloat((asuint(t.yxwx) ^ pnpp) & mask),
-                float4(sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One)
+                float4(sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one)
                 );
 
         }
@@ -500,10 +500,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z,  c.z * s.x * s.y - c.x * s.z,    c.x * c.z * s.y + s.x * s.z,    sfloat.Zero,
-                c.y * s.z,  c.x * c.z + s.x * s.y * s.z,    c.x * s.y * s.z - c.z * s.x,    sfloat.Zero,
-                -s.y,       c.y * s.x,                      c.x * c.y,                      sfloat.Zero,
-                sfloat.Zero,sfloat.Zero,                    sfloat.Zero,                    sfloat.One
+                c.y * c.z,  c.z * s.x * s.y - c.x * s.z,    c.x * c.z * s.y + s.x * s.z,    sfloat.zero,
+                c.y * s.z,  c.x * c.z + s.x * s.y * s.z,    c.x * s.y * s.z - c.z * s.x,    sfloat.zero,
+                -s.y,       c.y * s.x,                      c.x * c.y,                      sfloat.zero,
+                sfloat.zero,sfloat.zero,                    sfloat.zero,                    sfloat.one
                 );
         }
 
@@ -519,10 +519,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z,  s.x * s.y - c.x * c.y * s.z,    c.x * s.y + c.y * s.x * s.z,    sfloat.Zero,
-                s.z,        c.x * c.z,                      -c.z * s.x,                     sfloat.Zero,
-                -c.z * s.y, c.y * s.x + c.x * s.y * s.z,    c.x * c.y - s.x * s.y * s.z,    sfloat.Zero,
-                sfloat.Zero,sfloat.Zero,                    sfloat.Zero,                    sfloat.One
+                c.y * c.z,  s.x * s.y - c.x * c.y * s.z,    c.x * s.y + c.y * s.x * s.z,    sfloat.zero,
+                s.z,        c.x * c.z,                      -c.z * s.x,                     sfloat.zero,
+                -c.z * s.y, c.y * s.x + c.x * s.y * s.z,    c.x * c.y - s.x * s.y * s.z,    sfloat.zero,
+                sfloat.zero,sfloat.zero,                    sfloat.zero,                    sfloat.one
                 );
         }
 
@@ -538,10 +538,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z - s.x * s.y * s.z,    -c.x * s.z, c.z * s.y + c.y * s.x * s.z,    sfloat.Zero,
-                c.z * s.x * s.y + c.y * s.z,    c.x * c.z,  s.y * s.z - c.y * c.z * s.x,    sfloat.Zero,
-                -c.x * s.y,                     s.x,        c.x * c.y,                      sfloat.Zero,
-                sfloat.Zero,                    sfloat.Zero,sfloat.Zero,                    sfloat.One
+                c.y * c.z - s.x * s.y * s.z,    -c.x * s.z, c.z * s.y + c.y * s.x * s.z,    sfloat.zero,
+                c.z * s.x * s.y + c.y * s.z,    c.x * c.z,  s.y * s.z - c.y * c.z * s.x,    sfloat.zero,
+                -c.x * s.y,                     s.x,        c.x * c.y,                      sfloat.zero,
+                sfloat.zero,                    sfloat.zero,sfloat.zero,                    sfloat.one
                 );
         }
 
@@ -557,10 +557,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z,                      -s.z,       c.z * s.y,                      sfloat.Zero,
-                s.x * s.y + c.x * c.y * s.z,    c.x * c.z,  c.x * s.y * s.z - c.y * s.x,    sfloat.Zero,
-                c.y * s.x * s.z - c.x * s.y,    c.z * s.x,  c.x * c.y + s.x * s.y * s.z,    sfloat.Zero,
-                sfloat.Zero,                    sfloat.Zero,sfloat.Zero,                    sfloat.One
+                c.y * c.z,                      -s.z,       c.z * s.y,                      sfloat.zero,
+                s.x * s.y + c.x * c.y * s.z,    c.x * c.z,  c.x * s.y * s.z - c.y * s.x,    sfloat.zero,
+                c.y * s.x * s.z - c.x * s.y,    c.z * s.x,  c.x * c.y + s.x * s.y * s.z,    sfloat.zero,
+                sfloat.zero,                    sfloat.zero,sfloat.zero,                    sfloat.one
                 );
         }
 
@@ -577,10 +577,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z + s.x * s.y * s.z,    c.z * s.x * s.y - c.y * s.z,    c.x * s.y,  sfloat.Zero,
-                c.x * s.z,                      c.x * c.z,                      -s.x,       sfloat.Zero,
-                c.y * s.x * s.z - c.z * s.y,    c.y * c.z * s.x + s.y * s.z,    c.x * c.y,  sfloat.Zero,
-                sfloat.Zero,                    sfloat.Zero,                    sfloat.Zero,sfloat.One
+                c.y * c.z + s.x * s.y * s.z,    c.z * s.x * s.y - c.y * s.z,    c.x * s.y,  sfloat.zero,
+                c.x * s.z,                      c.x * c.z,                      -s.x,       sfloat.zero,
+                c.y * s.x * s.z - c.z * s.y,    c.y * c.z * s.x + s.y * s.z,    c.x * c.y,  sfloat.zero,
+                sfloat.zero,                    sfloat.zero,                    sfloat.zero,sfloat.one
                 );
         }
 
@@ -596,10 +596,10 @@ namespace AnotherECS.Mathematics
             float3 s, c;
             sincos(xyz, out s, out c);
             return float4x4(
-                c.y * c.z,                      -c.y * s.z,                     s.y,        sfloat.Zero,
-                c.z * s.x * s.y + c.x * s.z,    c.x * c.z - s.x * s.y * s.z,    -c.y * s.x, sfloat.Zero,
-                s.x * s.z - c.x * c.z * s.y,    c.z * s.x + c.x * s.y * s.z,    c.x * c.y,  sfloat.Zero,
-                sfloat.Zero,                    sfloat.Zero,                    sfloat.Zero,sfloat.One
+                c.y * c.z,                      -c.y * s.z,                     s.y,        sfloat.zero,
+                c.z * s.x * s.y + c.x * s.z,    c.x * c.z - s.x * s.y * s.z,    -c.y * s.x, sfloat.zero,
+                s.x * s.z - c.x * c.z * s.y,    c.z * s.x + c.x * s.y * s.z,    c.x * c.y,  sfloat.zero,
+                sfloat.zero,                    sfloat.zero,                    sfloat.zero,sfloat.one
                 );
         }
 
@@ -710,10 +710,10 @@ namespace AnotherECS.Mathematics
             // {{1, 0, 0}, {0, c_0, -s_0}, {0, s_0, c_0}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float4x4(sfloat.One, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, c, -s, sfloat.Zero,
-                            sfloat.Zero, s, c, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float4x4(sfloat.one, sfloat.zero, sfloat.zero, sfloat.zero,
+                            sfloat.zero, c, -s, sfloat.zero,
+                            sfloat.zero, s, c, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
 
         }
 
@@ -725,10 +725,10 @@ namespace AnotherECS.Mathematics
             // {{c_1, 0, s_1}, {0, 1, 0}, {-s_1, 0, c_1}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float4x4(c, sfloat.Zero, s, sfloat.Zero,
-                            sfloat.Zero, sfloat.One, sfloat.Zero, sfloat.Zero,
-                            -s, sfloat.Zero, c, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float4x4(c, sfloat.zero, s, sfloat.zero,
+                            sfloat.zero, sfloat.one, sfloat.zero, sfloat.zero,
+                            -s, sfloat.zero, c, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
 
         }
 
@@ -740,10 +740,10 @@ namespace AnotherECS.Mathematics
             // {{c_2, -s_2, 0}, {s_2, c_2, 0}, {0, 0, 1}}
             sfloat s, c;
             sincos(angle, out s, out c);
-            return float4x4(c, -s, sfloat.Zero, sfloat.Zero,
-                            s, c, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.One, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float4x4(c, -s, sfloat.zero, sfloat.zero,
+                            s, c, sfloat.zero, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.one, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
 
         }
 
@@ -751,20 +751,20 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 Scale(sfloat s)
         {
-            return float4x4(s, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, s, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, s, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float4x4(s, sfloat.zero, sfloat.zero, sfloat.zero,
+                            sfloat.zero, s, sfloat.zero, sfloat.zero,
+                            sfloat.zero, sfloat.zero, s, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
         }
 
         /// <summary>Returns a float4x4 scale matrix given a float3 vector containing the 3 axis scales.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 Scale(sfloat x, sfloat y, sfloat z)
         {
-            return float4x4(x, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, y, sfloat.Zero, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, z, sfloat.Zero,
-                            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+            return float4x4(x, sfloat.zero, sfloat.zero, sfloat.zero,
+                            sfloat.zero, y, sfloat.zero, sfloat.zero,
+                            sfloat.zero, sfloat.zero, z, sfloat.zero,
+                            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
         }
 
         /// <summary>Returns a float4x4 scale matrix given a float3 vector containing the 3 axis scales.</summary>
@@ -778,10 +778,10 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 Translate(float3 vector)
         {
-            return float4x4(float4(sfloat.One, sfloat.Zero, sfloat.Zero, sfloat.Zero),
-                            float4(sfloat.Zero, sfloat.One, sfloat.Zero, sfloat.Zero),
-                            float4(sfloat.Zero, sfloat.Zero, sfloat.One, sfloat.Zero),
-                            float4(vector.x, vector.y, vector.z, sfloat.One));
+            return float4x4(float4(sfloat.one, sfloat.zero, sfloat.zero, sfloat.zero),
+                            float4(sfloat.zero, sfloat.one, sfloat.zero, sfloat.zero),
+                            float4(sfloat.zero, sfloat.zero, sfloat.one, sfloat.zero),
+                            float4(vector.x, vector.y, vector.z, sfloat.one));
         }
 
         /// <summary>
@@ -796,10 +796,10 @@ namespace AnotherECS.Mathematics
             float3x3 rot = float3x3.LookRotation(normalize(target - eye), up);
 
             float4x4 matrix;
-            matrix.c0 = float4(rot.c0, sfloat.Zero);
-            matrix.c1 = float4(rot.c1, sfloat.Zero);
-            matrix.c2 = float4(rot.c2, sfloat.Zero);
-            matrix.c3 = float4(eye, sfloat.One);
+            matrix.c0 = float4(rot.c0, sfloat.zero);
+            matrix.c1 = float4(rot.c1, sfloat.zero);
+            matrix.c2 = float4(rot.c2, sfloat.zero);
+            matrix.c3 = float4(eye, sfloat.one);
             return matrix;
         }
 
@@ -813,15 +813,15 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 Ortho(sfloat width, sfloat height, sfloat near, sfloat far)
         {
-            sfloat rcpdx = sfloat.One / width;
-            sfloat rcpdy = sfloat.One / height;
-            sfloat rcpdz = sfloat.One / (far - near);
+            sfloat rcpdx = sfloat.one / width;
+            sfloat rcpdy = sfloat.one / height;
+            sfloat rcpdz = sfloat.one / (far - near);
 
             return float4x4(
-                (sfloat)2.0f * rcpdx, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-                sfloat.Zero, (sfloat)2.0f * rcpdy, sfloat.Zero, sfloat.Zero,
-                sfloat.Zero, sfloat.Zero, (sfloat)(-2.0f) * rcpdz, -(far + near) * rcpdz,
-                sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One
+                (sfloat)2.0f * rcpdx, sfloat.zero, sfloat.zero, sfloat.zero,
+                sfloat.zero, (sfloat)2.0f * rcpdy, sfloat.zero, sfloat.zero,
+                sfloat.zero, sfloat.zero, (sfloat)(-2.0f) * rcpdz, -(far + near) * rcpdz,
+                sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one
                 );
         }
 
@@ -837,15 +837,15 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 OrthoOffCenter(sfloat left, sfloat right, sfloat bottom, sfloat top, sfloat near, sfloat far)
         {
-            sfloat rcpdx = sfloat.One / (right - left);
-            sfloat rcpdy = sfloat.One / (top - bottom);
-            sfloat rcpdz = sfloat.One / (far - near);
+            sfloat rcpdx = sfloat.one / (right - left);
+            sfloat rcpdy = sfloat.one / (top - bottom);
+            sfloat rcpdz = sfloat.one / (far - near);
 
             return float4x4(
-                (sfloat)2.0f * rcpdx, sfloat.Zero, sfloat.Zero, -(right + left) * rcpdx,
-                sfloat.Zero, (sfloat)2.0f * rcpdy, sfloat.Zero, -(top + bottom) * rcpdy,
-                sfloat.Zero, sfloat.Zero, (sfloat)(-2.0f) * rcpdz, -(far + near) * rcpdz,
-                sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One
+                (sfloat)2.0f * rcpdx, sfloat.zero, sfloat.zero, -(right + left) * rcpdx,
+                sfloat.zero, (sfloat)2.0f * rcpdy, sfloat.zero, -(top + bottom) * rcpdy,
+                sfloat.zero, sfloat.zero, (sfloat)(-2.0f) * rcpdz, -(far + near) * rcpdz,
+                sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one
                 );
         }
 
@@ -859,14 +859,14 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 PerspectiveFov(sfloat verticalFov, sfloat aspect, sfloat near, sfloat far)
         {
-            sfloat cotangent = sfloat.One / tan(verticalFov * (sfloat)0.5f);
-            sfloat rcpdz = sfloat.One / (near - far);
+            sfloat cotangent = sfloat.one / tan(verticalFov * (sfloat)0.5f);
+            sfloat rcpdz = sfloat.one / (near - far);
 
             return float4x4(
-                cotangent / aspect, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-                sfloat.Zero, cotangent, sfloat.Zero, sfloat.Zero,
-                sfloat.Zero, sfloat.Zero, (far + near) * rcpdz, (sfloat)2.0f * near * far * rcpdz,
-                sfloat.Zero, sfloat.Zero, -sfloat.One, sfloat.Zero
+                cotangent / aspect, sfloat.zero, sfloat.zero, sfloat.zero,
+                sfloat.zero, cotangent, sfloat.zero, sfloat.zero,
+                sfloat.zero, sfloat.zero, (far + near) * rcpdz, (sfloat)2.0f * near * far * rcpdz,
+                sfloat.zero, sfloat.zero, -sfloat.one, sfloat.zero
                 );
         }
 
@@ -882,15 +882,15 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4x4 PerspectiveOffCenter(sfloat left, sfloat right, sfloat bottom, sfloat top, sfloat near, sfloat far)
         {
-            sfloat rcpdz = sfloat.One / (near - far);
-            sfloat rcpWidth = sfloat.One / (right - left);
-            sfloat rcpHeight = sfloat.One / (top - bottom);
+            sfloat rcpdz = sfloat.one / (near - far);
+            sfloat rcpWidth = sfloat.one / (right - left);
+            sfloat rcpHeight = sfloat.one / (top - bottom);
 
             return float4x4(
-                (sfloat)2.0f * near * rcpWidth, sfloat.Zero, (left + right) * rcpWidth, sfloat.Zero,
-                sfloat.Zero, (sfloat)2.0f * near * rcpHeight, (bottom + top) * rcpHeight, sfloat.Zero,
-                sfloat.Zero, sfloat.Zero, (far + near) * rcpdz, (sfloat)2.0f * near * far * rcpdz,
-                sfloat.Zero, sfloat.Zero, -sfloat.One, sfloat.Zero
+                (sfloat)2.0f * near * rcpWidth, sfloat.zero, (left + right) * rcpWidth, sfloat.zero,
+                sfloat.zero, (sfloat)2.0f * near * rcpHeight, (bottom + top) * rcpHeight, sfloat.zero,
+                sfloat.zero, sfloat.zero, (far + near) * rcpdz, (sfloat)2.0f * near * far * rcpdz,
+                sfloat.zero, sfloat.zero, -sfloat.one, sfloat.zero
                 );
         }
 
@@ -902,10 +902,10 @@ namespace AnotherECS.Mathematics
         public static float4x4 TRS(float3 translation, quaternion rotation, float3 scale)
         {
             float3x3 r = float3x3(rotation);
-            return float4x4(  float4(r.c0 * scale.x, sfloat.Zero),
-                              float4(r.c1 * scale.y, sfloat.Zero),
-                              float4(r.c2 * scale.z, sfloat.Zero),
-                              float4(translation, sfloat.One));
+            return float4x4(  float4(r.c0 * scale.x, sfloat.zero),
+                              float4(r.c1 * scale.y, sfloat.zero),
+                              float4(r.c2 * scale.z, sfloat.zero),
+                              float4(translation, sfloat.one));
         }
     }
 
@@ -967,8 +967,8 @@ namespace AnotherECS.Mathematics
 
             bool c = lenU > epsilon && lenV > epsilon;
 
-            o.c0 = math.select(float3(sfloat.One, sfloat.Zero, sfloat.Zero), u / lenU, c);
-            o.c1 = math.select(float3(sfloat.Zero, sfloat.One, sfloat.Zero), v / lenV, c);
+            o.c0 = math.select(float3(sfloat.one, sfloat.zero, sfloat.zero), u / lenU, c);
+            o.c1 = math.select(float3(sfloat.zero, sfloat.one, sfloat.zero), v / lenV, c);
             o.c2 = math.cross(o.c0, o.c1);
 
             return o;

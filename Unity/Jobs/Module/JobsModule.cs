@@ -7,7 +7,7 @@ namespace AnotherECS.Unity.Jobs
     {
         public void Construct(State state)
         {
-            state.SetModuleData(NativeArrayHandles.USER_DATA_ID, new NativeArrayHandles(state));
+            state.SetModuleData(NativeArrayHandles.MODULE_DATA_ID, new NativeArrayHandles(state));
         }
     }
 }

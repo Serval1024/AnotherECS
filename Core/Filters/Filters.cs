@@ -33,6 +33,7 @@ namespace AnotherECS.Core
 
                 var filterData = new FilterData(
                     _depencies,
+                    _maskTofilters.Count,
                     mask,
                     NList<BAllocator, uint>.CreateWrapper(_depencies->archetype.Filter(&_depencies->bAllocator, includes, excludes))
                     );
@@ -82,16 +83,19 @@ namespace AnotherECS.Core
     internal unsafe struct FilterData : IDisposable
     {
         private GlobalDepencies* _depencies;
-        private Mask mask;
+        private Mask _mask;
+        private uint _id;
 
         internal NList<BAllocator, uint> archetypeIds;
         internal NArray<BAllocator, uint> entities;
         internal uint entityCount;
 
-        public FilterData(GlobalDepencies* depencies, in Mask mask, in NList<BAllocator, uint> archetypeIds)
+        public FilterData(GlobalDepencies* depencies, uint id, in Mask mask, in NList<BAllocator, uint> archetypeIds)
         {
             _depencies = depencies;
-            this.mask = mask;
+            _mask = mask;
+            _id = id;
+
             this.archetypeIds = archetypeIds;
             entities = new NArray<BAllocator, uint>(&depencies->bAllocator, 16);
             entityCount = 0;
@@ -101,7 +105,7 @@ namespace AnotherECS.Core
         public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, ushort itemId)
             where TNArray : struct, INArray<Node>
         {
-            if (!mask.excludes.Contains(itemId))
+            if (!_mask.excludes.Contains(itemId))
             {
                 ArchetypeComparer<TNArray> comparer = default;
                 comparer.archetypes = archetypes;
@@ -110,10 +114,10 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<BAllocator, EntityId> GetEntities()
+        public EntityCollection GetEntities()
         {
             Update();
-            return entities;
+            return new EntityCollection() { id = _id, entities = new WArray<EntityId>(entities.ReadPtr(), entityCount) };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,4 +230,9 @@ namespace AnotherECS.Core
         }
     }
 
+    public struct EntityCollection
+    {
+        public uint id;
+        public WArray<EntityId> entities;
+    }
 }

@@ -1,0 +1,23 @@
+{
+    "name": "AnotherECS.Unity.Physics",
+    "rootNamespace": "",
+    "references": [
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "AnotherECS.Mathematics",
+        "SFloat",
+        "AnotherECS.Core",
+        "AnotherECS.Unity.Jobs",
+        "AnotherECS.Serializer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

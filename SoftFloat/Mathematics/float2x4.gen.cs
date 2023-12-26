@@ -57,20 +57,20 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2x4(bool v)
         {
-            this.c0 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
-            this.c1 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
-            this.c2 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
-            this.c3 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v);
+            this.c0 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
+            this.c1 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
+            this.c2 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
+            this.c3 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v);
         }
 
         /// <summary>Constructs a float2x4 matrix from a bool2x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2x4(bool2x4 v)
         {
-            this.c0 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c0);
-            this.c1 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c1);
-            this.c2 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c2);
-            this.c3 = math.select(new float2(sfloat.Zero), new float2(sfloat.One), v.c3);
+            this.c0 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c0);
+            this.c1 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c1);
+            this.c2 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c2);
+            this.c3 = math.select(new float2(sfloat.zero), new float2(sfloat.one), v.c3);
         }
 
         /// <summary>Constructs a float2x4 matrix from a single int value by converting it to float and assigning it to every component.</summary>

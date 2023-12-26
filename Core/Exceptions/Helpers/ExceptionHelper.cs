@@ -102,7 +102,7 @@ namespace AnotherECS.Core
         {
             ThrowIfDisposed(state);
 
-            if (caller.IsSingle)
+            if (!caller.IsSingle)
             {
                 throw new ComponentNotSingleException(typeof(T));
             }

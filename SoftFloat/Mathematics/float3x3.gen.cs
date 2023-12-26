@@ -22,9 +22,9 @@ namespace AnotherECS.Mathematics
 
         /// <summary>float3x3 identity transform.</summary>
         public static readonly float3x3 identity = new float3x3(
-            sfloat.One, sfloat.Zero, sfloat.Zero,
-            sfloat.Zero, sfloat.One, sfloat.Zero,
-            sfloat.Zero, sfloat.Zero, sfloat.One);
+            sfloat.one, sfloat.zero, sfloat.zero,
+            sfloat.zero, sfloat.one, sfloat.zero,
+            sfloat.zero, sfloat.zero, sfloat.one);
 
         /// <summary>float3x3 zero value.</summary>
         public static readonly float3x3 zero;
@@ -62,18 +62,18 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x3(bool v)
         {
-            this.c0 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v);
-            this.c1 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v);
-            this.c2 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v);
+            this.c0 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v);
+            this.c1 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v);
+            this.c2 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v);
         }
 
         /// <summary>Constructs a float3x3 matrix from a bool3x3 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3x3(bool3x3 v)
         {
-            this.c0 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v.c0);
-            this.c1 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v.c1);
-            this.c2 = math.select(new float3(sfloat.Zero), new float3(sfloat.One), v.c2);
+            this.c0 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v.c0);
+            this.c1 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v.c1);
+            this.c2 = math.select(new float3(sfloat.zero), new float3(sfloat.one), v.c2);
         }
 
         /// <summary>Constructs a float3x3 matrix from a single int value by converting it to float and assigning it to every component.</summary>
@@ -403,7 +403,7 @@ namespace AnotherECS.Mathematics
             float3 m1 = t0.yzx * t2 - t0 * t2.yzx;
             float3 m2 = t0 * t1.yzx - t0.yzx * t1;
 
-            sfloat rcpDet = sfloat.One / csum(t0.zxy * m0);
+            sfloat rcpDet = sfloat.one / csum(t0.zxy * m0);
             return float3x3(m0, m1, m2) * rcpDet;
         }
 

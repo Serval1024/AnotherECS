@@ -22,9 +22,9 @@ namespace AnotherECS.Mathematics
 
         /// <summary>float3 zero value.</summary>
         public static readonly float3 zero;
-        public static readonly float3 half = new(sfloat.Half, sfloat.Half, sfloat.Half);
-        public static readonly float3 one = new(sfloat.One, sfloat.One, sfloat.One);
-        public static readonly float3 two = new(sfloat.Two, sfloat.Two, sfloat.Two);
+        public static readonly float3 half = new(sfloat.half, sfloat.half, sfloat.half);
+        public static readonly float3 one = new(sfloat.one, sfloat.one, sfloat.one);
+        public static readonly float3 two = new(sfloat.two, sfloat.two, sfloat.two);
         
 
         /// <summary>Constructs a float3 vector from three sfloat values.</summary>
@@ -76,18 +76,18 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3(bool v)
         {
-            this.x = v ? sfloat.One : sfloat.Zero;
-            this.y = v ? sfloat.One : sfloat.Zero;
-            this.z = v ? sfloat.One : sfloat.Zero;
+            this.x = v ? sfloat.one : sfloat.zero;
+            this.y = v ? sfloat.one : sfloat.zero;
+            this.z = v ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float3 vector from a bool3 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3(bool3 v)
         {
-            this.x = v.x ? sfloat.One : sfloat.Zero;
-            this.y = v.y ? sfloat.One : sfloat.Zero;
-            this.z = v.z ? sfloat.One : sfloat.Zero;
+            this.x = v.x ? sfloat.one : sfloat.zero;
+            this.y = v.y ? sfloat.one : sfloat.zero;
+            this.z = v.z ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float3 vector from a single int value by converting it to sfloat and assigning it to every component.</summary>

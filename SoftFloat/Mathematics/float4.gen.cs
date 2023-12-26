@@ -25,9 +25,9 @@ namespace AnotherECS.Mathematics
 
         /// <summary>float4 zero value.</summary>
         public static readonly float4 zero;
-        public static readonly float4 half = new(sfloat.Half, sfloat.Half, sfloat.Half, sfloat.Half);
-        public static readonly float4 one = new(sfloat.One, sfloat.One, sfloat.One, sfloat.One);
-        public static readonly float4 two = new(sfloat.Two, sfloat.Two, sfloat.Two, sfloat.Two);
+        public static readonly float4 half = new(sfloat.half, sfloat.half, sfloat.half, sfloat.half);
+        public static readonly float4 one = new(sfloat.one, sfloat.one, sfloat.one, sfloat.one);
+        public static readonly float4 two = new(sfloat.two, sfloat.two, sfloat.two, sfloat.two);
 
         /// <summary>Constructs a float4 vector from four float values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,20 +123,20 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4(bool v)
         {
-            this.x = v ? sfloat.One : sfloat.Zero;
-            this.y = v ? sfloat.One : sfloat.Zero;
-            this.z = v ? sfloat.One : sfloat.Zero;
-            this.w = v ? sfloat.One : sfloat.Zero;
+            this.x = v ? sfloat.one : sfloat.zero;
+            this.y = v ? sfloat.one : sfloat.zero;
+            this.z = v ? sfloat.one : sfloat.zero;
+            this.w = v ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float4 vector from a bool4 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4(bool4 v)
         {
-            this.x = v.x ? sfloat.One : sfloat.Zero;
-            this.y = v.y ? sfloat.One : sfloat.Zero;
-            this.z = v.z ? sfloat.One : sfloat.Zero;
-            this.w = v.w ? sfloat.One : sfloat.Zero;
+            this.x = v.x ? sfloat.one : sfloat.zero;
+            this.y = v.y ? sfloat.one : sfloat.zero;
+            this.z = v.z ? sfloat.one : sfloat.zero;
+            this.w = v.w ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float4 vector from a single int value by converting it to float and assigning it to every component.</summary>

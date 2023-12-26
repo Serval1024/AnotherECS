@@ -18,7 +18,6 @@ namespace AnotherECS.Collections
         where T : unmanaged
     {
         private NArray<HAllocator, T> _data;
-        private HAllocator* _allocator;
 
         internal bool IsDirty
         {
@@ -29,7 +28,7 @@ namespace AnotherECS.Collections
         internal DArray(HAllocator* allocator)
         {
             _data = default;
-            _allocator = allocator;
+            _data.SetAllocator(allocator);
 #if !ANOTHERECS_RELEASE
             Validate();
 #endif
@@ -39,7 +38,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
         {
-            _allocator = allocator.Value;
+            _data.SetAllocator(allocator.Value);
             Validate();
         }
 
@@ -61,7 +60,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct(WPtr<HAllocator> allocator)
         {
-            _allocator = allocator.Value;
+            _data.SetAllocator(allocator.Value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,35 +90,31 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint length)
         {
-            if (!_allocator->IsValide)
+            if (!_data.GetAllocator()->IsValide)
             {
                 throw new MissInjectException(typeof(DArray<T>));
             }
 
-            if (length >= 0)
-            {
-                Deallocate();
-                _data.Allocate(_allocator, length);
-            }
-            else
-            {
-                throw new ArgumentException($"Argument '{nameof(length)}', must be equals or greater 0.");
-            }
+            _data.Allocate(length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate()
         {
-            if (_data.IsValide)
-            {
-                _data.Dispose();
-            }
+            _data.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint capacity)
         {
-            _data.Resize(capacity);
+            if (_data.IsValide)
+            {
+                _data.Resize(capacity);
+            }
+            else
+            {
+                _data.Allocate(capacity);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

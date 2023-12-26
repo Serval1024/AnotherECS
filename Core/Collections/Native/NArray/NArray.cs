@@ -71,7 +71,22 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(TAllocator* allocator, uint elementCount)
         {
+            Dispose();
             this = new(allocator, elementCount);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate(uint elementCount)
+        {
+            if (_allocator != null)
+            {
+                Dispose();
+                this = new(_allocator, elementCount);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,6 +96,12 @@ namespace AnotherECS.Core.Collection
             ExceptionHelper.ThrowIfNArrayBroken(this);
 #endif
             return _allocator;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetAllocator(TAllocator* allocator)
+        {
+            _allocator = allocator;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -606,8 +627,11 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            rebinder.Rebind(_allocator->GetId(), ref _data);
-            RebindMemoryHandleElement(ref rebinder);
+            if (IsValide)
+            {
+                rebinder.Rebind(_allocator->GetId(), ref _data);
+                RebindMemoryHandleElement(ref rebinder);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

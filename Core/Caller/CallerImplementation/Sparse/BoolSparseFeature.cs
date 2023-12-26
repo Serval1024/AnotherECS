@@ -118,7 +118,7 @@ namespace AnotherECS.Core.Caller
                 return new WArray<T>((T*)layout.storage.sparse.ReadPtr(), layout.storage.sparse.Length);
             }
 #if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(nameof(T));
+            throw new System.ArgumentException(typeof(T).Name);
 #endif
         }
     }

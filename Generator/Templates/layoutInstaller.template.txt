@@ -45,7 +45,7 @@ namespace AnotherECS.Gen.Project
 #endif
             }
 
-            static void MemoryRebind(ref MemoryRebinderContext rebinder, ref TEST.TestSet2 component)
+            static void MemoryRebind(ref MemoryRebinderContext rebinder, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
                 ReflectionUtils.ReflectionRebindMemoryHandle(ref component, ref rebinder);

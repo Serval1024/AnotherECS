@@ -204,8 +204,11 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            rebinder.Rebind(_allocator->GetId(), ref _data);
-            RebindMemoryHandleElement(ref rebinder);
+            if (IsValide)
+            {
+                rebinder.Rebind(_allocator->GetId(), ref _data);
+                RebindMemoryHandleElement(ref rebinder);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

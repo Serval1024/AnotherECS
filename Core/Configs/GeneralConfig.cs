@@ -13,10 +13,10 @@
         public static GeneralConfig Create()
            => new()
            {
-               entityCapacity = 16,
-               recycleCapacity = 256,
+               entityCapacity = 64,
+               recycleCapacity = 32,
 
-               componentCapacity = 64,
+               componentCapacity = 32,
                archetypeCapacity = 32,
 
                chunkLimit = 32,

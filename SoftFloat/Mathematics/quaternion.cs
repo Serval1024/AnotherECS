@@ -5,7 +5,10 @@ using static AnotherECS.Mathematics.math;
 namespace AnotherECS.Mathematics
 {
     public static class QuaternionExt
-    {    
+    {
+        private static readonly sfloat _360 = (sfloat)360f;
+        private static readonly sfloat _0_4995 = (sfloat)0.4995f;
+
         private static float3 FromQ2(quaternion quaternion)
         {
             var q1 = quaternion.value;
@@ -17,24 +20,24 @@ namespace AnotherECS.Mathematics
             var test = q1.x * q1.w - q1.y * q1.z;
             float3 v;
 
-            if (test > 0.4995f * unit) { // singularity at north pole
-                v.y = sfloat.Two * math.atan2(q1.y, q1.x);
-                v.x = math.PI / sfloat.Two;
+            if (test > _0_4995 * unit) { // singularity at north pole
+                v.y = sfloat.two * math.atan2(q1.y, q1.x);
+                v.x = math.PI / sfloat.two;
                 v.z = 0;
                 return QuaternionExt.NormalizeAngles(math.degrees(v));
             }
 
-            if (test < -0.4995f * unit) { // singularity at south pole
-                v.y = -sfloat.Two * math.atan2(q1.y, q1.x);
-                v.x = -math.PI / sfloat.Two;
+            if (test < -_0_4995 * unit) { // singularity at south pole
+                v.y = -sfloat.two * math.atan2(q1.y, q1.x);
+                v.x = -math.PI / sfloat.two;
                 v.z = 0;
                 return QuaternionExt.NormalizeAngles(math.degrees(v));
             }
 
             var q = new quaternion(q1.w, q1.z, q1.x, q1.y).value;
-            v.y = math.atan2(sfloat.Two * q.x * q.w + 2f * q.y * q.z, sfloat.One - sfloat.Two * (q.z * q.z + q.w * q.w)); // Yaw
-            v.x = math.asin(sfloat.Two * (q.x * q.z - q.w * q.y)); // Pitch
-            v.z = math.atan2(sfloat.Two * q.x * q.y + 2f * q.z * q.w, sfloat.One - sfloat.Two * (q.y * q.y + q.z * q.z)); // Roll
+            v.y = math.atan2(sfloat.two * q.x * q.w + sfloat.two * q.y * q.z, sfloat.one - sfloat.two * (q.z * q.z + q.w * q.w)); // Yaw
+            v.x = math.asin(sfloat.two * (q.x * q.z - q.w * q.y)); // Pitch
+            v.z = math.atan2(sfloat.two * q.x * q.y + sfloat.two * q.z * q.w, sfloat.one - sfloat.two * (q.y * q.y + q.z * q.z)); // Roll
             return QuaternionExt.NormalizeAngles(math.degrees(v));
         }
 
@@ -46,12 +49,12 @@ namespace AnotherECS.Mathematics
         }
 
         private static sfloat NormalizeAngle(sfloat angle) {
-            while (angle > 360f) {
-                angle -= 360f;
+            while (angle > _360) {
+                angle -= _360;
             }
 
-            while (angle < 0f) {
-                angle += 360f;
+            while (angle < sfloat.zero) {
+                angle += _360;
             }
 
             return angle;
@@ -67,10 +70,13 @@ namespace AnotherECS.Mathematics
     [Serializable]
     public partial struct quaternion : IEquatable<quaternion>, IFormattable
     {
+        private static readonly sfloat _closeOne = (sfloat)0.999998986721039f;
+
         public float4 value;
 
+
         /// <summary>A quaternion representing the identity transform.</summary>
-        public static quaternion identity => new quaternion(sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One);
+        public static quaternion identity => new quaternion(sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one);
 
         /// <summary>Constructs a quaternion from four float values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,7 +102,7 @@ namespace AnotherECS.Mathematics
             uint4 u_mask = uint4((int)u_sign >> 31);
             uint4 t_mask = uint4(asint(t) >> 31);
 
-            sfloat tr = sfloat.One + abs(u.x);
+            sfloat tr = sfloat.one + abs(u.x);
 
             uint4 sign_flips = uint4(0x00000000, 0x80000000, 0x80000000, 0x80000000) ^ (u_mask & uint4(0x00000000, 0x80000000, 0x00000000, 0x80000000)) ^ (t_mask & uint4(0x80000000, 0x80000000, 0x80000000, 0x00000000));
 
@@ -119,7 +125,7 @@ namespace AnotherECS.Mathematics
             uint4 u_mask = uint4((int)u_sign >> 31);
             uint4 t_mask = uint4(asint(t) >> 31);
 
-            sfloat tr = sfloat.One + abs(u.x);
+            sfloat tr = sfloat.one + abs(u.x);
 
             uint4 sign_flips = uint4(0x00000000, 0x80000000, 0x80000000, 0x80000000) ^ (u_mask & uint4(0x00000000, 0x80000000, 0x00000000, 0x80000000)) ^ (t_mask & uint4(0x80000000, 0x80000000, 0x80000000, 0x00000000));
 
@@ -138,7 +144,7 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static quaternion AxisAngle(float3 axis, sfloat angle)
         {
-            math.sincos(sfloat.Half * angle, out sfloat sina, out sfloat cosa);
+            math.sincos(sfloat.half * angle, out sfloat sina, out sfloat cosa);
             return quaternion(float4(axis * sina, cosa));
         }
 
@@ -148,22 +154,24 @@ namespace AnotherECS.Mathematics
             quaternion to,
             sfloat maxDegreesDelta) {
             sfloat num = from.Angle(to);
-            return num < sfloat.Epsilon ? to : math.slerp(from, to, math.min(1f, maxDegreesDelta / num));
+            return num < sfloat.epsilon ? to : math.slerp(from, to, math.min(sfloat.one, maxDegreesDelta / num));
         }
      
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static quaternion FromToRotation ( float3 from , float3 to )
+        public static quaternion FromToRotation (float3 from, float3 to)
             => quaternion.AxisAngle(
-                angle: math.acos( math.clamp(math.dot(math.normalize(from),math.normalize(to)), -sfloat.One, sfloat.One) ) ,
+                angle: math.acos( math.clamp(math.dot(math.normalize(from),math.normalize(to)), -sfloat.one, sfloat.one) ) ,
                 axis:  math.normalize( math.cross(from,to) )
             );
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public sfloat Angle(quaternion q2) {
             var dot    = math.dot(this, q2);
-            return !(dot > 0.999998986721039f) ? (sfloat)(math.acos(math.min(math.abs(dot), 1f)) * sfloat.Two) : sfloat.Zero;
+            return !(dot > _closeOne) ? (math.acos(math.min(math.abs(dot), sfloat.one)) * sfloat.two) : sfloat.zero;
         }
+
         
+
         /// <summary>
         /// Returns a quaternion constructed by first performing a rotation around the x-axis, then the y-axis and finally the z-axis.
         /// All rotation angles are in radians and clockwise when looking along the rotation axis towards the origin.
@@ -174,13 +182,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateZ(xyz.z), mul(rotateY(xyz.y), rotateX(xyz.x)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z - s.y * s.z * c.x,
                 // s.y * c.x * c.z + s.x * s.z * c.y,
                 // s.z * c.x * c.y - s.x * s.y * c.z,
                 // c.x * c.y * c.z + s.y * s.z * s.x
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.One, sfloat.One, -sfloat.One, sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.one, sfloat.one, -sfloat.one, sfloat.one)
                 );
         }
 
@@ -194,13 +202,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateY(xyz.y), mul(rotateZ(xyz.z), rotateX(xyz.x)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z + s.y * s.z * c.x,
                 // s.y * c.x * c.z + s.x * s.z * c.y,
                 // s.z * c.x * c.y - s.x * s.y * c.z,
                 // c.x * c.y * c.z - s.y * s.z * s.x
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.One, sfloat.One, -sfloat.One, -sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.one, sfloat.one, -sfloat.one, -sfloat.one)
                 );
         }
 
@@ -214,13 +222,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateZ(xyz.z), mul(rotateX(xyz.x), rotateY(xyz.y)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z - s.y * s.z * c.x,
                 // s.y * c.x * c.z + s.x * s.z * c.y,
                 // s.z * c.x * c.y + s.x * s.y * c.z,
                 // c.x * c.y * c.z - s.y * s.z * s.x
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.One, sfloat.One, sfloat.One, -sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.one, sfloat.one, sfloat.one, -sfloat.one)
                 );
         }
 
@@ -234,13 +242,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateX(xyz.x), mul(rotateZ(xyz.z), rotateY(xyz.y)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z - s.y * s.z * c.x,
                 // s.y * c.x * c.z - s.x * s.z * c.y,
                 // s.z * c.x * c.y + s.x * s.y * c.z,
                 // c.x * c.y * c.z + s.y * s.z * s.x
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.One, -sfloat.One, sfloat.One, sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(-sfloat.one, -sfloat.one, sfloat.one, sfloat.one)
                 );
         }
 
@@ -255,13 +263,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateY(xyz.y), mul(rotateX(xyz.x), rotateZ(xyz.z)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z + s.y * s.z * c.x,
                 // s.y * c.x * c.z - s.x * s.z * c.y,
                 // s.z * c.x * c.y - s.x * s.y * c.z,
                 // c.x * c.y * c.z + s.y * s.z * s.x
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.One, -sfloat.One, -sfloat.One, sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.one, -sfloat.one, -sfloat.one, sfloat.one)
                 );
         }
 
@@ -275,13 +283,13 @@ namespace AnotherECS.Mathematics
         {
             // return mul(rotateX(xyz.x), mul(rotateY(xyz.y), rotateZ(xyz.z)));
             float3 s, c;
-            sincos(sfloat.Half * xyz, out s, out c);
+            sincos(sfloat.half * xyz, out s, out c);
             return quaternion(
                 // s.x * c.y * c.z + s.y * s.z * c.x,
                 // s.y * c.x * c.z - s.x * s.z * c.y,
                 // s.z * c.x * c.y + s.x * s.y * c.z,
                 // c.x * c.y * c.z - s.y * s.x * s.z
-                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.One, -sfloat.One, sfloat.One, -sfloat.One)
+                float4(s.xyz, c.x) * c.yxxy * c.zzyz + s.yxxy * s.zzyz * float4(c.xyz, s.x) * float4(sfloat.one, -sfloat.one, sfloat.one, -sfloat.one)
                 );
         }
 
@@ -398,8 +406,8 @@ namespace AnotherECS.Mathematics
         public static quaternion RotateX(sfloat angle)
         {
             sfloat sina, cosa;
-            math.sincos(sfloat.Half * angle, out sina, out cosa);
-            return quaternion(sina, sfloat.Zero, sfloat.Zero, cosa);
+            math.sincos(sfloat.half * angle, out sina, out cosa);
+            return quaternion(sina, sfloat.zero, sfloat.zero, cosa);
         }
 
         /// <summary>Returns a quaternion that rotates around the y-axis by a given number of radians.</summary>
@@ -408,8 +416,8 @@ namespace AnotherECS.Mathematics
         public static quaternion RotateY(sfloat angle)
         {
             sfloat sina, cosa;
-            math.sincos(sfloat.Half * angle, out sina, out cosa);
-            return quaternion(sfloat.Zero, sina, sfloat.Zero, cosa);
+            math.sincos(sfloat.half * angle, out sina, out cosa);
+            return quaternion(sfloat.zero, sina, sfloat.zero, cosa);
         }
 
         /// <summary>Returns a quaternion that rotates around the z-axis by a given number of radians.</summary>
@@ -418,8 +426,8 @@ namespace AnotherECS.Mathematics
         public static quaternion RotateZ(sfloat angle)
         {
             sfloat sina, cosa;
-            math.sincos(sfloat.Half * angle, out sina, out cosa);
-            return quaternion(sfloat.Zero, sfloat.Zero, sina, cosa);
+            math.sincos(sfloat.half * angle, out sina, out cosa);
+            return quaternion(sfloat.zero, sfloat.zero, sina, cosa);
         }
 
         /// <summary>
@@ -459,7 +467,7 @@ namespace AnotherECS.Mathematics
             const uint smallValue = 0x0554ad2e;
 
             bool accept = mn > sfloat.FromRaw(smallValue) && mx < sfloat.FromRaw(bigValue) && isfinite(forwardLengthSq) && isfinite(upLengthSq) && isfinite(tLengthSq);
-            return quaternion(select(float4(sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One), quaternion(float3x3(t, cross(forward, t),forward)).value, accept));
+            return quaternion(select(float4(sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one), quaternion(float3x3(t, cross(forward, t),forward)).value, accept));
         }
 
         /// <summary>Returns true if the quaternion is equal to a given quaternion, false otherwise.</summary>
@@ -511,7 +519,7 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static quaternion conjugate(quaternion q)
         {
-            return quaternion(q.value * float4(-sfloat.One, -sfloat.One, -sfloat.One, sfloat.One));
+            return quaternion(q.value * float4(-sfloat.one, -sfloat.one, -sfloat.one, sfloat.one));
         }
 
        /// <summary>Returns the inverse of a quaternion value.</summary>
@@ -519,7 +527,7 @@ namespace AnotherECS.Mathematics
         public static quaternion inverse(quaternion q)
         {
             float4 x = q.value;
-            return quaternion(rcp(dot(x, x)) * x * float4(-sfloat.One, -sfloat.One, -sfloat.One, sfloat.One));
+            return quaternion(rcp(dot(x, x)) * x * float4(-sfloat.one, -sfloat.one, -sfloat.one, sfloat.one));
         }
 
         /// <summary>Returns the dot product of two quaternions.</summary>
@@ -601,9 +609,9 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static quaternion unitlog(quaternion q)
         {
-            sfloat w = clamp(q.value.w, -sfloat.One, sfloat.One);
-            sfloat s = acos(w) * rsqrt(sfloat.One - w*w);
-            return quaternion(float4(q.value.xyz * s, sfloat.Zero));
+            sfloat w = clamp(q.value.w, -sfloat.one, sfloat.one);
+            sfloat s = acos(w) * rsqrt(sfloat.one - w*w);
+            return quaternion(float4(q.value.xyz * s, sfloat.zero));
         }
 
         /// <summary>Returns the natural logarithm of a quaternion.</summary>
@@ -613,22 +621,22 @@ namespace AnotherECS.Mathematics
             sfloat v_len_sq = dot(q.value.xyz, q.value.xyz);
             sfloat q_len_sq = v_len_sq + q.value.w*q.value.w;
 
-            sfloat s = acos(clamp(q.value.w * rsqrt(q_len_sq), -sfloat.One, sfloat.One)) * rsqrt(v_len_sq);
-            return quaternion(float4(q.value.xyz * s, (sfloat)0.5f * log(q_len_sq)));
+            sfloat s = acos(clamp(q.value.w * rsqrt(q_len_sq), -sfloat.one, sfloat.one)) * rsqrt(v_len_sq);
+            return quaternion(float4(q.value.xyz * s, sfloat.half * log(q_len_sq)));
         }
 
         /// <summary>Returns the result of transforming the quaternion b by the quaternion a.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static quaternion mul(quaternion a, quaternion b)
         {
-            return quaternion(a.value.wwww * b.value + (a.value.xyzx * b.value.wwwx + a.value.yzxy * b.value.zxyy) * float4(sfloat.One, sfloat.One, sfloat.One, -sfloat.One) - a.value.zxyz * b.value.yzxz);
+            return quaternion(a.value.wwww * b.value + (a.value.xyzx * b.value.wwwx + a.value.yzxy * b.value.zxyy) * float4(sfloat.one, sfloat.one, sfloat.one, -sfloat.one) - a.value.zxyz * b.value.yzxz);
         }
 
         /// <summary>Returns the result of transforming a vector by a quaternion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3 mul(quaternion q, float3 v)
         {
-            float3 t = sfloat.Two * cross(q.value.xyz, v);
+            float3 t = sfloat.two * cross(q.value.xyz, v);
             return v + q.value.w * t + cross(q.value.xyz, t);
         }
 
@@ -636,7 +644,7 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3 rotate(quaternion q, float3 v)
         {
-            float3 t = sfloat.Two * cross(q.value.xyz, v);
+            float3 t = sfloat.two * cross(q.value.xyz, v);
             return v + q.value.w * t + cross(q.value.xyz, t);
         }
 
@@ -645,7 +653,7 @@ namespace AnotherECS.Mathematics
         public static quaternion nlerp(quaternion q1, quaternion q2, sfloat t)
         {
             sfloat dt = dot(q1, q2);
-            if(dt < sfloat.Zero)
+            if(dt < sfloat.zero)
             {
                 q2.value = -q2.value;
             }
@@ -658,7 +666,7 @@ namespace AnotherECS.Mathematics
         public static quaternion slerp(quaternion q1, quaternion q2, sfloat t)
         {
             sfloat dt = dot(q1, q2);
-            if (dt < sfloat.Zero)
+            if (dt < sfloat.zero)
             {
                 dt = -dt;
                 q2.value = -q2.value;
@@ -668,8 +676,8 @@ namespace AnotherECS.Mathematics
             if (dt < sfloat.FromRaw(almostOne))
             {
                 sfloat angle = acos(dt);
-                sfloat s = rsqrt(sfloat.One - dt * dt);    // 1.0f / sin(angle)
-                sfloat w1 = sin(angle * (sfloat.One - t)) * s;
+                sfloat s = rsqrt(sfloat.one - dt * dt);    // 1.0f / sin(angle)
+                sfloat w1 = sin(angle * (sfloat.one - t)) * s;
                 sfloat w2 = sin(angle * t) * s;
                 return quaternion(q1.value * w1 + q2.value * w2);
             }
@@ -700,6 +708,6 @@ namespace AnotherECS.Mathematics
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 forward(quaternion q) { return mul(q, float3(sfloat.Zero, sfloat.Zero, sfloat.One)); }  // for compatibility
+        public static float3 forward(quaternion q) { return mul(q, float3(sfloat.zero, sfloat.zero, sfloat.one)); }  // for compatibility
     }
 }

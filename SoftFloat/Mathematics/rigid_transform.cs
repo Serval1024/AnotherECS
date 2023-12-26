@@ -11,7 +11,7 @@ namespace AnotherECS.Mathematics
         public quaternion rot;
 
         /// <summary>A RigidTransform representing the identity transform.</summary>
-        public static readonly RigidTransform identity = new RigidTransform(new quaternion(sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One), new float3(sfloat.Zero, sfloat.Zero, sfloat.Zero));
+        public static readonly RigidTransform identity = new RigidTransform(new quaternion(sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one), new float3(sfloat.zero, sfloat.zero, sfloat.zero));
 
         /// <summary>Constructs a RigidTransform from a rotation represented by a unit quaternion and a translation represented by a float3 vector.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

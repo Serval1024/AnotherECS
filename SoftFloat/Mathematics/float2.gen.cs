@@ -23,9 +23,9 @@ namespace AnotherECS.Mathematics
 
         /// <summary>float2 zero value.</summary>
         public static readonly float2 zero;
-        public static readonly float2 half = new(sfloat.Half, sfloat.Half);
-        public static readonly float2 one = new(sfloat.One, sfloat.One);
-        public static readonly float2 two = new(sfloat.Two, sfloat.Two);
+        public static readonly float2 half = new(sfloat.half, sfloat.half);
+        public static readonly float2 one = new(sfloat.one, sfloat.one);
+        public static readonly float2 two = new(sfloat.two, sfloat.two);
 
         /// <summary>Constructs a float2 vector from two float values.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,16 +55,16 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2(bool v)
         {
-            this.x = v ? sfloat.One : sfloat.Zero;
-            this.y = v ? sfloat.One : sfloat.Zero;
+            this.x = v ? sfloat.one : sfloat.zero;
+            this.y = v ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float2 vector from a bool2 vector by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2(bool2 v)
         {
-            this.x = v.x ? sfloat.One : sfloat.Zero;
-            this.y = v.y ? sfloat.One : sfloat.Zero;
+            this.x = v.x ? sfloat.one : sfloat.zero;
+            this.y = v.y ? sfloat.one : sfloat.zero;
         }
 
         /// <summary>Constructs a float2 vector from a single int value by converting it to float and assigning it to every component.</summary>

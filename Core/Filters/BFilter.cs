@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
+using static AnotherECS.Core.FilterData;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Physics")]
 namespace AnotherECS.Core
 {
 #if ENABLE_IL2CPP
@@ -16,6 +18,7 @@ namespace AnotherECS.Core
         private State _state;
         private FilterData* _filterData;
 
+       
         internal void Construct(State state, FilterData* filterData)
         {
             _state = state;
@@ -35,6 +38,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal State GetState()
             => _state;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EntityCollection GetEntities()
+            => _filterData->GetEntities();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal FilterData* GetFilterData()

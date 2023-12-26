@@ -1,20 +1,14 @@
-﻿using AnotherECS.Converter;
-using AnotherECS.Serializer;
-using Mono.Cecil.Cil;
-using PlasticGui.WorkspaceWindow.Replication;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnotherECS.Converter;
 using static AnotherECS.Generator.TemplateParser;
 
-[assembly: InternalsVisibleTo("AnotherECS.Unity.Editor.Generator")]
-[assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs.Editor.Generator")]
 namespace AnotherECS.Generator
 {
-    internal static class TemplateParser
+    public static class TemplateParser
     {
         private static readonly Regex _commentStatement = new("\\*\\*\\*.*\\*\\*\\*");
         private static readonly Regex _tabStatement = new("\\-\\-\\-");
@@ -535,7 +529,7 @@ namespace AnotherECS.Generator
             }
         };
 
-        internal interface IExpressionToInt
+        public interface IExpressionToInt
         {
             int ToInt(Variables variables);
         }

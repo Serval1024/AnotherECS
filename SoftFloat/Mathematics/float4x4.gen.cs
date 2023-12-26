@@ -23,10 +23,10 @@ namespace AnotherECS.Mathematics
 
         /// <summary>float4x4 identity transform.</summary>
         public static readonly float4x4 identity = new float4x4(
-            sfloat.One, sfloat.Zero, sfloat.Zero, sfloat.Zero,
-            sfloat.Zero, sfloat.One, sfloat.Zero, sfloat.Zero,
-            sfloat.Zero, sfloat.Zero, sfloat.One, sfloat.Zero,
-            sfloat.Zero, sfloat.Zero, sfloat.Zero, sfloat.One
+            sfloat.one, sfloat.zero, sfloat.zero, sfloat.zero,
+            sfloat.zero, sfloat.one, sfloat.zero, sfloat.zero,
+            sfloat.zero, sfloat.zero, sfloat.one, sfloat.zero,
+            sfloat.zero, sfloat.zero, sfloat.zero, sfloat.one
         );
 
         /// <summary>float4x4 zero value.</summary>
@@ -69,20 +69,20 @@ namespace AnotherECS.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4x4(bool v)
         {
-            this.c0 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
-            this.c1 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
-            this.c2 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
-            this.c3 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v);
+            this.c0 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
+            this.c1 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
+            this.c2 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
+            this.c3 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v);
         }
 
         /// <summary>Constructs a float4x4 matrix from a bool4x4 matrix by componentwise conversion.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4x4(bool4x4 v)
         {
-            this.c0 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c0);
-            this.c1 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c1);
-            this.c2 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c2);
-            this.c3 = math.select(new float4(sfloat.Zero), new float4(sfloat.One), v.c3);
+            this.c0 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c0);
+            this.c1 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c1);
+            this.c2 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c2);
+            this.c3 = math.select(new float4(sfloat.zero), new float4(sfloat.one), v.c3);
         }
 
         /// <summary>Constructs a float4x4 matrix from a single int value by converting it to float and assigning it to every component.</summary>
@@ -463,7 +463,7 @@ namespace AnotherECS.Mathematics
             denom = denom + shuffle(denom, denom, ShuffleComponent.LeftY, ShuffleComponent.LeftX, ShuffleComponent.RightW, ShuffleComponent.RightZ);   // x+y        x+y            z+w            z+w
             denom = denom - shuffle(denom, denom, ShuffleComponent.LeftZ, ShuffleComponent.LeftZ, ShuffleComponent.RightX, ShuffleComponent.RightX);   // x+y-z-w  x+y-z-w        z+w-x-y        z+w-x-y
 
-            float4 rcp_denom_ppnn = float4(sfloat.One) / denom;
+            float4 rcp_denom_ppnn = float4(sfloat.one) / denom;
             float4x4 res;
             res.c0 = minors0 * rcp_denom_ppnn;
 
@@ -501,7 +501,7 @@ namespace AnotherECS.Mathematics
             float4 r2 = unpacklo(t2, t3);
 
             pos = -(r0 * pos.x + r1 * pos.y + r2 * pos.z);
-            pos.w = sfloat.One;
+            pos.w = sfloat.one;
 
             return float4x4(r0, r1, r2, pos);
         }

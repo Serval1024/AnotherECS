@@ -6,6 +6,7 @@ namespace AnotherECS.Core
 {
     public struct Entity : IEquatable<Entity>
     {
+        public const EntityId Zero = 0;
         public static readonly Entity Null = new();
 
         internal EntityId id;

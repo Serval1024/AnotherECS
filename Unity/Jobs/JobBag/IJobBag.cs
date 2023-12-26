@@ -6,5 +6,4 @@
         void BeginForEachIndex(int chunkIndex);
         void EndForEachIndex();
     }
-
 }

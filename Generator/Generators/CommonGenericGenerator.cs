@@ -22,30 +22,30 @@ namespace AnotherECS.Generator
             => new[] { Compile() };
 
         public ContentGenerator Compile()
-        {
-            TemplateParser.Variables variables = JobBagGVariablesConfigGenerator.Get(_count);
+            => new(
+                _path,
+                TemplateParser.Transform(_template, VariablesConfigGenerator.Get(_count))
+                );
+        
 
-            return new ContentGenerator(_path, TemplateParser.Transform(_template, variables));
-        }
-    }
-
-    internal static class JobBagGVariablesConfigGenerator
-    {
-        public static TemplateParser.Variables Get(int count)
+        private static class VariablesConfigGenerator
         {
-            TemplateParser.Variables variables = null;
-            variables = new()
+            public static TemplateParser.Variables Get(int count)
             {
-                { "STRUCT_COUNT", () => count },
-                { "GENERIC_COUNT", () => variables.GetIndex(0) + 1 },
-                { "SEPARATOR1:,", () =>
-                    (variables.GetIndex(1) < variables.GetLength(1) - 1)
-                    ? ", "
-                    : string.Empty
-                },
-            };
+                TemplateParser.Variables variables = null;
+                variables = new()
+                {
+                    { "STRUCT_COUNT", () => count },
+                    { "GENERIC_COUNT", () => variables.GetIndex(0) + 1 },
+                    { "SEPARATOR1:,", () =>
+                        (variables.GetIndex(1) < variables.GetLength(1) - 1)
+                        ? ", "
+                        : string.Empty
+                    },
+                };
 
-            return variables;
+                return variables;
+            }
         }
     }
 }
