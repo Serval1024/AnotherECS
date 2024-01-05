@@ -11,7 +11,7 @@ namespace AnotherECS.Core.Collection
         public void Pack<TNArray>(ref WriterContextSerializer writer, ref INArray arrayPtr)
             where TNArray : unmanaged, INArray
         {
-            if (arrayPtr.IsValide)
+            if (arrayPtr.IsValid)
             {
                 _count.PackConcrete(ref writer, arrayPtr.Length);
             }
@@ -25,7 +25,7 @@ namespace AnotherECS.Core.Collection
         public void Pack<TNArray>(ref WriterContextSerializer writer, ref TNArray arrayPtr)
             where TNArray : unmanaged, INArray
         {
-            if (arrayPtr.IsValide)
+            if (arrayPtr.IsValid)
             {
                 _count.PackConcrete(ref writer, arrayPtr.Length);
             }

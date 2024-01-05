@@ -10,7 +10,7 @@ namespace AnotherECS.Core
         internal ushort chunk;
         internal ushort segment;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => GetPtr() != null;

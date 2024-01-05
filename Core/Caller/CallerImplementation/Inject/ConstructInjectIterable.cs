@@ -9,10 +9,10 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, ref TDense component)
+        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
         {
             default(InjectFeature<TAllocator, TSparse, TDense, TDenseIndex>)
-                .Construct(ref layout, ref depencies, ref component);
+                .Construct(ref layout, ref dependencies, ref component);
         }
     }
 }

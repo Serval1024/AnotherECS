@@ -6,21 +6,28 @@ namespace AnotherECS.Core
     public class World<TState> : IWorld, IDisposable
         where TState : State, new()
     {
+#if !ANOTHERECS_RELEASE
+        private bool _isInit = false;
+        private bool _isDispose = false;
+#endif
         private readonly IGroupSystemInternal _systems;
         private readonly TState _state;
-
-        private readonly List<ITickEvent> _eventTemp = new();
+        private readonly LoopProcessing _loopProcessing;
 
         public World(IEnumerable<ISystem> systems)
-            : this(new SystemGroup(systems), new TState()) { }
+            : this(systems, new TState()) { }
 
-        public World(IEnumerable<ISystem> systems, TState state)
-            : this(new SystemGroup(systems), state) { }
-
-        public World(SystemGroup systems, TState state)
+        public World(IEnumerable<ISystem> systems, TState state, ISystemProcessing systemProcessing = default)
         {
-            _systems = systems ?? throw new ArgumentNullException(nameof(systems));
+            _systems = new SystemGroup(
+                systems ?? throw new ArgumentNullException(nameof(systems))
+                );
+
             _state = state ?? throw new ArgumentNullException(nameof(state));
+
+            _loopProcessing = new LoopProcessing(
+                systemProcessing ?? SystemProcessingFactory.Create(state, ThreadingLevel.MainThreadOnly)
+                );
         }
 
         public void Init()
@@ -29,18 +36,28 @@ namespace AnotherECS.Core
             {
                 _systems.Prepend((ISystem)Activator.CreateInstance(system));
             }
+            _systems.Sort();
 
-            _systems.PrepareInternal();
-            _systems.ConstructInternal(_state);
             _state.FirstStartup();
-            _systems.InitInternal(_state);
+            _loopProcessing.Init(_systems);
+#if !ANOTHERECS_RELEASE
+            _isInit = true;
+#endif
         }
 
         public void Tick()
-            => Tick(1);
+        {
+            Tick(1);
+        }
 
         public void Tick(uint tickCount)
         {
+#if !ANOTHERECS_RELEASE
+            if (!_isInit || _isDispose)
+            {
+                throw new InvalidOperationException("World not init yet or disposed.");
+            }
+#endif
             if (tickCount != 0)
             {
 #if ANOTHERECS_HISTORY_DISABLE
@@ -65,30 +82,32 @@ namespace AnotherECS.Core
         }
 
         public void Destroy()
-            => _systems.DestroyInternal(_state);
+            => _loopProcessing.Destroy();
+
+        public void UpdateFromMainThread()
+        {
+            _loopProcessing.CallFromMainThread();
+        }
 
         public void OneTick()
         {
             _state.TickStarted();
-            _systems.TickStartedInternal(_state);
-
-            _eventTemp.Clear();
-            _state.GetEvent(_eventTemp);
-            _systems.ReceiveInternal(_state, _eventTemp);
-            
-            _systems.TickInternal(_state);
-
-            _state.TickFinished();
-            _systems.TickFinishiedInternal(_state);
+            _loopProcessing.Tick();
         }
+
 
         public void Send(BaseEvent @event)
             => _state.Send(@event);
 
         public void Dispose()
         {
+            _loopProcessing.Dispose();
+
             _systems.Dispose();
             _state.Dispose();
+#if !ANOTHERECS_RELEASE
+            _isDispose = true;
+#endif
         }
     }
 }

@@ -19,7 +19,7 @@ namespace AnotherECS.Serializer
         public void PackBlittable(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data)
         {
             _meta.Pack(ref writer, ref data);
-            if (data.IsValide)
+            if (data.IsValid)
             {
                 writer.Write(data.GetAllocator()->GetId());
                 data.GetMemoryHandle().Pack(ref writer);
@@ -53,7 +53,7 @@ namespace AnotherECS.Serializer
         {
             _meta.Pack(ref writer, ref data);
 
-            if (data.IsValide)
+            if (data.IsValid)
             {
                 writer.Write(data.GetAllocator()->GetId());
                 data.GetMemoryHandle().Pack(ref writer);
@@ -152,7 +152,7 @@ namespace AnotherECS.Serializer
         public static void Pack(ref WriterContextSerializer writer, ref NArray<TAllocator, T> data, uint count)
         {
             _meta.Pack(ref writer, ref data);
-            if (data.IsValide)
+            if (data.IsValid)
             {
                 var ptr = data.GetPtr();
                 _count.Pack(ref writer, count);

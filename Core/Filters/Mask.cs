@@ -12,7 +12,7 @@ namespace AnotherECS.Core
 
         private uint _hash;
 
-        public bool IsValide
+        public bool IsValid
             => includes.count != 0;
 
         public uint Hash

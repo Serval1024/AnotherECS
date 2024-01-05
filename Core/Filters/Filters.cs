@@ -8,17 +8,17 @@ namespace AnotherECS.Core
 {
     internal unsafe struct Filters : IDisposable
     {
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
         private FilterUpdater _filterUpdater;
         private NDictionary<BAllocator, Mask, uint, Mask> _maskTofilters;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Filters(GlobalDepencies* depencies, uint capacity)
+        public Filters(GlobalDependencies* dependencies, uint capacity)
         {
-            _depencies  = depencies;
-            _filterUpdater = FilterUpdater.Create(&depencies->bAllocator, capacity);
-            _maskTofilters = new NDictionary<BAllocator, Mask, uint, Mask>(&depencies->bAllocator, capacity);
+            _dependencies  = dependencies;
+            _filterUpdater = FilterUpdater.Create(&dependencies->bAllocator, capacity);
+            _maskTofilters = new NDictionary<BAllocator, Mask, uint, Mask>(&dependencies->bAllocator, capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,13 +29,13 @@ namespace AnotherECS.Core
                 var includes = mask.includes.ValuesAsSpan();
                 var excludes = mask.excludes.ValuesAsSpan();
 
-                _depencies->archetype.Create(ref _filterUpdater, includes);
+                _dependencies->archetype.Create(ref _filterUpdater, includes);
 
                 var filterData = new FilterData(
-                    _depencies,
+                    _dependencies,
                     _maskTofilters.Count,
                     mask,
-                    NList<BAllocator, uint>.CreateWrapper(_depencies->archetype.Filter(&_depencies->bAllocator, includes, excludes))
+                    NList<BAllocator, uint>.CreateWrapper(_dependencies->archetype.Filter(&_dependencies->bAllocator, includes, excludes))
                     );
                 
                 filterId = _filterUpdater.filters.Count;
@@ -54,11 +54,11 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(uint id, ushort elementId, bool isTemporary)
-            => _depencies->archetype.Add(ref _filterUpdater, id, elementId, isTemporary);
+            => _dependencies->archetype.Add(ref _filterUpdater, id, elementId, isTemporary);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(uint id, ushort elementId)
-            => _depencies->archetype.Remove(ref _filterUpdater, id, elementId);
+            => _dependencies->archetype.Remove(ref _filterUpdater, id, elementId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
@@ -70,19 +70,19 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Lock()
         {
-            _depencies->archetype.Lock();
+            _dependencies->archetype.Lock();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unlock()
         {
-            _depencies->archetype.Unlock(ref _filterUpdater);
+            _dependencies->archetype.Unlock(ref _filterUpdater);
         }
     }
 
     internal unsafe struct FilterData : IDisposable
     {
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
         private Mask _mask;
         private uint _id;
 
@@ -90,14 +90,14 @@ namespace AnotherECS.Core
         internal NArray<BAllocator, uint> entities;
         internal uint entityCount;
 
-        public FilterData(GlobalDepencies* depencies, uint id, in Mask mask, in NList<BAllocator, uint> archetypeIds)
+        public FilterData(GlobalDependencies* dependencies, uint id, in Mask mask, in NList<BAllocator, uint> archetypeIds)
         {
-            _depencies = depencies;
+            _dependencies = dependencies;
             _mask = mask;
             _id = id;
 
             this.archetypeIds = archetypeIds;
-            entities = new NArray<BAllocator, uint>(&depencies->bAllocator, 16);
+            entities = new NArray<BAllocator, uint>(&dependencies->bAllocator, 16);
             entityCount = 0;
         }
 
@@ -126,7 +126,7 @@ namespace AnotherECS.Core
             entityCount = 0;
             for (uint i = 0; i < archetypeIds.Length; ++i)
             {
-                entityCount += _depencies->archetype.ReadIdCollection(archetypeIds.Read(i)).Count;
+                entityCount += _dependencies->archetype.ReadIdCollection(archetypeIds.Read(i)).Count;
             }
 
             if (entities.Length < entityCount)
@@ -137,7 +137,7 @@ namespace AnotherECS.Core
             uint counter = 0;
             for (uint i = 0; i < archetypeIds.Length; ++i)
             {
-                foreach (var id in _depencies->archetype.ReadIdCollection(archetypeIds.Read(i)))
+                foreach (var id in _dependencies->archetype.ReadIdCollection(archetypeIds.Read(i)))
                 {
                     entities.GetRef(counter++) = id;
                 }

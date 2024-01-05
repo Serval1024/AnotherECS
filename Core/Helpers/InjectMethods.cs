@@ -1,5 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
+    /* TODO REMOVE
     public interface IInjectMethodsReference { }
 
     public delegate void InjectDelegate<T>(ref T component, ref InjectContainer injectContainer);
@@ -16,5 +17,5 @@
             this.construct = construct;
             this.deconstruct = deconstruct;
         }
-    }
+    }*/
 }

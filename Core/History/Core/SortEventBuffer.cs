@@ -8,14 +8,14 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal struct EventSortBuffer : ISerialize
+    internal struct SortEventBuffer : ISerialize
     {
         private int _count;
         private ulong[] _keys;
         private ElementData[] _values;
         private int _tickLimit;
 
-        public EventSortBuffer(int capacity, int tickLimit)
+        public SortEventBuffer(int capacity, int tickLimit)
         {
             if (capacity == 0)
             {

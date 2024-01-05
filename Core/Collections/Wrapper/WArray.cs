@@ -8,8 +8,8 @@ namespace AnotherECS.Core.Collection
         private WPtr<T> _data;
         private uint _length;
 
-        public bool IsValide
-            => _data.IsValide;
+        public bool IsValid
+            => _data.IsValid;
 
         public uint Length
         {

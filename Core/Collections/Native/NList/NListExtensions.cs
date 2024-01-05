@@ -5,55 +5,67 @@ namespace AnotherECS.Core.Collection
 {
     public static class NListExtensions
     {
-        public static void AddSort<TAllocator, T, TOrder>(ref this NList<TAllocator, T> list, ref TOrder order, T element)
+        public unsafe static void Sort<TAllocator, T>(this ref NList<TAllocator, T> nlist)
+            where TAllocator : unmanaged, IAllocator
+            where T : unmanaged, IComparable<T>
+        {
+            nlist.AsSpan().Sort();
+        }
+
+        public unsafe static Span<T> AsSpan<TAllocator, T>(this ref NList<TAllocator, T> nlist)
+            where TAllocator : unmanaged, IAllocator
+            where T : unmanaged
+            => new(nlist.ReadPtr(), (int)nlist.Count);
+
+        public static void AddSort<TAllocator, T, TOrder>(ref this NList<TAllocator, T> nlist, ref TOrder order, T element)
             where TAllocator : unmanaged, IAllocator
             where T : unmanaged, IComparable<T>
             where TOrder : struct, IComparer<T>
         {
-            int i = list._data.BinarySearch(ref order, 0, list.Count, element);
+            int i = nlist._data.BinarySearch(ref order, 0, nlist.Count, element);
             if (i >= 0)
             {
                 throw new ArgumentException($"Element already added: '{element}'");
             }
 
-            Insert(ref list, (uint)~i, element);
+            Insert(ref nlist, (uint)~i, element);
         }
 
-        public static void AddSort<TAllocator, T>(ref this NList<TAllocator, T> list, T element)
+        public static void AddSort<TAllocator, T>(ref this NList<TAllocator, T> nlist, T element)
             where TAllocator : unmanaged, IAllocator
             where T : unmanaged, IComparable<T>
         {
-            int i = list._data.BinarySearch(0, list.Count, element);
+            int i = nlist._data.BinarySearch(0, nlist.Count, element);
             if (i >= 0)
             {
                 throw new ArgumentException($"Element already added: '{element}'");
             }
 
-            Insert(ref list, (uint)~i, element);
+            Insert(ref nlist, (uint)~i, element);
         }
 
-        public static void Insert<TAllocator, T>(ref this NList<TAllocator, T> list, uint index, T element)
+        public static void Insert<TAllocator, T>(ref this NList<TAllocator, T> nlist, uint index, T element)
             where TAllocator : unmanaged, IAllocator
             where T : unmanaged
         {
-            if (index > list.Count)
+            if (index > nlist.Count)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            if (index == list.Count)
+            if (index == nlist.Count)
             {
-                list.Add(element);
+                nlist.Add(element);
             }
             else
             {
-                list.Add(default);
+                nlist.Add(default);
 
-                for (uint i = list.Count - 1, iMax = index + 1; i >= iMax; --i)
+                for (uint i = nlist.Count - 1, iMax = index + 1; i >= iMax; --i)
                 {
-                    list.GetRef(i) = list.GetRef(i - 1);
+                    nlist.GetRef(i) = nlist.GetRef(i - 1);
                 }
-                list.GetRef(index) = element;
+                nlist.GetRef(index) = element;
             }
         }
     }

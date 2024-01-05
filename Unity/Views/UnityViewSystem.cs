@@ -7,7 +7,7 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Views
 {
     [SystemOrder(SystemOrder.First)]
-    public class UnityViewSystem : IViewSystem, IConstructModule, ITickFinishiedModule
+    public class UnityViewSystem : IViewSystem, IConstructModule, ITickFinishedModule
     {
         private readonly Queue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
@@ -20,10 +20,10 @@ namespace AnotherECS.Views
 
         public void Construct(State state)
         {
-            //state.SetOrAdd(new ViewSystemReference() { system = this });
+            state.SetOrAddConfig(new ViewSystemReference() { system = this });
         }
 
-        public void TickFinishied(State state)
+        public void TickFinished(State state)
         {
             while (_commandBuffer.Count != 0)
             {

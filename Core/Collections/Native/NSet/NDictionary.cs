@@ -37,10 +37,10 @@ namespace AnotherECS.Core.Collection
             _hashProvider = default;
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _buckets.IsValide && _entries.IsValide;
+            get => _buckets.IsValid && _entries.IsValid;
         }
 
         public uint Count

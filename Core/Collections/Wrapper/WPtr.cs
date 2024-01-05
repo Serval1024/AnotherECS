@@ -12,7 +12,7 @@ namespace AnotherECS.Core.Collection
             private set;
         }
 
-        public bool IsValide => Value != null;
+        public bool IsValid => Value != null;
 
         public WPtr(T* ptr)
         {

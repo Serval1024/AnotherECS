@@ -1,6 +1,6 @@
 using System;
+using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
-using Unity.Collections;
 
 namespace AnotherECS.Core
 {
@@ -70,16 +70,16 @@ namespace AnotherECS.Core
         public static void Sort<T>(this Span<T> array, int start, int count)
             where T : struct, IComparable<T>
         {
-            QSort(array, start, count - start - 1);
+            QSort(array, start, count - start);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Swap<T>(Span<T> array, int i, int j)
         {
-            var temp = array[i];
-            array[i] = array[j];
-            array[j] = temp;
+            (array[j], array[i]) = (array[i], array[j]);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int Partition<T>(Span<T> array, int from, int to, int pivot)
             where T : struct, IComparable<T>
         {
@@ -89,7 +89,7 @@ namespace AnotherECS.Core
 
             for (int i = from; i < to - 1; i++)
             {
-                if (array[i].CompareTo(arrayPivot) != 1)
+                if (array[i].CompareTo(arrayPivot) < 1)
                 {
                     Swap(array, newPivot, i);
                     newPivot++;

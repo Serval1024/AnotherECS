@@ -156,18 +156,18 @@ namespace AnotherECS.Core
         public static void ThrowIfNArrayBroken<TNArray>(TNArray narray)
             where TNArray : struct, INArray
         {
-            if (!narray.IsValide)
+            if (!narray.IsValid)
             {
-                throw new InvalidOperationException(nameof(narray.IsValide));
+                throw new InvalidOperationException(nameof(narray.IsValid));
             }
         }
 
         public static void ThrowIfNContainerBroken<TNative>(TNative container)
             where TNative : struct, INative
         {
-            if (!container.IsValide)
+            if (!container.IsValid)
             {
-                throw new InvalidOperationException(nameof(container.IsValide));
+                throw new InvalidOperationException(nameof(container.IsValid));
             }
         }
 

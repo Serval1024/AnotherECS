@@ -1,12 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Collections;
 
 namespace AnotherECS.Core.Collection
 {
     public static class NArrayExtensions
     {
+        public unsafe static void Sort<TNArray, T>(this ref TNArray narray)
+            where TNArray : struct, INArray<T>
+            where T : unmanaged, IComparable<T>
+        {
+            narray.AsSpan<TNArray, T>().Sort();
+        }
+
+        public unsafe static Span<T> AsSpan<TNArray, T>(this ref TNArray narray)
+            where TNArray : struct, INArray<T>
+            where T : unmanaged
+            => new(narray.ReadPtr(), (int)narray.Length);
+
         public static void AddSort<TAllocator, T>(ref this NArray<TAllocator, T> array, uint count, T element)
             where TAllocator : unmanaged, IAllocator
             where T : unmanaged, IComparable<T>
@@ -59,17 +70,17 @@ namespace AnotherECS.Core.Collection
                 throw new ArgumentException();
             }
 
-            uint lo = index;
-            uint hi = index + length - 1;
+            int lo = (int)index;
+            int hi = lo + (int)length - 1;
 
             while (lo <= hi)
             {
-                uint i = GetMedian(lo, hi);
+                int i = GetMedian(lo, hi);
 
                 int c = array.ReadRef(i).CompareTo(value);
                 if (c == 0)
                 {
-                    return (int)i;
+                    return i;
                 }
                 else if (c < 0)
                 {
@@ -80,7 +91,7 @@ namespace AnotherECS.Core.Collection
                     hi = i - 1;
                 }
             }
-            return ~(int)lo;
+            return ~lo;
         }
 
         public static int BinarySearch<TNArray, T, TOrder>(ref this TNArray array, ref TOrder order, T value)
@@ -99,17 +110,17 @@ namespace AnotherECS.Core.Collection
                 throw new ArgumentException();
             }
 
-            uint lo = index;
-            uint hi = index + length - 1;
+            int lo = (int)index;
+            int hi = lo + (int)length - 1;
 
             while (lo <= hi)
             {
-                uint i = GetMedian(lo, hi);
+                int i = GetMedian(lo, hi);
 
-                int c = order.Compare(array.Get(i), value);
+                int c = order.Compare(array.ReadRef(i), value);
                 if (c == 0)
                 {
-                    return (int)i;
+                    return i;
                 }
                 else if (c < 0)
                 {
@@ -120,11 +131,11 @@ namespace AnotherECS.Core.Collection
                     hi = i - 1;
                 }
             }
-            return ~(int)lo;
+            return ~lo;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static uint GetMedian(uint low, uint hi)
+        private static int GetMedian(int low, int hi)
             => low + ((hi - low) >> 1);
     }
 }

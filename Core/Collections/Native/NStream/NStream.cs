@@ -16,10 +16,10 @@ namespace AnotherECS.Core.Collection
         private NArray<TAllocator, byte> _data;
         private uint _position;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public uint Position

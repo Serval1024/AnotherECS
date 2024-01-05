@@ -29,10 +29,10 @@ namespace AnotherECS.Core
         private MemoryChecker<BAllocator>  _memoryChecker;
 #endif
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _chunks.IsValide;
+            get => _chunks.IsValid;
         }
 
         public uint ChunkLimit
@@ -176,7 +176,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate(ref MemoryHandle memoryHandle)
         {
-            if (memoryHandle.IsValide)
+            if (memoryHandle.IsValid)
             {
                 UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
                 memoryHandle = default;

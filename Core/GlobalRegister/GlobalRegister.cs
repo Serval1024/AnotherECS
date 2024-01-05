@@ -10,6 +10,14 @@ namespace AnotherECS.Core
 
         public static List<Type> Data => _data;
 
+#if UNITY_EDITOR
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ReloadDomainOptimizationHack()
+        {
+            _data.Clear();
+        }
+#endif
+
         public static void Install<T>()
         {
             lock (_data)

@@ -23,7 +23,7 @@ namespace AnotherECS.Core.Caller
         bool IsCallRevertStages { get; }
         
         uint GetDenseMemoryAllocated { get; }
-        internal unsafe void Config(void* layout, GlobalDepencies* depencies, ushort id, CallerDirtyHandler dirtyHandler, State state);
+        internal unsafe void Config(void* layout, GlobalDependencies* dependencies, ushort id, CallerDirtyHandler dirtyHandler, State state);
         internal void AllocateLayout();
         Type GetElementType();
         void Remove(EntityId id);

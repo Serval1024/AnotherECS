@@ -43,10 +43,10 @@ namespace AnotherECS.Core.Collection
             get => _data.ElementSize;
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public bool IsDirty

@@ -23,10 +23,10 @@ namespace AnotherECS.Core.Collection
         private int _freeList;
         private THashProvider _hashProvider;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _buckets.IsValide && _slots.IsValide;
+            get => _buckets.IsValid && _slots.IsValid;
         }
 
         public uint Count
@@ -285,10 +285,10 @@ namespace AnotherECS.Core.Collection
                 _current = default;
             }
 
-            public bool IsValide
+            public bool IsValid
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _data.IsValide;
+                get => _data.IsValid;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

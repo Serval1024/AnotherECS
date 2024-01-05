@@ -47,7 +47,7 @@ namespace AnotherECS.Physics
         public BlobAssetReference<Collider> Value
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide ? BlobAssetReference<Collider>.Create(*(BlobAssetReferenceData*)_data.GetPtr()) : _empty;
+            get => _data.IsValid ? BlobAssetReference<Collider>.Create(*(BlobAssetReferenceData*)_data.GetPtr()) : _empty;
             
             set
             {
@@ -65,7 +65,7 @@ namespace AnotherECS.Physics
 
         private NArray<HAllocator, byte> _data;
 
-        public bool IsValide
+        public bool IsValid
             => Value.IsCreated;
 
         public unsafe Collider* ColliderPtr
@@ -111,45 +111,6 @@ namespace AnotherECS.Physics
             MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
         }
 #endif
-
-        public void ReplaceWith(in PhysicsCollider other)
-        {
-            if (Value.IsCreated && other.Value.IsCreated)
-            {
-                Value.Dispose();
-                Value = other.Value.Value.Clone();    
-            }
-            else if (Value.IsCreated && !other.Value.IsCreated)
-            {    
-                Value.Dispose();
-                Value = default;
-            }
-            else if (!Value.IsCreated && other.Value.IsCreated)
-            {    
-                Value = other.Value.Value.Clone();
-            }
-            else if (!Value.IsCreated && !other.Value.IsCreated)
-            {    
-                // Nothing to do
-            }
-        }
-
-        public void Dispose()
-        {
-            if (Value.IsCreated && Value.IsValid)
-            {
-                Value.Dispose();
-            }
-            Value = default;
-        }
-
-        public void CopyFrom(in PhysicsCollider other)
-        {
-            //var collider = default(BoxCollider);
-            //collider.Initialize(geometry, filter, material);
-            //return BlobAssetReference<Collider>.Create(&collider, sizeof(BoxCollider));
-            //value.Value.MemorySize   
-        }
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]

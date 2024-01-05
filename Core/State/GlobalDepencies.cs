@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct GlobalDepencies : ISerialize
+    internal unsafe struct GlobalDependencies : ISerialize
     {
         public Entities entities;
         public Archetype archetype;

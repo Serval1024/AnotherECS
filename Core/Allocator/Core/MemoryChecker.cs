@@ -26,7 +26,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void EnterCheckChanges(ref MemoryHandle memoryHandle)
         {
-            if (memoryHandle.IsValide)
+            if (memoryHandle.IsValid)
             {
                 var key = (ulong)memoryHandle.pointer;
                 if (_memoryChecks.ContainsKey(key))
@@ -46,7 +46,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges(ref MemoryHandle memoryHandle)
         {
-            if (memoryHandle.IsValide)
+            if (memoryHandle.IsValid)
             {
                 var key = (ulong)memoryHandle.pointer;
                 if (_memoryChecks.TryGetValue(key, out CheckEntry checkEntry))

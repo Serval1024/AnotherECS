@@ -12,7 +12,7 @@ namespace AnotherECS.Serializer
         private uint _length;
         private uint _position;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data != null;

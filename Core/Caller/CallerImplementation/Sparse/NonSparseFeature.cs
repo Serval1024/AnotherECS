@@ -19,16 +19,16 @@ namespace AnotherECS.Core.Caller
         where TDense : unmanaged
     {
         private ushort _itemId;
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
 
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(GlobalDepencies* depencies, ushort callerId)
+        public void Config(GlobalDependencies* dependencies, ushort callerId)
         {
-            _depencies = depencies;
+            _dependencies = dependencies;
             _itemId = callerId;
         }
 
@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Caller
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies) { }
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint capacity)
@@ -53,10 +53,10 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, uint id)
-            => _depencies->archetype.IsHasItem(_depencies->entities.ReadArchetypeId(id), _itemId);
+            => _dependencies->archetype.IsHasItem(_dependencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
@@ -69,7 +69,7 @@ namespace AnotherECS.Core.Caller
                 dense.Dirty();
                 for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
                 {
-                    iterable.Each(ref layout, ref depencies, ref dense.ReadRef(i));
+                    iterable.Each(ref layout, ref dependencies, ref dense.ReadRef(i));
                 }
             }
         }
@@ -95,7 +95,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex) { }
+        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, EntityId id, uint denseIndex) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref bool GetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, EntityId id)

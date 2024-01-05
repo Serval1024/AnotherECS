@@ -10,10 +10,10 @@ namespace AnotherECS.Core.Collection
     {
         private NList<TAllocator, T> _data;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public bool IsEmpty

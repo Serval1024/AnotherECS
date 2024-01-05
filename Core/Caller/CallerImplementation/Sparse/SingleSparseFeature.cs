@@ -23,7 +23,7 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(GlobalDepencies* depencies, ushort callerId) { }
+        public void Config(GlobalDependencies* dependencies, ushort callerId) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -31,7 +31,7 @@ namespace AnotherECS.Core.Caller
            => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies)
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
             layout.storage.sparse.Allocate(allocator, 1);
         }
@@ -52,13 +52,13 @@ namespace AnotherECS.Core.Caller
             => layout.storage.sparse.Read(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             ref var storage = ref layout.storage;
             if (storage.sparse.ReadPtr()[0])
             {
-                default(AIterable).Each(ref layout, ref depencies, ref storage.dense.GetRef(0));
+                default(AIterable).Each(ref layout, ref dependencies, ref storage.dense.GetRef(0));
             }
         }
         public void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
@@ -73,7 +73,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDepencies depencies, EntityId id, uint denseIndex)
+        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, EntityId id, uint denseIndex)
         {
             layout.storage.sparse.GetPtr()[0] = true;
         }

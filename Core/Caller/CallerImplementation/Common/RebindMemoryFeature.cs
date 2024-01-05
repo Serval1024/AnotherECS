@@ -24,10 +24,10 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDepencies depencies, ref TDense component)
+        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
         {
             default(RebindMemoryFeature<TAllocator, TSparse, TDense, TDenseIndex>)
-                .RebindMemory(ref layout, ref depencies.currentMemoryRebinder, ref component);
+                .RebindMemory(ref layout, ref dependencies.currentMemoryRebinder, ref component);
         }
     }
 }

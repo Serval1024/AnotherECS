@@ -38,10 +38,10 @@ namespace AnotherECS.Core.Collection
             get => _data.ElementSize;
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public bool IsDirty
@@ -430,7 +430,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 for (uint i = 0; i < _data.Length; ++i)
                 {

@@ -51,7 +51,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
             }
@@ -81,16 +81,16 @@ namespace AnotherECS.Collections
             get => _data.Length;
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint length)
         {
-            if (!_data.GetAllocator()->IsValide)
+            if (!_data.GetAllocator()->IsValid)
             {
                 throw new MissInjectException(typeof(DArray<T>));
             }
@@ -107,7 +107,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Resize(uint capacity)
         {
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 _data.Resize(capacity);
             }
@@ -121,7 +121,7 @@ namespace AnotherECS.Collections
         public ref readonly T Read(uint index)
 #if !ANOTHERECS_RELEASE
         {
-            if (!IsValide)
+            if (!IsValid)
             {
                 throw new DArrayInvalideException(this.GetType());
             }
@@ -134,7 +134,7 @@ namespace AnotherECS.Collections
         public ref T Get(uint index)
 #if !ANOTHERECS_RELEASE
         {
-            if (!IsValide)
+            if (!IsValid)
             {
                 throw new DArrayInvalideException(GetType());
             }
@@ -154,7 +154,7 @@ namespace AnotherECS.Collections
         public void Set(uint index, ref T value)
 #if !ANOTHERECS_RELEASE
         {
-            if (!IsValide)
+            if (!IsValid)
             {
                 throw new DArrayInvalideException(GetType());
             }
@@ -240,7 +240,7 @@ namespace AnotherECS.Collections
         internal unsafe int IndexOf(ref T item, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValide)
+            if (!IsValid)
             {
                 throw new DArrayInvalideException(this.GetType());
             }

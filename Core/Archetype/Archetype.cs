@@ -20,7 +20,7 @@ namespace AnotherECS.Core
         private const uint TRANSITION_INIT_CAPACITY = 32;
         private const uint CHANGE_INIT_CAPACITY = 32;
 
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
 
         private NList<BAllocator, Node> _nodes;
         private NContainerList<BAllocator, IdCollection<HAllocator>> _collections;
@@ -39,19 +39,19 @@ namespace AnotherECS.Core
             get => locked != 0;
         }
 
-        public Archetype(GlobalDepencies* depencies, INArray<ushort> isTemporaries)
+        public Archetype(GlobalDependencies* dependencies, INArray<ushort> isTemporaries)
         {
-            _depencies = depencies;
+            _dependencies = dependencies;
 
-            _nodes = new NList<BAllocator, Node>(&_depencies->bAllocator, _depencies->componentTypesCount + 1);
-            _collections = new NContainerList<BAllocator, IdCollection<HAllocator>>(&_depencies->bAllocator, _nodes.Length);
+            _nodes = new NList<BAllocator, Node>(&_dependencies->bAllocator, _dependencies->componentTypesCount + 1);
+            _collections = new NContainerList<BAllocator, IdCollection<HAllocator>>(&_dependencies->bAllocator, _nodes.Length);
 
-            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_depencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _bufferChange = new NBuffer<BAllocator, BufferEntry>(&_depencies->bAllocator, CHANGE_INIT_CAPACITY);
+            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
+            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
+            _bufferChange = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
 
-            _isTemporaries = new NHashSet<BAllocator, ushort, U2U4HashProvider>(&_depencies->bAllocator, isTemporaries);
-            _temporaries = new NList<BAllocator, MoveCollection>(&_depencies->bAllocator, _isTemporaries.Count);
+            _isTemporaries = new NHashSet<BAllocator, ushort, U2U4HashProvider>(&_dependencies->bAllocator, isTemporaries);
+            _temporaries = new NList<BAllocator, MoveCollection>(&_dependencies->bAllocator, _isTemporaries.Count);
 
             locked = default;
 
@@ -317,7 +317,7 @@ namespace AnotherECS.Core
                     foreach (var id in from)
                     {
                         to.Add(id);
-                        _depencies->entities.GetRef(id).archetypeId = element.toArchetypeId;
+                        _dependencies->entities.GetRef(id).archetypeId = element.toArchetypeId;
                     }
                     from.Clear();
                 }
@@ -379,7 +379,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IdCollection<HAllocator> CreateIdCollection()
-            => new(&_depencies->hAllocator, _depencies->config.general.archetypeCapacity);
+            => new(&_dependencies->hAllocator, _dependencies->config.general.archetypeCapacity);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint AddInternal(uint id, ushort itemId)
@@ -393,7 +393,7 @@ namespace AnotherECS.Core
         private void AddInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId, bool isTemporary)
             where TFilterUpdater : struct, IFilterUpdater
         {
-            ref uint archetypeId = ref _depencies->entities.GetRef(id).archetypeId;
+            ref uint archetypeId = ref _dependencies->entities.GetRef(id).archetypeId;
             var transitionId = ((ulong)archetypeId) << 32 | itemId;
             if (_transitionAddCache.TryGetValue(transitionId, out uint newArchetypeId))
             {
@@ -479,7 +479,7 @@ namespace AnotherECS.Core
         private void RemoveInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId)
             where TFilterUpdater : struct, IFilterUpdater
         {
-            ref uint archetypeId = ref _depencies->entities.GetRef(id).archetypeId;
+            ref uint archetypeId = ref _dependencies->entities.GetRef(id).archetypeId;
             var transitionId = ((ulong)archetypeId) << 32 | itemId;
             if (_transitionRemoveCache.TryGetValue(transitionId, out uint newArchetypeId))
             {
@@ -759,7 +759,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _depencies = reader.GetDepency<WPtr<GlobalDepencies>>().Value;
+            _dependencies = reader.GetDepency<WPtr<GlobalDependencies>>().Value;
             _nodes.UnpackBlittable(ref reader);
             _collections.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);

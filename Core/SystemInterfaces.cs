@@ -2,33 +2,24 @@
 using AnotherECS.Unsafe;
 #endif
 
+using AnotherECS.Core.Threading;
+
 namespace AnotherECS.Core
 {
     public interface ISystem { }
     public interface ISystem<TState> : ISystem
-        where TState : State
-    { }
+        where TState : State { }
 
-    public interface IReceiverSystem : ISystem
-    { }
+    public interface IReceiverSystem : ISystem { }
 
-    public interface IReceiverSystem<UEvent> : IReceiverSystem
-        where UEvent : BaseEvent
-    {
-        void Receive(State state, UEvent @event);
-    }
+    public interface IReceiverSystem<UEvent> : IReceiverSystem<State, UEvent>
+        where UEvent : BaseEvent { }
 
-    public interface IReceiverSystem<TState, UEvent> : IReceiverSystem<UEvent>
+    public interface IReceiverSystem<TState, UEvent> : IReceiverSystem
         where TState : State
         where UEvent : BaseEvent
     {
         void Receive(TState state, UEvent @event);
-        void IReceiverSystem<UEvent>.Receive(State state, UEvent @event)
-#if !ANOTHERECS_RELEASE
-            => Receive((TState)state, @event);
-#else
-            => Receive(UnsafeUtils.As<State, TState>(ref state), @event);
-#endif
     }
 
     public interface IInitSystem : ISystem
@@ -69,11 +60,23 @@ namespace AnotherECS.Core
     {
         void Destroy(State state);
     }
+
     public interface IDestroySystem<TState> : ISystem<TState>, IDestroySystem
         where TState : State
     {
         void Destroy(TState state);
         void IDestroySystem.Destroy(State state)
+#if !ANOTHERECS_RELEASE
             => Destroy((TState)state);
+#else
+            => Destroy(UnsafeUtils.As<State, TState>(ref state));
+#endif
+    }
+
+    public interface ISyncThread : ISystem { }
+    public interface IMainThread : ISystem { }
+    public interface IAsyncThread : ISystem
+    {
+        void Restrictions(ref ThreadRestrictionsBuilder builder);
     }
 }

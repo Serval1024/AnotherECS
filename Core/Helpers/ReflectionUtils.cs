@@ -1,9 +1,9 @@
-using AnotherECS.Core.Collection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Collection;
 
 [assembly: InternalsVisibleTo("AnotherECS.Generator")]
 namespace AnotherECS.Core
@@ -126,15 +126,6 @@ namespace AnotherECS.Core
             }
         }
 
-        private static MethodInfo GetMethod(Type type, string methodName)
-                => type.GetInterfaces().Select(p => p.GetMethod(methodName)).First(p => p != null);
-
-        public static IEnumerable<MemberInfo> GetFieldsAndProperties(this Type type, BindingFlags bindingFlags)
-            => type
-                .GetFields(bindingFlags)
-                .Cast<MemberInfo>()
-                .Union(type.GetProperties(bindingFlags));
-
         public static string GetMemberName(this MemberInfo memberInfo)
             => memberInfo.MemberType switch
             {
@@ -173,6 +164,15 @@ namespace AnotherECS.Core
                     throw new NotImplementedException();
             };
         }
+
+        private static MethodInfo GetMethod(Type type, string methodName)
+              => type.GetInterfaces().Select(p => p.GetMethod(methodName)).First(p => p != null);
+
+        public static IEnumerable<MemberInfo> GetFieldsAndProperties(this Type type, BindingFlags bindingFlags)
+            => type
+                .GetFields(bindingFlags)
+                .Cast<MemberInfo>()
+                .Union(type.GetProperties(bindingFlags));
 
         public static string GetNameWithoutGeneric(this Type type)
         {

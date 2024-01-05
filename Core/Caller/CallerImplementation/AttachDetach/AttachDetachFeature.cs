@@ -16,16 +16,16 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Allocate(State state, GlobalDepencies* depencies)
+        public void Allocate(State state, GlobalDependencies* dependencies)
         {
             this.state = state;
-            _temp = new NArray<BAllocator, byte>(&depencies->bAllocator, depencies->config.general.componentCapacity);
+            _temp = new NArray<BAllocator, byte>(&dependencies->bAllocator, dependencies->config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDepencies depencies)
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
-            layout.storage.addRemoveVersion.Allocate(allocator, depencies.config.general.componentCapacity);
+            layout.storage.addRemoveVersion.Allocate(allocator, dependencies.config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

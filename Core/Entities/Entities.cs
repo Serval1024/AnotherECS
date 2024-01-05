@@ -15,16 +15,16 @@ namespace AnotherECS.Core
     {
         internal const ushort AllocateGeneration = 32768;
 
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
         private NContainer<HAllocator, NArray<HAllocator, EntityData>> _data;
         private NContainer<HAllocator, Recycle<uint, UintNumber>> _recycle;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Entities(GlobalDepencies* depencies)
+        public Entities(GlobalDependencies* dependencies)
         {
-            _depencies = depencies;
-            _data = new(&_depencies->hAllocator, new NArray<HAllocator, EntityData>(&_depencies->hAllocator, _depencies->config.general.entityCapacity));
-            _recycle = new(&_depencies->hAllocator, new Recycle<EntityId, UintNumber>(&_depencies->hAllocator, _depencies->config.general.recycleCapacity));
+            _dependencies = dependencies;
+            _data = new(&_dependencies->hAllocator, new NArray<HAllocator, EntityData>(&_dependencies->hAllocator, _dependencies->config.general.entityCapacity));
+            _recycle = new(&_dependencies->hAllocator, new Recycle<EntityId, UintNumber>(&_dependencies->hAllocator, _dependencies->config.general.recycleCapacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,11 +104,11 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
         {
-            if (_depencies->archetype.GetFilterZeroCount() != 0)
+            if (_dependencies->archetype.GetFilterZeroCount() != 0)
             {
                 const int idsLength = 32;
                 var ids = stackalloc EntityId[idsLength];
-                var count = _depencies->archetype.FilterZero(ids, idsLength);
+                var count = _dependencies->archetype.FilterZero(ids, idsLength);
 
                 for (int i = 0; i < count; ++i)
                 {
@@ -145,7 +145,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _depencies = reader.GetDepency<WPtr<GlobalDepencies>>().Value;
+            _dependencies = reader.GetDepency<WPtr<GlobalDependencies>>().Value;
             _data.Unpack(ref reader);
             _recycle.Unpack(ref reader);
         }

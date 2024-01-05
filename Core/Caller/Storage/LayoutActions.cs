@@ -73,7 +73,7 @@ namespace AnotherECS.Core.Actions
         {
             ref var storage = ref layout.storage;
 
-            if (storage.sparse.IsValide)
+            if (storage.sparse.IsValid)
             {
                 storage.sparse.Clear();
             }

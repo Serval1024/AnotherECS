@@ -7,17 +7,17 @@ namespace AnotherECS.Core
     internal struct EventBuffer : ISerialize
     {
         private uint _counter;
-        private EventSortBuffer _buffer;
+        private SortEventBuffer _buffer;
 
         public EventBuffer(int bufferTickLimit)
         {
             _counter = 0;
-            _buffer = new EventSortBuffer(128, bufferTickLimit);
+            _buffer = new SortEventBuffer(128, bufferTickLimit);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(ITickEvent @event)
-            => _buffer.Add(MakeId(@event.Tick), new EventSortBuffer.ElementData(@event.Tick, @event));
+            => _buffer.Add(MakeId(@event.Tick), new SortEventBuffer.ElementData(@event.Tick, @event));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Find(uint tick, List<ITickEvent> result)

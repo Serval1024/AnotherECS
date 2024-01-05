@@ -1,5 +1,4 @@
-﻿using AnotherECS.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,6 +7,14 @@ namespace AnotherECS.Core
     public static class SystemGlobalRegister
     {
         private static readonly Dictionary<Type, int> _data = new();
+
+#if UNITY_EDITOR
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ReloadDomainOptimizationHack()
+        {
+            _data.Clear();
+        }
+#endif
 
         public static void Install<T>(int order)
             where T : ISystem

@@ -7,15 +7,15 @@ namespace AnotherECS.Core.Caller
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref GlobalDepencies depencies, uint id, ushort elementId)
+        public void Add(ref GlobalDependencies dependencies, uint id, ushort elementId)
         {
-            depencies.filters.Add(id, elementId, false);
+            dependencies.filters.Add(id, elementId, false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref GlobalDepencies depencies, uint id, ushort elementId)
+        public void Remove(ref GlobalDependencies dependencies, uint id, ushort elementId)
         {
-            depencies.filters.Remove(id, elementId);
+            dependencies.filters.Remove(id, elementId);
         }
     }
 
@@ -24,15 +24,15 @@ namespace AnotherECS.Core.Caller
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref GlobalDepencies depencies, uint id, ushort elementId)
+        public void Add(ref GlobalDependencies dependencies, uint id, ushort elementId)
         {
-            depencies.filters.Add(id, elementId, true);
+            dependencies.filters.Add(id, elementId, true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref GlobalDepencies depencies, uint id, ushort elementId)
+        public void Remove(ref GlobalDependencies dependencies, uint id, ushort elementId)
         {
-            depencies.filters.Remove(id, elementId);
+            dependencies.filters.Remove(id, elementId);
         }
     }
 }

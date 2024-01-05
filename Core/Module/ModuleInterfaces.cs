@@ -13,8 +13,8 @@ namespace AnotherECS.Core
         void TickStarted(State state);
     }
 
-    public interface ITickFinishiedModule : IModule
+    public interface ITickFinishedModule : IModule
     {
-        void TickFinishied(State state);
+        void TickFinished(State state);
     }
 }

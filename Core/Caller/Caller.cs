@@ -61,7 +61,7 @@ namespace AnotherECS.Core.Caller
     {
         private UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* _layout;
         private CallerDirtyHandler _dirtyHandler;
-        private GlobalDepencies* _depencies;
+        private GlobalDependencies* _dependencies;
 
         private ushort _elementId;
 
@@ -80,10 +80,10 @@ namespace AnotherECS.Core.Caller
             get => _elementId;
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _layout != null && _depencies != null;
+            get => _layout != null && _dependencies != null;
         }
 
         public bool IsSingle
@@ -143,7 +143,7 @@ namespace AnotherECS.Core.Caller
         public uint GetDenseMemoryAllocated
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _layout->storage.dense.IsValide
+            get => _layout->storage.dense.IsValid
                 ? (_layout->storage.dense.Length * (uint)sizeof(TDense))
                 : 0u;
         }
@@ -159,23 +159,23 @@ namespace AnotherECS.Core.Caller
             => _layout;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GlobalDepencies* GetDepencies()
-            => _depencies;
+        public GlobalDependencies* GetDependencies()
+            => _dependencies;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Type GetElementType()
             => typeof(TDense);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICaller.Config(void* layout, GlobalDepencies* depencies, ushort id, CallerDirtyHandler dirtyHandler, State state)
+        void ICaller.Config(void* layout, GlobalDependencies* dependencies, ushort id, CallerDirtyHandler dirtyHandler, State state)
         {
             _layout = (UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>*)layout;
-            _depencies = depencies;
+            _dependencies = dependencies;
             _elementId = id;
             _dirtyHandler = dirtyHandler;
-            _attachDetachStorage.Allocate(state, depencies);
-            _defaultSetter.Allocate(state, depencies);
-            _sparseStorage.Config(depencies, id);
+            _attachDetachStorage.Allocate(state, dependencies);
+            _defaultSetter.Allocate(state, dependencies);
+            _sparseStorage.Config(dependencies, id);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,12 +183,12 @@ namespace AnotherECS.Core.Caller
         {
             layoutAllocator.LayoutAllocate(
                 ref *_layout,
-                ref *_depencies,
-                default(TMemoryAllocatorProvider).Get(_depencies),
-                default(TMemoryAllocatorProvider).Get(_depencies),
-                default(TMemoryAllocatorProvider).Get(_depencies),
-                default(TMemoryAllocatorProvider).Get(_depencies),
-                default(TMemoryAllocatorProvider).GetAlt(_depencies)
+                ref *_dependencies,
+                default(TMemoryAllocatorProvider).Get(_dependencies),
+                default(TMemoryAllocatorProvider).Get(_dependencies),
+                default(TMemoryAllocatorProvider).Get(_dependencies),
+                default(TMemoryAllocatorProvider).Get(_dependencies),
+                default(TMemoryAllocatorProvider).GetAlt(_dependencies)
                 );
         }
 
@@ -243,7 +243,7 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                _sparseStorage.ForEach<ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, default(TDenseStorage).GetIndex(), GetCount());
+                _sparseStorage.ForEach<ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_dependencies, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -252,7 +252,7 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                _sparseStorage.ForEach<DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, default(TDenseStorage).GetIndex(), GetCount());
+                _sparseStorage.ForEach<DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_dependencies, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -352,7 +352,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(EntityId id)
         {
-            default(TBinderToFilters).Remove(ref *_depencies, id, _elementId);
+            default(TBinderToFilters).Remove(ref *_dependencies, id, _elementId);
             RemoveRaw(id);
         }
 
@@ -369,11 +369,11 @@ namespace AnotherECS.Core.Caller
             }
             ref var component = ref default(TDenseStorage).GetDense(ref *_layout, denseIndex);
 
-            default(TIdAllocator).DeallocateId(ref *_layout, ref *_depencies, denseIndex);
+            default(TIdAllocator).DeallocateId(ref *_layout, ref *_dependencies, denseIndex);
 
             default(TDetach).Detach(_attachDetachStorage.GetState(), ref component);
 
-            default(TInject).Deconstruct(ref *_layout, ref *_depencies, ref component);
+            default(TInject).Deconstruct(ref *_layout, ref *_dependencies, ref component);
 
             UpdateAddRemove(denseIndex);
         }
@@ -467,7 +467,7 @@ namespace AnotherECS.Core.Caller
         public void RevertFinished()
         {
             TDenseStorage dense = default;
-            default(TVersion).DropChange(ref *_layout, ref *_depencies, dense.GetIndex(), dense.GetAllocated(ref *_layout));
+            default(TVersion).DropChange(ref *_layout, ref *_dependencies, dense.GetIndex(), dense.GetAllocated(ref *_layout));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -504,7 +504,7 @@ namespace AnotherECS.Core.Caller
         private void CreateInternal(ref TDense component)
         {
             _defaultSetter.SetupDefault(ref component);
-            default(TInject).Construct(ref *_layout, ref *_depencies, ref component);
+            default(TInject).Construct(ref *_layout, ref *_dependencies, ref component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -537,10 +537,10 @@ namespace AnotherECS.Core.Caller
         {
             var denseIndex = AllocateNext();
 
-            default(TBinderToFilters).Add(ref *_depencies, id, _elementId);
+            default(TBinderToFilters).Add(ref *_dependencies, id, _elementId);
             if (_sparseStorage.IsUseSparse)
             {
-                _sparseStorage.SetSparse(ref *_layout, ref *_depencies, id, denseIndex);
+                _sparseStorage.SetSparse(ref *_layout, ref *_dependencies, id, denseIndex);
             }
             return denseIndex;
         }
@@ -556,7 +556,7 @@ namespace AnotherECS.Core.Caller
         private TDenseIndex UnsafeAllocate()
         {
             _dirtyHandler.Dirty();
-            var denseIndex = default(TIdAllocator).AllocateId<TUintNextNumber>(ref *_layout, ref *_depencies);
+            var denseIndex = default(TIdAllocator).AllocateId<TUintNextNumber>(ref *_layout, ref *_dependencies);
             UpdateVersion(denseIndex);
             UpdateAddRemove(denseIndex);
             return denseIndex;
@@ -565,7 +565,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateVersion(TDenseIndex denseIndex)
         {
-            default(TVersion).Change(ref *_layout, ref *_depencies, denseIndex);
+            default(TVersion).Change(ref *_layout, ref *_dependencies, denseIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -584,7 +584,7 @@ namespace AnotherECS.Core.Caller
 
             if (default(TRebindMemory).Is)
             {
-                _sparseStorage.ForEach<RebindMemoryIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_depencies, default(TDenseStorage).GetIndex(), GetCount());
+                _sparseStorage.ForEach<RebindMemoryIterable<TAllocator, TSparse, TDense, TDenseIndex>>(ref *_layout, ref *_dependencies, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
     }

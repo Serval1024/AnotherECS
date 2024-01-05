@@ -12,10 +12,10 @@ namespace AnotherECS.Core.Collection
         private TAllocator* _allocator;
         private MemoryHandle _data;
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public bool IsDirty
@@ -74,7 +74,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() 
         {
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 DisposeElement();
                 Deallocate();
@@ -147,7 +147,7 @@ namespace AnotherECS.Core.Collection
 
             _data.Pack(ref writer);
 
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 writer.Write(_allocator->GetId());
 
@@ -204,7 +204,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (IsValide)
+            if (IsValid)
             {
                 rebinder.Rebind(_allocator->GetId(), ref _data);
                 RebindMemoryHandleElement(ref rebinder);
@@ -231,11 +231,11 @@ namespace AnotherECS.Core.Collection
                 this.container = container;
             }
 
-            public bool IsValide
-                => container.IsValide;
+            public bool IsValid
+                => container.IsValid;
 
             public T Data
-                => IsValide ? container.ReadRef() : default;
+                => IsValid ? container.ReadRef() : default;
         }
     }
 }

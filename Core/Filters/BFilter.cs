@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
-using static AnotherECS.Core.FilterData;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
@@ -100,7 +99,7 @@ namespace AnotherECS.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                if (_currentCollection.IsValide && _currentCollection.MoveNext())
+                if (_currentCollection.IsValid && _currentCollection.MoveNext())
                 {
                     return true;
                 }

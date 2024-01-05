@@ -72,23 +72,23 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            if (sparse.IsValide)
+            if (sparse.IsValid)
             {
                 sparse.Clear();
             }
-            if (dense.IsValide)
+            if (dense.IsValid)
             {
                 dense.Clear();
             }
-            if (recycle.IsValide)
+            if (recycle.IsValid)
             {
                 recycle.Clear();
             }
-            if (tickVersion.IsValide)
+            if (tickVersion.IsValid)
             {
                 tickVersion.Clear();
             }
-            if (addRemoveVersion.IsValide)
+            if (addRemoveVersion.IsValid)
             {
                 addRemoveVersion.Clear();
             }
@@ -107,23 +107,23 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (sparse.IsValide)
+            if (sparse.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref sparse, ref rebinder);
             }
-            if (dense.IsValide)
+            if (dense.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref dense, ref rebinder);
             }
-            if (recycle.IsValide)
+            if (recycle.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref recycle, ref rebinder);
             }
-            if (tickVersion.IsValide)
+            if (tickVersion.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref tickVersion, ref rebinder);
             }
-            if (addRemoveVersion.IsValide)
+            if (addRemoveVersion.IsValid)
             {
                 MemoryRebinderCaller.Rebind(ref addRemoveVersion, ref rebinder);
             }

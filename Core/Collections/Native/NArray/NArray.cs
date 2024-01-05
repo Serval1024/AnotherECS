@@ -40,10 +40,10 @@ namespace AnotherECS.Core.Collection
             get => (uint)sizeof(T);
         }
 
-        public bool IsValide
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public bool IsDirty
@@ -427,11 +427,11 @@ namespace AnotherECS.Core.Collection
             }
 #endif
             var copySize = count * other.ElementSize;
-            if (_data.IsValide && Length != other.Length)
+            if (_data.IsValid && Length != other.Length)
             {
                 _allocator->Deallocate(ref _data);
             }
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 Dirty();
             }
@@ -484,7 +484,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            if (_data.IsValide)
+            if (_data.IsValid)
             {
                 DisposeElement(0, Length);
                 _allocator->Deallocate(ref _data);
@@ -592,7 +592,7 @@ namespace AnotherECS.Core.Collection
 #endif
             if (byteLength != ByteLength)
             {
-                if (_data.IsValide)
+                if (_data.IsValid)
                 {
                     if (!_allocator->TryResize(ref _data, byteLength))
                     {
@@ -627,7 +627,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (IsValide)
+            if (IsValid)
             {
                 rebinder.Rebind(_allocator->GetId(), ref _data);
                 RebindMemoryHandleElement(ref rebinder);

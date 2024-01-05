@@ -20,10 +20,10 @@ namespace AnotherECS.Core.Caller
             => default(TSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref GlobalDepencies depencies)
+        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
             ref var storage = ref layout.storage;
-            storage.dense.Allocate(allocator, depencies.config.general.componentCapacity);
+            storage.dense.Allocate(allocator, dependencies.config.general.componentCapacity);
             storage.denseIndex = GetIndex();
         }
 

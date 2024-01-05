@@ -54,10 +54,10 @@ namespace AnotherECS.Collections
         }
 #endif
 
-        public bool IsValide
+        public bool IsValid
         { 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsValide;
+            get => _data.IsValid;
         }
 
         public uint Capacity
@@ -141,7 +141,7 @@ namespace AnotherECS.Collections
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!_data.IsValide)
+            if (!_data.IsValid)
             {
                 throw new DArrayInvalideException(_data.GetType());
             }
@@ -167,7 +167,7 @@ namespace AnotherECS.Collections
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!_data.IsValide)
+            if (!_data.IsValid)
             {
                 throw new DArrayInvalideException(_data.GetType());
             }
