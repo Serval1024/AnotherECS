@@ -145,6 +145,10 @@ namespace AnotherECS.Core.Threading
             .ToArray();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => false;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread() { }
 
 

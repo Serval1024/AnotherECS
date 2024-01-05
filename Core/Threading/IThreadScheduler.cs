@@ -10,7 +10,9 @@ namespace AnotherECS.Core.Threading
             where THandler : struct, ITaskHandler<TData>
             where TData : struct;
 
-        void Update();
+        void CallFromMainThread();
+
+        bool IsBusy();
     }
 
     public struct ThreadArg<TArg> : IComparable<ThreadArg<TArg>>

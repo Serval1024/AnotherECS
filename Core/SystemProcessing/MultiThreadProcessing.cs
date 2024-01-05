@@ -183,9 +183,12 @@ namespace AnotherECS.Core.Threading
                 : SystemType.Sync;
         }
 
+        public bool IsBusy()
+            => _threadScheduler.IsBusy();
+
         public void CallFromMainThread()
         {
-            _threadScheduler.Update();
+            _threadScheduler.CallFromMainThread();
         }
 
         public void Dispose()

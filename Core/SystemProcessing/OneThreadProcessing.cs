@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core.Threading
+﻿using System.Runtime.CompilerServices;
+
+namespace AnotherECS.Core.Threading
 {
     internal sealed class OneThreadProcessing : ISystemProcessing
     {
@@ -48,6 +50,9 @@
         {
             _impl.Receive();
         }
+
+        public bool IsBusy()
+            => _impl.IsBusy();
 
         public void CallFromMainThread()
         {

@@ -14,7 +14,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public abstract unsafe class State : BaseState, ISerialize, ISerializeConstructor
+    public abstract unsafe class State : BDisposable, IState, ISerializeConstructor
     {
         #region const
         private const uint CORE_LAYOUT_COUNT = 0;
@@ -664,6 +664,20 @@ namespace AnotherECS.Core
         internal void UnlockFilter()
         {
             _dependencies->filters.Unlock();
+        }
+        #endregion
+
+        #region Threading
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void EnterThreading()
+        {
+            LockFilter();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ExitThreading()
+        {
+            UnlockFilter();
         }
         #endregion
 

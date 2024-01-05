@@ -2,11 +2,11 @@
 
 namespace AnotherECS.Core
 {
-    public unsafe abstract class BaseState : IState, IDisposable
+    public unsafe abstract class BDisposable : IDisposable
     {
         public bool IsDisposed { get; private set; }
 
-        ~BaseState()
+        ~BDisposable()
             => Dispose(false);
 
         public void Dispose()

@@ -46,12 +46,16 @@ namespace AnotherECS.Core.Threading
             _worker.Wait();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => false;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CallFromMainThread() { }
+
         public void Dispose()
         {
             _worker.Dispose();
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update() { }
     }
 }

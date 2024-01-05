@@ -40,10 +40,10 @@ namespace AnotherECS.Core.Threading
                 _tasks.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, true));
             }
 
-            Update();
+            CallFromMainThread();
         }
 
-        public void Update()
+        public void CallFromMainThread()
         {
             if (!_worker.IsBusy())
             {
@@ -104,6 +104,10 @@ namespace AnotherECS.Core.Threading
         {
             _worker.Dispose();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => _worker.IsBusy() || _tasks.Count > 0; 
 
         public void Dispose()
         {

@@ -43,6 +43,10 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => _systemProcessing.IsBusy();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             _systemProcessing.Dispose();

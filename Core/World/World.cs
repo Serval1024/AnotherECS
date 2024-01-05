@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    public class World<TState> : IWorld, IDisposable
+    public class World<TState> : BDisposable, IWorld
         where TState : State, new()
     {
 #if !ANOTHERECS_RELEASE
         private bool _isInit = false;
-        private bool _isDispose = false;
 #endif
         private readonly IGroupSystemInternal _systems;
         private readonly TState _state;
@@ -32,7 +32,10 @@ namespace AnotherECS.Core
 
         public void Init()
         {
-            foreach(var system in SystemAutoAttachGlobalRegister.Gets())
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            foreach (var system in SystemAutoAttachGlobalRegister.Gets())
             {
                 _systems.Prepend((ISystem)Activator.CreateInstance(system));
             }
@@ -47,67 +50,89 @@ namespace AnotherECS.Core
 
         public void Tick()
         {
-            Tick(1);
+            Tick(1u);
         }
 
         public void Tick(uint tickCount)
         {
 #if !ANOTHERECS_RELEASE
-            if (!_isInit || _isDispose)
-            {
-                throw new InvalidOperationException("World not init yet or disposed.");
-            }
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
 #endif
-            if (tickCount != 0)
+            if (IsBusy())
             {
+
+            }
+            else
+            {
+                if (tickCount != 0)
+                {
 #if ANOTHERECS_HISTORY_DISABLE
                 for (int i = 0; i < tickCount; ++i)
                 {
                     OneTick();
                 }
 #else
-                var targetTick = _state.Tick + tickCount;
+                    var targetTick = _state.Tick + tickCount;
 
-                if (_state.GetNextTickForEvent() < targetTick)
-                {
-                    _state.RevertTo(_state.GetNextTickForEvent() - 1);
-                }
+                    if (_state.GetNextTickForEvent() < targetTick)
+                    {
+                        _state.RevertTo(_state.GetNextTickForEvent() - 1);
+                    }
 
-                while (_state.Tick < targetTick)
-                {
-                    OneTick();
-                }
+                    while (_state.Tick < targetTick)
+                    {
+                        OneTick();
+                    }
 #endif
+                }
             }
         }
 
         public void Destroy()
-            => _loopProcessing.Destroy();
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+#endif
+            _loopProcessing.Destroy();
+        }
 
         public void UpdateFromMainThread()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+#endif
             _loopProcessing.CallFromMainThread();
         }
 
-        public void OneTick()
+        public void Send(BaseEvent @event)
         {
-            _state.TickStarted();
-            _loopProcessing.Tick();
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+#endif
+            _state.Send(@event);
         }
 
+        public bool IsBusy()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+#endif
+            return _loopProcessing.IsBusy();
+        }
 
-        public void Send(BaseEvent @event)
-            => _state.Send(@event);
-
-        public void Dispose()
+        protected override void OnDispose()
         {
             _loopProcessing.Dispose();
 
             _systems.Dispose();
             _state.Dispose();
-#if !ANOTHERECS_RELEASE
-            _isDispose = true;
-#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void OneTick()
+        {
+            _state.TickStarted();
+            _loopProcessing.Tick();
         }
     }
 }
