@@ -31,6 +31,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertTo(uint tick)
+        {
+            _systemProcessing.RevertTo(tick);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Destroy()
         {
             _systemProcessing.Destroy();

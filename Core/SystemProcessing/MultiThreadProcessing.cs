@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using static AnotherECS.Core.Threading.ThreadRestrictionsBuilder;
+using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Threading
 {
@@ -51,7 +52,7 @@ namespace AnotherECS.Core.Threading
 
             _receiver = CreatePhaseReceiver<IReceiverSystem>(ref phaseArgs);
 
-            _threadScheduler.ParallelMax = Math.Min(_parallelMax, GetParallelMax());
+            _threadScheduler.ParallelMax = IsSingleParallel() ? 1 : Math.Min(_parallelMax, GetParallelMax());
 
             phaseArgs.Dispose();
         }
@@ -178,9 +179,20 @@ namespace AnotherECS.Core.Threading
                 return SystemType.Collection;
             }
 
-            return (system is IAsyncThread)
+            return !IsSingleParallel() && (system is IAsyncThread)
                 ? SystemType.ASync
                 : SystemType.Sync;
+        }
+
+        private bool IsSingleParallel()
+            => _parallelMax == 1;
+
+        public void RevertTo(uint tick)
+        {    
+            _threadScheduler.Run<RevertHandlerInvoke, StateInvokeData>(
+                new ThreadArg<StateInvokeData>() { arg = new StateInvokeData() { State = _state, tick = tick } }
+                );
+            _state.RevertTo(tick);
         }
 
         public bool IsBusy()
@@ -195,7 +207,6 @@ namespace AnotherECS.Core.Threading
         {
             _threadScheduler.Dispose();
         }
-        
 
         private struct Context<TData, TSystem>
             where TData : struct, ISystemInvokeData<TSystem>

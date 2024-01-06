@@ -13,6 +13,7 @@ namespace AnotherECS.Core
         private readonly IGroupSystemInternal _systems;
         private readonly TState _state;
         private readonly LoopProcessing _loopProcessing;
+        private readonly List<uint> _tickTasks;
 
         public World(IEnumerable<ISystem> systems)
             : this(systems, new TState()) { }
@@ -28,6 +29,8 @@ namespace AnotherECS.Core
             _loopProcessing = new LoopProcessing(
                 systemProcessing ?? SystemProcessingFactory.Create(state, ThreadingLevel.MainThreadOnly)
                 );
+
+            _tickTasks = new List<uint>();
         }
 
         public void Init()
@@ -58,33 +61,26 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
 #endif
-            if (IsBusy())
+            if (tickCount != 0)
             {
-
-            }
-            else
-            {
-                if (tickCount != 0)
-                {
 #if ANOTHERECS_HISTORY_DISABLE
                 for (int i = 0; i < tickCount; ++i)
                 {
                     OneTick();
                 }
 #else
-                    var targetTick = _state.Tick + tickCount;
+                var targetTick = _state.Tick + tickCount;
 
-                    if (_state.GetNextTickForEvent() < targetTick)
-                    {
-                        _state.RevertTo(_state.GetNextTickForEvent() - 1);
-                    }
-
-                    while (_state.Tick < targetTick)
-                    {
-                        OneTick();
-                    }
-#endif
+                if (_state.GetNextTickForEvent() < targetTick)
+                {
+                    _loopProcessing.RevertTo(_state.GetNextTickForEvent() - 1);
                 }
+
+                while (_state.Tick < targetTick)
+                {
+                    OneTick();
+                }
+#endif
             }
         }
 

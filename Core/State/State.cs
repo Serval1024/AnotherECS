@@ -32,6 +32,7 @@ namespace AnotherECS.Core
         private ICaller[] _callers;
         private IConfig[] _configs;
 
+        private object _eventsLocker = new object();
         private Events _events;
         #endregion
 
@@ -778,7 +779,10 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            _events.Send(@event);
+            lock (_eventsLocker)
+            {
+                _events.Send(@event);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

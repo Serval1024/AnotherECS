@@ -44,10 +44,23 @@ namespace AnotherECS.Core.Threading
             }
         }
 
-        public ThreadWorker(int capacity)
+        public void SetCallbackOnNotBusy(Action onNotBusy)
+        {
+            if (IsBusy())
+            {
+                throw new InvalidOperationException("SetCallbackOnNotBusy only possible calls when all threads are waiting.");
+            }
+
+            _shared.onNotBusy = onNotBusy;
+        }
+
+        public ThreadWorker(int capacity, Action onNotBusy = null)
         {
             _workers = Array.Empty<Worker>();
-            _shared = new();
+            _shared = new()
+            {
+                onNotBusy = onNotBusy
+            };
             _workersOffset = 0;
             Count = capacity;
         }
@@ -116,6 +129,7 @@ namespace AnotherECS.Core.Threading
             if (!shared.IsAnyBusy())
             {
                 shared.waiterComplete.Set();
+                shared.onNotBusy?.Invoke();
             }
         }
 
@@ -128,6 +142,7 @@ namespace AnotherECS.Core.Threading
             public readonly ConcurrentQueue<ITask> tasks = new();
             public readonly ManualResetEvent waiterComplete = new(true);
             public int inWork;
+            public Action onNotBusy;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool IsAnyBusy()

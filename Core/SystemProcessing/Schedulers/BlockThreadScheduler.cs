@@ -47,6 +47,14 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Run<THandler, TData>(ThreadArg<TData> task)
+            where THandler : struct, ITaskHandler<TData>
+            where TData : struct
+        {
+            default(THandler).Invoke(ref task.arg);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => false;
 

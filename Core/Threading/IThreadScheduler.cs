@@ -10,6 +10,10 @@ namespace AnotherECS.Core.Threading
             where THandler : struct, ITaskHandler<TData>
             where TData : struct;
 
+        void Run<THandler, TData>(ThreadArg<TData> task)
+            where THandler : struct, ITaskHandler<TData>
+            where TData : struct;
+
         void CallFromMainThread();
 
         bool IsBusy();

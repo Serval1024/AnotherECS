@@ -16,6 +16,8 @@ namespace AnotherECS.Core
 
         void Receive();
 
+        void RevertTo(uint tick);
+
         bool IsBusy();
         void CallFromMainThread();
     }

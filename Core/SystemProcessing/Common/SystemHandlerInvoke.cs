@@ -23,6 +23,12 @@ namespace AnotherECS.Core.Threading
         public State State { set; get; }
     }
 
+    public struct StateInvokeData
+    {
+        public uint tick;
+        public State State { set; get; }
+    }
+
     public struct ReceiverSystemInvokeData<T> : ISystemInvokeData<T>
     {
         public T System { set; get; }
@@ -109,6 +115,15 @@ namespace AnotherECS.Core.Threading
                 }
             }
             
+        }
+    }
+
+    public struct RevertHandlerInvoke : ITaskHandler<StateInvokeData>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(ref StateInvokeData data)
+        {
+            data.State.RevertTo(data.tick);
         }
     }
 }

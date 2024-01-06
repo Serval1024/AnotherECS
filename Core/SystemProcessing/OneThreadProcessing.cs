@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace AnotherECS.Core.Threading
+﻿namespace AnotherECS.Core.Threading
 {
     internal sealed class OneThreadProcessing : ISystemProcessing
     {
@@ -49,6 +47,11 @@ namespace AnotherECS.Core.Threading
         public void Receive()
         {
             _impl.Receive();
+        }
+
+        public void RevertTo(uint tick)
+        {
+            _impl.RevertTo(tick);
         }
 
         public bool IsBusy()

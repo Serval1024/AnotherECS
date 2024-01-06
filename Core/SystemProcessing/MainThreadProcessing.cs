@@ -148,9 +148,13 @@ namespace AnotherECS.Core.Threading
         public bool IsBusy()
             => false;
 
+        public void RevertTo(uint tick)
+        {
+            _state.RevertTo(tick);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread() { }
-
 
         private struct PhaseArgs
         {
