@@ -97,6 +97,12 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait()
+        {
+            _worker.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsMultiParallel()
             => ParallelMax > 1;
 

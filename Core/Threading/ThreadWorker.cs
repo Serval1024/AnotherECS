@@ -68,6 +68,11 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Schedule(ITask task)
         {
+            if (!IsBusy())
+            {
+                _shared.isExecuteFlagOnNotBusy = 0;
+            }
+
             _shared.tasks.Enqueue(task);
             _shared.LockBusy();
             Run();
@@ -129,7 +134,15 @@ namespace AnotherECS.Core.Threading
             if (!shared.IsAnyBusy())
             {
                 shared.waiterComplete.Set();
-                shared.onNotBusy?.Invoke();
+
+                if (shared.onNotBusy != null)
+                {
+                    var isExecute = Interlocked.CompareExchange(ref shared.isExecuteFlagOnNotBusy, 1, 0) == 0;
+                    if (isExecute)
+                    {
+                        shared.onNotBusy();
+                    }
+                }
             }
         }
 
@@ -142,6 +155,7 @@ namespace AnotherECS.Core.Threading
             public readonly ConcurrentQueue<ITask> tasks = new();
             public readonly ManualResetEvent waiterComplete = new(true);
             public int inWork;
+            public int isExecuteFlagOnNotBusy;
             public Action onNotBusy;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,7 +224,6 @@ namespace AnotherECS.Core.Threading
                 Run();
             }
 
-            
 
             private void __Processing()
             {

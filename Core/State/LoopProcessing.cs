@@ -24,22 +24,33 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Tick()
         {
+            _systemProcessing.StateTickStart();
             _systemProcessing.TickStart();
             _systemProcessing.Receive();
             _systemProcessing.Tick();
             _systemProcessing.TickFinished();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RevertTo(uint tick)
-        {
-            _systemProcessing.RevertTo(tick);
+            _systemProcessing.StateTickFinished();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Destroy()
         {
             _systemProcessing.Destroy();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TryRevertTo(uint currentTick, uint getNextTickForEvent)
+        {
+            if (getNextTickForEvent <= currentTick)
+            {
+                _systemProcessing.RevertTo(getNextTickForEvent - 1);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertTo(uint tick)
+        {
+            _systemProcessing.RevertTo(tick);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,6 +62,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => _systemProcessing.IsBusy();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait()
+            => _systemProcessing.Wait();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()

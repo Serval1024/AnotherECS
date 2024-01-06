@@ -17,6 +17,7 @@ namespace AnotherECS.Core.Threading
         void CallFromMainThread();
 
         bool IsBusy();
+        void Wait();
     }
 
     public struct ThreadArg<TArg> : IComparable<ThreadArg<TArg>>

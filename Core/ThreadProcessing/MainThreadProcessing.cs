@@ -39,6 +39,16 @@ namespace AnotherECS.Core.Threading
             _receivers = CollectReceiverSystems(ref phaseArgs);
         }
 
+        public void StateTickStart()
+        {
+            _state.TickStarted();
+        }
+
+        public void StateTickFinished()
+        {
+            _state.TickFinished();
+        }
+
         public void Construct()
         {
             Run<ConstructSystemHandlerInvoke<IConstructModule>, SystemInvokeData<IConstructModule>, IConstructModule>(ref _constructModule);
@@ -148,6 +158,9 @@ namespace AnotherECS.Core.Threading
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait() { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
           => true;
 
@@ -158,6 +171,7 @@ namespace AnotherECS.Core.Threading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread() { }
+
 
         private struct PhaseArgs
         {

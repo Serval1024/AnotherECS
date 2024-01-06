@@ -58,6 +58,11 @@ namespace AnotherECS.Core.Threading
         public bool IsBusy()
             => false;
 
+        public void Wait()
+        {
+            _worker.Wait();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread() { }
 

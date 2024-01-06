@@ -33,6 +33,7 @@ namespace AnotherECS.Core
         private IConfig[] _configs;
 
         private object _eventsLocker = new object();
+        private object _tickStartedLocker = new object();
         private Events _events;
         #endregion
 
@@ -686,12 +687,15 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
         {
-            ++Tick;
-            _events.TickStarted(Tick);
-            _dependencies->hAllocator.TickStarted(Tick);
-            _dependencies->altHAllocator.TickStarted(Tick);
+            lock (_tickStartedLocker)
+            {
+                ++Tick;
+                _events.TickStarted(Tick);
+                _dependencies->hAllocator.TickStarted(Tick);
+                _dependencies->altHAllocator.TickStarted(Tick);
 
-            FlushEvents();
+                FlushEvents();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -802,11 +806,21 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void GetEvent(uint tick, List<ITickEvent> result)
-            => _events.Find(tick, result);
+        {
+            lock (_eventsLocker)
+            {
+                _events.Find(tick, result);
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint GetNextTickForEvent()
-            => _events.NextTickForEvent;
+        {
+            lock (_eventsLocker)
+            {
+                return _events.NextTickForEvent;
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)

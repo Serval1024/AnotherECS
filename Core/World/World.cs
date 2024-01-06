@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
     public class World<TState> : BDisposable, IWorld
         where TState : State, new()
     {
+        public uint CurrentTick => _state.Tick;
+        public uint RequestTick { get; private set; }
+
 #if !ANOTHERECS_RELEASE
         private bool _isInit = false;
 #endif
@@ -34,6 +36,7 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
+            _isInit = true;
 #endif
             foreach (var system in SystemAutoAttachGlobalRegister.Gets())
             {
@@ -42,10 +45,9 @@ namespace AnotherECS.Core
             _systems.Sort();
 
             _state.FirstStartup();
+
+            RequestTick = CurrentTick;
             _loopProcessing.Init(_systems);
-#if !ANOTHERECS_RELEASE
-            _isInit = true;
-#endif
         }
 
         public void Tick()
@@ -60,24 +62,16 @@ namespace AnotherECS.Core
 #endif
             if (tickCount != 0)
             {
-#if ANOTHERECS_HISTORY_DISABLE
+                RequestTick += tickCount;
+
+#if !ANOTHERECS_HISTORY_DISABLE
+                _loopProcessing.TryRevertTo(_state.Tick, _state.GetNextTickForEvent());             //TODO SER
+#endif
                 for (int i = 0; i < tickCount; ++i)
                 {
-                    OneTick();
-                }
-#else
-                var targetTick = _state.Tick + tickCount;
-
-                if (_state.GetNextTickForEvent() < targetTick)
-                {
-                    _loopProcessing.RevertTo(_state.GetNextTickForEvent() - 1);
+                    _loopProcessing.Tick();
                 }
 
-                while (_state.Tick < targetTick)
-                {
-                    OneTick();
-                }
-#endif
             }
         }
 
@@ -113,19 +107,20 @@ namespace AnotherECS.Core
             return _loopProcessing.IsBusy();
         }
 
+        public void Wait()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+#endif
+            _loopProcessing.Wait();
+        }
+
         protected override void OnDispose()
         {
-            _loopProcessing.Dispose();
+            _loopProcessing.Dispose();  //with waiting work threads.
 
             _systems.Dispose();
             _state.Dispose();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void OneTick()
-        {
-            _state.TickStarted();
-            _loopProcessing.Tick();
         }
     }
 }

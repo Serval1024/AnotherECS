@@ -6,6 +6,9 @@ namespace AnotherECS.Core
     {
         void Prepare(IGroupSystem systemGroup);
 
+        void StateTickStart();
+        void StateTickFinished();
+
         void Construct();
         void TickStart();
         void TickFinished();
@@ -19,6 +22,7 @@ namespace AnotherECS.Core
         void RevertTo(uint tick);
 
         bool IsBusy();
+        void Wait();
         bool IsDeterministicSequence();
 
         void CallFromMainThread();

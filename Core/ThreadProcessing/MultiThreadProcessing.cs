@@ -57,6 +57,16 @@ namespace AnotherECS.Core.Threading
             phaseArgs.Dispose();
         }
 
+        public void StateTickStart()
+        {
+            Run<StateTickStartedHandlerInvoke, StateInvokeData>(new StateInvokeData() { State = _state });
+        }
+
+        public void StateTickFinished()
+        {
+            Run<StateTickFinishedHandlerInvoke, StateInvokeData>(new StateInvokeData() { State = _state });
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct()
         {
@@ -102,10 +112,7 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick)
         {
-            _threadScheduler.Run<RevertHandlerInvoke, StateInvokeData>(
-                new ThreadArg<StateInvokeData>() { arg = new StateInvokeData() { State = _state, tick = tick } }
-                );
-            _state.RevertTo(tick);
+            Run<RevertHandlerInvoke, RevertInvokeData>(new RevertInvokeData() { State = _state, tick = tick });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,8 +120,14 @@ namespace AnotherECS.Core.Threading
             => _threadScheduler.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait()
+        {
+            _threadScheduler.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
-            => false;
+            => IsSingleParallel();
 
         public void CallFromMainThread()
         {
@@ -137,6 +150,14 @@ namespace AnotherECS.Core.Threading
                 var head = phase.heads[i];
                 _threadScheduler.Run<TMethod, TData>(phase.systems.AsSpan(head.index, head.count), head.relativeIndexMainThread);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Run<TMethod, TData>(TData data)
+            where TMethod : struct, ITaskHandler<TData>
+            where TData : struct
+        {
+            _threadScheduler.Run<TMethod, TData>(new ThreadArg<TData>() { arg = data });
         }
 
         private int GetParallelMax()

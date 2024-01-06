@@ -11,6 +11,16 @@ namespace AnotherECS.Core.Threading
             _impl = new MultiThreadProcessing(state, 1, threadScheduler);
         }
 
+        public void StateTickStart()
+        {
+            _impl.StateTickStart();
+        }
+
+        public void StateTickFinished()
+        {
+            _impl.TickFinished();
+        }
+
         public void Prepare(IGroupSystem systemGroup)
         {
             _impl.Prepare(systemGroup);
@@ -61,8 +71,14 @@ namespace AnotherECS.Core.Threading
             => _impl.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait()
+        {
+            _impl.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
-            => true;
+            => _impl.IsDeterministicSequence();
 
         public void CallFromMainThread()
         {

@@ -25,6 +25,11 @@ namespace AnotherECS.Core.Threading
 
     public struct StateInvokeData
     {
+        public State State { set; get; }
+    }
+
+    public struct RevertInvokeData
+    {
         public uint tick;
         public State State { set; get; }
     }
@@ -36,6 +41,24 @@ namespace AnotherECS.Core.Threading
 
         public Dictionary<Type, IEventInvoke> eventContainers;
         public List<ITickEvent> events;
+    }
+
+    public struct StateTickStartedHandlerInvoke : ITaskHandler<StateInvokeData>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(ref StateInvokeData data)
+        {
+            data.State.TickStarted();
+        }
+    }
+
+    public struct StateTickFinishedHandlerInvoke : ITaskHandler<StateInvokeData>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(ref StateInvokeData data)
+        {
+            data.State.TickFinished();
+        }
     }
 
     public struct InitSystemHandlerInvoke<T> : ITaskHandler<SystemInvokeData<T>>
@@ -118,10 +141,10 @@ namespace AnotherECS.Core.Threading
         }
     }
 
-    public struct RevertHandlerInvoke : ITaskHandler<StateInvokeData>
+    public struct RevertHandlerInvoke : ITaskHandler<RevertInvokeData>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke(ref StateInvokeData data)
+        public void Invoke(ref RevertInvokeData data)
         {
             data.State.RevertTo(data.tick);
         }
