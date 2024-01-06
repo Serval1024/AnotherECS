@@ -19,6 +19,8 @@ namespace AnotherECS.Core
         void RevertTo(uint tick);
 
         bool IsBusy();
+        bool IsDeterministicSequence();
+
         void CallFromMainThread();
     }
 }

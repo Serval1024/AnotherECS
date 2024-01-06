@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core.Threading
+﻿using System.Runtime.CompilerServices;
+
+namespace AnotherECS.Core.Threading
 {
     internal sealed class OneThreadProcessing : ISystemProcessing
     {
@@ -54,8 +56,13 @@
             _impl.RevertTo(tick);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => _impl.IsBusy();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDeterministicSequence()
+            => true;
 
         public void CallFromMainThread()
         {

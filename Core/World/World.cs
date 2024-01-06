@@ -13,7 +13,6 @@ namespace AnotherECS.Core
         private readonly IGroupSystemInternal _systems;
         private readonly TState _state;
         private readonly LoopProcessing _loopProcessing;
-        private readonly List<uint> _tickTasks;
 
         public World(IEnumerable<ISystem> systems)
             : this(systems, new TState()) { }
@@ -29,8 +28,6 @@ namespace AnotherECS.Core
             _loopProcessing = new LoopProcessing(
                 systemProcessing ?? SystemProcessingFactory.Create(state, ThreadingLevel.MainThreadOnly)
                 );
-
-            _tickTasks = new List<uint>();
         }
 
         public void Init()

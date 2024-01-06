@@ -76,7 +76,6 @@ namespace AnotherECS.Core.Threading
 
         public void Dispose() { }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Run<TMethod, TData, TSystem>(ref TData[] phase)
             where TMethod : struct, ITaskHandler<TData>
             where TData : struct, ISystemInvokeData<TSystem>
@@ -147,6 +146,10 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => false;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDeterministicSequence()
+          => true;
 
         public void RevertTo(uint tick)
         {

@@ -53,6 +53,10 @@ namespace AnotherECS.Core
             => _systemProcessing.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDeterministicSequence()
+            => _systemProcessing.IsDeterministicSequence();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             _systemProcessing.Dispose();

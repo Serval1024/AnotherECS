@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using static AnotherECS.Core.Threading.ThreadRestrictionsBuilder;
-using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Threading
 {
@@ -38,6 +37,7 @@ namespace AnotherECS.Core.Threading
             _parallelMax = parallelMax;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Prepare(IGroupSystem systemGroup)
         {
             var phaseArgs = new PhaseArgs(_state, systemGroup);
@@ -57,39 +57,73 @@ namespace AnotherECS.Core.Threading
             phaseArgs.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct()
         {
             Run<ConstructSystemHandlerInvoke<IConstructModule>, SystemInvokeData<IConstructModule>, IConstructModule>(ref _constructModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickStart()
         {
             Run<TickStartSystemHandlerInvoke<ITickStartModule>, SystemInvokeData<ITickStartModule>, ITickStartModule>(ref _tickStartModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
         {
             Run<TickFinishedSystemHandlerInvoke<ITickFinishedModule>, SystemInvokeData<ITickFinishedModule>, ITickFinishedModule>(ref _tickFinishedModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Init()
         {
             Run<InitSystemHandlerInvoke<IInitSystem>, SystemInvokeData<IInitSystem>, IInitSystem>(ref _init);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Tick()
         {
             Run<TickSystemHandlerInvoke<ITickSystem>, SystemInvokeData<ITickSystem>, ITickSystem>(ref _tick);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Destroy()
         {
             Run<DestroySystemHandlerInvoke<IDestroySystem>, SystemInvokeData<IDestroySystem>, IDestroySystem>(ref _destroy);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Receive()
         {
             Run<ReceiverSystemHandlerInvoke<IReceiverSystem>, ReceiverSystemInvokeData<IReceiverSystem>, IReceiverSystem>(ref _receiver);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertTo(uint tick)
+        {
+            _threadScheduler.Run<RevertHandlerInvoke, StateInvokeData>(
+                new ThreadArg<StateInvokeData>() { arg = new StateInvokeData() { State = _state, tick = tick } }
+                );
+            _state.RevertTo(tick);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => _threadScheduler.IsBusy();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDeterministicSequence()
+            => false;
+
+        public void CallFromMainThread()
+        {
+            _threadScheduler.CallFromMainThread();
+        }
+
+        public void Dispose()
+        {
+            _threadScheduler.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,29 +218,10 @@ namespace AnotherECS.Core.Threading
                 : SystemType.Sync;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsSingleParallel()
             => _parallelMax == 1;
 
-        public void RevertTo(uint tick)
-        {    
-            _threadScheduler.Run<RevertHandlerInvoke, StateInvokeData>(
-                new ThreadArg<StateInvokeData>() { arg = new StateInvokeData() { State = _state, tick = tick } }
-                );
-            _state.RevertTo(tick);
-        }
-
-        public bool IsBusy()
-            => _threadScheduler.IsBusy();
-
-        public void CallFromMainThread()
-        {
-            _threadScheduler.CallFromMainThread();
-        }
-
-        public void Dispose()
-        {
-            _threadScheduler.Dispose();
-        }
 
         private struct Context<TData, TSystem>
             where TData : struct, ISystemInvokeData<TSystem>
