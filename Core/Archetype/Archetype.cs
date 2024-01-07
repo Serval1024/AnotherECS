@@ -2,10 +2,10 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Collections;
+using System.Threading;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
-using System.Threading;
 
 namespace AnotherECS.Core
 {
@@ -524,9 +524,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref Node FindChildNode(ref Node node, ushort itemId)
         {
-            for (uint i = 0; i < node.childenCount; ++i)
+            for (uint i = 0; i < node.childrenCount; ++i)
             {
-                ref var childNode = ref _nodes.ReadRef(node.childen[i]);
+                ref var childNode = ref _nodes.ReadRef(node.children[i]);
                 if (childNode.itemId == itemId)
                 {
                     return ref childNode;
@@ -676,9 +676,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void PatternFindInChild(ref Node node, Span<uint> result, ref int resultCount, Span<ushort> excludes)
         {
-            for (int i = 0, iMax = node.childenCount; i < iMax; ++i)
+            for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
             {
-                ref var childNode = ref _nodes.ReadRef(node.childen[i]);
+                ref var childNode = ref _nodes.ReadRef(node.children[i]);
                 if (!excludes.SortContains(childNode.itemId))
                 {
                     PatternDownExtend(ref childNode, result, ref resultCount, excludes);
@@ -717,17 +717,17 @@ namespace AnotherECS.Core
                     else
                     {
 
-                        for (int i = 0, iMax = node.childenCount; i < iMax; ++i)
+                        for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
                         {
-                            FindPattern(ref _nodes.ReadRef(node.childen[i]), itemIndex + 1, includes, excludes, result, ref resultCount);
+                            FindPattern(ref _nodes.ReadRef(node.children[i]), itemIndex + 1, includes, excludes, result, ref resultCount);
                         }
                     }
                 }
                 else if (!excludes.SortContains(node.itemId))
                 {
-                    for (int i = 0, iMax = node.childenCount; i < iMax; ++i)
+                    for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
                     {
-                        FindPattern(ref _nodes.ReadRef(node.childen[i]), itemIndex, includes, excludes, result, ref resultCount);
+                        FindPattern(ref _nodes.ReadRef(node.children[i]), itemIndex, includes, excludes, result, ref resultCount);
                     }
                 }
             }
@@ -802,31 +802,31 @@ namespace AnotherECS.Core
 
     internal unsafe struct Node
     {
-        public const int ChildenMax = 16;
+        public const int ChildrenMax = 16;
 
         public uint parent;
         public uint archetypeId;
         public ushort itemId;
         public uint collectionId;
         public uint hash;
-        public int childenCount;
-        public fixed uint childen[Node.ChildenMax];
+        public int childrenCount;
+        public fixed uint children[Node.ChildrenMax];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddChild(uint nodeId)
         {
 #if !ANOTHERECS_RELEASE
-            if (childenCount == ChildenMax)
+            if (childrenCount == ChildrenMax)
             {
                 throw new InvalidOperationException();
             }
 #endif
-            childenCount = CapacityChildenAsSpan().TryAddSort(childenCount, nodeId);
+            childrenCount = CapacityChildrenAsSpan().TryAddSort(childrenCount, nodeId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Span<uint> CapacityChildenAsSpan()
-            => new(UnsafeUtils.AddressOf(ref childen[0]), ChildenMax);
+        private Span<uint> CapacityChildrenAsSpan()
+            => new(UnsafeUtils.AddressOf(ref children[0]), ChildrenMax);
     }
 
 #if ENABLE_IL2CPP
