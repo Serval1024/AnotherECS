@@ -26,5 +26,7 @@ namespace AnotherECS.Core
         bool IsDeterministicSequence();
 
         void CallFromMainThread();
+
+        void TickFullLoop();
     }
 }

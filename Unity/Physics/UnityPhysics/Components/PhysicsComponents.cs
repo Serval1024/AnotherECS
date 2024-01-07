@@ -96,13 +96,13 @@ namespace AnotherECS.Physics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct(WPtr<HAllocator> allocator)
         {
-            _data.Construct(allocator);
+            _data.SetAllocator(allocator.Value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct()
         {
-            _data.Deallocate();
+            _data.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

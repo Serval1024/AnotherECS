@@ -39,46 +39,55 @@ namespace AnotherECS.Core.Threading
             _receivers = CollectReceiverSystems(ref phaseArgs);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StateTickStart()
         {
             _state.TickStarted();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StateTickFinished()
         {
             _state.TickFinished();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct()
         {
             Run<ConstructSystemHandlerInvoke<IConstructModule>, SystemInvokeData<IConstructModule>, IConstructModule>(ref _constructModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickStart()
         {
             Run<TickStartSystemHandlerInvoke<ITickStartModule>, SystemInvokeData<ITickStartModule>, ITickStartModule>(ref _tickStartModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
         {
             Run<TickFinishedSystemHandlerInvoke<ITickFinishedModule>, SystemInvokeData<ITickFinishedModule>, ITickFinishedModule>(ref _tickFinishedModule);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Init()
         {
             Run<InitSystemHandlerInvoke<IInitSystem>, SystemInvokeData<IInitSystem>, IInitSystem>(ref _init);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Tick()
         {
             Run<TickSystemHandlerInvoke<ITickSystem>, SystemInvokeData<ITickSystem>, ITickSystem>(ref _tick);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Destroy()
         {
             Run<DestroySystemHandlerInvoke<IDestroySystem>, SystemInvokeData<IDestroySystem>, IDestroySystem>(ref _destroy);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Receive()
         {
             Receive(_state.GetEventCache());
@@ -172,6 +181,16 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread() { }
 
+        public void TickFullLoop()
+        {
+            StateTickStart();
+            TickStart();
+            Receive();
+            Tick();
+            TickFinished();
+            StateTickFinished();
+        }
+    
 
         private struct PhaseArgs
         {

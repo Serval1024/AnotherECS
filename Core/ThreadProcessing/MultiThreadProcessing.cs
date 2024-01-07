@@ -58,11 +58,13 @@ namespace AnotherECS.Core.Threading
             phaseArgs.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StateTickStart()
         {
             Run<StateTickStartedHandlerInvoke, StateInvokeData>(new StateInvokeData() { State = _state });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StateTickFinished()
         {
             Run<StateTickFinishedHandlerInvoke, StateInvokeData>(new StateInvokeData() { State = _state });
@@ -130,9 +132,20 @@ namespace AnotherECS.Core.Threading
         public bool IsDeterministicSequence()
             => IsSingleParallel();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()
         {
             _threadScheduler.CallFromMainThread();
+        }
+
+        public void TickFullLoop()
+        {
+            StateTickStart();
+            TickStart();
+            Receive();
+            Tick();
+            TickFinished();
+            StateTickFinished();
         }
 
         public void Dispose()
@@ -243,7 +256,6 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsSingleParallel()
             => _parallelMax == 1;
-
 
         private struct Context<TData, TSystem>
             where TData : struct, ISystemInvokeData<TSystem>

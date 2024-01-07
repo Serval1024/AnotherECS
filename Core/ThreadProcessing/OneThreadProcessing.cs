@@ -90,6 +90,11 @@ namespace AnotherECS.Core.Threading
         {
             _impl.Dispose();
         }
+
+        public void TickFullLoop()
+        {
+            _impl.TickFullLoop();
+        }
     }
 }
 

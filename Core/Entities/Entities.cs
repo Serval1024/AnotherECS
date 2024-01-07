@@ -98,6 +98,7 @@ namespace AnotherECS.Core
         {
             ref var head = ref _data.ReadRef().GetRef(id);
             head.generation -= AllocateGeneration;
+            head.archetypeId = 0;
             _recycle.GetRef().Deallocate(id);
         }
 

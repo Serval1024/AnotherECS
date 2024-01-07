@@ -255,7 +255,6 @@ namespace AnotherECS.Core
             return _dependencies->entities.IsHas(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityId New()
         {
 #if !ANOTHERECS_RELEASE
@@ -280,11 +279,9 @@ namespace AnotherECS.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Entity NewEntity()
             => EntityExtensions.Pack(this, New());
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
@@ -307,7 +304,6 @@ namespace AnotherECS.Core
             _dependencies->entities.Deallocate(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Count(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
@@ -316,7 +312,6 @@ namespace AnotherECS.Core
             return _dependencies->archetype.GetCount(_dependencies->entities.ReadArchetypeId(id));
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool IsHas(EntityId id, ushort generation)
         {
 #if !ANOTHERECS_RELEASE
@@ -336,7 +331,6 @@ namespace AnotherECS.Core
         #endregion
 
         #region multi component
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Create<T>()
             where T : unmanaged, IComponent
         {
@@ -357,12 +351,10 @@ namespace AnotherECS.Core
             return GetCaller<T>().IsHas(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(EntityId id, T data)
             where T : unmanaged, IComponent
             => Add(id, ref data);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(EntityId id, ref T data)
             where T : unmanaged, IComponent
         {
@@ -372,7 +364,6 @@ namespace AnotherECS.Core
             GetCaller<T>().Add(id, ref data);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Add<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -382,7 +373,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Add(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVoid<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -392,7 +382,6 @@ namespace AnotherECS.Core
             Add<T>(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -402,7 +391,6 @@ namespace AnotherECS.Core
             GetCaller<T>().Remove(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
@@ -411,7 +399,6 @@ namespace AnotherECS.Core
             return GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).GetCopy(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -422,7 +409,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Read(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -433,7 +419,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Get(id);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE
@@ -442,7 +427,6 @@ namespace AnotherECS.Core
             GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).Set(id, component);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set<T>(EntityId id, ref T data)
             where T : unmanaged, IComponent
         {
@@ -455,7 +439,6 @@ namespace AnotherECS.Core
         #endregion
 
         #region single component
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas<T>()
             where T : unmanaged, ISingle
         {
@@ -465,12 +448,10 @@ namespace AnotherECS.Core
             return GetCaller<T>().IsHas(0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetOrAdd<T>(T data)
             where T : unmanaged, ISingle
             => SetOrAdd(ref data);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetOrAdd<T>(ref T data)
             where T : unmanaged, ISingle
         {
@@ -480,12 +461,10 @@ namespace AnotherECS.Core
             GetCaller<T>().SetOrAdd(0, ref data);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(T data)
             where T : unmanaged, ISingle
             => Add(ref data);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add<T>(ref T data)
             where T : unmanaged, ISingle
         {
@@ -495,7 +474,6 @@ namespace AnotherECS.Core
             GetCaller<T>().Add(0, ref data);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Add<T>()
             where T : unmanaged, ISingle
         {
@@ -505,7 +483,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Add(0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove<T>()
             where T : unmanaged, ISingle
         {
@@ -515,7 +492,6 @@ namespace AnotherECS.Core
             GetCaller<T>().Remove(0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read<T>()
             where T : unmanaged, ISingle
         {
@@ -526,7 +502,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Read(0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T Get<T>()
             where T : unmanaged, ISingle
         {
@@ -537,7 +512,6 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Get(0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set<T>(ref T data)
             where T : unmanaged, ISingle
         {
@@ -653,7 +627,6 @@ namespace AnotherECS.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(BaseEvent @event)
         {
 #if !ANOTHERECS_RELEASE

@@ -24,12 +24,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Tick()
         {
-            _systemProcessing.StateTickStart();
-            _systemProcessing.TickStart();
-            _systemProcessing.Receive();
-            _systemProcessing.Tick();
-            _systemProcessing.TickFinished();
-            _systemProcessing.StateTickFinished();
+            _systemProcessing.TickFullLoop();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -37,24 +37,15 @@ namespace AnotherECS.Core.Threading
             where THandler : struct, ITaskHandler<TData>
             where TData : struct
         {
-            if (IsMultiParallel())
-            {
-                EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
-                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
-                EnqueueBreaker(_tempBufferTasks);
 
-                lock (_tasks)
-                {
-                    Flush(_tempBufferTasks, _tasks);
-                    CallFromMainThreadInternal();
-                }
-            }
-            else
-            {
-                EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tasks);
-                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tasks);
+            EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+            Enqueue<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+            EnqueueBreaker(_tempBufferTasks);
 
-                TryAsyncContinue();
+            lock (_tasks)
+            {
+                Flush(_tempBufferTasks, _tasks);
+                CallFromMainThreadInternal();
             }
         }
 
@@ -63,35 +54,20 @@ namespace AnotherECS.Core.Threading
             where THandler : struct, ITaskHandler<TData>
             where TData : struct
         {
-            if (IsMultiParallel())
-            {
-                Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tempBufferTasks);
-                EnqueueBreaker(_tempBufferTasks);
+            Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tempBufferTasks);
+            EnqueueBreaker(_tempBufferTasks);
 
-                lock (_tasks)
-                {
-                    Flush(_tempBufferTasks, _tasks);
-                    CallFromMainThreadInternal();
-                }
-            }
-            else
+            lock (_tasks)
             {
-                Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tasks);
-                TryAsyncContinue();
+                Flush(_tempBufferTasks, _tasks);
+                CallFromMainThreadInternal();
             }
         }
 
 
         public void CallFromMainThread()
         {
-            if (IsMultiParallel())
-            {
-                lock (_tasks)
-                {
-                    CallFromMainThreadInternal();
-                }
-            }
-            else
+            lock (_tasks)
             {
                 CallFromMainThreadInternal();
             }
@@ -101,27 +77,6 @@ namespace AnotherECS.Core.Threading
         public void Wait()
         {
             _worker.Wait();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsMultiParallel()
-            => ParallelMax > 1;
-
-        private void TryAsyncContinue()
-        {
-            while (_tasks.Count > 0)
-            {
-                var task = _tasks.Peek();
-                if (task.IsBreaker || task.isMainThread)
-                {
-                    return;
-                }
-                else
-                {
-                    _tasks.Dequeue();
-                    _worker.Schedule(task.task);
-                }
-            }
         }
 
         private void CallFromMainThreadInternal()
@@ -249,26 +204,6 @@ namespace AnotherECS.Core.Threading
                         }
                     }
                 }
-            }
-        }
-
-        private struct TaskDeferred
-        {
-            public readonly static TaskDeferred Breaker = default;
-
-            public ITask task;
-            public bool isMainThread;
-
-            public bool IsBreaker
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => task == null;
-            }
-
-            public TaskDeferred(ITask task, bool isMainThread)
-            {
-                this.task = task;
-                this.isMainThread = isMainThread;
             }
         }
     }

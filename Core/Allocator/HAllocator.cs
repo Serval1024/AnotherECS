@@ -124,10 +124,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(ref MemoryHandle memoryHandle)
         {
-            if (Interlocked.Exchange(ref *memoryHandle.isNotDirty, 0) != 0)     //TODO SER threading
+            if (Interlocked.Exchange(ref *memoryHandle.isNotDirty, 0) != 0)
             {
-                UnityEngine.Debug.Log("!!!!");
-                _history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
+                //_history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
             }
         }
 
