@@ -7,7 +7,7 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class BlockThreadScheduler : IThreadScheduler, IDisposable
+    internal struct BlockThreadScheduler : IThreadScheduler, IDisposable
     {
         private ThreadWorker _worker;
 
@@ -17,11 +17,12 @@ namespace AnotherECS.Core.Threading
             set => _worker.Count = value;
         }
 
-        public BlockThreadScheduler()
-        {
-            _worker = new ThreadWorker(0);
-        }
-
+        public static BlockThreadScheduler Create()
+            => new()
+            {
+                _worker = new ThreadWorker(0),
+            };
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
             where THandler : struct, ITaskHandler<TData>

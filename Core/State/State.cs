@@ -6,6 +6,7 @@ using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using System;
 using EntityId = System.UInt32;
+using System.Threading;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Core
@@ -26,6 +27,7 @@ namespace AnotherECS.Core
         private GlobalDependencies* _dependencies;
         private NContainerArray<HAllocator, UnmanagedLayout> _layouts;
         private uint _layoutCount;
+        private uint _nextTickForEvent;
 
         private IModuleData[] _moduleDatas;
 
@@ -210,6 +212,7 @@ namespace AnotherECS.Core
 
             _revertStagesCallers = _callers.Skip(1).Where(p => p.IsCallRevertStages && p is IRevertStages).Cast<IRevertStages>().ToArray();
             _eventsCache = new List<ITickEvent>();
+            _nextTickForEvent = _events.NextTickForEvent;
         }
         #endregion
 
@@ -690,7 +693,6 @@ namespace AnotherECS.Core
             lock (_tickStartedLocker)
             {
                 ++Tick;
-                _events.TickStarted(Tick);
                 _dependencies->hAllocator.TickStarted(Tick);
                 _dependencies->altHAllocator.TickStarted(Tick);
 
@@ -786,6 +788,7 @@ namespace AnotherECS.Core
             lock (_eventsLocker)
             {
                 _events.Send(@event);
+                _nextTickForEvent = _events.NextTickForEvent;
             }
         }
 
@@ -793,34 +796,26 @@ namespace AnotherECS.Core
         internal void FlushEvents()
         {
             _eventsCache.Clear();
-            GetEvent(Tick, _eventsCache);
+            CollectEvent(Tick, _eventsCache);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void GetEvent(List<ITickEvent> result)
-            => GetEvent(Tick, result);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal List<ITickEvent> GetEventCache() 
             => _eventsCache;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void GetEvent(uint tick, List<ITickEvent> result)
+        internal void CollectEvent(uint tick, List<ITickEvent> result)
         {
             lock (_eventsLocker)
             {
-                _events.Find(tick, result);
+                _events.CollectForProcessing(tick, result);
+                _nextTickForEvent = _events.NextTickForEvent;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal uint GetNextTickForEvent()
-        {
-            lock (_eventsLocker)
-            {
-                return _events.NextTickForEvent;
-            }
-        }
+            => _nextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)

@@ -62,11 +62,12 @@ namespace AnotherECS.Core
 #endif
             if (tickCount != 0)
             {
-                RequestTick += tickCount;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-                _loopProcessing.TryRevertTo(_state.Tick, _state.GetNextTickForEvent());             //TODO SER
+                _loopProcessing.TryRevertTo(RequestTick, _state.GetNextTickForEvent());
 #endif
+                RequestTick += tickCount;
+
                 for (int i = 0; i < tickCount; ++i)
                 {
                     _loopProcessing.Tick();

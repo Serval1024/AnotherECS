@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace AnotherECS.Core.Threading
 {
@@ -8,10 +9,11 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class NonBlockThreadScheduler : IThreadScheduler, IDisposable
+    internal struct NonBlockThreadScheduler : IThreadScheduler, IDisposable
     {
         private ThreadWorker _worker;
         private Queue<TaskDeferred> _tasks;
+        private Queue<TaskDeferred> _tempBufferTasks;
 
         public int ParallelMax
         {
@@ -23,11 +25,13 @@ namespace AnotherECS.Core.Threading
             }
         }
 
-        public NonBlockThreadScheduler()
-        {
-            _worker = new ThreadWorker(0);
-            _tasks = new Queue<TaskDeferred>();
-        }
+        public static NonBlockThreadScheduler Create()
+            => new()
+            {
+                _worker = new ThreadWorker(0),
+                _tasks = new Queue<TaskDeferred>(),
+                _tempBufferTasks = new Queue<TaskDeferred>(),
+            };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
@@ -36,23 +40,23 @@ namespace AnotherECS.Core.Threading
         {
             if (IsMultiParallel())
             {
+                EnqueueBreaker(_tempBufferTasks);
+                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+                TryMiddleEnqueueBreaker(tasks, mainThreadIndex, _tempBufferTasks);
+                EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+
                 lock (_tasks)
                 {
-                    EnqueueBreaker();
-                    Enqueue<THandler, TData>(tasks, mainThreadIndex);
-                    TryMiddleEnqueueBreaker(tasks, mainThreadIndex);
-                    EnqueueMain<THandler, TData>(tasks, mainThreadIndex);
-
+                    Flush(_tempBufferTasks, _tasks);
                     CallFromMainThreadInternal();
                 }
             }
             else
             {
-
-                TryEnqueueBreaker(tasks, 0);
-                Enqueue<THandler, TData>(tasks, mainThreadIndex);
-                TryEnqueueBreaker(tasks, mainThreadIndex);
-                EnqueueMain<THandler, TData>(tasks, mainThreadIndex);
+                TryEnqueueBreaker(tasks, 0, _tasks);
+                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tasks);
+                TryEnqueueBreaker(tasks, mainThreadIndex, _tasks);
+                EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tasks);
 
                 TryContinue();
             }
@@ -65,17 +69,19 @@ namespace AnotherECS.Core.Threading
         {
             if (IsMultiParallel())
             {
+                EnqueueBreaker(_tempBufferTasks);
+                Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tempBufferTasks);
+
                 lock (_tasks)
                 {
-                    EnqueueBreaker();
-                    _tasks.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread));
+                    Flush(_tempBufferTasks, _tasks);
                     CallFromMainThreadInternal();
                 }
             }
             else
             {
-                TryEnqueueBreaker(task);
-                _tasks.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread));
+                TryEnqueueBreaker(task, _tasks);
+                Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tasks);
                 TryContinue();
             }
         }
@@ -164,35 +170,35 @@ namespace AnotherECS.Core.Threading
             SyncDispose();
         }
 
-        private void TryEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int index)
+        private void TryEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int index, Queue<TaskDeferred> buffer)
         {
             if (index < tasks.Length)
             {
-                TryEnqueueBreaker(tasks[index]);
+                TryEnqueueBreaker(tasks[index], buffer);
             }
         }
 
-        private void TryEnqueueBreaker<TData>(ThreadArg<TData> task)
+        private void TryEnqueueBreaker<TData>(ThreadArg<TData> task, Queue<TaskDeferred> buffer)
         {
             if (
-                _tasks.Count != 0 &&
-                (_tasks.Peek().isMainThread != task.isMainThread)
+                buffer.Count != 0 &&
+                (buffer.Peek().isMainThread != task.isMainThread)
                 )
             {
-                if (_tasks.Peek().isMainThread && !task.isMainThread)
+                if (buffer.Peek().isMainThread && !task.isMainThread)
                 {
-                    EnqueueBreaker();
+                    EnqueueBreaker(buffer);
                 }
             }
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryMiddleEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
+        private void TryMiddleEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
         {
             if (IsMiddleEnqueueBreaker(tasks, mainThreadIndex))
             {
-                EnqueueBreaker();
+                EnqueueBreaker(buffer);
             }
         }
 
@@ -201,30 +207,47 @@ namespace AnotherECS.Core.Threading
             => !(mainThreadIndex >= tasks.Length && mainThreadIndex <= 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void EnqueueBreaker()
+        private void EnqueueBreaker(Queue<TaskDeferred> buffer)
         {
-            _tasks.Enqueue(TaskDeferred.Breaker);
+            buffer.Enqueue(TaskDeferred.Breaker);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Enqueue<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
+        private void Enqueue<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
             where THandler : struct, ITaskHandler<TData>
             where TData : struct
         {
             for (int i = 0; i < mainThreadIndex; i++)
             {
-                _tasks.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, false));
+                buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, false));
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void EnqueueMain<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
+        private void EnqueueMain<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
             where THandler : struct, ITaskHandler<TData>
             where TData : struct
         {
             for (int i = mainThreadIndex; i < tasks.Length; i++)
             {
-                _tasks.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, true));
+                buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, true));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Enqueue<THandler, TData>(Task<THandler, TData> task, bool isMainThread, Queue<TaskDeferred> buffer)
+           where THandler : struct, ITaskHandler<TData>
+           where TData : struct
+        {
+            buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = task.arg }, isMainThread));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Flush(Queue<TaskDeferred> source, Queue<TaskDeferred> destination)
+        {
+            while (source.Count > 0)
+            {
+                destination.Enqueue(source.Dequeue());
             }
         }
 

@@ -14,12 +14,12 @@ namespace AnotherECS.Core
             private set;
         }
 
-        private EventBuffer _buffer;
+        private SortEventBuffer _buffer;
 
         public Events(uint recordTickLength)
         {
-            _buffer = new EventBuffer((int)recordTickLength);
-            NextTickForEvent = 1;
+            _buffer = new SortEventBuffer(128, (int)recordTickLength);
+            NextTickForEvent = int.MaxValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -30,16 +30,25 @@ namespace AnotherECS.Core
                 NextTickForEvent = @event.Tick;
             }
 
-            _buffer.Push(@event);
+            _buffer.Add(@event);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Find(uint tick, List<ITickEvent> result)
-            => _buffer.Find(tick, result);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TickStarted(uint tick)
-            => NextTickForEvent = tick + 1;
+        public void CollectForProcessing(uint tick, List<ITickEvent> result)
+        {
+            var indexAfterHit = _buffer.Find(tick, result);
+            if (NextTickForEvent == tick)
+            {
+                if (indexAfterHit != -1)
+                {
+                    NextTickForEvent = _buffer.GetTickByIndex(indexAfterHit);
+                }
+                else
+                {
+                    ++NextTickForEvent;
+                }
+            }
+        }
 
         public void Pack(ref WriterContextSerializer writer)
         {

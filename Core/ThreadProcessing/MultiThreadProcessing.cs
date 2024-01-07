@@ -11,10 +11,11 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class MultiThreadProcessing : ISystemProcessing
+    internal sealed class MultiThreadProcessing<TThreadScheduler> : ISystemProcessing
+        where TThreadScheduler : struct, IThreadScheduler
     {
         private readonly State _state;
-        private readonly IThreadScheduler _threadScheduler;
+        private TThreadScheduler _threadScheduler;
         private readonly int _parallelMax;
 
         private Phase<SystemInvokeData<IConstructModule>, IConstructModule> _constructModule;
@@ -27,10 +28,10 @@ namespace AnotherECS.Core.Threading
 
         private Phase<ReceiverSystemInvokeData<IReceiverSystem>, IReceiverSystem> _receiver;
 
-        public MultiThreadProcessing(State state, IThreadScheduler threadScheduler)
+        public MultiThreadProcessing(State state, TThreadScheduler threadScheduler)
             : this(state, int.MaxValue, threadScheduler) { }
 
-        public MultiThreadProcessing(State state, int parallelMax, IThreadScheduler threadScheduler)
+        public MultiThreadProcessing(State state, int parallelMax, TThreadScheduler threadScheduler)
         {
             _state = state;
             _threadScheduler = threadScheduler;

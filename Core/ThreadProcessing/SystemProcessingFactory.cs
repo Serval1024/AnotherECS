@@ -8,9 +8,9 @@ namespace AnotherECS.Core
             => (threadingLevel) switch
             {
                 ThreadingLevel.MainThreadOnly       => new MainThreadProcessing(state),
-                ThreadingLevel.NonBlockOneThread    => new OneThreadProcessing(state, new NonBlockThreadScheduler()),
-                ThreadingLevel.BlockMultiThread     => new MultiThreadProcessing(state, new BlockThreadScheduler()),
-                ThreadingLevel.NonBlockMultiThread  => new MultiThreadProcessing(state, new NonBlockThreadScheduler()),
+                ThreadingLevel.NonBlockOneThread    => new OneThreadProcessing<NonBlockThreadScheduler>(state, NonBlockThreadScheduler.Create()),
+                ThreadingLevel.BlockMultiThread     => new MultiThreadProcessing<BlockThreadScheduler>(state, BlockThreadScheduler.Create()),
+                ThreadingLevel.NonBlockMultiThread  => new MultiThreadProcessing<NonBlockThreadScheduler>(state, NonBlockThreadScheduler.Create()),
                 _ => throw new System.NotImplementedException()
             };
     }

@@ -2,13 +2,14 @@
 
 namespace AnotherECS.Core.Threading
 {
-    internal sealed class OneThreadProcessing : ISystemProcessing
+    internal sealed class OneThreadProcessing<TThreadScheduler> : ISystemProcessing
+        where TThreadScheduler : struct, IThreadScheduler
     {
-        private MultiThreadProcessing _impl;
+        private MultiThreadProcessing<TThreadScheduler> _impl;
 
-        public OneThreadProcessing(State state, IThreadScheduler threadScheduler)
+        public OneThreadProcessing(State state, TThreadScheduler threadScheduler)
         {
-            _impl = new MultiThreadProcessing(state, 1, threadScheduler);
+            _impl = new MultiThreadProcessing<TThreadScheduler>(state, 1, threadScheduler);
         }
 
         public void StateTickStart()

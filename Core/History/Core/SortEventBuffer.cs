@@ -1,6 +1,7 @@
-﻿using AnotherECS.Serializer;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
 {
@@ -12,8 +13,9 @@ namespace AnotherECS.Core
     {
         private int _count;
         private ulong[] _keys;
-        private ElementData[] _values;
-        private int _tickLimit;
+        private EventData[] _values;
+        private ulong _tickLimit;
+        private uint _counter;
 
         public SortEventBuffer(int capacity, int tickLimit)
         {
@@ -23,19 +25,22 @@ namespace AnotherECS.Core
             }
             _count = 0;
             _keys = new ulong[capacity];
-            _values = new ElementData[capacity];
-            _tickLimit = tickLimit;
+            _values = new EventData[capacity];
+            _tickLimit = ((ulong)tickLimit) << 32;
+            _counter = 0;
         }
 
-        public void Add(ulong key, ElementData value)
+        public void Add(ITickEvent value)
         {
+            var key = MakeId(value.Tick);
             int i = Array.BinarySearch(_keys, 0, _count, key);
             if (i >= 0)
                 throw new ArgumentException();
-            Insert(~i, key, value);
+            Insert(~i, key, new EventData(key, value));
         }
 
-        private void Insert(int index, ulong key, ElementData value)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Insert(int index, ulong key, EventData value)
         {
             if (_count == _keys.Length)
             {
@@ -61,7 +66,11 @@ namespace AnotherECS.Core
             _values[index] = value;
         }
 
-        public void Find(uint tick, List<ITickEvent> result)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetTickByIndex(int index)
+            => ToTick(_values[index].tick);
+
+        public int Find(uint tick, List<ITickEvent> result)
         {
             int findIndex = _count - 1;
             for (; findIndex >= 0; --findIndex)
@@ -78,21 +87,31 @@ namespace AnotherECS.Core
                 var valueTick = _values[i].tick;
                 if (valueTick == tick)
                 {
-                    result.Add(_values[i].content);
+                    result.Add(_values[i].@event);
                 }
                 else
                 {
-                    break;
+                    return (result.Count == 0) ? -1 : i;
                 }
             }
+            return -1;
         }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ulong MakeId(uint tick)
+          => (ulong)tick << 32 | unchecked(++_counter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint ToTick(ulong key)
+          => (uint)(key >> 32);
 
         private void EnsureCapacity()
         {
             var newCapacity = _keys.Length << 1;
 
             var newKeys = new ulong[newCapacity];
-            var newValues = new ElementData[newCapacity];
+            var newValues = new EventData[newCapacity];
 
             Array.Copy(_keys, 0, newKeys, 0, _count);
             Array.Copy(_values, 0, newValues, 0, _count);
@@ -112,34 +131,34 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             _count = reader.ReadInt32();
-            _tickLimit = reader.ReadInt32();
+            _tickLimit = reader.ReadUInt64();
             _keys = reader.Unpack<ulong[]>();
-            _values = reader.Unpack<ElementData[]>();
+            _values = reader.Unpack<EventData[]>();
         }
 
 
 
-        public struct ElementData : ISerialize
+        private struct EventData : ISerialize
         {
-            public long tick;
-            public ITickEvent content;
+            public ulong tick;
+            public ITickEvent @event;
 
-            public ElementData(long tick, ITickEvent content)
+            public EventData(ulong tick, ITickEvent content)
             {
                 this.tick = tick;
-                this.content = content;
+                this.@event = content;
             }
 
             public void Pack(ref WriterContextSerializer writer)
             {
-                writer.Write((uint)tick);
-                writer.Pack(content);
+                writer.Write(tick);
+                writer.Pack(@event);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
-                tick = reader.ReadUInt32();
-                content = reader.Unpack<ITickEvent>();
+                tick = reader.ReadUInt64();
+                @event = reader.Unpack<ITickEvent>();
             }
         }
     }
