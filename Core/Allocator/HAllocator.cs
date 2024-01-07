@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using AnotherECS.Core.Collection;
+using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
@@ -16,6 +18,7 @@ namespace AnotherECS.Core
         private BAllocator* _allocator;
         private NArray<BAllocator, Chunk> _chunks;
 
+        private int _threadLockerId;
         private uint _id;
         private uint _chunkAllocated;
         private uint _multiplier;
@@ -26,7 +29,7 @@ namespace AnotherECS.Core
         private ChangeHistory _history;
 #endif
 #if !ANOTHERECS_RELEASE
-        private MemoryChecker<BAllocator>  _memoryChecker;
+        private MemoryChecker<BAllocator> _memoryChecker;
 #endif
 
         public bool IsValid
@@ -65,15 +68,16 @@ namespace AnotherECS.Core
         public uint GetId()
             => _id;
 
-        public HAllocator(BAllocator* allocator, uint id,  uint chunkLimit, uint historyCapacity, uint recordHistoryLength)
+        public HAllocator(BAllocator* allocator, uint id, uint chunkLimit, uint historyCapacity, uint recordHistoryLength)
         {
             if (chunkLimit < 2)
             {
                 chunkLimit = 2;
             }
-         
+
             const uint chunkPreallocation = CHUNK_PREALLOCATION_COUNT + 1;
 
+            _threadLockerId = GlobalThreadLockerProvider.AllocateId();
             _id = id;
             _allocator = allocator;
             _chunks = new NArray<BAllocator, Chunk>(_allocator, chunkLimit);
@@ -105,7 +109,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DropDirty()
         {
-            for(uint i = ChunkDownBound; i < ChunkCount; ++i)
+            for (uint i = ChunkDownBound; i < ChunkCount; ++i)
             {
                 DropDirty(i);
             }
@@ -120,19 +124,17 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(ref MemoryHandle memoryHandle)
         {
-#if !ANOTHERECS_RELEASE
-            if (*memoryHandle.isNotDirty)
+            if (Interlocked.Exchange(ref *memoryHandle.isNotDirty, 0) != 0)     //TODO SER threading
             {
-                *memoryHandle.isNotDirty = false;
+                UnityEngine.Debug.Log("!!!!");
                 _history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
             }
-#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref Chunk GetChunk(uint chunk)
             => ref _chunks.ReadRef(chunk);
-      
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MemoryHandle Allocate(uint size)
         {
@@ -143,19 +145,24 @@ namespace AnotherECS.Core
             }
 #endif
             var segmentCount = GetSegmentCountBySize(size);
-            Location location = FindLocation(segmentCount);
+            Location location = default;
+
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                location = FindLocation(segmentCount);
 #if !ANOTHERECS_RELEASE
-            if (location.chunk == 0)
-            {
-                throw new Exceptions.ReachedLimitChunkException(ChunkLimit);
-            }
-            
-            if (segmentCount >= SEGMENT_LIMIT)
-            {
-                throw new Exceptions.ReachedLimitAmountOfSegmentException(SEGMENT_LIMIT);
-            }
+                if (location.chunk == 0)
+                {
+                    throw new Exceptions.ReachedLimitChunkException(ChunkLimit);
+                }
+
+                if (segmentCount >= SEGMENT_LIMIT)
+                {
+                    throw new Exceptions.ReachedLimitAmountOfSegmentException(SEGMENT_LIMIT);
+                }
 #endif
-            LockLocation(location, segmentCount);
+                LockLocation(location, segmentCount);
+            }
 
             ref var chunk = ref _chunks.GetRef(location.chunk);
 
@@ -178,7 +185,10 @@ namespace AnotherECS.Core
         {
             if (memoryHandle.IsValid)
             {
-                UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
+                lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+                {
+                    UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
+                }
                 memoryHandle = default;
             }
         }
@@ -193,30 +203,35 @@ namespace AnotherECS.Core
         public bool TryResize(ref MemoryHandle memoryHandle, uint size)
         {
             var requirementSegmentCount = GetSegmentCountBySize(size);
-            var currentSegmentCount = GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment);
 
-            if (requirementSegmentCount > currentSegmentCount)
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
             {
-                var segment = memoryHandle.segment;
-                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-                var deltaCount = requirementSegmentCount - currentSegmentCount;
+                var currentSegmentCount = GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment);
 
-                if (chunk.NextFree(segment + currentSegmentCount, deltaCount))
+                if (requirementSegmentCount > currentSegmentCount)
                 {
-                    chunk.LockSegments(segment + currentSegmentCount, deltaCount);
-                    chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+                    var segment = memoryHandle.segment;
 
-                    UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
-                    return true;
+                    ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
+                    var deltaCount = requirementSegmentCount - currentSegmentCount;
+
+                    if (chunk.NextFree(segment + currentSegmentCount, deltaCount))
+                    {
+                        chunk.LockSegments(segment + currentSegmentCount, deltaCount);
+                        chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+
+                        UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
+                        return true;
+                    }
+
+                    return false;
                 }
-                
-                return false;
-            }
-            else if (requirementSegmentCount != currentSegmentCount)
-            {
-                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-                chunk.UnlockSegments(memoryHandle.segment + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
-                chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+                else if (requirementSegmentCount != currentSegmentCount)
+                {
+                    ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
+                    chunk.UnlockSegments(memoryHandle.segment + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
+                    chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+                }
             }
 
             Dirty(ref memoryHandle);
@@ -228,14 +243,22 @@ namespace AnotherECS.Core
         public void EnterCheckChanges(ref MemoryHandle memoryHandle)
         {
 #if !ANOTHERECS_RELEASE
-            _memoryChecker.EnterCheckChanges(ref memoryHandle);
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                _memoryChecker.EnterCheckChanges(ref memoryHandle);
+            }
 #endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges(ref MemoryHandle memoryHandle)
 #if !ANOTHERECS_RELEASE
-            => _memoryChecker.ExitCheckChanges(ref memoryHandle);
+        {
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                return _memoryChecker.ExitCheckChanges(ref memoryHandle);
+            }
+        }
 #else
             => false;
 #endif
@@ -243,7 +266,12 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool RevertTo(uint tick)
 #if !ANOTHERECS_RELEASE
-            => _history.RevertTo(ref this, tick);
+        {
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                return _history.RevertTo(ref this, tick);
+            }
+        }
 #else
             => throw new NotSupportedException();
 #endif
@@ -251,13 +279,16 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            for (uint i = ChunkDownBound; i < _chunkAllocated; ++i)
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
             {
-                _chunks.GetRef(i).Dispose();
-            }
+                for (uint i = ChunkDownBound; i < _chunkAllocated; ++i)
+                {
+                    _chunks.GetRef(i).Dispose();
+                }
 #if !ANOTHERECS_RELEASE
-            _history.Dispose();
+                _history.Dispose();
 #endif
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -305,7 +336,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal MemoryRebinder GetMemoryRebinder()
         {
-            var dirties = new NArray<BAllocator, WPtr<bool>>(_allocator, _chunkAllocated);
+            var dirties = new NArray<BAllocator, WPtr<int>>(_allocator, _chunkAllocated);
             var memories = new NArray<BAllocator, WPtr<byte>>(_allocator, _chunkAllocated);
             for(uint i = ChunkDownBound; i < _chunkAllocated; ++i)
             {
@@ -405,7 +436,7 @@ namespace AnotherECS.Core
 
         public struct Chunk : IDisposable, ISerialize
         {
-            private NArray<BAllocator, bool> _isDirty;
+            private NArray<BAllocator, int> _isDirty;
             private NArray<BAllocator, ushort> _sizeSegments;
             private NArray<BAllocator, bool> _freeSegments;
             private NArray<BAllocator, byte> _memory;
@@ -427,7 +458,7 @@ namespace AnotherECS.Core
 
             public void Allocate(BAllocator* allocator, uint capacity)
             {
-                _isDirty = new NArray<BAllocator, bool>(allocator, capacity + 1);
+                _isDirty = new NArray<BAllocator, int>(allocator, capacity + 1);
                 _sizeSegments = new NArray<BAllocator, ushort>(allocator, capacity + 1);
                 _freeSegments = new NArray<BAllocator, bool>(allocator, capacity + 1);
                 _memory = new NArray<BAllocator, byte>(allocator, (capacity + 1) << SEGMENT_POWER_2);
@@ -439,7 +470,7 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool* GetIsDirtyPtr()
+            public int* GetIsDirtyPtr()
                 => _isDirty.GetPtr();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -557,7 +588,7 @@ namespace AnotherECS.Core
                 => (uint)(((byte*)pointer) - _memory.GetPtr()) >> SEGMENT_POWER_2;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool* GetPointerDirtyBySegment(uint segment)
+            public int* GetPointerDirtyBySegment(uint segment)
                 => _isDirty.GetPtr(segment);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

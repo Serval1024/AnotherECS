@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System;
 using System.Collections.Generic;
-using System.Collections;
 
 namespace AnotherECS.Core.Threading
 {
@@ -40,10 +39,9 @@ namespace AnotherECS.Core.Threading
         {
             if (IsMultiParallel())
             {
-                EnqueueBreaker(_tempBufferTasks);
-                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
-                TryMiddleEnqueueBreaker(tasks, mainThreadIndex, _tempBufferTasks);
                 EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tempBufferTasks);
+                EnqueueBreaker(_tempBufferTasks);
 
                 lock (_tasks)
                 {
@@ -53,12 +51,10 @@ namespace AnotherECS.Core.Threading
             }
             else
             {
-                TryEnqueueBreaker(tasks, 0, _tasks);
-                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tasks);
-                TryEnqueueBreaker(tasks, mainThreadIndex, _tasks);
                 EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tasks);
+                Enqueue<THandler, TData>(tasks, mainThreadIndex, _tasks);
 
-                TryContinue();
+                TryAsyncContinue();
             }
         }
 
@@ -69,8 +65,8 @@ namespace AnotherECS.Core.Threading
         {
             if (IsMultiParallel())
             {
-                EnqueueBreaker(_tempBufferTasks);
                 Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tempBufferTasks);
+                EnqueueBreaker(_tempBufferTasks);
 
                 lock (_tasks)
                 {
@@ -80,9 +76,8 @@ namespace AnotherECS.Core.Threading
             }
             else
             {
-                TryEnqueueBreaker(task, _tasks);
                 Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tasks);
-                TryContinue();
+                TryAsyncContinue();
             }
         }
 
@@ -112,12 +107,11 @@ namespace AnotherECS.Core.Threading
         private bool IsMultiParallel()
             => ParallelMax > 1;
 
-        private void TryContinue()
+        private void TryAsyncContinue()
         {
             while (_tasks.Count > 0)
             {
                 var task = _tasks.Peek();
-                UnityEngine.Debug.Log(task.task);
                 if (task.IsBreaker || task.isMainThread)
                 {
                     return;
@@ -137,6 +131,7 @@ namespace AnotherECS.Core.Threading
                 while (_tasks.Count > 0)
                 {
                     var task = _tasks.Dequeue();
+
                     if (task.IsBreaker)
                     {
                         return;
@@ -150,6 +145,20 @@ namespace AnotherECS.Core.Threading
                         else
                         {
                             _worker.Schedule(task.task);
+
+                            while (_tasks.Count > 0)
+                            {
+                                task = _tasks.Dequeue();
+
+                                if (task.IsBreaker || task.isMainThread)
+                                {
+                                    return;
+                                }
+                                else
+                                {
+                                    _worker.Schedule(task.task);
+                                }
+                            }
                         }
                     }
                 }
@@ -169,42 +178,6 @@ namespace AnotherECS.Core.Threading
         {
             SyncDispose();
         }
-
-        private void TryEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int index, Queue<TaskDeferred> buffer)
-        {
-            if (index < tasks.Length)
-            {
-                TryEnqueueBreaker(tasks[index], buffer);
-            }
-        }
-
-        private void TryEnqueueBreaker<TData>(ThreadArg<TData> task, Queue<TaskDeferred> buffer)
-        {
-            if (
-                buffer.Count != 0 &&
-                (buffer.Peek().isMainThread != task.isMainThread)
-                )
-            {
-                if (buffer.Peek().isMainThread && !task.isMainThread)
-                {
-                    EnqueueBreaker(buffer);
-                }
-            }
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryMiddleEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
-        {
-            if (IsMiddleEnqueueBreaker(tasks, mainThreadIndex))
-            {
-                EnqueueBreaker(buffer);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsMiddleEnqueueBreaker<TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
-            => !(mainThreadIndex >= tasks.Length && mainThreadIndex <= 0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void EnqueueBreaker(Queue<TaskDeferred> buffer)
@@ -257,6 +230,11 @@ namespace AnotherECS.Core.Threading
             {
                 lock (_tasks)
                 {
+                    if (_tasks.Peek().IsBreaker)
+                    {
+                        _tasks.Dequeue();
+                    }
+
                     while (_tasks.Count > 0)
                     {
                         var task = _tasks.Peek();

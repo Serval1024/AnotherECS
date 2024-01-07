@@ -19,7 +19,7 @@ namespace AnotherECS.Core
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        public ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage;
+        public ComponentStorage<TAllocator, TSparse, TDense, TDenseIndex> storage;
         public ComponentFunction<TDense> componentFunction;
 
         public static uint GetSize()
@@ -54,7 +54,7 @@ namespace AnotherECS.Core
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> : IDisposable, IRebindMemoryHandle
+    public unsafe struct ComponentStorage<TAllocator, TSparse, TDense, TDenseIndex> : IDisposable, IRebindMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged

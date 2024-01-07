@@ -9,6 +9,7 @@ namespace AnotherECS.Core.Collection
             where TAllocator : unmanaged, IAllocator
             where T : unmanaged, IComparable<T>
         {
+            nlist.Dirty();
             nlist.AsSpan().Sort();
         }
 

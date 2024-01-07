@@ -10,7 +10,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe struct Recycle<TNumber, TNumberProvider>: IRebindMemoryHandle, ISerialize
+    internal unsafe struct URecycle<TNumber, TNumberProvider>: IRebindMemoryHandle, ISerialize
         where TNumber : unmanaged
         where TNumberProvider : struct, INumberProvier<TNumber>
     {
@@ -18,7 +18,7 @@ namespace AnotherECS.Core
         public uint _currentIndex;
         public uint _counter;
 
-        public Recycle(HAllocator* allocator, uint capacity)
+        public URecycle(HAllocator* allocator, uint capacity)
         {
             _data = new NArray<HAllocator, TNumber>(allocator, capacity);
             _currentIndex = default;

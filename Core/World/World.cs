@@ -3,8 +3,7 @@ using System.Collections.Generic;
 
 namespace AnotherECS.Core
 {
-    public class World<TState> : BDisposable, IWorld
-        where TState : State, new()
+    public class World : BDisposable, IWorld
     {
         public uint CurrentTick => _state.Tick;
         public uint RequestTick { get; private set; }
@@ -13,13 +12,10 @@ namespace AnotherECS.Core
         private bool _isInit = false;
 #endif
         private readonly IGroupSystemInternal _systems;
-        private readonly TState _state;
+        private readonly State _state;
         private readonly LoopProcessing _loopProcessing;
 
-        public World(IEnumerable<ISystem> systems)
-            : this(systems, new TState()) { }
-
-        public World(IEnumerable<ISystem> systems, TState state, ISystemProcessing systemProcessing = default)
+        public World(IEnumerable<ISystem> systems, State state, ISystemProcessing systemProcessing = default)
         {
             _systems = new SystemGroup(
                 systems ?? throw new ArgumentNullException(nameof(systems))
@@ -30,6 +26,8 @@ namespace AnotherECS.Core
             _loopProcessing = new LoopProcessing(
                 systemProcessing ?? SystemProcessingFactory.Create(state, ThreadingLevel.MainThreadOnly)
                 );
+
+            _state.SetOption(new StateOption() { isMultiThreadMode = !_loopProcessing.IsDeterministicSequence() });
         }
 
         public void Init()

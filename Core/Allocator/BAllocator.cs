@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
+using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
@@ -15,6 +16,8 @@ namespace AnotherECS.Core
         private NDictionary<RawAllocator, ulong, MemEntry, U8U4HashProvider> _pointerToSize;
         private NDictionary<RawAllocator, uint, ulong, U4U4HashProvider> _idToPointer;
         private uint _counter;
+
+        private int _threadLockerId;
 
         public ulong TotalBytesAllocated
         {
@@ -40,6 +43,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             allocator._memoryChecker = new MemoryChecker<RawAllocator>(allocator._rawAllocator);
 #endif
+            allocator._threadLockerId = GlobalThreadLockerProvider.AllocateId();
             allocator._idToPointer = new(allocator._rawAllocator, 128);
             allocator._pointerToSize = new(allocator._rawAllocator, 128);
             allocator._counter = 0;
@@ -50,23 +54,28 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MemoryHandle Allocate(uint size)
         {
-            ++_counter;
+            var pointer = UnsafeMemory.Allocate(size);
+
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                ++_counter;
+                _pointerToSize.Add((ulong)pointer, new MemEntry() { id = _counter, size = size });
+                _idToPointer.Add(_counter, (ulong)pointer);
+            }
+
             var c = (ushort)(_counter & 0xffff);
             var s = (ushort)(_counter >> 16);
-
-            var pointer = UnsafeMemory.Allocate(size);
-            _pointerToSize.Add((ulong)pointer, new MemEntry() { id = _counter, size = size });
-            _idToPointer.Add(_counter, (ulong)pointer);
-
             return new() { pointer = pointer, chunk = c, segment = s };
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate(ref MemoryHandle memoryHandle)
         {
-            _pointerToSize.Remove((ulong)memoryHandle.pointer);
-            _idToPointer.Remove(GetId(ref memoryHandle));
-
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                _pointerToSize.Remove((ulong)memoryHandle.pointer);
+                _idToPointer.Remove(GetId(ref memoryHandle));
+            }
             UnsafeMemory.Deallocate(ref memoryHandle.pointer);
         }
 
@@ -92,14 +101,22 @@ namespace AnotherECS.Core
         public void EnterCheckChanges(ref MemoryHandle memoryHandle)
         {
 #if !ANOTHERECS_RELEASE
-            _memoryChecker.EnterCheckChanges(ref memoryHandle);
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                _memoryChecker.EnterCheckChanges(ref memoryHandle);
+            }
 #endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges(ref MemoryHandle memoryHandle)
 #if !ANOTHERECS_RELEASE
-            => _memoryChecker.ExitCheckChanges(ref memoryHandle);
+        {
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
+            {
+                return _memoryChecker.ExitCheckChanges(ref memoryHandle);
+            }
+        }
 #else
             => false;
 #endif
@@ -107,17 +124,20 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-#if !ANOTHERECS_RELEASE
-            _memoryChecker.Dispose();
-#endif
-            RawAllocator rawAllocator = default;
-            foreach (var pointer in _pointerToSize)
+            lock (GlobalThreadLockerProvider.GetLocker(_threadLockerId))
             {
-                rawAllocator.Deallocate((void*)pointer.key);
-            }
+#if !ANOTHERECS_RELEASE
+                _memoryChecker.Dispose();
+#endif
+                RawAllocator rawAllocator = default;
+                foreach (var pointer in _pointerToSize)
+                {
+                    rawAllocator.Deallocate((void*)pointer.key);
+                }
 
-            _pointerToSize.Dispose();
-            _idToPointer.Dispose();
+                _pointerToSize.Dispose();
+                _idToPointer.Dispose();
+            }
             UnsafeMemory.Deallocate(ref _rawAllocator);
         }
 

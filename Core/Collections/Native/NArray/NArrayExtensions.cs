@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -10,6 +11,7 @@ namespace AnotherECS.Core.Collection
             where TNArray : struct, INArray<T>
             where T : unmanaged, IComparable<T>
         {
+            narray.Dirty();
             narray.AsSpan<TNArray, T>().Sort();
         }
 

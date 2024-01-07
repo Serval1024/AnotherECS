@@ -37,8 +37,8 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    _memoryChecks.Add(key, new CheckEntry() { blockCounter = 0, restoreValueIsDirty = memoryHandle.IsDirty });
-                    *memoryHandle.isNotDirty = false;
+                    _memoryChecks.Add(key, new CheckEntry() { blockCounter = 0, restoreValueIsDirty = *memoryHandle.isNotDirty });
+                    *memoryHandle.isNotDirty = 1;
                 }
             }
         }
@@ -58,7 +58,7 @@ namespace AnotherECS.Core
                         var currentIsDirty = *memoryHandle.isNotDirty;
                         *memoryHandle.isNotDirty = checkEntry.restoreValueIsDirty;
 
-                        return currentIsDirty;
+                        return currentIsDirty == 0;
                     }
                     else
                     {
@@ -74,7 +74,7 @@ namespace AnotherECS.Core
         private struct CheckEntry
         {
             public uint blockCounter;
-            public bool restoreValueIsDirty;
+            public int restoreValueIsDirty;
         }
     }
 

@@ -228,7 +228,7 @@ namespace AnotherECS.Core.Threading
             private void __Processing()
             {
                 while (_isLiving)
-                {
+                {       
                     _waiterTask.WaitOne();
                     __TryProcessingTask(_shared);
                 }

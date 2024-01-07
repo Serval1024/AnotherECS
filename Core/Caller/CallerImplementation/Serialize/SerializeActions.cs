@@ -89,7 +89,7 @@ namespace AnotherECS.Core.Actions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref WriterContextSerializer writer, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
+            (ref WriterContextSerializer writer, ref ComponentStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
@@ -107,7 +107,7 @@ namespace AnotherECS.Core.Actions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnpackCommonBlittable<TAllocator, TSparse, TDense, TDenseIndex>
-            (ref ReaderContextSerializer reader, ref ComponetStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
+            (ref ReaderContextSerializer reader, ref ComponentStorage<TAllocator, TSparse, TDense, TDenseIndex> storage)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged

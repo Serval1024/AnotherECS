@@ -74,9 +74,9 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unlock()
+        public void Unlock(bool isSorting)
         {
-            _dependencies->archetype.Unlock(ref _filterUpdater);
+            _dependencies->archetype.Unlock(ref _filterUpdater, isSorting);
         }
     }
 

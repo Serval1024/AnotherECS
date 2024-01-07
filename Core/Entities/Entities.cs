@@ -17,14 +17,14 @@ namespace AnotherECS.Core
 
         private GlobalDependencies* _dependencies;
         private NContainer<HAllocator, NArray<HAllocator, EntityData>> _data;
-        private NContainer<HAllocator, Recycle<uint, UintNumber>> _recycle;
+        private NContainer<HAllocator, URecycle<uint, UintNumber>> _recycle;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Entities(GlobalDependencies* dependencies)
         {
             _dependencies = dependencies;
             _data = new(&_dependencies->hAllocator, new NArray<HAllocator, EntityData>(&_dependencies->hAllocator, _dependencies->config.general.entityCapacity));
-            _recycle = new(&_dependencies->hAllocator, new Recycle<EntityId, UintNumber>(&_dependencies->hAllocator, _dependencies->config.general.recycleCapacity));
+            _recycle = new(&_dependencies->hAllocator, new URecycle<EntityId, UintNumber>(&_dependencies->hAllocator, _dependencies->config.general.recycleCapacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

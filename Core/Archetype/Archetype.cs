@@ -5,6 +5,7 @@ using System.Collections;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
+using System.Threading;
 
 namespace AnotherECS.Core
 {
@@ -28,7 +29,7 @@ namespace AnotherECS.Core
 
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionAddCache;
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionRemoveCache;
-        private NBuffer<BAllocator, BufferEntry> _bufferChange;
+        private NBuffer<BAllocator, BufferEntry> _changesBuffer;
         private NHashSet<BAllocator, ushort, U2U4HashProvider> _isTemporaries;
 
         private int locked;
@@ -48,7 +49,7 @@ namespace AnotherECS.Core
 
             _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
             _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _bufferChange = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
+            _changesBuffer = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
 
             _isTemporaries = new NHashSet<BAllocator, ushort, U2U4HashProvider>(&_dependencies->bAllocator, isTemporaries);
             _temporaries = new NList<BAllocator, MoveCollection>(&_dependencies->bAllocator, _isTemporaries.Count);
@@ -111,7 +112,16 @@ namespace AnotherECS.Core
         {
             if (IsLocked)
             {
-                _bufferChange.Push(new BufferEntry() { isAdd = true, isTemporary = isTemporary, id = id, itemId = itemId });
+                _changesBuffer.Push(        //TODO SER threading?
+                    new BufferEntry()
+                    {
+                        sortKey = Thread.CurrentThread.ManagedThreadId,
+                        isAdd = true,
+                        isTemporary = isTemporary,
+                        entityId = id,
+                        itemId = itemId
+                    }
+                );
             }
             else
             {
@@ -125,7 +135,7 @@ namespace AnotherECS.Core
         {
             if (IsLocked)
             {
-                _bufferChange.Push(new BufferEntry() { isAdd = false, id = id, itemId = itemId });
+                _changesBuffer.Push(new BufferEntry() { isAdd = false, entityId = id, itemId = itemId });
             }
             else
             {
@@ -339,7 +349,7 @@ namespace AnotherECS.Core
 
             _transitionAddCache.Dispose();
             _transitionRemoveCache.Dispose();
-            _bufferChange.Dispose();
+            _changesBuffer.Dispose();
             _isTemporaries.Dispose();
         }
 
@@ -350,29 +360,34 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Unlock<TFilterUpdater>(ref TFilterUpdater filterUpdater)
+        internal void Unlock<TFilterUpdater>(ref TFilterUpdater filterUpdater, bool isSorting)
             where TFilterUpdater : struct, IFilterUpdater
         {
             --locked;
             if (locked == 0)
             {
-                PushData(ref filterUpdater);
+                PushData(ref filterUpdater, isSorting);
             }
         }
 
-        internal void PushData<TFilterUpdater>(ref TFilterUpdater filterUpdater)
+        internal void PushData<TFilterUpdater>(ref TFilterUpdater filterUpdater, bool isSorting)
             where TFilterUpdater : struct, IFilterUpdater
         {
-            while (!_bufferChange.IsEmpty)
+            if (isSorting)
             {
-                var element = _bufferChange.Pop();
+                _changesBuffer.Sort();
+            }
+
+            while (!_changesBuffer.IsEmpty)
+            {
+                var element = _changesBuffer.Pop();
                 if (element.isAdd)
                 {
-                    AddInternal(ref filterUpdater, element.id, element.itemId, element.isTemporary);
+                    AddInternal(ref filterUpdater, element.entityId, element.itemId, element.isTemporary);
                 }
                 else
                 {
-                    RemoveInternal(ref filterUpdater, element.id, element.itemId);
+                    RemoveInternal(ref filterUpdater, element.entityId, element.itemId);
                 }
             }
         }
@@ -753,7 +768,7 @@ namespace AnotherECS.Core
 
             _transitionAddCache.PackBlittable(ref writer);
             _transitionRemoveCache.PackBlittable(ref writer);
-            _bufferChange.PackBlittable(ref writer);
+            _changesBuffer.PackBlittable(ref writer);
             _isTemporaries.PackBlittable(ref writer);
         }
 
@@ -766,16 +781,22 @@ namespace AnotherECS.Core
 
             _transitionAddCache.UnpackBlittable(ref reader);
             _transitionRemoveCache.UnpackBlittable(ref reader);
-            _bufferChange.UnpackBlittable(ref reader);
+            _changesBuffer.UnpackBlittable(ref reader);
             _isTemporaries.UnpackBlittable(ref reader);
         }
 
-        private struct BufferEntry
+        private struct BufferEntry : IComparable<BufferEntry>
         {
+            public int sortKey;
+
             public bool isAdd;
             public bool isTemporary;
-            public uint id;
+            public uint entityId;
             public ushort itemId;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int CompareTo(BufferEntry other)
+                => sortKey - other.sortKey;
         }
     }
 

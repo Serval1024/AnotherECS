@@ -6,7 +6,6 @@ using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using System;
 using EntityId = System.UInt32;
-using System.Threading;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Core
@@ -22,6 +21,7 @@ namespace AnotherECS.Core
         private const int COMPONENT_ENTITY_MAX = 32;
         private const uint FILTER_INIT_CAPACITY = 32;
         #endregion
+
         #region data
         private RawAllocator _allocator;
         private GlobalDependencies* _dependencies;
@@ -34,9 +34,13 @@ namespace AnotherECS.Core
         private ICaller[] _callers;
         private IConfig[] _configs;
 
-        private object _eventsLocker = new object();
-        private object _tickStartedLocker = new object();
+        private StateOption _option;
         private Events _events;
+        #endregion
+
+        #region data support
+        private object _eventsLocker = new();
+        private object _tickStartedLocker = new();
         #endregion
 
         #region data cache
@@ -71,6 +75,11 @@ namespace AnotherECS.Core
         internal State(ref ReaderContextSerializer reader)
         {
             Unpack(ref reader);
+        }
+
+        internal void SetOption(StateOption option)
+        {
+            _option = option;
         }
 
         private GlobalDependencies* CreateGlobalDependencies()
@@ -668,7 +677,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UnlockFilter()
         {
-            _dependencies->filters.Unlock();
+            _dependencies->filters.Unlock(_option.isMultiThreadMode);
         }
         #endregion
 
