@@ -34,25 +34,25 @@ namespace AnotherECS.Core
     
     public unsafe struct MemoryRebinder : IDisposable
     {
-        private bool _isValide;
+        private bool _isValid;
         private int _segmentSizePower2;
-        private NArray<BAllocator, WPtr<int>> _isDirties;
+        private NArray<BAllocator, WPtr<bool>> _isDirties;
         private NArray<BAllocator, WPtr<byte>> _memories;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public MemoryRebinder(int segmentSizePower2, NArray<BAllocator, WPtr<int>> isDirties, NArray<BAllocator, WPtr<byte>> memories)
+        public MemoryRebinder(int segmentSizePower2, NArray<BAllocator, WPtr<bool>> isDirties, NArray<BAllocator, WPtr<byte>> memories)
         {
             _segmentSizePower2 = segmentSizePower2;
 
             _isDirties = isDirties;
             _memories = memories;
-            _isValide = _segmentSizePower2 != 0;
+            _isValid = _segmentSizePower2 != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Rebind(ref MemoryHandle memoryHandle)
         {
-            if (_isValide)
+            if (_isValid)
             {
                 var memPtr = _memories.Get(memoryHandle.chunk).Value;
                 var dPtr = _isDirties.Get(memoryHandle.chunk).Value;

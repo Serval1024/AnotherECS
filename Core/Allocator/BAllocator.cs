@@ -138,6 +138,8 @@ namespace AnotherECS.Core
                 _pointerToSize.Dispose();
                 _idToPointer.Dispose();
             }
+            GlobalThreadLockerProvider.DeallocateId(_threadLockerId);
+
             UnsafeMemory.Deallocate(ref _rawAllocator);
         }
 

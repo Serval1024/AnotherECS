@@ -6,7 +6,7 @@ namespace AnotherECS.Core
     public unsafe struct MemoryHandle : ISerialize
     {
         internal void* pointer;
-        internal int* isNotDirty;
+        internal bool* isNotDirty;
         internal ushort chunk;
         internal ushort segment;
 
@@ -18,7 +18,7 @@ namespace AnotherECS.Core
         public bool IsDirty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => *isNotDirty == 0;
+            get => !*isNotDirty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

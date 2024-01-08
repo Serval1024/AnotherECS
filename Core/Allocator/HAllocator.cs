@@ -124,9 +124,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(ref MemoryHandle memoryHandle)
         {
-            if (Interlocked.Exchange(ref *memoryHandle.isNotDirty, 0) != 0)
+            if (*memoryHandle.isNotDirty)
             {
-                //_history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
+                _history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
             }
         }
 
@@ -288,6 +288,8 @@ namespace AnotherECS.Core
                 _history.Dispose();
 #endif
             }
+
+            GlobalThreadLockerProvider.DeallocateId(_threadLockerId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -335,7 +337,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal MemoryRebinder GetMemoryRebinder()
         {
-            var dirties = new NArray<BAllocator, WPtr<int>>(_allocator, _chunkAllocated);
+            var dirties = new NArray<BAllocator, WPtr<bool>>(_allocator, _chunkAllocated);
             var memories = new NArray<BAllocator, WPtr<byte>>(_allocator, _chunkAllocated);
             for(uint i = ChunkDownBound; i < _chunkAllocated; ++i)
             {
@@ -435,7 +437,7 @@ namespace AnotherECS.Core
 
         public struct Chunk : IDisposable, ISerialize
         {
-            private NArray<BAllocator, int> _isDirty;
+            private NArray<BAllocator, bool> _isDirty;
             private NArray<BAllocator, ushort> _sizeSegments;
             private NArray<BAllocator, bool> _freeSegments;
             private NArray<BAllocator, byte> _memory;
@@ -457,7 +459,7 @@ namespace AnotherECS.Core
 
             public void Allocate(BAllocator* allocator, uint capacity)
             {
-                _isDirty = new NArray<BAllocator, int>(allocator, capacity + 1);
+                _isDirty = new NArray<BAllocator, bool>(allocator, capacity + 1);
                 _sizeSegments = new NArray<BAllocator, ushort>(allocator, capacity + 1);
                 _freeSegments = new NArray<BAllocator, bool>(allocator, capacity + 1);
                 _memory = new NArray<BAllocator, byte>(allocator, (capacity + 1) << SEGMENT_POWER_2);
@@ -469,7 +471,7 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int* GetIsDirtyPtr()
+            public bool* GetIsDirtyPtr()
                 => _isDirty.GetPtr();
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -587,7 +589,7 @@ namespace AnotherECS.Core
                 => (uint)(((byte*)pointer) - _memory.GetPtr()) >> SEGMENT_POWER_2;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int* GetPointerDirtyBySegment(uint segment)
+            public bool* GetPointerDirtyBySegment(uint segment)
                 => _isDirty.GetPtr(segment);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
