@@ -125,7 +125,14 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
-            _threadScheduler.Wait();
+            if (IsSingleParallel())
+            {
+                _threadScheduler.Wait();
+            }
+            else
+            {
+                _threadScheduler.ProcessingAndWait();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

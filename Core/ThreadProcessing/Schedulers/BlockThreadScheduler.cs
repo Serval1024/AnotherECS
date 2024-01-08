@@ -44,7 +44,7 @@ namespace AnotherECS.Core.Threading
                 default(THandler).Invoke(ref tasks[i].arg);
             }
 
-            _worker.Wait();
+            _worker.ProcessingAndWait();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -59,9 +59,16 @@ namespace AnotherECS.Core.Threading
         public bool IsBusy()
             => false;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
             _worker.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ProcessingAndWait()
+        {
+            _worker.ProcessingAndWait();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

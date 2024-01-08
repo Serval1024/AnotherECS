@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using System;
+﻿using System;
+using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 
 namespace AnotherECS.Core.Threading
@@ -77,6 +77,12 @@ namespace AnotherECS.Core.Threading
         public void Wait()
         {
             _worker.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ProcessingAndWait()
+        {
+            _worker.ProcessingAndWait();
         }
 
         private void CallFromMainThreadInternal()

@@ -126,7 +126,7 @@ namespace AnotherECS.Core
         {
             if (*memoryHandle.isNotDirty)
             {
-                _history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
+                //_history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
             }
         }
 

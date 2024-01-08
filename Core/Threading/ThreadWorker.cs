@@ -83,12 +83,18 @@ namespace AnotherECS.Core.Threading
             => _shared.IsAnyBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Wait()
+        public void ProcessingAndWait()
         {
             while (!_shared.tasks.IsEmpty)
             {
                 __TryProcessingTask(_shared);
             }
+            _shared.waiterComplete.WaitOne();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait()
+        {
             _shared.waiterComplete.WaitOne();
         }
 
@@ -125,12 +131,12 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void __TryProcessingTask(Shared shared)
         {
-            if (shared.tasks.TryDequeue(out ITask task))
+            while (shared.tasks.TryDequeue(out ITask task))
             {
                 task.Invoke();
                 shared.UnlockBusy();
-
             }
+            
             if (!shared.IsAnyBusy())
             {
                 shared.waiterComplete.Set();
