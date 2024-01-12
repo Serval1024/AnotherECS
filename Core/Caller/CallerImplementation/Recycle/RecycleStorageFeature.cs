@@ -21,36 +21,35 @@ namespace AnotherECS.Core.Caller
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
-            layout.storage.recycle.Allocate(allocator, dependencies.config.general.recycleCapacity);
+            layout.recycle.Allocate(allocator, dependencies.config.general.recycleCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetCount(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
+        public uint GetCount(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
             => LayoutActions.GetCount(ref layout, startIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+        public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
+        public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TDenseIndex AllocateId<TNumberProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies)
+        public TDenseIndex AllocateId<TNumberProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies)
             where TNumberProvider : struct, INumberProvier<TDenseIndex>
         {
-            ref var storage = ref layout.storage;
-            ref var recycleIndex = ref storage.recycleIndex;
+            ref var recycleIndex = ref layout.recycleIndex;
 
             if (recycleIndex > 0)
             {
-                return storage.recycle.Get(--recycleIndex);
+                return layout.recycle.Get(--recycleIndex);
             }
             else
             {
-                ref var denseIndex = ref storage.denseIndex;
+                ref var denseIndex = ref layout.denseIndex;
 #if !ANOTHERECS_RELEASE
                 LayoutActions.CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TSparse>(ref layout);
 #endif
@@ -59,10 +58,10 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void DeallocateId(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex id)
+        public unsafe void DeallocateId(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex id)
         {
-            ref var recycleIndex = ref layout.storage.recycleIndex;
-            ref var recycle = ref layout.storage.recycle;
+            ref var recycleIndex = ref layout.recycleIndex;
+            ref var recycle = ref layout.recycle;
             if (recycleIndex == recycle.Length)
             {
                 recycle.Resize(recycle.Length << 1);

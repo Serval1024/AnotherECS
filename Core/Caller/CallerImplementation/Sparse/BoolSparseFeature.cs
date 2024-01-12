@@ -30,39 +30,38 @@ namespace AnotherECS.Core.Caller
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
-            layout.storage.sparse.Allocate(allocator, dependencies.config.general.entityCapacity);
+            layout.sparse.Allocate(allocator, dependencies.config.general.entityCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint capacity)
+        public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, bool, TDense, ushort> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst
         {
-            layout.storage.sparse.Resize(capacity);
+            layout.sparse.Resize(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint capacity) { }
+        public void DenseResize(ref ULayout<TAllocator, bool, TDense, ushort> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ushort ConvertToDenseIndex(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint id)
+        public ushort ConvertToDenseIndex(ref ULayout<TAllocator, bool, TDense, ushort> layout, uint id)
             => (ushort)id;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsHas(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, uint id)
-            => layout.storage.sparse.Read(id);
+        public bool IsHas(ref ULayout<TAllocator, bool, TDense, ushort> layout, uint id)
+            => layout.sparse.Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, bool, TDense, ushort>
         {
             AIterable iterable = default;
-            ref var storage = ref layout.storage;
 
-            var sparse = storage.sparse.ReadPtr();
-            var dense = storage.dense.GetPtr();
-            var denseIndex = storage.denseIndex;
+            var sparse = layout.sparse.ReadPtr();
+            var dense = layout.dense.GetPtr();
+            var denseIndex = layout.denseIndex;
 
             for (uint i = startIndex; i < denseIndex; ++i)
             {
@@ -74,16 +73,15 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TAllocator, bool, TDense, ushort, TEachData>
+        public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
+            where AIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct, IEachData
         {
             AIterable iterable = default;
-            ref var storage = ref layout.storage;
 
-            var sparse = storage.sparse.ReadPtr();
-            var dense = storage.dense.GetPtr();
-            var denseIndex = storage.denseIndex;
+            var sparse = layout.sparse.ReadPtr();
+            var dense = layout.dense.GetPtr();
+            var denseIndex = layout.denseIndex;
 
             for (uint i = startIndex; i < denseIndex; ++i)
             {
@@ -95,26 +93,24 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, EntityId id, ushort denseIndex)
+        public void SetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, EntityId id, ushort denseIndex)
         {
-            ref var storage = ref layout.storage;
-            var sparse = storage.sparse.GetPtr();
-            sparse[id] = true;
+            layout.sparse.GetPtr()[id] = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref bool GetSparse(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout, EntityId id)
-            => ref layout.storage.sparse.GetRef(id);
+        public ref bool GetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, EntityId id)
+            => ref layout.sparse.GetRef(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> ReadSparse<T>(ref UnmanagedLayout<TAllocator, bool, TDense, ushort> layout)
+        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, ushort> layout)
             where T : unmanaged
         {
 #if !ANOTHERECS_RELEASE
             if (typeof(T) == typeof(bool))
 #endif
             {
-                return new WArray<T>((T*)layout.storage.sparse.ReadPtr(), layout.storage.sparse.Length);
+                return new WArray<T>((T*)layout.sparse.ReadPtr(), layout.sparse.Length);
             }
 #if !ANOTHERECS_RELEASE
             throw new System.ArgumentException(typeof(T).Name);

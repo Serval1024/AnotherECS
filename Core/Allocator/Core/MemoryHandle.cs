@@ -13,7 +13,7 @@ namespace AnotherECS.Core
         public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => GetPtr() != null;
+            get => pointer != null;
         }
         public bool IsDirty
         {
@@ -23,7 +23,15 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void* GetPtr()
-            => pointer;
+        {
+#if !ANOTHERECS_RELEASE
+            if (pointer == null)
+            {
+                throw new System.NullReferenceException();
+            }
+#endif
+            return pointer;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)

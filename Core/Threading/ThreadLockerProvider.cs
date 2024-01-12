@@ -39,6 +39,16 @@ namespace AnotherECS.Core.Threading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public object GetLocker(int id)
+#if ANOTHERECS_RELEASE
             => _lockers[id];
+#else
+        {
+            if (id <= 0)
+            {
+                throw new System.ArgumentException(nameof(id));
+            }
+            return _lockers[id];
+        }
+#endif
     }
 }

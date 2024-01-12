@@ -8,7 +8,7 @@
         public static HistoryConfig Create()
             => new()
             {
-                recordTickLength = 20,
+                recordTickLength = 40,
                 buffersCapacity = 1024,
             };
     }

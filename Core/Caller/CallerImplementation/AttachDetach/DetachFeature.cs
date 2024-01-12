@@ -12,19 +12,20 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+        public void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            default(TSparseProvider).ForEach<DetachIterable, DetachData>(ref layout, new DetachData() { state = state }, startIndex, count);
+            sparseProvider.ForEach<DetachIterable, DetachData>(ref layout, new DetachData() { state = state }, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+        public void Detach<TSparseProvider>
+            (ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            default(TSparseProvider).ForEach<VersionDetachIterable, VersionDetachData>(
+            sparseProvider.ForEach<VersionDetachIterable, VersionDetachData>(
                 ref layout,
-                new VersionDetachData() { state = state, version = version, newVersion = layout.storage.addRemoveVersion },
+                new VersionDetachData() { state = state, generation = generation, newGeneration = newGeneration },
                 startIndex,
                 count);
         }
@@ -39,16 +40,16 @@ namespace AnotherECS.Core.Caller
         private struct VersionDetachData : IEachData
         {
             public State state;
-            public NArray<BAllocator, byte> version;
-            public NArray<TAllocator, byte> newVersion;
+            public NArray<BAllocator, byte> generation;
+            public NArray<TAllocator, byte> newGeneration;
         }
 
-        private struct VersionDetachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, VersionDetachData>
+        private struct VersionDetachIterable : IDataIterable<TDense, VersionDetachData>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Each(ref VersionDetachData data, uint index, ref TDense component)
             {
-                if (data.version.Read(index) != data.newVersion.Read(index))
+                if (data.generation.Read(index) != data.newGeneration.Read(index))
                 {
                     component.OnDetach(data.state);
                 }
@@ -60,7 +61,7 @@ namespace AnotherECS.Core.Caller
             public State state;
         }
 
-        private struct DetachIterable : IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, DetachData>
+        private struct DetachIterable : IDataIterable<TDense, DetachData>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Each(ref DetachData data, uint index, ref TDense component)

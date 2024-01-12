@@ -2,17 +2,17 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex> : IIterable<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe struct DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex> : IDataIterable<TDense, InjectData<TDense>>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
+        public void Each(ref InjectData<TDense> data, uint index, ref TDense component)
         {
             InjectFeature<TAllocator, TSparse, TDense, TDenseIndex> injectFeature = default;
-            injectFeature.Deconstruct(ref layout, ref dependencies, ref component);
+            injectFeature.Deconstruct(ref data.componentFunction, ref *data.dependencies, ref component);
         }
     }
 }

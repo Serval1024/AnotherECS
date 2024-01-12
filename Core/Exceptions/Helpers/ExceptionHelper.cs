@@ -155,11 +155,11 @@ namespace AnotherECS.Core
             ThrowIfNArrayBroken(narray);
             if (index < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(index));
+                throw new ArgumentOutOfRangeException($"{nameof(index)}, value '{index}'");
             }
             if (index >= count)
             {
-                throw new ArgumentOutOfRangeException(nameof(index));
+                throw new ArgumentOutOfRangeException($"{nameof(index)}, value '{index}'");
             }
         }
 

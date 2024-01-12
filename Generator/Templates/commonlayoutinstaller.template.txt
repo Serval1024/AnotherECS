@@ -16,7 +16,7 @@ namespace AnotherECS.Gen.Common
         public static void Install_<#CALLER:TYPE_NAME#><TComponent>(State state<#IF INJECT#>, ComponentFunction<TComponent> componentFunction<#END#>)
             where TComponent : unmanaged, IComponent<#GENERIC_CONSTRAINTS:TComponent#>
         {
-            state.AddLayout<<#CALLER:DECLARE#>, <#LAYOUT:TAllocator#>, <#LAYOUT:TSparse#>, TComponent, <#LAYOUT:TDenseIndex#>>(<#IF INJECT#>componentFunction<#END#>);
+            state.AddLayout<<#CALLER:DECLARE#>, TComponent>(<#IF INJECT#>componentFunction<#END#>);
         }
 <#END#>
     }

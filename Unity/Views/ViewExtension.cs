@@ -1,5 +1,4 @@
-using System.Runtime.CompilerServices;
-using AnotherECS.Core;
+using AnotherECS.Core.Threading;
 using AnotherECS.Views.Core;
 using EntityId = System.UInt32;
 
@@ -7,6 +6,9 @@ namespace AnotherECS.Views
 {
     public static class ViewExtension
     {
+        public static ThreadRestrictionsBuilder UseView(ref this ThreadRestrictionsBuilder builder)
+            => builder.Use<ViewHandle>();
+
         /*
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State context, EntityId id)

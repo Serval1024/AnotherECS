@@ -6,11 +6,12 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NContainerList<TAllocator, T> : IDisposable, ISerialize, IEnumerable<T>, INArray<T>, IRebindMemoryHandle
+    public unsafe struct NContainerList<TAllocator, TElementAllocator, T> : IDisposable, ISerialize, IEnumerable<T>, INArray<T>, IRebindMemoryHandle
         where TAllocator : unmanaged, IAllocator
+        where TElementAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
-        internal NContainerArray<TAllocator, T> _data;
+        internal NContainerArray<TAllocator, TElementAllocator, T> _data;
         private uint _count;
 
         public uint Count
@@ -56,9 +57,9 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NContainerList(TAllocator* allocator, uint capacity)
+        public NContainerList(TAllocator* allocator, TElementAllocator* elementAllocator, uint capacity)
         {
-            _data = new NContainerArray<TAllocator, T>(allocator, capacity);
+            _data = new NContainerArray<TAllocator, TElementAllocator, T>(allocator, elementAllocator, capacity);
             _count = 0;
         }
 
@@ -421,10 +422,10 @@ namespace AnotherECS.Core.Collection
 
         public struct Enumerator : IEnumerator<T>
         {
-            private readonly NContainerList<TAllocator, T> _data;
+            private readonly NContainerList<TAllocator, TElementAllocator, T> _data;
             private uint _current;
             private readonly uint _length;
-            public Enumerator(ref NContainerList<TAllocator, T> data)
+            public Enumerator(ref NContainerList<TAllocator, TElementAllocator, T> data)
             {
                 _data = data;
                 _length = _data.Count;
@@ -434,7 +435,7 @@ namespace AnotherECS.Core.Collection
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _data.Get(_current);
+                get => _data.Read(_current);
             }
 
             object IEnumerator.Current

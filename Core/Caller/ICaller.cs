@@ -23,7 +23,7 @@ namespace AnotherECS.Core.Caller
         bool IsCallRevertStages { get; }
         
         uint GetDenseMemoryAllocated { get; }
-        internal unsafe void Config(void* layout, GlobalDependencies* dependencies, ushort id, CallerDirtyHandler dirtyHandler, State state);
+
         internal void AllocateLayout();
         Type GetElementType();
         void Remove(EntityId id);
@@ -46,6 +46,7 @@ namespace AnotherECS.Core.Caller
     internal interface ICaller<TComponent> : ICaller
         where TComponent : unmanaged
     {
+        unsafe void Config(GlobalDependencies* dependencies, ushort id, State state, ComponentFunction<TComponent> componentFunction);
         TComponent Create();
         bool IsHas(EntityId id);
         void Add(EntityId id, ref TComponent component);
@@ -68,9 +69,9 @@ namespace AnotherECS.Core.Caller
 
     internal interface IRevertStages
     {
+        void RevertStage0();
         void RevertStage1();
         void RevertStage2();
-        void RevertStage3();
     }
 
     internal interface IRevertFinishedCaller

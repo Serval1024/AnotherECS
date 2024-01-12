@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using AnotherECS.Core.Collection;
 using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
@@ -17,6 +18,7 @@ namespace AnotherECS.Core
         private NDictionary<RawAllocator, uint, ulong, U4U4HashProvider> _idToPointer;
         private uint _counter;
 
+        private uint _id;
         private int _threadLockerId;
 
         public ulong TotalBytesAllocated
@@ -34,21 +36,19 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId()
-            => 1;
+            => _id;
 
-        public static BAllocator Create()
+        public BAllocator(uint id)
         {
-            BAllocator allocator;
-            allocator._rawAllocator = UnsafeMemory.Allocate<RawAllocator>();
+            _id = id;
+            _rawAllocator = UnsafeMemory.Allocate<RawAllocator>();
 #if !ANOTHERECS_RELEASE
-            allocator._memoryChecker = new MemoryChecker<RawAllocator>(allocator._rawAllocator);
+            _memoryChecker = new MemoryChecker<RawAllocator>(_rawAllocator);
 #endif
-            allocator._threadLockerId = GlobalThreadLockerProvider.AllocateId();
-            allocator._idToPointer = new(allocator._rawAllocator, 128);
-            allocator._pointerToSize = new(allocator._rawAllocator, 128);
-            allocator._counter = 0;
-
-            return allocator;
+            _threadLockerId = GlobalThreadLockerProvider.AllocateId();
+            _idToPointer = new(_rawAllocator, 128);
+            _pointerToSize = new(_rawAllocator, 128);
+            _counter = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -154,6 +154,7 @@ namespace AnotherECS.Core
 
         public void Pack(ref WriterContextSerializer writer)
         {
+            writer.Write(_id);
             writer.Write(_counter);
             writer.Write(_pointerToSize.Count);
             foreach (var element in _pointerToSize)
@@ -166,18 +167,19 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            this = Create();
+            var id = reader.ReadUInt32();
+            this = new BAllocator(id);
 
             _counter = reader.ReadUInt32();
             var count = reader.ReadUInt32();
             for(uint i = 0; i < count; ++i)
             {
-                var id = reader.ReadUInt32();
-                var size = reader.ReadUInt32();
-                var ptr = _rawAllocator->Allocate(size).GetPtr();
-                reader.Read(ptr, size);
+                var pointerToSizeId = reader.ReadUInt32();
+                var pointerToSizeSize = reader.ReadUInt32();
+                var ptr = _rawAllocator->Allocate(pointerToSizeSize).GetPtr();
+                reader.Read(ptr, pointerToSizeSize);
 
-                _pointerToSize.Add((ulong)ptr, new MemEntry() { id = id, size = size });
+                _pointerToSize.Add((ulong)ptr, new MemEntry() { id = id, size = pointerToSizeSize });
                 _idToPointer.Add(id, (ulong)ptr);
             }
         }

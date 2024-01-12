@@ -6,6 +6,7 @@ using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using System;
 using EntityId = System.UInt32;
+using AnotherECS.Exceptions;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Core
@@ -17,15 +18,17 @@ namespace AnotherECS.Core
     public abstract unsafe class State : BDisposable, IState, ISerializeConstructor
     {
         #region const
-        private const uint CORE_LAYOUT_COUNT = 0;
         private const int COMPONENT_ENTITY_MAX = 32;
         private const uint FILTER_INIT_CAPACITY = 32;
+
+        private const uint BASIC_ALLOCATOR_ID = 1;
+        private const uint HISTORY_ALLOCATOR_STAGE0_ID = 2;
+        private const uint HISTORY_ALLOCATOR_STAGE1_ID = 3;
         #endregion
 
         #region data
         private RawAllocator _allocator;
-        private GlobalDependencies* _dependencies;
-        private NContainerArray<HAllocator, UnmanagedLayout> _layouts;
+        private GlobalDependencies* _dependencies;        
         private uint _layoutCount;
         private uint _nextTickForEvent;
 
@@ -59,20 +62,19 @@ namespace AnotherECS.Core
             SystemInit(config, new TickProvider());
 
             _layoutCount = 1;
-            _layouts = new NContainerArray<HAllocator, UnmanagedLayout>(&_dependencies->hAllocator, GetLayoutCount());
-            _callers = new ICaller[GetLayoutCount()];
+            _callers = new ICaller[GetComponentArrayCount()];
             _configs = new IConfig[GetConfigArrayCount()];
 
             _events = new Events(config.history.recordTickLength);
 
             CommonInit();
-
+             
             _dependencies->archetype = new Archetype(_dependencies, GetTemporaryIndexes());
 
             AllocateLayouts();
         }
 
-        internal State(ref ReaderContextSerializer reader)
+        public State(ref ReaderContextSerializer reader)
         {
             Unpack(ref reader);
         }
@@ -80,6 +82,7 @@ namespace AnotherECS.Core
         internal void SetOption(StateOption option)
         {
             _option = option;
+            SetParallelMax(_option.parallelMax);
         }
 
         private GlobalDependencies* CreateGlobalDependencies()
@@ -88,28 +91,30 @@ namespace AnotherECS.Core
         private void SystemInit(in StateConfig config, in TickProvider tickProvider)
         {
             _allocator = new RawAllocator();
-            var basicAllocator = BAllocator.Create();
             _dependencies = CreateGlobalDependencies();
 
             _dependencies->config = config;
             _dependencies->tickProvider = tickProvider;
-            _dependencies->bAllocator = basicAllocator;
-            _dependencies->hAllocator = new HAllocator(
+
+            _dependencies->bAllocator = new BAllocator(BASIC_ALLOCATOR_ID);
+
+            _dependencies->stage1HAllocator = new HAllocator(
                 &_dependencies->bAllocator,
-                2,
+                HISTORY_ALLOCATOR_STAGE0_ID,
                 _dependencies->config.general.chunkLimit,
                 _dependencies->config.history.buffersCapacity,
                 _dependencies->config.history.recordTickLength);
-            _dependencies->altHAllocator = new HAllocator(
+
+            _dependencies->stage0HAllocator = new HAllocator(
                 &_dependencies->bAllocator,
-                3,
+                HISTORY_ALLOCATOR_STAGE1_ID,
                 _dependencies->config.general.chunkLimit,
                 _dependencies->config.history.buffersCapacity,
                 _dependencies->config.history.recordTickLength);
 
             _dependencies->componentTypesCount = GetComponentCount();
             _dependencies->entities = new Entities(_dependencies);
-            _dependencies->injectContainer = new InjectContainer(new WPtr<HAllocator>(&_dependencies->hAllocator));
+            _dependencies->injectContainer = new InjectContainer(new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             _dependencies->filters = new Filters(_dependencies, 32);
         }
 
@@ -141,17 +146,15 @@ namespace AnotherECS.Core
         {
             writer.AddDepency(new WPtr<GlobalDependencies>(_dependencies));
             writer.AddDepency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
-            writer.AddDepency(_dependencies->hAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->hAllocator));
-            writer.AddDepency(_dependencies->altHAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->altHAllocator));
+            writer.AddDepency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+            writer.AddDepency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
 
             writer.Write(_dependencies->bAllocator.GetId());
-            writer.Write(_dependencies->hAllocator.GetId());
-            writer.Write(_dependencies->altHAllocator.GetId());
+            writer.Write(_dependencies->stage1HAllocator.GetId());
+            writer.Write(_dependencies->stage0HAllocator.GetId());
 
             _dependencies->Pack(ref writer);
             _events.Pack(ref writer);
-
-            _layouts.Pack(ref writer);
 
             for (uint i = 1; i < _callers.Length; ++i)
             {
@@ -171,8 +174,8 @@ namespace AnotherECS.Core
 
             reader.AddDepency(new WPtr<GlobalDependencies>(_dependencies));
             reader.AddDepency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
-            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->hAllocator));
-            reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_dependencies->altHAllocator));
+            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+            reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
 
 
             _dependencies->Unpack(ref reader);
@@ -181,9 +184,8 @@ namespace AnotherECS.Core
             _events.Unpack(ref reader);
 
             _layoutCount = 1;
-            _layouts.Unpack(ref reader);
 
-            _callers = new ICaller[GetLayoutCount()];
+            _callers = new ICaller[GetComponentArrayCount()];
             CommonInit();
 
             for (uint i = 1; i < _callers.Length; ++i)
@@ -192,14 +194,6 @@ namespace AnotherECS.Core
             }
 
             _configs = reader.Unpack<IConfig[]>();
-
-            for (uint i = 1; i < _callers.Length; ++i)
-            {
-                if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
-                {
-                    injectCaller.CallConstruct();
-                }
-            }
 
             RebindMemoryHandles();
             CallConstruct();
@@ -210,7 +204,7 @@ namespace AnotherECS.Core
             _moduleDatas = Array.Empty<IModuleData>();
 
             BindingCodeGenerationStage(_dependencies->config);
-
+            
             _tickFinishedCallers = _callers.Skip(1).Where(p => p.IsTickFinished && p is ITickFinishedCaller).Cast<ITickFinishedCaller>().ToArray();
             _resizableCallers = _callers
                 .Skip(1)
@@ -274,7 +268,6 @@ namespace AnotherECS.Core
         {
             for (int i = 0; i < _resizableCallers.Length; ++i)
             {
-                _layouts.Dirty(_resizableCallers[i].callerIndex);
                 _resizableCallers[i].caller.Resize(capacity);
             }
         }
@@ -666,6 +659,16 @@ namespace AnotherECS.Core
         {
             UnlockFilter();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetParallelMax(uint value)
+        {
+            if (_dependencies != null)
+            {
+                _dependencies->stage0HAllocator.ParallelMax = value;
+                _dependencies->stage1HAllocator.ParallelMax = value;
+            }
+        }
         #endregion
 
         #region events
@@ -675,8 +678,8 @@ namespace AnotherECS.Core
             lock (_tickStartedLocker)
             {
                 ++Tick;
-                _dependencies->hAllocator.TickStarted(Tick);
-                _dependencies->altHAllocator.TickStarted(Tick);
+                _dependencies->stage1HAllocator.TickStarted(Tick);
+                _dependencies->stage0HAllocator.TickStarted(Tick);
 
                 FlushEvents();
             }
@@ -689,6 +692,9 @@ namespace AnotherECS.Core
             {
                 tickFinished.TickFinished();
             }
+
+            _dependencies->stage0HAllocator.TickFinished();
+            _dependencies->stage1HAllocator.TickFinished();
         }
         #endregion
 
@@ -807,28 +813,33 @@ namespace AnotherECS.Core
 #endif
             if (tick < Tick)
             {
+                if ((Tick - tick) > _dependencies->config.history.recordTickLength)
+                {
+                    throw new HistoryTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
+                }
+
                 if (IsNeedCallRevertByStages())
                 {
-                    CallRevertStage1();
+                    CallRevertStage0();
 
-                    if (_dependencies->altHAllocator.RevertTo(tick))
+                    if (_dependencies->stage0HAllocator.RevertTo(tick))
                     {
                         RebindMemoryHandles();
                     }
 
-                    CallRevertStage2();
+                    CallRevertStage1();
 
-                    if (_dependencies->hAllocator.RevertTo(tick))
+                    if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
                         RebindMemoryHandles();
                         CallConstruct();
                     }
 
-                    CallRevertStage3();
+                    CallRevertStage2();
                 }
                 else
                 {
-                    if (_dependencies->hAllocator.RevertTo(tick))
+                    if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
                         RebindMemoryHandles();
                         CallConstruct();
@@ -892,6 +903,15 @@ namespace AnotherECS.Core
             => _revertStagesCallers.Length != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CallRevertStage0()
+        {
+            for (uint i = 0; i < _revertStagesCallers.Length; ++i)
+            {
+                _revertStagesCallers[i].RevertStage0();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CallRevertStage1()
         {
             for (uint i = 0; i < _revertStagesCallers.Length; ++i)
@@ -910,18 +930,9 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CallRevertStage3()
-        {
-            for (uint i = 0; i < _revertStagesCallers.Length; ++i)
-            {
-                _revertStagesCallers[i].RevertStage3();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RebindMemoryHandles()
         {
-            var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->hAllocator);
+            var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->stage1HAllocator);
             _dependencies->currentMemoryRebinder = memoryRebinder;
 
             for (uint i = 1; i < _layoutCount; ++i)
@@ -950,8 +961,8 @@ namespace AnotherECS.Core
             return list.ToNArray();
         }
         
-        private uint GetLayoutCount()
-            => GetComponentCount() + 1 + CORE_LAYOUT_COUNT;
+        private uint GetComponentArrayCount()
+            => GetComponentCount() + 1;
 
         private uint GetConfigArrayCount()
             => GetConfigCount() + 1;
@@ -975,48 +986,42 @@ namespace AnotherECS.Core
             => _callers[index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal UCaller AddLayout<UCaller, TAllocator, TSparse, TDense, TDenseIndex>(ComponentFunction<TDense> componentFunction = default)
-            where TAllocator : unmanaged, IAllocator
+        internal void AddLayout<UCaller, TDense>(ComponentFunction<TDense> componentFunction = default)
             where UCaller : struct, ICallerReference
-            where TSparse : unmanaged
             where TDense : unmanaged
-            where TDenseIndex : unmanaged
         {
 #if !ANOTHERECS_RELEASE
-            if (_layoutCount == GetLayoutCount())
+            if (_layoutCount == GetComponentArrayCount())
             {
-                throw new System.InvalidOperationException();
+                throw new InvalidOperationException();
             }
 #endif
-            var layout = (UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>*)_layouts.GetPtr(_layoutCount);
-            layout->componentFunction = componentFunction;
-
-            return AddLayout<UCaller>();
+            AddLayout<UCaller, TDense>(default, componentFunction);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal UCaller AddLayout<UCaller>(UCaller caller = default)
+        internal void AddLayout<UCaller, TDense>(UCaller caller, ComponentFunction<TDense> componentFunction = default)
             where UCaller : struct, ICallerReference
+            where TDense : unmanaged
         {
 #if !ANOTHERECS_RELEASE
-            if (_layoutCount == GetLayoutCount())
+            if (_layoutCount == GetComponentArrayCount())
             {
-                throw new System.InvalidOperationException();
+                throw new InvalidOperationException();
             }
 #endif
-            var iCaller = (ICaller)caller;
-            _callers[_layoutCount] = iCaller;
+            
+            var iCaller = (ICaller<TDense>)caller;
 
             iCaller.Config(
-                _layouts.GetPtr(_layoutCount),
                 _dependencies,
                 (ushort)_layoutCount,
-                new CallerDirtyHandler(_layouts.GetDirtyHandler(_layoutCount)),
-                this);
+                this,
+                componentFunction);
+
+            _callers[_layoutCount] = iCaller;
 
             ++_layoutCount;
-
-            return (UCaller)iCaller;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

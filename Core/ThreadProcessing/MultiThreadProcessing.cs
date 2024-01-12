@@ -53,7 +53,7 @@ namespace AnotherECS.Core.Threading
 
             _receiver = CreatePhaseReceiver<IReceiverSystem>(ref phaseArgs);
 
-            _threadScheduler.ParallelMax = IsSingleParallel() ? 1 : Math.Min(_parallelMax, GetParallelMax());
+            _threadScheduler.ParallelMax = IsSingleParallel() ? 1 : Math.Min(_parallelMax, FindParallelMax());
 
             phaseArgs.Dispose();
         }
@@ -131,13 +131,17 @@ namespace AnotherECS.Core.Threading
             }
             else
             {
-                _threadScheduler.ProcessingAndWait();
+                _threadScheduler.Complete();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
             => IsSingleParallel();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetParallelMax()
+            => (uint)_threadScheduler.ParallelMax;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()
@@ -181,7 +185,8 @@ namespace AnotherECS.Core.Threading
             _threadScheduler.Run<TMethod, TData>(new ThreadArg<TData>() { arg = data });
         }
 
-        private int GetParallelMax()
+
+        private int FindParallelMax()
         {
             var parallelMax = new IPhase[] { _constructModule, _tickStartModule, _tickFinishedModule, _init, _tick, _destroy, _receiver }
                 .Max(p => p.ParallelMax);

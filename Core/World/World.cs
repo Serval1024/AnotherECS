@@ -24,10 +24,8 @@ namespace AnotherECS.Core
             _state = state ?? throw new ArgumentNullException(nameof(state));
 
             _loopProcessing = new LoopProcessing(
-                systemProcessing ?? SystemProcessingFactory.Create(state, ThreadingLevel.MainThreadOnly)
+                systemProcessing ?? SystemProcessingFactory.Create(state, WorldThreadingLevel.MainThreadOnly)
                 );
-
-            _state.SetOption(new StateOption() { isMultiThreadMode = !_loopProcessing.IsDeterministicSequence() });
         }
 
         public void Init()
@@ -45,7 +43,8 @@ namespace AnotherECS.Core
             _state.FirstStartup();
 
             RequestTick = CurrentTick;
-            _loopProcessing.Init(_systems);
+            _loopProcessing.Prepare(_state, _systems);
+            _loopProcessing.Init();
         }
 
         public void Tick()
@@ -72,6 +71,11 @@ namespace AnotherECS.Core
                 }
 
             }
+        }
+
+        public void RevertTo(uint tickCount)
+        {
+            _loopProcessing.RevertTo(tickCount);
         }
 
         public void Destroy()

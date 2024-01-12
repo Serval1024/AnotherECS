@@ -9,8 +9,8 @@ namespace AnotherECS.Core
 
         public StateConfig config;
         public BAllocator bAllocator;
-        public HAllocator hAllocator;
-        public HAllocator altHAllocator;
+        public HAllocator stage0HAllocator;
+        public HAllocator stage1HAllocator;
         public TickProvider tickProvider;
         public InjectContainer injectContainer;
 
@@ -22,8 +22,8 @@ namespace AnotherECS.Core
         public void Pack(ref WriterContextSerializer writer)
         {
             bAllocator.Pack(ref writer);
-            hAllocator.Pack(ref writer);
-            altHAllocator.Pack(ref writer);
+            stage1HAllocator.Pack(ref writer);
+            stage0HAllocator.Pack(ref writer);
 
             entities.Pack(ref writer);
             archetype.Pack(ref writer);
@@ -35,8 +35,8 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             bAllocator.Unpack(ref reader);
-            hAllocator.Unpack(ref reader);
-            altHAllocator.Unpack(ref reader);
+            stage1HAllocator.Unpack(ref reader);
+            stage0HAllocator.Unpack(ref reader);
 
             entities.Unpack(ref reader);
             archetype.Unpack(ref reader);

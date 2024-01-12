@@ -93,7 +93,41 @@ namespace AnotherECS.Core.Threading
             Receive(_state.GetEventCache());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsBusy()
+            => false;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Wait() { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDeterministicSequence()
+          => true;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetParallelMax()
+            => 1u;
+
+        public void RevertTo(uint tick)
+        {
+            _state.RevertTo(tick);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CallFromMainThread() { }
+
+        public void TickFullLoop()
+        {
+            StateTickStart();
+            TickStart();
+            Receive();
+            Tick();
+            TickFinished();
+            StateTickFinished();
+        }
+
         public void Dispose() { }
+
 
         private void Run<TMethod, TData, TSystem>(ref TData[] phase)
             where TMethod : struct, ITaskHandler<TData>
@@ -105,7 +139,6 @@ namespace AnotherECS.Core.Threading
                 default(TMethod).Invoke(ref phase[i]);
             }
         }
-
 
         private Dictionary<Type, List<IEventInvoke>> CollectReceiverSystems(ref PhaseArgs phaseArgs)
         {
@@ -153,44 +186,12 @@ namespace AnotherECS.Core.Threading
             }
         } 
 
-         
-
 
         private SystemInvokeData<TSystem>[] CreatePhase<TSystem>(ref PhaseArgs phaseArgs)
             where TSystem : ISystem
             => phaseArgs.systems.OfType<TSystem>()
             .Select(p => new SystemInvokeData<TSystem>() { State = _state, System = p })
             .ToArray();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsBusy()
-            => false;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Wait() { }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsDeterministicSequence()
-          => true;
-
-        public void RevertTo(uint tick)
-        {
-            _state.RevertTo(tick);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CallFromMainThread() { }
-
-        public void TickFullLoop()
-        {
-            StateTickStart();
-            TickStart();
-            Receive();
-            Tick();
-            TickFinished();
-            StateTickFinished();
-        }
-    
 
         private struct PhaseArgs
         {

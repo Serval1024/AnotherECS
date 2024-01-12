@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Debug;
 using AnotherECS.Serializer;
@@ -8,7 +7,7 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct ChangeHistory : IDisposable, ISerialize
+    internal unsafe struct BucketChangeHistory : IHistory, IDisposable, ISerialize
     {
         private NArray<BAllocator, Meta> _meta;
         private NArray<BAllocator, byte> _buffer;
@@ -31,7 +30,9 @@ namespace AnotherECS.Core
             }
         }
 
-        public ChangeHistory(BAllocator* allocator, uint capacity, uint recordHistoryLength)
+        public uint ParallelMax { get => 1; set { } }
+
+        public BucketChangeHistory(BAllocator* allocator, uint capacity, uint recordHistoryLength)
         {
             _meta = new NArray<BAllocator, Meta>(allocator, 32);
             _buffer = new NArray<BAllocator, byte>(allocator, capacity);
@@ -40,6 +41,9 @@ namespace AnotherECS.Core
             _isNeedRefreshReference = false;
             _notReadyToUse = default;
         }
+
+        public IHistory Create(BAllocator* allocator, uint historyCapacity, uint recordHistoryLength)
+            => new BucketChangeHistory(allocator, historyCapacity, recordHistoryLength);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(uint tick, ref MemoryHandle memoryHandle, uint size)
@@ -93,113 +97,98 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool RevertTo(ref HAllocator source, uint tick)
+        public unsafe bool RevertTo(ref HAllocator destination, uint tick)
         {
-            if (_isNeedRefreshReference)
-            {
-                return RevertTo<TrueConst>(ref source, tick);
-            }
-            else
-            {
-                _ = RevertTo<FalseConst>(ref source, tick);
-                return false;
-            }
+            RevertToInternal(ref destination, tick);
+            return _isNeedRefreshReference;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe bool RevertTo<TIsBrokenReferenceInBuffer>(ref HAllocator source, uint tick)
-            where TIsBrokenReferenceInBuffer : struct, IBoolConst
+        private unsafe void RevertToInternal(ref HAllocator destination, uint tick)
         {
-            bool isNotNeedRefreshReference = true;
-
-            for (uint i = _current; i >= 0; --i)
+            for (int i = (int)_current; i >= 0; --i)
             {
                 ref var frame = ref _meta.GetRef(i);
 
                 if (frame.tick > tick)
                 {
-                    RestoreMemory(
-                        source.GetChunk(frame.destChunk).GetPointerBySegment(frame.destSegment),
-                        _buffer.GetPtr(frame.bufferIndex),
-                        frame.size);
-
-                    if (default(TIsBrokenReferenceInBuffer).Is)
-                    {
-                        if (i < _notReadyToUse.Length)
-                        {
-                            isNotNeedRefreshReference &= _notReadyToUse.Get(i);
-                            _notReadyToUse.Set(i, true);
-                        }
-                    }
+                    IndexRevertTo(ref destination, ref frame);
                 }
                 else
                 {
-                    _current = i;
-
-                    if (default(TIsBrokenReferenceInBuffer).Is)
-                    {
-                        TryDropRefreshReference();
-                        return !isNotNeedRefreshReference;
-                    }
-                    return false;
-                }
-            }
-
-            for (uint i = _meta.Length - 1; i > _current; --i)
-            {
-                ref var frame = ref _meta.GetRef(i);
-
-                if (frame.tick > tick)
-                {
-                    RestoreMemory(
-                            source.GetChunk(frame.destChunk).GetPointerBySegment(frame.destSegment),
-                            _buffer.GetPtr(frame.bufferIndex),
-                            frame.size);
-
-                    if (default(TIsBrokenReferenceInBuffer).Is)
-                    {
-                        if (i < _notReadyToUse.Length)
-                        {
-                            isNotNeedRefreshReference &= _notReadyToUse.Get(i);
-                            _notReadyToUse.Set(i, true);
-                        }
-                    }
-                }
-                else
-                {
-                    _current = i;
-
-                    if (default(TIsBrokenReferenceInBuffer).Is)
-                    {
-                        TryDropRefreshReference();
-                        return !isNotNeedRefreshReference;
-                    }
-                    return false;
-                }
-            }
-
-            if (default(TIsBrokenReferenceInBuffer).Is)
-            {
-                TryDropRefreshReference();
-                return !isNotNeedRefreshReference;
-            }
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryDropRefreshReference()
-        {
-            for (uint i = 0; i < _notReadyToUse.Length; ++i)
-            {
-                if (!_notReadyToUse.Get(i))
-                {
+                    _current = (uint)i;
                     return;
                 }
             }
-            _isNeedRefreshReference = false;
-            _notReadyToUse.Dispose();
+
+            for (int i = (int)_meta.Length - 1; i > _current; --i)
+            {
+                ref var frame = ref _meta.GetRef(i);
+
+                if (frame.tick > tick)
+                {
+                    IndexRevertTo(ref destination, ref frame);
+                }
+                else
+                {
+                    _current = (uint)i;
+                    return;
+                }
+            }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryStepBack(ref HAllocator destination, uint tick)
+        {
+            ref var frame = ref _meta.GetRef(_current);
+            if (_current == 0)
+            {
+                _current = _meta.Length;
+            }
+            else
+            {
+                --_current;
+            }
+
+            if (frame.tick > tick)
+            {
+                IndexRevertTo(ref destination, ref frame);
+                return false;
+            }
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void IndexRevertTo(ref HAllocator destination, ref Meta frame)
+        {
+            RestoreMemory(
+                        destination.GetChunk(frame.destChunk).GetPointerBySegment(frame.destSegment),
+                        _buffer.GetPtr(frame.bufferIndex),
+                        frame.size
+                        );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryDropRefreshReference()
+        {
+            if (_isNeedRefreshReference)
+            {
+                for (uint i = 0; i < _notReadyToUse.Length; ++i)
+                {
+                    if (!_notReadyToUse.Get(i))
+                    {
+                        return false;
+                    }
+                }
+                _isNeedRefreshReference = false;
+                _notReadyToUse.Dispose();
+            }
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNeedDropRefreshReference()
+            => _isNeedRefreshReference;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
@@ -208,6 +197,30 @@ namespace AnotherECS.Core
             _buffer.Dispose();
             _notReadyToUse.Dispose();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TickFinished() { }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            _isNeedRefreshReference = true;
+
+            _meta.PackBlittable(ref writer);
+            _buffer.PackBlittable(ref writer);
+            writer.Write(_recordHistoryLength);
+            writer.Write(_current);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            _meta.UnpackBlittable(ref reader);
+            _buffer.UnpackBlittable(ref reader);
+            _recordHistoryLength = reader.ReadUInt32();
+            _current = reader.ReadUInt32();
+
+            _notReadyToUse = new NArray<BAllocator, bool>(_meta.GetAllocator(), _meta.Length);
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SaveMemory(uint offset, void* memory, uint size)
@@ -236,25 +249,6 @@ namespace AnotherECS.Core
             return uint.MaxValue;
         }
 
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            _isNeedRefreshReference = true;
-
-            _meta.PackBlittable(ref writer);
-            _buffer.PackBlittable(ref writer);
-            writer.Write(_recordHistoryLength);
-            writer.Write(_current);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            _meta.UnpackBlittable(ref reader);
-            _buffer.UnpackBlittable(ref reader);
-            _recordHistoryLength = reader.ReadUInt32();
-            _current = reader.ReadUInt32();
-
-            _notReadyToUse = new NArray<BAllocator, bool>(_meta.GetAllocator(), _meta.Length);
-        }
 
         private struct Meta
         {

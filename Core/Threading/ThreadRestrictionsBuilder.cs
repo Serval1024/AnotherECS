@@ -166,7 +166,7 @@ namespace AnotherECS.Core.Threading
             {
                 for (uint i = 0; i < components.Count; ++i)
                 {
-                    for (uint j = 0; j < other.components.Count; ++i)
+                    for (uint j = 0; j < other.components.Count; ++j)
                     {
                         if (components.Read(i) >= other.components.Read(j))
                         {

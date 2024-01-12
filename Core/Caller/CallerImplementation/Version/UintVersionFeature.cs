@@ -25,42 +25,42 @@ namespace AnotherECS.Core.Caller
             => default(TSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
-            layout.storage.tickVersion.Allocate(allocator, layout.storage.dense.Length);
+            layout.tickVersion.Allocate(allocator, layout.dense.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
+        public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst
         {
             if (default(TSparseBoolConst).Is)
             {
-                layout.storage.tickVersion.Resize(capacity);
+                layout.tickVersion.Resize(capacity);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
+        public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
         {
-            layout.storage.tickVersion.Resize(capacity);
+            layout.tickVersion.Resize(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Change(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint index)
+        public void Change(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint index)
         {
-            layout.storage.tickVersion.GetRef(index) = dependencies.tickProvider.tick;
+            layout.tickVersion.GetRef(index) = dependencies.tickProvider.tick;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, uint id)
-            => layout.storage.tickVersion.Get(id);
+        public uint GetVersion(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint id)
+            => layout.tickVersion.Get(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void DropChange(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public unsafe void DropChange(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
         {
             var tick = dependencies.tickProvider.tick;
-            var versionPtr = layout.storage.tickVersion.GetPtr();
+            var versionPtr = layout.tickVersion.GetPtr();
             for (uint i = startIndex; i < count; ++i)
             {
                 versionPtr[i] = tick;
@@ -68,7 +68,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, uint> layout)
-            => new(layout.storage.tickVersion.ReadPtr(), layout.storage.tickVersion.Length);
+        public WArray<uint> ReadVersion(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
+            => new(layout.tickVersion.ReadPtr(), layout.tickVersion.Length);
     }
 }

@@ -127,7 +127,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ReadPtr() + index;
         }
@@ -136,7 +136,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ReadPtr() + index;
         }
@@ -145,7 +145,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ReadPtr() + index;
         }
@@ -160,7 +160,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ref *(ReadPtr() + index);
         }
@@ -169,7 +169,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ref *(ReadPtr() + index);
         }
@@ -178,7 +178,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return ref *(ReadPtr() + index);
         }
@@ -189,7 +189,7 @@ namespace AnotherECS.Core.Collection
         public T Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return *(ReadPtr() + index);
         }
@@ -198,7 +198,7 @@ namespace AnotherECS.Core.Collection
         public T Read(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return *(ReadPtr() + index);
         }
@@ -207,7 +207,7 @@ namespace AnotherECS.Core.Collection
         public T Read(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfNArrayBroken(this, index);
 #endif
             return *(ReadPtr() + index);
         }
@@ -385,6 +385,12 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetAll(T element)
+        {
+            SetAll(0, Length, element);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAll(uint start, uint elementCount, T element)
         {
 #if !ANOTHERECS_RELEASE
@@ -398,11 +404,17 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetAllByte(byte value)
+        {
+            SetAllByte(0, ByteLength, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllByte(uint start, uint byteLength, byte value)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNArrayBroken(this);
-            if (ByteLength <= byteLength + start)
+            if (ByteLength < byteLength + start)
             {
                 throw new OutOfMemoryException();
             }
@@ -596,10 +608,10 @@ namespace AnotherECS.Core.Collection
                 {
                     if (!_allocator->TryResize(ref _data, byteLength))
                     {
-                        var memoryHandle = _allocator->Allocate(byteLength);
-                        UnsafeMemory.MemCopy(memoryHandle.GetPtr(), _data.GetPtr(), Math.Min(byteLength, ByteLength));
+                        var newData = _allocator->Allocate(byteLength);
+                        UnsafeMemory.MemCopy(newData.GetPtr(), _data.GetPtr(), Math.Min(byteLength, ByteLength));
                         _allocator->Deallocate(ref _data);
-                        _data = memoryHandle;
+                        _data = newData;
                     }
                 }
                 else
@@ -664,7 +676,7 @@ namespace AnotherECS.Core.Collection
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _data.Get(_current);
+                get => _data.Read(_current);
             }
 
             object IEnumerator.Current

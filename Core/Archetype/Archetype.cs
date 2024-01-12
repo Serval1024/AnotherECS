@@ -24,7 +24,7 @@ namespace AnotherECS.Core
         private GlobalDependencies* _dependencies;
 
         private NList<BAllocator, Node> _nodes;
-        private NContainerList<BAllocator, IdCollection<HAllocator>> _collections;
+        private NContainerList<BAllocator, HAllocator, IdCollection<HAllocator>> _collections;
         private NList<BAllocator, MoveCollection> _temporaries;
 
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionAddCache;
@@ -43,10 +43,10 @@ namespace AnotherECS.Core
         public Archetype(GlobalDependencies* dependencies, INArray<ushort> isTemporaries)
         {
             _dependencies = dependencies;
-
+            
             _nodes = new NList<BAllocator, Node>(&_dependencies->bAllocator, _dependencies->componentTypesCount + 1);
-            _collections = new NContainerList<BAllocator, IdCollection<HAllocator>>(&_dependencies->bAllocator, _nodes.Length);
-
+            _collections = new NContainerList<BAllocator, HAllocator, IdCollection<HAllocator>>(&_dependencies->bAllocator, &_dependencies->stage1HAllocator, _nodes.Length);
+            
             _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
             _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
             _changesBuffer = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
@@ -55,7 +55,7 @@ namespace AnotherECS.Core
             _temporaries = new NList<BAllocator, MoveCollection>(&_dependencies->bAllocator, _isTemporaries.Count);
 
             locked = default;
-
+            
             Init();
         }
 
@@ -394,7 +394,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IdCollection<HAllocator> CreateIdCollection()
-            => new(&_dependencies->hAllocator, _dependencies->config.general.archetypeCapacity);
+            => new(&_dependencies->stage1HAllocator, _dependencies->config.general.archetypeCapacity);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint AddInternal(uint id, ushort itemId)

@@ -11,23 +11,30 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemory(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref MemoryRebinderContext rebinder, ref TDense component)
+        public void RebindMemory(ref ComponentFunction<TDense> componentFunction, ref MemoryRebinderContext rebinder, ref TDense component)
         {
-            layout.componentFunction.memoryRebind(ref rebinder, ref component);
+            componentFunction.memoryRebind(ref rebinder, ref component);
         }
     }
 
-    internal unsafe struct RebindMemoryIterable<TAllocator, TSparse, TDense, TDenseIndex> : IIterable<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe struct RebindMemoryIterable<TAllocator, TSparse, TDense, TDenseIndex> : IDataIterable<TDense, RebindMemoryData<TDense>>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
+        public void Each(ref RebindMemoryData<TDense> data, uint index, ref TDense component)
         {
             default(RebindMemoryFeature<TAllocator, TSparse, TDense, TDenseIndex>)
-                .RebindMemory(ref layout, ref dependencies.currentMemoryRebinder, ref component);
+                .RebindMemory(ref data.componentFunction, ref data.dependencies->currentMemoryRebinder, ref component);
         }
+    }
+
+    internal unsafe struct RebindMemoryData<TDense> : IEachData
+        where TDense : unmanaged
+    {
+        public GlobalDependencies* dependencies;
+        public ComponentFunction<TDense> componentFunction;
     }
 }

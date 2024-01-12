@@ -4,7 +4,6 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views.Core
 {
-    [CompileComponentOption(ComponentOptions.HistoryNonSync)]
     public struct ViewSystemReference : IConfig
     {
         internal IViewSystem system;

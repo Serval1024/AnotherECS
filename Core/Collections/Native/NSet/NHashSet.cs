@@ -95,7 +95,7 @@ namespace AnotherECS.Core.Collection
             {
                 if (_lastIndex == _slots.Length)
                 {
-                    IncreaseCapacity();
+                    Resize();
                     bucketId = _hashProvider.GetHash(ref item) % _buckets.Length;
                 }
                 index = _lastIndex++;
@@ -206,9 +206,9 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void IncreaseCapacity()
+        private void Resize()
         {
-            uint newSize = HashHelpers.GetPrime(Count << 1);
+            uint newSize = HashHelpers.ExpandPrime(Count);
 #if !ANOTHERECS_RELEASE
             if (newSize <= Count)
             {

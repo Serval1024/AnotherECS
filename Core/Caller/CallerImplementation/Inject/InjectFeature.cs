@@ -11,15 +11,15 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
+        public void Construct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component)
         {
-            layout.componentFunction.construct(ref dependencies.injectContainer, ref component);
+            componentFunction.construct(ref dependencies.injectContainer, ref component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component)
+        public void Deconstruct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component)
         {
-            layout.componentFunction.deconstruct(ref dependencies.injectContainer, ref component);
+            componentFunction.deconstruct(ref dependencies.injectContainer, ref component);
         }
     }
 }

@@ -81,6 +81,11 @@ namespace AnotherECS.Core.Threading
         public bool IsDeterministicSequence()
             => _impl.IsDeterministicSequence();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetParallelMax()
+            => _impl.GetParallelMax();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()
         {
             _impl.CallFromMainThread();

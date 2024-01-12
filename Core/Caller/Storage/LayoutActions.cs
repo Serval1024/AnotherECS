@@ -6,37 +6,37 @@ namespace AnotherECS.Core.Actions
     internal static unsafe class LayoutActions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetCount<TAllocator, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, bool, TDense, TDenseIndex> layout)
+        public static uint GetCount<TAllocator, TDense, TDenseIndex>(ref ULayout<TAllocator, bool, TDense, TDenseIndex> layout)
             where TAllocator : unmanaged, IAllocator
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            => layout.storage.sparse.Get(0) ? 1u : 0u;
+            => layout.sparse.Get(0) ? 1u : 0u;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetCount<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
-            where TAllocator : unmanaged, IAllocator
-            where TSparse : unmanaged
-            where TDense : unmanaged
-            where TDenseIndex : unmanaged
-            => GetSpaceCount(ref layout, startIndex) - layout.storage.recycleIndex;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetSpaceCount<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
+        public static uint GetCount<TAllocator, TSparse, TDense, TDenseIndex>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
-            => layout.storage.denseIndex - startIndex;
+            => GetSpaceCount(ref layout, startIndex) - layout.recycleIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TNumber>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public static uint GetSpaceCount<TAllocator, TSparse, TDense, TDenseIndex>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
+            where TAllocator : unmanaged, IAllocator
+            where TSparse : unmanaged
+            where TDense : unmanaged
+            where TDenseIndex : unmanaged
+            => layout.denseIndex - startIndex;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TNumber>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
             where TNumber : unmanaged
         {
-            if (layout.storage.denseIndex == GetMaxValue<TNumber>())
+            if (layout.denseIndex == GetMaxValue<TNumber>())
             {
                 throw new Exceptions.ReachedLimitComponentException(GetMaxValue<TNumber>());
             }
@@ -65,17 +65,15 @@ namespace AnotherECS.Core.Actions
             };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SparseClear<TAllocator, TSparse, TDense, TDenseIndex>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public static void SparseClear<TAllocator, TSparse, TDense, TDenseIndex>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where TAllocator : unmanaged, IAllocator
             where TSparse : unmanaged
             where TDense : unmanaged
             where TDenseIndex : unmanaged
         {
-            ref var storage = ref layout.storage;
-
-            if (storage.sparse.IsValid)
+            if (layout.sparse.IsValid)
             {
-                storage.sparse.Clear();
+                layout.sparse.Clear();
             }
         }
     }

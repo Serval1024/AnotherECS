@@ -6,21 +6,21 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe interface IAllocaterProvider<TAllocator, TAltAllocator>
-        where TAllocator : unmanaged, IAllocator
-        where TAltAllocator : unmanaged, IAllocator
+    internal unsafe interface IAllocatorProvider<TStage0Allocator, TStage1Allocator>
+        where TStage0Allocator : unmanaged, IAllocator
+        where TStage1Allocator : unmanaged, IAllocator
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        TAllocator* Get(GlobalDependencies* dependencies);
+        TStage0Allocator* GetStage0(GlobalDependencies* dependencies);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        TAltAllocator* GetAlt(GlobalDependencies* dependencies);
+        TStage1Allocator* GetStage1(GlobalDependencies* dependencies);
     }
 
     internal unsafe interface IData : IDisposable
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Allocate(State state, GlobalDependencies* dependencies);
+        void Config(State state, GlobalDependencies* dependencies);
     }
 
     internal interface IStateProvider
@@ -45,13 +45,16 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        NArray<BAllocator, byte> GetAddRemoveVersion();
+        NArray<BAllocator, byte> GetTempGeneration();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RevertStage1(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint denseAllocated);
+        public NArray<TAllocator, byte> GetGeneration();          
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void AddRemoveEvent(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id);
+        void RevertStage1(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint denseAllocated);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void UpdateGeneration(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id);
     }
 
     internal interface IStartIndexProvider
@@ -72,19 +75,19 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref TDense GetDense(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
+        ref TDense GetDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe TDense* GetDensePtr(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
+        ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint GetCapacity(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
+        uint GetCapacity(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
+        uint GetAllocated(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> GetDense<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public WArray<T> GetDense<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where T : unmanaged, IComponent;
     }
 
@@ -106,19 +109,19 @@ namespace AnotherECS.Core.Caller
     {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        bool IsHas(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+        bool IsHas(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        TDenseIndex ConvertToDenseIndex(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+        TDenseIndex ConvertToDenseIndex(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref TSparse GetSparse(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+        ref TSparse GetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void SetSparse(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, EntityId id, TDenseIndex denseIndex);
+        void SetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, EntityId id, TDenseIndex denseIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        WArray<T> ReadSparse<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        WArray<T> ReadSparse<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where T : unmanaged;
     }
 
@@ -129,7 +132,7 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies);
+        void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies);
     }
 
     internal interface IInject<TAllocator, TSparse, TDense, TDenseIndex>
@@ -139,10 +142,10 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Construct(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component);
+        void Construct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Deconstruct(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component);
+        void Deconstruct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component);
     }
 
     internal interface ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>
@@ -156,7 +159,7 @@ namespace AnotherECS.Core.Caller
             where TSparseBoolConst : struct, IBoolConst;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+        void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst;
     }
 
@@ -167,7 +170,7 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity);
+        void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity);
     }
 
     internal interface IIdAllocator<TAllocator, TSparse, TDense, TDenseIndex>
@@ -177,14 +180,14 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        TDenseIndex AllocateId<TNumberProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies)
+        TDenseIndex AllocateId<TNumberProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies)
             where TNumberProvider : struct, INumberProvier<TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void DeallocateId(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex id);
+        void DeallocateId(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint GetCount(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex);
+        uint GetCount(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex);
     }
 
     internal interface IChange<TAllocator, TSparse, TDense, TDenseIndex>
@@ -194,9 +197,9 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Change(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex index);
+        void Change(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex index);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void DropChange(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count);
+        void DropChange(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count);
     }
 
     internal interface INumberProvier<TDenseIndex>
@@ -220,9 +223,9 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint GetVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+        uint GetVersion(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        WArray<uint> ReadVersion(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
+        WArray<uint> ReadVersion(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
     }
 
     internal interface IBoolConst
@@ -242,11 +245,11 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+        void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Attach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+        void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -260,11 +263,11 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, State state, uint startIndex, uint count)
+        void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Detach<TSparseProvider>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> version, uint startIndex, uint count)
+        void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -277,7 +280,7 @@ namespace AnotherECS.Core.Caller
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        void ForEach<AIterable>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        void ForEach<AIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex>;
     }
 
@@ -288,7 +291,7 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Each(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component);
+        void Each(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, ref TDense component);
     }
 
     internal unsafe interface IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
@@ -297,16 +300,13 @@ namespace AnotherECS.Core.Caller
       where TDense : unmanaged
       where TDenseIndex : unmanaged
     {
-        void ForEach<AIterable, TEachData>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, TEachData>
+        void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
+            where AIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct, IEachData;
     }
 
-    internal unsafe interface IDataIterable<TAllocator, TSparse, TDense, TDenseIndex, TEachData>
-        where TAllocator : unmanaged, IAllocator
-        where TSparse : unmanaged
+    internal unsafe interface IDataIterable<TDense, TEachData>
         where TDense : unmanaged
-        where TDenseIndex : unmanaged
         where TEachData : struct
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -315,16 +315,17 @@ namespace AnotherECS.Core.Caller
 
     internal unsafe interface IEachData { }
 
-    internal unsafe interface ICustomSerialize<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Pack(ref WriterContextSerializer writer, UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout);
+        void Pack(ref WriterContextSerializer writer, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Unpack(ref ReaderContextSerializer reader, UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex>* layout);
+        void Unpack(ref ReaderContextSerializer reader, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout);
     }
 
     internal interface ITickFinished<TAllocator, TSparse, TDense, TDenseIndex>
@@ -335,7 +336,7 @@ namespace AnotherECS.Core.Caller
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void TickFinished
-            (ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies);
+            (ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies);
     }
 
     internal interface IRebindMemory { }
@@ -347,82 +348,6 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RebindMemory(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref MemoryRebinderContext rebinder, ref TDense component);
+        void RebindMemory(ref ComponentFunction<TDense> componentFunction, ref MemoryRebinderContext rebinder, ref TDense component);
     }
-
-    /*
-    internal unsafe interface IHistory<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>
-        where TSparse : unmanaged
-        where TDense : unmanaged
-        where TDenseIndex : unmanaged
-        where TTickData : unmanaged, ITickData<TTickDataDense>
-        where TTickDataDense : unmanaged
-    {
-        bool IsRevert { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
-        bool IsTickFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushRecycledCount(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, uint recycleIndex)
-        {
-            HistoryActions.PushRecycledCount<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref layout, dependencies.tickProvider.tick, dependencies.config.history.recordTickLength, recycleIndex);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushCount(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, uint count)
-        {
-            HistoryActions.PushCount<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref layout, dependencies.tickProvider.tick, dependencies.config.history.recordTickLength, count);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushSparse(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, EntityId id, TSparse sparse)
-        {
-            HistoryActions.PushSparse<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref layout, dependencies.tickProvider.tick, dependencies.config.history.recordTickLength, id, sparse);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushDense<TCopyable, TUintNextNumber>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, TDenseIndex offset, ref TDense data)
-            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst
-            where TUintNextNumber : struct, INumberProvier<TDenseIndex>;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushRecycled(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, uint offset, TDenseIndex recycle)
-        {
-            HistoryActions.PushRecycled<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>(ref layout, dependencies.tickProvider.tick, dependencies.config.history.recordTickLength, offset, recycle);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void HistoryClear<TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout)
-            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void TickFinished<TCopyable>(ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies)
-            where TCopyable : struct, IDenseCopyable<TDense>, IBoolConst;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RevertTo<TAttachDetachStorage, TAttach, TDetach, TSparseBoolConst, TVersion, TIsUseSparse>
-            (UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData>* layout, ref TAttachDetachStorage attachDetachStorage, uint tick)
-            where TAttachDetachStorage : struct, IAttachDetachProvider<TSparse>, IBoolConst
-            where TAttach : struct, IAttach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
-            where TDetach : struct, IDetach<TSparse, TDense, TDenseIndex, TTickData>, IBoolConst
-            where TSparseBoolConst : struct, IBoolConst
-            where TVersion : struct, IBoolConst
-            where TIsUseSparse : struct, IUseSparse;
-    }
-
-    internal unsafe interface ISegmentHistory<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense> : IHistory<TSparse, TDense, TDenseIndex, TTickData, TTickDataDense>
-        where TSparse : unmanaged
-        where TDense : unmanaged
-        where TDenseIndex : unmanaged
-        where TTickData : unmanaged, ITickData<TTickDataDense>
-        where TTickDataDense : unmanaged
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushDenseSegment
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, TTickDataDense* data);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushSegmentDense
-            (ref UnmanagedLayout<TSparse, TDense, TDenseIndex, TTickData> layout, ref GlobalDependencies dependencies, uint offset, uint index, TTickDataDense* data);
-    }
-    */
 }

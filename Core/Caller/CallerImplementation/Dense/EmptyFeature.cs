@@ -21,11 +21,10 @@ namespace AnotherECS.Core.Caller
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
         {
-            ref var storage = ref layout.storage;
-            storage.dense.Allocate(allocator, 1);
-            storage.denseIndex = GetIndex();
+            layout.dense.Allocate(allocator, 1);
+            layout.denseIndex = GetIndex();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -33,37 +32,37 @@ namespace AnotherECS.Core.Caller
             => 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SparseResize<TSparseBoolConst>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
+        public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DenseResize(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
+        public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense GetDense(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
-            => ref layout.storage.dense.GetRef(0);
+        public ref TDense GetDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
+            => ref layout.dense.GetRef(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe TDense* GetDensePtr(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
-            => layout.storage.dense.GetPtr(0);
+        public ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index)
+            => ref layout.dense.ReadRef(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetCapacity(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public uint GetCapacity(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             => 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetAllocated(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public uint GetAllocated(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             => 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> GetDense<T>(ref UnmanagedLayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        public WArray<T> GetDense<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
             if (typeof(T) == typeof(TDense))
 #endif
             {
-                return new WArray<T>((T*)layout.storage.dense.GetPtr(), layout.storage.dense.Length);
+                return new WArray<T>((T*)layout.dense.GetPtr(), layout.dense.Length);
             }
 #if !ANOTHERECS_RELEASE
             throw new System.ArgumentException(typeof(T).Name);

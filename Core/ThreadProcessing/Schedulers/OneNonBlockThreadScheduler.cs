@@ -52,7 +52,7 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ProcessingAndWait()
+        public void Complete()
         {
             _worker.Wait();
         }

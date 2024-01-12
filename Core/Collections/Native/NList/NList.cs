@@ -471,7 +471,7 @@ namespace AnotherECS.Core.Collection
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _data.Get(_current);
+                get => _data.Read(_current);
             }
 
             object IEnumerator.Current

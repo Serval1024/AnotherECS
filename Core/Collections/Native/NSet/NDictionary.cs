@@ -143,7 +143,7 @@ namespace AnotherECS.Core.Collection
                     return;
                 }
             }
-
+            
             int index;
             if (_freeCount > 0)
             {
@@ -173,15 +173,15 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Resize()
         {
-            Resize(HashHelpers.GetPrime(_count));
+            Resize(HashHelpers.ExpandPrime(_count));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Resize(uint newSize)
+        private void Resize(uint size)
         {
-            _entries.Resize(newSize);
+            _entries.Resize(size);
 
-            var newBuckets = new NArray<TAllocator, int>(_buckets.GetAllocator(), newSize);
+            var newBuckets = new NArray<TAllocator, int>(_buckets.GetAllocator(), size);
             for (uint i = 0; i < newBuckets.Length; ++i)
             {
                 newBuckets.ReadRef(i) = -1;
@@ -191,14 +191,14 @@ namespace AnotherECS.Core.Collection
 
             var count = _count;
 
-            for (uint i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 ref var entry = ref _entries.ReadRef(i);
                 if (!entry.value.Equals(default))
                 {
-                    ulong bucket = entry.hashCode % newSize;
+                    ulong bucket = entry.hashCode % size;
                     entry.next = newBuckets.Read(bucket);
-                    newBuckets.ReadRef(bucket) = (int)i;
+                    newBuckets.ReadRef(bucket) = i;
                 }
             }
 

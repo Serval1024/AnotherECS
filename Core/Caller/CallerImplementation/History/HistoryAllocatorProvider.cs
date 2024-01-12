@@ -3,14 +3,14 @@ using System.Runtime.CompilerServices;
 namespace AnotherECS.Core.Caller
 {
 
-    internal unsafe struct HistoryAllocatorProvider : IAllocaterProvider<HAllocator, HAllocator>
+    internal unsafe struct HistoryAllocatorProvider : IAllocatorProvider<HAllocator, HAllocator>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public HAllocator* Get(GlobalDependencies* dependencies)
-            => &dependencies->hAllocator;
+        public HAllocator* GetStage0(GlobalDependencies* dependencies)
+            => &dependencies->stage0HAllocator;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public HAllocator* GetAlt(GlobalDependencies* dependencies)
-            => &dependencies->altHAllocator;
+        public HAllocator* GetStage1(GlobalDependencies* dependencies)
+            => &dependencies->stage1HAllocator;
     }
 }

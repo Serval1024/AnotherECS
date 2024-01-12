@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using AnotherECS.Core.Collection;
 using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
@@ -26,7 +25,7 @@ namespace AnotherECS.Core
         private uint _tick;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-        private ChangeHistory _history;
+        private ConcurrentChangeHistory _history;
 #endif
 #if !ANOTHERECS_RELEASE
         private MemoryChecker<BAllocator> _memoryChecker;
@@ -61,6 +60,23 @@ namespace AnotherECS.Core
             get => _chunkAllocated;
         }
 
+#if !ANOTHERECS_HISTORY_DISABLE
+        public uint ParallelMax
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _history.ParallelMax;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => _history.ParallelMax = value;
+        }
+#else
+        public uint ParallelMax
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => 0u;
+            set { };
+        }
+#endif
+
         public ulong TotalBytesAllocated
             => _allocator->TotalBytesAllocated;
 
@@ -91,7 +107,7 @@ namespace AnotherECS.Core
 
             _tick = 0;
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = new ChangeHistory(_allocator, historyCapacity, recordHistoryLength);
+            _history = (ConcurrentChangeHistory)default(ConcurrentChangeHistory).Create(_allocator, historyCapacity, recordHistoryLength);
 #endif
             for (uint i = ChunkDownBound; i < chunkPreallocation; ++i)
             {
@@ -103,7 +119,17 @@ namespace AnotherECS.Core
         public void TickStarted(uint tick)
         {
             _tick = tick;
+#if !ANOTHERECS_HISTORY_DISABLE
             SetDirty(true);
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TickFinished()
+        {
+#if !ANOTHERECS_HISTORY_DISABLE
+            _history.TickFinished();
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,10 +150,16 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(ref MemoryHandle memoryHandle)
         {
+#if !ANOTHERECS_HISTORY_DISABLE
             if (*memoryHandle.isNotDirty)
             {
-                //_history.Push(_tick, ref memoryHandle, GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2);
+                _history.Push(
+                    _tick,
+                    ref memoryHandle,
+                    GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2
+                    );
             }
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -329,9 +361,11 @@ namespace AnotherECS.Core
             _tick = reader.ReadUInt32();
 
             _chunks.Unpack(ref reader);
+
 #if !ANOTHERECS_RELEASE
             _history.Unpack(ref reader);
 #endif
+            _threadLockerId = GlobalThreadLockerProvider.AllocateId();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -23,8 +23,8 @@ namespace AnotherECS.Core
         public Entities(GlobalDependencies* dependencies)
         {
             _dependencies = dependencies;
-            _data = new(&_dependencies->hAllocator, new NArray<HAllocator, EntityData>(&_dependencies->hAllocator, _dependencies->config.general.entityCapacity));
-            _recycle = new(&_dependencies->hAllocator, new URecycle<EntityId, UintNumber>(&_dependencies->hAllocator, _dependencies->config.general.recycleCapacity));
+            _data = new(&_dependencies->stage1HAllocator, new NArray<HAllocator, EntityData>(&_dependencies->stage1HAllocator, _dependencies->config.general.entityCapacity));
+            _recycle = new(&_dependencies->stage1HAllocator, new URecycle<EntityId, UintNumber>(&_dependencies->stage1HAllocator, _dependencies->config.general.recycleCapacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

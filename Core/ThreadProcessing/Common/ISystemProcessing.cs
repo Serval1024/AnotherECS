@@ -24,6 +24,7 @@ namespace AnotherECS.Core
         bool IsBusy();
         void Wait();
         bool IsDeterministicSequence();
+        uint GetParallelMax();
 
         void CallFromMainThread();
 

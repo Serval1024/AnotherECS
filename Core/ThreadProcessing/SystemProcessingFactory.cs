@@ -4,14 +4,15 @@ namespace AnotherECS.Core
 {
     internal static class SystemProcessingFactory
     {
-        public static ISystemProcessing Create(State state, ThreadingLevel threadingLevel)
+        public static ISystemProcessing Create(State state, WorldThreadingLevel threadingLevel)
             => (threadingLevel) switch
             {
-                ThreadingLevel.MainThreadOnly       => new MainThreadProcessing(state),
-                ThreadingLevel.NonBlockOneThread    => new OneThreadProcessing<OneNonBlockThreadScheduler>(state, OneNonBlockThreadScheduler.Create()),
-                ThreadingLevel.BlockMultiThread     => new MultiThreadProcessing<BlockThreadScheduler>(state, BlockThreadScheduler.Create()),
-                ThreadingLevel.NonBlockMultiThread  => new MultiThreadProcessing<NonBlockThreadScheduler>(state, NonBlockThreadScheduler.Create()),
-                _ => throw new System.NotImplementedException()
+                WorldThreadingLevel.MainThreadOnly       => new MainThreadProcessing(state),
+                WorldThreadingLevel.NonBlockOneThread    => new OneThreadProcessing<OneNonBlockThreadScheduler>(state, OneNonBlockThreadScheduler.Create()),
+                WorldThreadingLevel.BlockMultiThread     => new MultiThreadProcessing<BlockThreadScheduler>(state, BlockThreadScheduler.Create()),
+                WorldThreadingLevel.NonBlockMultiThread  => new MultiThreadProcessing<NonBlockThreadScheduler>(state, NonBlockThreadScheduler.Create()),
+
+                                                       _ => throw new System.NotImplementedException()
             };
     }
 }

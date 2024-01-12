@@ -14,9 +14,20 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Init(IGroupSystem systemGroup)
+        public void Prepare(State state, IGroupSystem systemGroup)
         {
             _systemProcessing.Prepare(systemGroup);
+
+            state.SetOption(new StateOption()
+            {
+                isMultiThreadMode = !IsDeterministicSequence(),
+                parallelMax = GetParallelMax(),
+            });
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Init()
+        {
             _systemProcessing.Construct();
             _systemProcessing.Init();
         }
@@ -65,6 +76,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
             => _systemProcessing.IsDeterministicSequence();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetParallelMax()
+            => _systemProcessing.GetParallelMax();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()

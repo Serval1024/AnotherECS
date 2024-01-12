@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace AnotherECS.Core.Threading
 {
@@ -80,9 +81,9 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ProcessingAndWait()
+        public void Complete()
         {
-            _worker.ProcessingAndWait();
+            _worker.Complete();
         }
 
         private void CallFromMainThreadInternal()

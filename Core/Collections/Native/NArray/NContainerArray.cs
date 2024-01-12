@@ -11,13 +11,14 @@ namespace AnotherECS.Core.Collection
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    [System.Diagnostics.DebuggerTypeProxy(typeof(NContainerArray<,>.NArrayDebugView))]
+    [System.Diagnostics.DebuggerTypeProxy(typeof(NContainerArray<,,>.NArrayDebugView))]
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct NContainerArray<TAllocator, T> : INArray<T>, IDisposable, ISerialize, IEnumerable<T>, IRebindMemoryHandle
+    public unsafe struct NContainerArray<TAllocator, TElementAllocator, T> : INArray<T>, IDisposable, ISerialize, IEnumerable<T>, IRebindMemoryHandle
         where TAllocator : unmanaged, IAllocator
+        where TElementAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
-        private TAllocator* _allocator;
+        private TElementAllocator* _elementAllocator;
         private NArray<TAllocator, MemoryHandle> _data;
 
         public uint ByteLength
@@ -50,25 +51,19 @@ namespace AnotherECS.Core.Collection
             get => _data.IsDirty;
         }
 
-        public NContainerArray(TAllocator* allocator, uint elementCount)
+        public NContainerArray(TAllocator* allocator, TElementAllocator* elementAllocator, uint elementCount)
         {
-            _allocator = allocator;
+            _elementAllocator = elementAllocator;
             _data = new NArray<TAllocator, MemoryHandle>(allocator, elementCount);
             for (uint i = 0; i < _data.Length; ++i)
             {
-                _data.ReadRef(i) = allocator->Allocate((uint)sizeof(T));
+                _data.ReadRef(i) = elementAllocator->Allocate((uint)sizeof(T));
             }
         }
 
-        public NContainerArray(TAllocator* allocator, ref MemoryHandle memoryHandle, uint elementCount)
+        public void Allocate(TAllocator* allocator, TElementAllocator* elementAllocator, uint elementCount)
         {
-            _allocator = allocator;
-            _data = new NArray<TAllocator, MemoryHandle>(allocator, ref memoryHandle, elementCount);
-        }
-
-        public void Allocate(TAllocator* allocator, uint elementCount)
-        {
-            this = new(allocator, elementCount);
+            this = new(allocator, elementAllocator, elementCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,7 +72,7 @@ namespace AnotherECS.Core.Collection
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNArrayBroken(this);
 #endif
-            return _allocator;
+            return _data.GetAllocator();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,7 +89,7 @@ namespace AnotherECS.Core.Collection
         {
             throw new NotSupportedException();
         }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MemoryHandle GetMemoryHandle(uint index)
         {
@@ -102,15 +97,6 @@ namespace AnotherECS.Core.Collection
             ExceptionHelper.ThrowIfNArrayBroken(this);
 #endif
             return _data.GetRef(index);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public DirtyHandler<TAllocator> GetDirtyHandler(uint index)
-        {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
-#endif
-            return new(_allocator, GetMemoryHandle(index));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -358,14 +344,14 @@ namespace AnotherECS.Core.Collection
 
             for (uint i = _data.Length - 1; i >= lastLength; --i)
             {
-                _allocator->Deallocate(ref _data.GetRef(i));
+                _elementAllocator->Deallocate(ref _data.GetRef(i));
             }
 
             _data.Resize(elementCount);
 
             for (uint i = lastLength; i < _data.Length; ++i)
             {
-                _data.ReadRef(i) = _allocator->Allocate((uint)sizeof(T));
+                _data.ReadRef(i) = _elementAllocator->Allocate((uint)sizeof(T));
             }
         }
 
@@ -394,19 +380,19 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(uint index)
         {
-            _allocator->Dirty(ref _data.GetRef(index));
+            _elementAllocator->Dirty(ref _data.GetRef(index));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(int index)
         {
-            _allocator->Dirty(ref _data.ReadRef(index));
+            _elementAllocator->Dirty(ref _data.ReadRef(index));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dirty(ulong index)
         {
-            _allocator->Dirty(ref _data.ReadRef(index));
+            _elementAllocator->Dirty(ref _data.ReadRef(index));
         }
         #endregion
 
@@ -423,7 +409,7 @@ namespace AnotherECS.Core.Collection
 
             for (uint i = start; i < elementCount; ++i)
             {
-                _allocator->Reuse(ref _data.GetRef(i), ElementSize);
+                _elementAllocator->Reuse(ref _data.GetRef(i), ElementSize);
             }
         }
 
@@ -434,7 +420,7 @@ namespace AnotherECS.Core.Collection
             {
                 for (uint i = 0; i < _data.Length; ++i)
                 {
-                    _allocator->Deallocate(ref _data.ReadRef(i));
+                    _elementAllocator->Deallocate(ref _data.ReadRef(i));
                 }
                 _data.Dispose();
             }
@@ -442,7 +428,7 @@ namespace AnotherECS.Core.Collection
 
         public NArray<TAllocator, T> ToNArray()
         {
-            var result = new NArray<TAllocator, T>(_allocator, Length);
+            var result = new NArray<TAllocator, T>(_data.GetAllocator(), Length);
             for (uint i = 0; i < result.Length; ++i)
             {
                 result.ReadRef(i) = ReadRef(i);
@@ -492,17 +478,20 @@ namespace AnotherECS.Core.Collection
         public void Pack(ref WriterContextSerializer writer)
         {
             _data.PackBlittable(ref writer);
+            writer.Write(_elementAllocator->GetId());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
             _data.UnpackBlittable(ref reader);
-            _allocator = _data.GetAllocator();
+            var elementAllocatorId = reader.ReadUInt32();
 
-            for(uint i = 0; i < _data.Length; ++i)
+            _elementAllocator = reader.GetDepency<WPtr<TElementAllocator>>(elementAllocatorId).Value;
+
+            for (uint i = 0; i < _data.Length; ++i)
             {
-                _allocator->Repair(ref _data.GetRef(i));
+                _elementAllocator->Repair(ref _data.GetRef(i));
             }
         }
 
@@ -516,16 +505,12 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void EnterCheckChanges()
         {
-            var memoryHandle = _data.GetMemoryHandle();
-            _allocator->EnterCheckChanges(ref memoryHandle);
+            _data.EnterCheckChanges();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges()
-        {
-            var memoryHandle = _data.GetMemoryHandle();
-            return _allocator->ExitCheckChanges(ref memoryHandle);
-        }
+            => _data.ExitCheckChanges();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
@@ -551,10 +536,10 @@ namespace AnotherECS.Core.Collection
 
         public struct Enumerator : IEnumerator<T>
         {
-            private readonly NContainerArray<TAllocator, T> _data;
+            private readonly NContainerArray<TAllocator, TElementAllocator, T> _data;
             private uint _current;
             private readonly uint _length;
-            public Enumerator(ref NContainerArray<TAllocator, T> data)
+            public Enumerator(ref NContainerArray<TAllocator, TElementAllocator, T> data)
             {
                 _data = data;
                 _length = _data.Length;
@@ -564,7 +549,7 @@ namespace AnotherECS.Core.Collection
             public T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _data.Get(_current);
+                get => _data.Read(_current);
             }
 
             object IEnumerator.Current
@@ -587,8 +572,8 @@ namespace AnotherECS.Core.Collection
 
         private class NArrayDebugView
         {
-            private NContainerArray<TAllocator, T> array;
-            public NArrayDebugView(NContainerArray<TAllocator, T> array)
+            private NContainerArray<TAllocator, TElementAllocator, T> array;
+            public NArrayDebugView(NContainerArray<TAllocator, TElementAllocator, T> array)
             {
                 this.array = array;
             }
