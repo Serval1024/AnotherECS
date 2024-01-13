@@ -6,14 +6,18 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Physics
 {
-    public struct PhysicConfig : ISingle
+    public struct PhysicData : ISingle
     {
         public float3 gravity;
         public sfloat deltaTime; 
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
-    public struct PhysicsOneShotInternal : IConfig
+    public struct PhysicsOneShotConfig : IConfig
+    {
+        public PhysicsOneShotData data;
+    }
+
+    public struct PhysicsOneShotData : ISingle
     {
         public CollisionEvents collisionEvents;
         public TriggerEvents triggerEvents;

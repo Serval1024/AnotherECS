@@ -31,21 +31,23 @@ namespace AnotherECS.Core.Threading
             return this;
         }
 
-        public void Use<T0>(Filter<T0> filter)
+        public ThreadRestrictionsBuilder Use<T0>(Filter<T0> filter)
             where T0 : IComponent
         {
             Use<T0>();
+            return this;
         }
 
-        public void Use<T0, T1>(Filter<T0, T1> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1>(Filter<T0, T1> filter)
             where T0 : IComponent
             where T1 : IComponent
         {
             Use<T0>();
             Use<T1>();
+            return this;
         }
 
-        public void Use<T0, T1, T2>(Filter<T0, T1, T2> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2>(Filter<T0, T1, T2> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -53,9 +55,10 @@ namespace AnotherECS.Core.Threading
             Use<T0>();
             Use<T1>();
             Use<T2>();
+            return this;
         }
 
-        public void Use<T0, T1, T2, T3>(Filter<T0, T1, T2, T3> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2, T3>(Filter<T0, T1, T2, T3> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -65,9 +68,10 @@ namespace AnotherECS.Core.Threading
             Use<T1>();
             Use<T2>();
             Use<T3>();
+            return this;
         }
 
-        public void Use<T0, T1, T2, T3, T4>(Filter<T0, T1, T2, T3, T4> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2, T3, T4>(Filter<T0, T1, T2, T3, T4> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -79,9 +83,10 @@ namespace AnotherECS.Core.Threading
             Use<T2>();
             Use<T3>();
             Use<T4>();
+            return this;
         }
 
-        public void Use<T0, T1, T2, T3, T4, T5>(Filter<T0, T1, T2, T3, T4, T5> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2, T3, T4, T5>(Filter<T0, T1, T2, T3, T4, T5> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -95,9 +100,10 @@ namespace AnotherECS.Core.Threading
             Use<T3>();
             Use<T4>();
             Use<T5>();
+            return this;
         }
 
-        public void Use<T0, T1, T2, T3, T4, T5, T6>(Filter<T0, T1, T2, T3, T4, T5, T6> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2, T3, T4, T5, T6>(Filter<T0, T1, T2, T3, T4, T5, T6> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -113,9 +119,10 @@ namespace AnotherECS.Core.Threading
             Use<T4>();
             Use<T5>();
             Use<T6>();
+            return this;
         }
 
-        public void Use<T0, T1, T2, T3, T4, T5, T6, T7>(Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
+        public ThreadRestrictionsBuilder Use<T0, T1, T2, T3, T4, T5, T6, T7>(Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
             where T0 : IComponent
             where T1 : IComponent
             where T2 : IComponent
@@ -133,6 +140,7 @@ namespace AnotherECS.Core.Threading
             Use<T5>();
             Use<T6>();
             Use<T7>();
+            return this;
         }
 
         internal ThreadRestrictions Build()

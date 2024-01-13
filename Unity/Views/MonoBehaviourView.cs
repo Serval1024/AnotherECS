@@ -10,40 +10,43 @@ namespace AnotherECS.Views
         private State _state;
         private Entity _entity;
 
-        public void Construct(State state, in Entity entity)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T Read<T>()
+            where T : unmanaged, ISingle
+            => ref _state.Read<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetConfig<T>()
+            where T : IConfig
+            => _state.GetConfig<T>();
+
+        void IView.Construct(State state, in Entity entity)
         {
             _state = state;
             _entity = entity;
         }
 
-        public string GetGUID()
+        string IView.GetGUID()
             => GetType().Name;
 
-        //public void Send(BaseEvent @event)
-            //=> _state.Send(@event);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Read<T>()
-            where T : unmanaged, ISingle
-            => _state.Read<T>();
-
-        public void Destroyed()
+        void IView.Destroyed()
         {
             OnDestroying();
             Destroy(gameObject);
         }
 
-        public IView Create()
-          => Instantiate(this);
+        IView IView.Create()
+            => Instantiate(this);
 
-        public void Created()
+        void IView.Created()
             => OnCreated(ref _entity);
 
-        public void Apply()
+        void IView.Apply()
             => OnApply(ref _entity);
 
         public abstract void OnApply(ref Entity entity);
-        public abstract void OnCreated(ref Entity entity);
-        public abstract void OnDestroying();
+        public virtual void OnCreated(ref Entity entity) { }
+        public virtual void OnDestroying() { }
     }
 }

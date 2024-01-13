@@ -1,4 +1,5 @@
 using AnotherECS.Core;
+using AnotherECS.Core.Threading;
 using AnotherECS.Essentials.Physics;
 using AnotherECS.Mathematics;
 using EntityId = System.UInt32;
@@ -7,6 +8,20 @@ namespace AnotherECS.Physics
 {
     public static class PhysicsExtensions
     {
+        public static ThreadRestrictionsBuilder UsePhysicsData(ref this ThreadRestrictionsBuilder builder)
+            => builder.Use<PhysicsOneShotData>();
+
+        public static PhysicsOneShotData GetPhysicsData(this State state)
+        {
+#if !ANOTHERECS_RELEASE
+            if(!state.IsHasConfig<PhysicsOneShotConfig>())
+            {
+                throw new System.InvalidOperationException("Physics has not been added to ecs.");
+            }
+#endif
+            return state.GetConfig<PhysicsOneShotConfig>().data;
+        }
+
         public static void CreatePhysics(this State state, EntityId id, BlobAssetReference<Collider> collider, float3 position, quaternion rotation)
         {
             state.Add<PhysicsVelocity>(id);

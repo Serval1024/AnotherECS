@@ -34,6 +34,7 @@ namespace AnotherECS.Core.Caller
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(ref Dependencies dependencies, uint id, ushort elementId);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(ref Dependencies dependencies, uint id, ushort elementId);
     }

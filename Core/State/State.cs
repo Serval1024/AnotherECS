@@ -288,9 +288,10 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfDontExists(this, id);
             if (_dependencies->archetype.GetCount(_dependencies->entities.ReadArchetypeId(id)) > COMPONENT_ENTITY_MAX)
             {
-                throw new Exceptions.ReachedLimitComponentOnEntityException(COMPONENT_ENTITY_MAX);
+                throw new ReachedLimitComponentOnEntityException(COMPONENT_ENTITY_MAX);
             }
 #endif
+
             var componentIds = stackalloc uint[COMPONENT_ENTITY_MAX];
             var archetypeId = _dependencies->entities.ReadArchetypeId(id);
             var count = _dependencies->archetype.GetItemIds(archetypeId, componentIds, COMPONENT_ENTITY_MAX);
@@ -301,7 +302,11 @@ namespace AnotherECS.Core
             }
 
             _dependencies->archetype.Remove(archetypeId, id);
-            _dependencies->entities.Deallocate(id);
+
+            lock (_entitiesLocker)
+            {
+                _dependencies->entities.Deallocate(id);
+            }
         }
 
         public uint Count(EntityId id)

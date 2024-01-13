@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
@@ -6,16 +7,16 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views
 {
-    [SystemOrder(SystemOrder.First)]
-    public class UnityViewSystem : IViewSystem, IConstructModule, ITickFinishedModule
+    [SystemOrder(SystemOrder.Last)]
+    public class UnityViewSystem : IViewSystem, IMainThread, IConstructModule, ITickFinishedModule
     {
-        private readonly Queue<Command> _commandBuffer;
+        private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
 
         public UnityViewSystem(UnityViewController unityViewController)
         {
             _unityViewController = unityViewController;
-            _commandBuffer = new Queue<Command>();
+            _commandBuffer = new ConcurrentQueue<Command>();
         }
 
         public void Construct(State state)
@@ -25,20 +26,22 @@ namespace AnotherECS.Views
 
         public void TickFinished(State state)
         {
-            while (_commandBuffer.Count != 0)
+            while (!_commandBuffer.IsEmpty)
             {
-                var command = _commandBuffer.Dequeue();
-                switch (command.type)
+                if (_commandBuffer.TryDequeue(out Command command))
                 {
-                    case Command.Type.Create:
-                        Create(state, command.id, command.viewId);
-                        break;
-                    case Command.Type.Change:
-                        Change(command.id);
-                        break;
-                    case Command.Type.Destroy:
-                        Change(command.id);
-                        break;
+                    switch (command.type)
+                    {
+                        case Command.Type.Create:
+                            CreateInternal(state, command.id, command.viewId);
+                            break;
+                        case Command.Type.Change:
+                            ChangeInternal(command.id);
+                            break;
+                        case Command.Type.Destroy:
+                            DestroyInternal(command.id);
+                            break;
+                    }
                 }
             }
         }
@@ -49,20 +52,33 @@ namespace AnotherECS.Views
             => _unityViewController.GetId<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Create<T>(State state, EntityId id)
-            where T : IView
-            => Create(state, id, _unityViewController.GetId<T>());
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Create(State state, EntityId id, uint viewId)
-            => _unityViewController.CreateView(state, id, viewId);
+        {
+            _commandBuffer.Enqueue(new Command { type = Command.Type.Create, id = id, viewId = viewId });
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Change(EntityId id)
-            => _unityViewController.ChangeView(id);
+        {
+            _commandBuffer.Enqueue(new Command { type = Command.Type.Change, id = id });
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Destroy(EntityId id)
+        {
+            _commandBuffer.Enqueue(new Command { type = Command.Type.Destroy, id = id });
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CreateInternal(State state, EntityId id, uint viewId)
+            => _unityViewController.CreateView(state, id, viewId);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ChangeInternal(EntityId id)
+            => _unityViewController.ChangeView(id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DestroyInternal(EntityId id)
             => _unityViewController.DestroyView(id);
 
         private struct Command

@@ -10,6 +10,7 @@ using AnotherECS.Essentials.Physics;
 using AnotherECS.Essentials.Physics.Components;
 using AnotherECS.Unity.Jobs;
 using EntityId = System.Int32;
+using AnotherECS.Core.Threading;
 
 namespace AnotherECS.Physics
 {    
@@ -36,7 +37,7 @@ namespace AnotherECS.Physics
         Rotation>;
     
     [SystemOrder(SystemOrder.First)]
-    public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IDisposable
+    public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IMainThread, IAsyncThread, IDisposable
     {
         private SimulationContext simulationContext;
         private Filter<Position, Rotation, IsPhysicsStatic> staticBodies;
@@ -50,11 +51,31 @@ namespace AnotherECS.Physics
 
         private State _state;
 
+        public void Restrictions(ref ThreadRestrictionsBuilder builder)
+        {
+            builder
+                .Use(staticBodies)
+                .Use(dynamicBodies)
+                .Use(joints)
+                .Use<Position>()
+                .Use<Position>()
+                .Use<PhysicsCollider>()
+                .Use<PhysicsVelocity>()
+                .Use<PhysicsCustomTags>()
+                .Use<PhysicsMass>()
+                .Use<PhysicsGravityFactor>()
+                .Use<PhysicsDamping>()
+                .Use<PhysicsMassOverride>()
+                .Use<PhysicsJoint>()
+                .Use<PhysicsConstrainedBodyPair>()
+                .Use<IsPhysicsStatic>()
+                .Use<PhysicsOneShotData>();
+        }
 
         public void Init(State state)
         {
             _state = state;
-            _state.SetOrAdd(new PhysicConfig() { gravity = new float3(sfloat.zero, -9.8f, sfloat.zero), deltaTime = 1f / 20f });
+            _state.SetOrAdd(new PhysicData() { gravity = new float3(sfloat.zero, -9.8f, sfloat.zero), deltaTime = 1f / 20f });
             _state.SetOrAdd(new PhysicsInternal());
 
             physicsWorldInternal = new PhysicsWorld(0, 0, 0);
@@ -325,7 +346,7 @@ namespace AnotherECS.Physics
                 
             }
 
-            ref readonly var config = ref _state.Read<PhysicConfig>();
+            ref readonly var config = ref _state.Read<PhysicData>();
 
             var simulationParameters = new SimulationStepInput()
             {
@@ -474,10 +495,13 @@ namespace AnotherECS.Physics
                     marker = new ProfilerMarker("[Physics] Apply World");
                     marker.Begin();
 
-                    _state.SetOrAddConfig(new PhysicsOneShotInternal()
+                    _state.SetOrAddConfig(new PhysicsOneShotConfig()
                     {
-                        collisionEvents = simulationContext.CollisionEvents,
-                        triggerEvents = simulationContext.TriggerEvents,
+                        data = new PhysicsOneShotData()
+                        {
+                            collisionEvents = simulationContext.CollisionEvents,
+                            triggerEvents = simulationContext.TriggerEvents,
+                        }
                     });
                     
                     {
@@ -505,7 +529,6 @@ namespace AnotherECS.Physics
             marker.End();
 
         }
-
     }
     
 }
