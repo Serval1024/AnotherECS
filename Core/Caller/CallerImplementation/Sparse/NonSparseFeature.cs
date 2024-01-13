@@ -19,14 +19,14 @@ namespace AnotherECS.Core.Caller
         where TDense : unmanaged
     {
         private ushort _itemId;
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
 
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(GlobalDependencies* dependencies, ushort callerId)
+        public void Config(Dependencies* dependencies, ushort callerId)
         {
             _dependencies = dependencies;
             _itemId = callerId;
@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Caller
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies) { }
+        public void LayoutAllocate(ref ULayout<TAllocator, bool, TDense, uint> layout, TAllocator* allocator, ref Dependencies dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, bool, TDense, uint> layout, uint capacity)
@@ -56,7 +56,7 @@ namespace AnotherECS.Core.Caller
             => _dependencies->archetype.IsHasItem(_dependencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
@@ -93,7 +93,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, ref GlobalDependencies dependencies, EntityId id, uint denseIndex) { }
+        public void SetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, EntityId id, uint denseIndex) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref bool GetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, EntityId id)

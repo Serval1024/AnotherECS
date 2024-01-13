@@ -62,7 +62,7 @@ namespace AnotherECS.Core.Caller
         private ULayout<TAllocator, TSparse, TDense, TDenseIndex>* _layout;
         private TAllocator* _allocator;
         private MemoryHandle _layoutMemoryHandle;
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
         private ComponentFunction<TDense> _componentFunction;
 
         private ushort _elementId;
@@ -162,7 +162,7 @@ namespace AnotherECS.Core.Caller
             => _layout;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GlobalDependencies* GetDependencies()
+        public Dependencies* GetDependencies()
             => _dependencies;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,7 +170,7 @@ namespace AnotherECS.Core.Caller
             => typeof(TDense);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICaller<TDense>.Config(GlobalDependencies* dependencies, ushort id, State state, ComponentFunction<TDense> componentFunction)
+        void ICaller<TDense>.Config(Dependencies* dependencies, ushort id, State state, ComponentFunction<TDense> componentFunction)
         {
             _dependencies = dependencies;
             _allocator = default(TMemoryAllocatorProvider).GetStage1(_dependencies);

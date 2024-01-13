@@ -67,7 +67,9 @@ namespace AnotherECS.Core.Threading
 
                     if (task.isMainThread)
                     {
+                        _worker.LockWakeup();
                         task.task.Invoke();
+                        _worker.UnlockWakeup();
                     }
                     else
                     {
@@ -99,6 +101,14 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => _worker.IsBusy() || _tasks.Count > 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInWork()
+            => _worker.GetInWork();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetWorkingThreadCount()
+            => _worker.GetWorkingThreadCount();
 
         public void Dispose()
         {

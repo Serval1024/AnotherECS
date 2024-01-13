@@ -30,7 +30,7 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, GlobalDependencies* dependencies)
+        public void Config(State state, Dependencies* dependencies)
         {
             this.state = state;
             _temp = new NContainer<BAllocator, NArray<BAllocator, byte>>(&dependencies->bAllocator, default);
@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
             _allocator = allocator;
             _layoutMemoryHandle = allocator->Allocate((uint)sizeof(GenerationULayout<TAllocator>));

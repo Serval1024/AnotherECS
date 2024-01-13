@@ -8,7 +8,7 @@ namespace AnotherECS.Core.Caller
         public State state;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, GlobalDependencies* dependencies)
+        public void Config(State state, Dependencies* dependencies)
         {
             this.state = state;
         }

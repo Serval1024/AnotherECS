@@ -28,7 +28,7 @@ namespace AnotherECS.Core
 
         #region data
         private RawAllocator _allocator;
-        private GlobalDependencies* _dependencies;        
+        private Dependencies* _dependencies;        
         private uint _layoutCount;
         private uint _nextTickForEvent;
 
@@ -41,9 +41,10 @@ namespace AnotherECS.Core
         private Events _events;
         #endregion
 
-        #region data support
+        #region thread support
         private object _eventsLocker = new();
         private object _tickStartedLocker = new();
+        private object _entitiesLocker = new();
         #endregion
 
         #region data cache
@@ -82,16 +83,18 @@ namespace AnotherECS.Core
         internal void SetOption(StateOption option)
         {
             _option = option;
+            _dependencies->processingId = _option.processingId;
             SetParallelMax(_option.parallelMax);
+            
         }
 
-        private GlobalDependencies* CreateGlobalDependencies()
-            => (GlobalDependencies*)_allocator.Allocate((uint)sizeof(GlobalDependencies)).pointer;
+        private Dependencies* CreateDependencies()
+            => (Dependencies*)_allocator.Allocate((uint)sizeof(Dependencies)).pointer;
 
         private void SystemInit(in StateConfig config, in TickProvider tickProvider)
         {
             _allocator = new RawAllocator();
-            _dependencies = CreateGlobalDependencies();
+            _dependencies = CreateDependencies();
 
             _dependencies->config = config;
             _dependencies->tickProvider = tickProvider;
@@ -144,7 +147,7 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.AddDepency(new WPtr<GlobalDependencies>(_dependencies));
+            writer.AddDepency(new WPtr<Dependencies>(_dependencies));
             writer.AddDepency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
             writer.AddDepency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             writer.AddDepency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
@@ -166,13 +169,13 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = CreateGlobalDependencies();
+            _dependencies = CreateDependencies();
 
             var bAllocatorId = reader.ReadUInt32();
             var hAllocatorId = reader.ReadUInt32();
             var altHAllocatorId = reader.ReadUInt32();
 
-            reader.AddDepency(new WPtr<GlobalDependencies>(_dependencies));
+            reader.AddDepency(new WPtr<Dependencies>(_dependencies));
             reader.AddDepency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
             reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
@@ -258,7 +261,11 @@ namespace AnotherECS.Core
             {
                 ResizeStorages(_dependencies->entities.GetCapacity());
             }
-            var id = _dependencies->entities.Allocate();
+            EntityId id = 0;
+            lock (_entitiesLocker)
+            {
+                id = _dependencies->entities.Allocate();
+            }
             _dependencies->archetype.Add(id);
             return id;
         }
@@ -869,7 +876,7 @@ namespace AnotherECS.Core
             => GetCaller<T>().ReadVersion();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal GlobalDependencies* GetGlobalDependencies()
+        internal Dependencies* GetDependencies()
             => _dependencies;
         #endregion
 

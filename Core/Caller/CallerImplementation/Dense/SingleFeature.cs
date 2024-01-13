@@ -21,7 +21,7 @@ namespace AnotherECS.Core.Caller
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
             layout.dense.Allocate(allocator, 1);
             layout.denseIndex = GetIndex() + 1;

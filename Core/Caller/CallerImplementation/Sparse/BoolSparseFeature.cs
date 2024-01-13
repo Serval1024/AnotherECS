@@ -22,7 +22,7 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(GlobalDependencies* dependencies, ushort callerId) { }
+        public void Config(Dependencies* dependencies, ushort callerId) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -30,7 +30,7 @@ namespace AnotherECS.Core.Caller
            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, bool, TDense, ushort> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
             layout.sparse.Allocate(allocator, dependencies.config.general.entityCapacity);
         }
@@ -54,7 +54,7 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, bool, TDense, ushort>
         {
             AIterable iterable = default;
@@ -93,7 +93,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref GlobalDependencies dependencies, EntityId id, ushort denseIndex)
+        public void SetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, EntityId id, ushort denseIndex)
         {
             layout.sparse.GetPtr()[id] = true;
         }

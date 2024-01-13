@@ -46,7 +46,7 @@ namespace AnotherECS.Core.Caller
     internal interface ICaller<TComponent> : ICaller
         where TComponent : unmanaged
     {
-        unsafe void Config(GlobalDependencies* dependencies, ushort id, State state, ComponentFunction<TComponent> componentFunction);
+        unsafe void Config(Dependencies* dependencies, ushort id, State state, ComponentFunction<TComponent> componentFunction);
         TComponent Create();
         bool IsHas(EntityId id);
         void Add(EntityId id, ref TComponent component);

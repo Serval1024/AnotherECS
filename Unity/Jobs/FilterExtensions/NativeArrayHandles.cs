@@ -21,8 +21,8 @@ namespace AnotherECS.Unity.Jobs
         public NativeArrayHandles(State state)
         {
             _state = state;
-            _byIds = new NArray<BAllocator, Handle<Dummy>>(&state.GetGlobalDependencies()->bAllocator, 1);
-            _byComponents = new NArray<BAllocator, Handle<Dummy>>(&state.GetGlobalDependencies()->bAllocator, 1);
+            _byIds = new NArray<BAllocator, Handle<Dummy>>(&state.GetDependencies()->bAllocator, 1);
+            _byComponents = new NArray<BAllocator, Handle<Dummy>>(&state.GetDependencies()->bAllocator, 1);
             UintDummy = new NativeArray<uint>(0, Allocator.Persistent);
         }
 

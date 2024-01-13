@@ -22,6 +22,7 @@ namespace AnotherECS.Core
             {
                 isMultiThreadMode = !IsDeterministicSequence(),
                 parallelMax = GetParallelMax(),
+                processingId = _systemProcessing.GetProcessingId(),
             });
         }
 

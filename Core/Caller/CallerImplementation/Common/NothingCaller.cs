@@ -15,13 +15,13 @@ namespace AnotherECS.Core.Caller
         public void Dispose() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, GlobalDependencies* dependencies) { }
+        public void Config(State state, Dependencies* dependencies) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(ref GlobalDependencies dependencies) { }
+        public void Config(ref Dependencies dependencies) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref GlobalDependencies dependencies, uint id, ushort elementId) { }
+        public void Add(ref Dependencies dependencies, uint id, ushort elementId) { }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref GlobalDependencies dependencies, uint id, ushort elementId) { }
+        public void Remove(ref Dependencies dependencies, uint id, ushort elementId) { }
     }
 
     [IgnoreCompile]
@@ -60,10 +60,10 @@ namespace AnotherECS.Core.Caller
             => false; 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, GlobalDependencies* dependencies) { }
+        public void Config(State state, Dependencies* dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies) { }
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity)
@@ -73,10 +73,10 @@ namespace AnotherECS.Core.Caller
         public void Dispose() { }       
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Change(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex index) { }
+        public void Change(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, TDenseIndex index) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DropChange(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count) { }
+        public void DropChange(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetVersion(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id)
@@ -97,7 +97,7 @@ namespace AnotherECS.Core.Caller
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public void ForEach<AIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
             where AIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,10 +119,10 @@ namespace AnotherECS.Core.Caller
         public void RebindMemory(ref ComponentFunction<TDense> componentFunction, ref MemoryRebinderContext rebinder, ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component) { }
+        public void Construct(ref ComponentFunction<TDense> componentFunction, ref Dependencies dependencies, ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(ref ComponentFunction<TDense> componentFunction, ref GlobalDependencies dependencies, ref TDense component) { }
+        public void Deconstruct(ref ComponentFunction<TDense> componentFunction, ref Dependencies dependencies, ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)

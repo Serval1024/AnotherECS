@@ -72,6 +72,18 @@ namespace AnotherECS.Core.Threading
             => _impl.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInWork()
+            => _impl.GetInWork();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetThreadMax()
+            => 1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetWorkingThreadCount()
+            => 1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
             _impl.Wait();
@@ -84,6 +96,10 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetParallelMax()
             => _impl.GetParallelMax();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetProcessingId()
+            => _impl.GetProcessingId();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()

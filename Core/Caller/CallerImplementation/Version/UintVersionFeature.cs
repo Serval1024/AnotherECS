@@ -25,7 +25,7 @@ namespace AnotherECS.Core.Caller
             => default(TSparseBoolConst).Is;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref GlobalDependencies dependencies)
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
             layout.tickVersion.Allocate(allocator, layout.dense.Length);
         }
@@ -47,7 +47,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Change(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint index)
+        public void Change(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref Dependencies dependencies, uint index)
         {
             layout.tickVersion.GetRef(index) = dependencies.tickProvider.tick;
         }
@@ -57,7 +57,7 @@ namespace AnotherECS.Core.Caller
             => layout.tickVersion.Get(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void DropChange(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref GlobalDependencies dependencies, uint startIndex, uint count)
+        public unsafe void DropChange(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
         {
             var tick = dependencies.tickProvider.tick;
             var versionPtr = layout.tickVersion.GetPtr();

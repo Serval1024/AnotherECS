@@ -21,7 +21,7 @@ namespace AnotherECS.Core
         private const uint TRANSITION_INIT_CAPACITY = 32;
         private const uint CHANGE_INIT_CAPACITY = 32;
 
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
 
         private NList<BAllocator, Node> _nodes;
         private NContainerList<BAllocator, HAllocator, IdCollection<HAllocator>> _collections;
@@ -40,7 +40,7 @@ namespace AnotherECS.Core
             get => locked != 0;
         }
 
-        public Archetype(GlobalDependencies* dependencies, INArray<ushort> isTemporaries)
+        public Archetype(Dependencies* dependencies, INArray<ushort> isTemporaries)
         {
             _dependencies = dependencies;
             
@@ -774,7 +774,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.GetDepency<WPtr<GlobalDependencies>>().Value;
+            _dependencies = reader.GetDepency<WPtr<Dependencies>>().Value;
             _nodes.UnpackBlittable(ref reader);
             _collections.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);

@@ -11,12 +11,13 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class MultiThreadProcessing<TThreadScheduler> : ISystemProcessing
+    internal sealed class MultiThreadProcessing<TThreadScheduler> : ISystemProcessing, IDisposable
         where TThreadScheduler : struct, IThreadScheduler
     {
         private readonly State _state;
         private TThreadScheduler _threadScheduler;
         private readonly int _parallelMax;
+        private readonly int _processingId;
 
         private Phase<SystemInvokeData<IConstructModule>, IConstructModule> _constructModule;
         private Phase<SystemInvokeData<ITickStartModule>, ITickStartModule> _tickStartModule;
@@ -36,6 +37,7 @@ namespace AnotherECS.Core.Threading
             _state = state;
             _threadScheduler = threadScheduler;
             _parallelMax = parallelMax;
+            _processingId = GlobalThreadWaiter.Register(this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,6 +125,18 @@ namespace AnotherECS.Core.Threading
             => _threadScheduler.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInWork()
+            => _threadScheduler.GetInWork();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetThreadMax()
+            => _threadScheduler.ParallelMax + 1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetWorkingThreadCount()
+            => _threadScheduler.GetWorkingThreadCount();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
             if (IsSingleParallel())
@@ -144,6 +158,10 @@ namespace AnotherECS.Core.Threading
             => (uint)_threadScheduler.ParallelMax;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetProcessingId()
+            => _processingId;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()
         {
             _threadScheduler.CallFromMainThread();
@@ -162,6 +180,7 @@ namespace AnotherECS.Core.Threading
         public void Dispose()
         {
             _threadScheduler.Dispose();
+            GlobalThreadWaiter.Unregister(_processingId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -330,7 +349,7 @@ namespace AnotherECS.Core.Threading
             {
                 if (_asyncBuffer.Count != 0)
                 {
-                    using var restrictions = new ThreadRestrictions(&_state.GetGlobalDependencies()->bAllocator);
+                    using var restrictions = new ThreadRestrictions(&_state.GetDependencies()->bAllocator);
 
                     var system = _systems[_asyncBuffer[0].GetType()];
                     _heads.Add(new Head() { index = system.index, count = 1 });

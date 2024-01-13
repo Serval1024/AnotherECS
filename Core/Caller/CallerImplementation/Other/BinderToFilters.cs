@@ -7,13 +7,13 @@ namespace AnotherECS.Core.Caller
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref GlobalDependencies dependencies, uint id, ushort elementId)
+        public void Add(ref Dependencies dependencies, uint id, ushort elementId)
         {
             dependencies.filters.Add(id, elementId, false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref GlobalDependencies dependencies, uint id, ushort elementId)
+        public void Remove(ref Dependencies dependencies, uint id, ushort elementId)
         {
             dependencies.filters.Remove(id, elementId);
         }
@@ -24,13 +24,13 @@ namespace AnotherECS.Core.Caller
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref GlobalDependencies dependencies, uint id, ushort elementId)
+        public void Add(ref Dependencies dependencies, uint id, ushort elementId)
         {
             dependencies.filters.Add(id, elementId, true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref GlobalDependencies dependencies, uint id, ushort elementId)
+        public void Remove(ref Dependencies dependencies, uint id, ushort elementId)
         {
             dependencies.filters.Remove(id, elementId);
         }

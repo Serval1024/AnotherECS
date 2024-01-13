@@ -20,7 +20,7 @@ namespace AnotherECS.Core.Caller
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref GlobalDependencies dependencies) { }
+        public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetCount(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex)
@@ -34,7 +34,7 @@ namespace AnotherECS.Core.Caller
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TDenseIndex AllocateId<TNumberProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies)
+        public TDenseIndex AllocateId<TNumberProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies)
             where TNumberProvider : struct, INumberProvier<TDenseIndex>
         {
             ref var denseIndex = ref layout.denseIndex;
@@ -45,6 +45,6 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DeallocateId(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref GlobalDependencies dependencies, TDenseIndex id) { }
+        public void DeallocateId(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, TDenseIndex id) { }
     }
 }

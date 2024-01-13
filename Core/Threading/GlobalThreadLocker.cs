@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Threading
 {
-    public class GlobalThreadLockerProvider
+    public class GlobalThreadLocker
     {
         private const int _CAPACITY = 16;
 

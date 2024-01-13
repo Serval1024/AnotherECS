@@ -9,6 +9,8 @@ namespace AnotherECS.Core
 {
     internal unsafe struct ConcurrentChangeHistory : IHistory, IDisposable, ISerialize
     {
+        private const int _ORDER_BUFFER_LENGTH = 32768;
+
         private BAllocator* _allocator;
 
         private bool _isNeedRefreshReference;
@@ -40,7 +42,7 @@ namespace AnotherECS.Core
                     {
                         for (uint i = bucketCount; i < _buckets.Length; ++i)
                         {
-                            GlobalThreadLockerProvider.DeallocateId(_lockers.GetRef(i));
+                            GlobalThreadLocker.DeallocateId(_lockers.GetRef(i));
                             _buckets.GetRef(i).Dispose();
                         }
                         _lockers.Resize(value);
@@ -54,7 +56,7 @@ namespace AnotherECS.Core
 
                         for (uint i = lastLength; i < _buckets.Length; ++i)
                         {
-                            _lockers.GetRef(i) = GlobalThreadLockerProvider.AllocateId();
+                            _lockers.GetRef(i) = GlobalThreadLocker.AllocateId();
                             _buckets.GetRef(i) = new BucketChangeHistory(_allocator, _capacity, _recordHistoryLength);
                         }
                     }
@@ -67,7 +69,7 @@ namespace AnotherECS.Core
                     else
                     {
                         _isOrders = true;
-                        _orders = new NArray<BAllocator, byte>(_allocator, 32);
+                        _orders = new NArray<BAllocator, byte>(_allocator, _ORDER_BUFFER_LENGTH);
                         _orders.SetAllByte(byte.MaxValue);
                     }
                 }
@@ -103,9 +105,9 @@ namespace AnotherECS.Core
                 var bucketId = (uint)Thread.CurrentThread.ManagedThreadId % _buckets.Length;
                 var currentIndex = Interlocked.Increment(ref _ordersIndex);
                 
-                _orders.GetRef(currentIndex % (int)_orders.Length) = (byte)bucketId;    //TODO SER thre resize?
+                _orders.GetRef(currentIndex % (int)_orders.Length) = (byte)bucketId;    //TODO thread resize?
 
-                lock (GlobalThreadLockerProvider.GetLocker(_lockers.Read(bucketId)))
+                lock (GlobalThreadLocker.GetLocker(_lockers.Read(bucketId)))
                 {
                     _buckets.GetRef(bucketId).Push(tick, ref memoryHandle, size);
                 }
@@ -161,7 +163,7 @@ namespace AnotherECS.Core
         {
             for (uint i = 0; i < _lockers.Length; ++i)
             {
-                GlobalThreadLockerProvider.DeallocateId(_lockers.GetRef(i));
+                GlobalThreadLocker.DeallocateId(_lockers.GetRef(i));
             }
 
             _buckets.Dispose();
@@ -203,7 +205,7 @@ namespace AnotherECS.Core
             _lockers.UnpackBlittable(ref reader);
             for (uint i = 0; i < _lockers.Length; ++i)
             {
-                _lockers.GetRef(i) = GlobalThreadLockerProvider.AllocateId();
+                _lockers.GetRef(i) = GlobalThreadLocker.AllocateId();
             }
             _isNeedRefreshReference = true;
         }

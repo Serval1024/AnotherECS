@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
+using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
@@ -15,12 +16,12 @@ namespace AnotherECS.Core
     {
         internal const ushort AllocateGeneration = 32768;
 
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
         private NContainer<HAllocator, NArray<HAllocator, EntityData>> _data;
         private NContainer<HAllocator, URecycle<uint, UintNumber>> _recycle;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Entities(GlobalDependencies* dependencies)
+        public Entities(Dependencies* dependencies)
         {
             _dependencies = dependencies;
             _data = new(&_dependencies->stage1HAllocator, new NArray<HAllocator, EntityData>(&_dependencies->stage1HAllocator, _dependencies->config.general.entityCapacity));
@@ -72,8 +73,13 @@ namespace AnotherECS.Core
         {
             if (IsNeedResizeDense())
             {
-                _data.GetRef().Resize(_data.ReadRef().Length << 1);
-                return true;
+                GlobalThreadWaiter.WaitOtherAndPassOne(_dependencies->processingId);    //Continue only one thread at a time. Other wait for pass thread finished.
+
+                if (IsNeedResizeDense())
+                {
+                    _data.GetRef().Resize(_data.ReadRef().Length << 1);
+                    return true;
+                }
             }
             return false;
         }
@@ -146,7 +152,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.GetDepency<WPtr<GlobalDependencies>>().Value;
+            _dependencies = reader.GetDepency<WPtr<Dependencies>>().Value;
             _data.Unpack(ref reader);
             _recycle.Unpack(ref reader);
         }

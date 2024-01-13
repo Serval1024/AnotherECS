@@ -12,7 +12,7 @@ namespace AnotherECS.Core.Threading
         internal ThreadRestrictionsBuilder(State state)
         {
             _state = state;
-            _components = new NList<BAllocator, ushort>(&state.GetGlobalDependencies()->bAllocator, 16);
+            _components = new NList<BAllocator, ushort>(&state.GetDependencies()->bAllocator, 16);
         }
 
         public void Dispose()

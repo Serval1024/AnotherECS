@@ -4,5 +4,6 @@ namespace AnotherECS.Core
     {
         public bool isMultiThreadMode;
         public uint parallelMax;
+        public int processingId;
     }
 }

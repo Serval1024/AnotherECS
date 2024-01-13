@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace AnotherECS.Core.Threading
@@ -75,8 +74,27 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInWork()
+            => _shared.GetInWork();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void LockWakeup()
+        {
+            _shared.LockWakeup();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UnlockWakeup()
+        {
+            _shared.UnlockWakeup();
+        }
+
+        public int GetWorkingThreadCount()
+            => _shared.GetWakeup();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
-            => _shared.IsAnyBusy();
+            => _shared.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Complete()
@@ -164,11 +182,20 @@ namespace AnotherECS.Core.Threading
             public readonly ConcurrentQueue<ITask> tasks = new();
             public readonly ManualResetEvent waiterComplete = new(true);
             public int inWork;
+            public int wakeup;
             public Action onNotBusy;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool IsAnyBusy()
-                => inWork != 0;
+            public int GetInWork()
+                => inWork;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool IsBusy()
+                => GetInWork() != 0;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public int GetWakeup()
+                => wakeup;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void LockBusy()
@@ -179,6 +206,16 @@ namespace AnotherECS.Core.Threading
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool UnlockBusy()
                 => Interlocked.Decrement(ref inWork) == 0;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void LockWakeup()
+            {
+                Interlocked.Increment(ref wakeup);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void UnlockWakeup()
+                => Interlocked.Decrement(ref wakeup);
         }
 
 #if ENABLE_IL2CPP
@@ -234,9 +271,11 @@ namespace AnotherECS.Core.Threading
             private void __Processing()
             {
                 while (_isLiving)
-                {       
+                {
                     _waiterTask.WaitOne();
+                    _shared.LockWakeup();
                     __TryProcessingTask(_shared);
+                    _shared.UnlockWakeup();
                 }
                 _waiterTask.Dispose();
             }

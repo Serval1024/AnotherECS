@@ -60,6 +60,14 @@ namespace AnotherECS.Core.Threading
             => false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetInWork()
+            => _worker.GetInWork();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetWorkingThreadCount()
+           => _worker.GetWorkingThreadCount();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
             _worker.Wait();

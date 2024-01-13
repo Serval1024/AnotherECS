@@ -31,7 +31,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LayoutAllocate(
             ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout,
-            ref GlobalDependencies dependencies,
+            ref Dependencies dependencies,
 
             TAllocator* allocator0,
             TAllocator* allocator1,

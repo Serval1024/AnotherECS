@@ -34,7 +34,7 @@ namespace AnotherECS.Core.Caller
     internal unsafe struct RebindMemoryData<TDense> : IEachData
         where TDense : unmanaged
     {
-        public GlobalDependencies* dependencies;
+        public Dependencies* dependencies;
         public ComponentFunction<TDense> componentFunction;
     }
 }

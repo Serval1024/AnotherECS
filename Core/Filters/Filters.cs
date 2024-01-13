@@ -8,13 +8,13 @@ namespace AnotherECS.Core
 {
     internal unsafe struct Filters : IDisposable
     {
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
         private FilterUpdater _filterUpdater;
         private NDictionary<BAllocator, Mask, uint, Mask> _maskTofilters;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Filters(GlobalDependencies* dependencies, uint capacity)
+        public Filters(Dependencies* dependencies, uint capacity)
         {
             _dependencies  = dependencies;
             _filterUpdater = FilterUpdater.Create(&dependencies->bAllocator, capacity);
@@ -82,7 +82,7 @@ namespace AnotherECS.Core
 
     internal unsafe struct FilterData : IDisposable
     {
-        private GlobalDependencies* _dependencies;
+        private Dependencies* _dependencies;
         private Mask _mask;
         private uint _id;
 
@@ -90,7 +90,7 @@ namespace AnotherECS.Core
         internal NArray<BAllocator, uint> entities;
         internal uint entityCount;
 
-        public FilterData(GlobalDependencies* dependencies, uint id, in Mask mask, in NList<BAllocator, uint> archetypeIds)
+        public FilterData(Dependencies* dependencies, uint id, in Mask mask, in NList<BAllocator, uint> archetypeIds)
         {
             _dependencies = dependencies;
             _mask = mask;

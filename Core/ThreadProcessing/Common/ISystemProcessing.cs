@@ -2,7 +2,21 @@
 
 namespace AnotherECS.Core
 {
-    public interface ISystemProcessing : IDisposable
+    public interface IThreadProcessing
+    {
+        bool IsBusy();
+        int GetInWork();
+        int GetThreadMax();
+        int GetWorkingThreadCount();
+        void Wait();
+        bool IsDeterministicSequence();
+        uint GetParallelMax();
+
+        void CallFromMainThread();
+        int GetProcessingId();
+    }
+
+    public interface ISystemProcessing : IThreadProcessing, IDisposable
     {
         void Prepare(IGroupSystem systemGroup);
 
@@ -20,13 +34,6 @@ namespace AnotherECS.Core
         void Receive();
 
         void RevertTo(uint tick);
-
-        bool IsBusy();
-        void Wait();
-        bool IsDeterministicSequence();
-        uint GetParallelMax();
-
-        void CallFromMainThread();
 
         void TickFullLoop();
     }

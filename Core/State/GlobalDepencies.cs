@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct GlobalDependencies : ISerialize
+    internal unsafe struct Dependencies : ISerialize
     {
         public Entities entities;
         public Archetype archetype;
@@ -16,6 +16,7 @@ namespace AnotherECS.Core
 
         public Filters filters;
         public uint componentTypesCount;
+        public int processingId;
 
         public MemoryRebinderContext currentMemoryRebinder;
 
