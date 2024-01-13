@@ -9,9 +9,9 @@ namespace AnotherECS.Physics
     public static class PhysicsExtensions
     {
         public static ThreadRestrictionsBuilder UsePhysicsData(ref this ThreadRestrictionsBuilder builder)
-            => builder.Use<PhysicsOneShotData>();
+            => builder.Use<PhysicsRestrictions>();
 
-        public static PhysicsOneShotData GetPhysicsData(this State state)
+        public static PhysicsOneShotConfig GetPhysicsData(this State state)
         {
 #if !ANOTHERECS_RELEASE
             if(!state.IsHasConfig<PhysicsOneShotConfig>())
@@ -19,7 +19,7 @@ namespace AnotherECS.Physics
                 throw new System.InvalidOperationException("Physics has not been added to ecs.");
             }
 #endif
-            return state.GetConfig<PhysicsOneShotConfig>().data;
+            return state.GetConfig<PhysicsOneShotConfig>();
         }
 
         public static void CreatePhysics(this State state, EntityId id, BlobAssetReference<Collider> collider, float3 position, quaternion rotation)

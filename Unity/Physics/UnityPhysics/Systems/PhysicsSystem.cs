@@ -69,7 +69,7 @@ namespace AnotherECS.Physics
                 .Use<PhysicsJoint>()
                 .Use<PhysicsConstrainedBodyPair>()
                 .Use<IsPhysicsStatic>()
-                .Use<PhysicsOneShotData>();
+                .Use<PhysicsRestrictions>();
         }
 
         public void Init(State state)
@@ -497,11 +497,8 @@ namespace AnotherECS.Physics
 
                     _state.SetOrAddConfig(new PhysicsOneShotConfig()
                     {
-                        data = new PhysicsOneShotData()
-                        {
-                            collisionEvents = simulationContext.CollisionEvents,
-                            triggerEvents = simulationContext.TriggerEvents,
-                        }
+                        collisionEvents = simulationContext.CollisionEvents,
+                        triggerEvents = simulationContext.TriggerEvents,
                     });
                     
                     {

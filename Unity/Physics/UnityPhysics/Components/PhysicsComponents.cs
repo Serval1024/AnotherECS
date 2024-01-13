@@ -14,14 +14,11 @@ namespace AnotherECS.Physics
 
     public struct PhysicsOneShotConfig : IConfig
     {
-        public PhysicsOneShotData data;
-    }
-
-    public struct PhysicsOneShotData : ISingle
-    {
         public CollisionEvents collisionEvents;
         public TriggerEvents triggerEvents;
     }
+    
+    public struct PhysicsRestrictions : ISingle { }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
     public struct Position : IComponent, IVersion

@@ -109,9 +109,6 @@ namespace AnotherECS.Core
         public static bool IsInjectComponent(Type type)
             => typeof(IInject).IsAssignableFrom(type);
 
-        public static bool IsUseISerialize(Type type)
-            => IsOption(type, ComponentOptions.UseISerialize);
-
         public static bool IsInjectMembers(Type type)
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
