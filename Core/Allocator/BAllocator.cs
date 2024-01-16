@@ -19,7 +19,6 @@ namespace AnotherECS.Core
         private uint _counter;
 
         private uint _id;
-        private int _threadLockerId;
 
         public ulong TotalBytesAllocated
         {
@@ -45,7 +44,6 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             _memoryChecker = new MemoryChecker<RawAllocator>(_rawAllocator);
 #endif
-            _threadLockerId = GlobalThreadLocker.AllocateId();
             _idToPointer = new(_rawAllocator, 128);
             _pointerToSize = new(_rawAllocator, 128);
             _counter = 0;
@@ -56,12 +54,9 @@ namespace AnotherECS.Core
         {
             var pointer = UnsafeMemory.Allocate(size);
 
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                ++_counter;
-                _pointerToSize.Add((ulong)pointer, new MemEntry() { id = _counter, size = size });
-                _idToPointer.Add(_counter, (ulong)pointer);
-            }
+            ++_counter;
+            _pointerToSize.Add((ulong)pointer, new MemEntry() { id = _counter, size = size });
+            _idToPointer.Add(_counter, (ulong)pointer);
 
             var c = (ushort)(_counter & 0xffff);
             var s = (ushort)(_counter >> 16);
@@ -71,11 +66,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate(ref MemoryHandle memoryHandle)
         {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                _pointerToSize.Remove((ulong)memoryHandle.pointer);
-                _idToPointer.Remove(GetId(ref memoryHandle));
-            }
+            _pointerToSize.Remove((ulong)memoryHandle.pointer);
+            _idToPointer.Remove(GetId(ref memoryHandle));
+
             UnsafeMemory.Deallocate(ref memoryHandle.pointer);
         }
 
@@ -101,22 +94,14 @@ namespace AnotherECS.Core
         public void EnterCheckChanges(ref MemoryHandle memoryHandle)
         {
 #if !ANOTHERECS_RELEASE
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                _memoryChecker.EnterCheckChanges(ref memoryHandle);
-            }
+            _memoryChecker.EnterCheckChanges(ref memoryHandle);
 #endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges(ref MemoryHandle memoryHandle)
 #if !ANOTHERECS_RELEASE
-        {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                return _memoryChecker.ExitCheckChanges(ref memoryHandle);
-            }
-        }
+            => _memoryChecker.ExitCheckChanges(ref memoryHandle);
 #else
             => false;
 #endif
@@ -124,21 +109,17 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
 #if !ANOTHERECS_RELEASE
-                _memoryChecker.Dispose();
+            _memoryChecker.Dispose();
 #endif
-                RawAllocator rawAllocator = default;
-                foreach (var pointer in _pointerToSize)
-                {
-                    rawAllocator.Deallocate((void*)pointer.key);
-                }
-
-                _pointerToSize.Dispose();
-                _idToPointer.Dispose();
+            RawAllocator rawAllocator = default;
+            foreach (var pointer in _pointerToSize)
+            {
+                rawAllocator.Deallocate((void*)pointer.key);
             }
-            GlobalThreadLocker.DeallocateId(_threadLockerId);
+
+            _pointerToSize.Dispose();
+            _idToPointer.Dispose();
 
             UnsafeMemory.Deallocate(ref _rawAllocator);
         }

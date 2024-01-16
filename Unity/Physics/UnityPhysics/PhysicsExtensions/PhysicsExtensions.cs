@@ -1,5 +1,4 @@
 using AnotherECS.Core;
-using AnotherECS.Core.Threading;
 using AnotherECS.Essentials.Physics;
 using AnotherECS.Mathematics;
 using EntityId = System.UInt32;
@@ -8,9 +7,6 @@ namespace AnotherECS.Physics
 {
     public static class PhysicsExtensions
     {
-        public static ThreadRestrictionsBuilder UsePhysicsData(ref this ThreadRestrictionsBuilder builder)
-            => builder.Use<PhysicsRestrictions>();
-
         public static PhysicsOneShotConfig GetPhysicsData(this State state)
         {
 #if !ANOTHERECS_RELEASE

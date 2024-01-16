@@ -112,10 +112,9 @@ namespace AnotherECS.Core
         {
             if (IsLocked)
             {
-                _changesBuffer.Push(        //TODO SER threading?
+                _changesBuffer.Push(
                     new BufferEntry()
                     {
-                        sortKey = Thread.CurrentThread.ManagedThreadId,
                         isAdd = true,
                         isTemporary = isTemporary,
                         entityId = id,
@@ -360,24 +359,19 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Unlock<TFilterUpdater>(ref TFilterUpdater filterUpdater, bool isSorting)
+        internal void Unlock<TFilterUpdater>(ref TFilterUpdater filterUpdater)
             where TFilterUpdater : struct, IFilterUpdater
         {
             --locked;
             if (locked == 0)
             {
-                PushData(ref filterUpdater, isSorting);
+                PushData(ref filterUpdater);
             }
         }
 
-        internal void PushData<TFilterUpdater>(ref TFilterUpdater filterUpdater, bool isSorting)
+        internal void PushData<TFilterUpdater>(ref TFilterUpdater filterUpdater)
             where TFilterUpdater : struct, IFilterUpdater
         {
-            if (isSorting)
-            {
-                _changesBuffer.Sort();
-            }
-
             while (!_changesBuffer.IsEmpty)
             {
                 var element = _changesBuffer.Pop();
@@ -785,18 +779,12 @@ namespace AnotherECS.Core
             _isTemporaries.UnpackBlittable(ref reader);
         }
 
-        private struct BufferEntry : IComparable<BufferEntry>
+        private struct BufferEntry
         {
-            public int sortKey;
-
             public bool isAdd;
             public bool isTemporary;
             public uint entityId;
             public ushort itemId;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int CompareTo(BufferEntry other)
-                => sortKey - other.sortKey;
         }
     }
 

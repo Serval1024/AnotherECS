@@ -8,10 +8,6 @@ namespace AnotherECS.Views
 {
     public static class ViewExtension
     {
-        public static ThreadRestrictionsBuilder UseView(ref this ThreadRestrictionsBuilder builder)
-            => builder.Use<ViewHandle>();
-
-        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State state, EntityId id)
             where T : IView

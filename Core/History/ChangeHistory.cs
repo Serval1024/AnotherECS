@@ -7,7 +7,7 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct BucketChangeHistory : IHistory, IDisposable, ISerialize
+    internal unsafe struct ChangeHistory : IHistory, IDisposable, ISerialize
     {
         private NArray<BAllocator, Meta> _meta;
         private NArray<BAllocator, byte> _buffer;
@@ -32,7 +32,7 @@ namespace AnotherECS.Core
 
         public uint ParallelMax { get => 1; set { } }
 
-        public BucketChangeHistory(BAllocator* allocator, uint capacity, uint recordHistoryLength)
+        public ChangeHistory(BAllocator* allocator, uint capacity, uint recordHistoryLength)
         {
             _meta = new NArray<BAllocator, Meta>(allocator, 32);
             _buffer = new NArray<BAllocator, byte>(allocator, capacity);
@@ -43,7 +43,7 @@ namespace AnotherECS.Core
         }
 
         public IHistory Create(BAllocator* allocator, uint historyCapacity, uint recordHistoryLength)
-            => new BucketChangeHistory(allocator, historyCapacity, recordHistoryLength);
+            => new ChangeHistory(allocator, historyCapacity, recordHistoryLength);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Push(uint tick, ref MemoryHandle memoryHandle, uint size)

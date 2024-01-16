@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AnotherECS.Core.Processing;
 
 namespace AnotherECS.Core
 {
@@ -15,8 +16,6 @@ namespace AnotherECS.Core
     public enum WorldThreadingLevel
     {
         MainThreadOnly = 0,
-        NonBlockOneThread = 1,
-        BlockMultiThread = 2,
-        NonBlockMultiThread = 3,
+        OneThread = 1,
     }
 }

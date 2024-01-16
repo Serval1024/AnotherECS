@@ -16,7 +16,6 @@ namespace AnotherECS.Core
 
         public Filters filters;
         public uint componentTypesCount;
-        public int processingId;
 
         public MemoryRebinderContext currentMemoryRebinder;
 

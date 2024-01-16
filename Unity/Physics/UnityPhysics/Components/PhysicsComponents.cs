@@ -17,8 +17,6 @@ namespace AnotherECS.Physics
         public CollisionEvents collisionEvents;
         public TriggerEvents triggerEvents;
     }
-    
-    public struct PhysicsRestrictions : ISingle { }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
     public struct Position : IComponent, IVersion

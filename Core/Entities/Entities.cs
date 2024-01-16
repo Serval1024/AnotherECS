@@ -73,13 +73,8 @@ namespace AnotherECS.Core
         {
             if (IsNeedResizeDense())
             {
-                GlobalThreadWaiter.WaitOtherAndPassOne(_dependencies->processingId);    //Continue only one thread at a time. Other wait for pass thread finished.
-
-                if (IsNeedResizeDense())
-                {
-                    _data.GetRef().Resize(_data.ReadRef().Length << 1);
-                    return true;
-                }
+                _data.GetRef().Resize(_data.ReadRef().Length << 1);
+                return true;
             }
             return false;
         }

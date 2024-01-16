@@ -17,7 +17,6 @@ namespace AnotherECS.Core
         private BAllocator* _allocator;
         private NArray<BAllocator, Chunk> _chunks;
 
-        private int _threadLockerId;
         private uint _id;
         private uint _chunkAllocated;
         private uint _multiplier;
@@ -25,7 +24,7 @@ namespace AnotherECS.Core
         private uint _tick;
 
 #if !ANOTHERECS_HISTORY_DISABLE
-        private ConcurrentChangeHistory _history;
+        private ChangeHistory _history;
 #endif
 #if !ANOTHERECS_RELEASE
         private MemoryChecker<BAllocator> _memoryChecker;
@@ -93,7 +92,6 @@ namespace AnotherECS.Core
 
             const uint chunkPreallocation = CHUNK_PREALLOCATION_COUNT + 1;
 
-            _threadLockerId = GlobalThreadLocker.AllocateId();
             _id = id;
             _allocator = allocator;
             _chunks = new NArray<BAllocator, Chunk>(_allocator, chunkLimit);
@@ -107,7 +105,7 @@ namespace AnotherECS.Core
 
             _tick = 0;
 #if !ANOTHERECS_HISTORY_DISABLE
-            _history = (ConcurrentChangeHistory)default(ConcurrentChangeHistory).Create(_allocator, historyCapacity, recordHistoryLength);
+            _history = (ChangeHistory)default(ChangeHistory).Create(_allocator, historyCapacity, recordHistoryLength);
 #endif
             for (uint i = ChunkDownBound; i < chunkPreallocation; ++i)
             {
@@ -176,24 +174,20 @@ namespace AnotherECS.Core
             }
 #endif
             var segmentCount = GetSegmentCountBySize(size);
-            Location location = default;
 
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                location = FindLocation(segmentCount);
+            var location = FindLocation(segmentCount);
 #if !ANOTHERECS_RELEASE
-                if (location.chunk == 0)
-                {
-                    throw new Exceptions.ReachedLimitChunkException(ChunkLimit);
-                }
-
-                if (segmentCount >= SEGMENT_LIMIT)
-                {
-                    throw new Exceptions.ReachedLimitAmountOfSegmentException(SEGMENT_LIMIT);
-                }
-#endif
-                LockLocation(location, segmentCount);
+            if (location.chunk == 0)
+            {
+                throw new Exceptions.ReachedLimitChunkException(ChunkLimit);
             }
+
+            if (segmentCount >= SEGMENT_LIMIT)
+            {
+                throw new Exceptions.ReachedLimitAmountOfSegmentException(SEGMENT_LIMIT);
+            }
+#endif
+            LockLocation(location, segmentCount);
 
             ref var chunk = ref _chunks.GetRef(location.chunk);
 
@@ -216,10 +210,8 @@ namespace AnotherECS.Core
         {
             if (memoryHandle.IsValid)
             {
-                lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-                {
-                    UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
-                }
+
+                UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
                 memoryHandle = default;
             }
         }
@@ -235,34 +227,31 @@ namespace AnotherECS.Core
         {
             var requirementSegmentCount = GetSegmentCountBySize(size);
 
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
+            var currentSegmentCount = GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment);
+
+            if (requirementSegmentCount > currentSegmentCount)
             {
-                var currentSegmentCount = GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment);
+                var segment = memoryHandle.segment;
 
-                if (requirementSegmentCount > currentSegmentCount)
+                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
+                var deltaCount = requirementSegmentCount - currentSegmentCount;
+
+                if (chunk.NextFree(segment + currentSegmentCount, deltaCount))
                 {
-                    var segment = memoryHandle.segment;
-
-                    ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-                    var deltaCount = requirementSegmentCount - currentSegmentCount;
-
-                    if (chunk.NextFree(segment + currentSegmentCount, deltaCount))
-                    {
-                        chunk.LockSegments(segment + currentSegmentCount, deltaCount);
-                        chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
-
-                        UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
-                        return true;
-                    }
-
-                    return false;
-                }
-                else if (requirementSegmentCount != currentSegmentCount)
-                {
-                    ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-                    chunk.UnlockSegments(memoryHandle.segment + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
+                    chunk.LockSegments(segment + currentSegmentCount, deltaCount);
                     chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+
+                    UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
+                    return true;
                 }
+
+                return false;
+            }
+            else if (requirementSegmentCount != currentSegmentCount)
+            {
+                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
+                chunk.UnlockSegments(memoryHandle.segment + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
+                chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
             }
 
             Dirty(ref memoryHandle);
@@ -274,22 +263,14 @@ namespace AnotherECS.Core
         public void EnterCheckChanges(ref MemoryHandle memoryHandle)
         {
 #if !ANOTHERECS_RELEASE
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                _memoryChecker.EnterCheckChanges(ref memoryHandle);
-            }
+            _memoryChecker.EnterCheckChanges(ref memoryHandle);
 #endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges(ref MemoryHandle memoryHandle)
 #if !ANOTHERECS_RELEASE
-        {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                return _memoryChecker.ExitCheckChanges(ref memoryHandle);
-            }
-        }
+            => _memoryChecker.ExitCheckChanges(ref memoryHandle);
 #else
             => false;
 #endif
@@ -297,12 +278,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool RevertTo(uint tick)
 #if !ANOTHERECS_RELEASE
-        {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                return _history.RevertTo(ref this, tick);
-            }
-        }
+            => _history.RevertTo(ref this, tick);
 #else
             => throw new NotSupportedException();
 #endif
@@ -310,18 +286,14 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            lock (GlobalThreadLocker.GetLocker(_threadLockerId))
-            {
-                for (uint i = ChunkDownBound; i < _chunkAllocated; ++i)
-                {
-                    _chunks.GetRef(i).Dispose();
-                }
-#if !ANOTHERECS_RELEASE
-                _history.Dispose();
-#endif
-            }
 
-            GlobalThreadLocker.DeallocateId(_threadLockerId);
+            for (uint i = ChunkDownBound; i < _chunkAllocated; ++i)
+            {
+                _chunks.GetRef(i).Dispose();
+            }
+#if !ANOTHERECS_RELEASE
+            _history.Dispose();
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -365,7 +337,6 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             _history.Unpack(ref reader);
 #endif
-            _threadLockerId = GlobalThreadLocker.AllocateId();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Processing
 {
     public interface IThreadProcessing
     {
@@ -13,7 +13,6 @@ namespace AnotherECS.Core
         uint GetParallelMax();
 
         void CallFromMainThread();
-        int GetProcessingId();
     }
 
     public interface ISystemProcessing : IThreadProcessing, IDisposable

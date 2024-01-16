@@ -1,17 +1,18 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System;
+using AnotherECS.Core.Threading;
 
-namespace AnotherECS.Core.Threading
+namespace AnotherECS.Core.Processing
 {
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal struct OneNonBlockThreadScheduler : IThreadScheduler, IDisposable
+    internal struct OneNonBlockThreadScheduler : IThreadScheduler<Task>, IDisposable
     {
-        private ThreadWorker _worker;
-        private Queue<TaskDeferred> _tasks;
+        private ThreadWorker<Task> _worker;
+        private Queue<Task> _tasks;
 
         public int ParallelMax
         {
@@ -22,26 +23,24 @@ namespace AnotherECS.Core.Threading
         public static OneNonBlockThreadScheduler Create()
             => new()
             {
-                _worker = new ThreadWorker(1),
-                _tasks = new Queue<TaskDeferred>(),
+                _worker = new ThreadWorker<Task>(1),
+                _tasks = new Queue<Task>(),
             };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Run<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex)
-            where THandler : struct, ITaskHandler<TData>
-            where TData : struct
+        public void Run(Task task)
         {
-            EnqueueMain<THandler, TData>(tasks, mainThreadIndex, _tasks);
-            Enqueue<THandler, TData>(tasks, mainThreadIndex, _tasks);
+            _tasks.Enqueue(task);
             TryAsyncContinue();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Run<THandler, TData>(ThreadArg<TData> task)
-            where THandler : struct, ITaskHandler<TData>
-            where TData : struct
+        public void Run(Span<Task> tasks)
         {
-            Enqueue(new Task<THandler, TData>() { arg = task.arg }, task.isMainThread, _tasks);
+            for (int i = 0; i < tasks.Length; ++i)
+            {
+                _tasks.Enqueue(tasks[i]);
+            }
             TryAsyncContinue();
         }
 
@@ -55,6 +54,10 @@ namespace AnotherECS.Core.Threading
         public void Complete()
         {
             _worker.Wait();
+            while (_tasks.Count > 0)
+            {
+                _tasks.Dequeue().Invoke();
+            }
         }
 
         public void CallFromMainThread()
@@ -64,28 +67,25 @@ namespace AnotherECS.Core.Threading
                 while (_tasks.Count > 0)
                 {
                     var task = _tasks.Dequeue();
-
                     if (task.isMainThread)
                     {
-                        _worker.LockWakeup();
-                        task.task.Invoke();
-                        _worker.UnlockWakeup();
+                        task.Invoke();   
                     }
                     else
                     {
-                        _worker.Schedule(task.task);
+                        _worker.Schedule(task);
 
                         while (_tasks.Count > 0)
                         {
                             task = _tasks.Dequeue();
 
-                            if (task.IsBreaker || task.isMainThread)
+                            if (task.isMainThread)
                             {
                                 return;
                             }
                             else
                             {
-                                _worker.Schedule(task.task);
+                                _worker.Schedule(task);
                             }
                         }
                     }
@@ -106,10 +106,6 @@ namespace AnotherECS.Core.Threading
         public int GetInWork()
             => _worker.GetInWork();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetWorkingThreadCount()
-            => _worker.GetWorkingThreadCount();
-
         public void Dispose()
         {
             SyncDispose();
@@ -121,46 +117,16 @@ namespace AnotherECS.Core.Threading
             while (_tasks.Count > 0)
             {
                 var task = _tasks.Peek();
-                if (task.IsBreaker || task.isMainThread)
+                if (task.isMainThread)
                 {
                     return;
                 }
                 else
                 {
                     _tasks.Dequeue();
-                    _worker.Schedule(task.task);
+                    _worker.Schedule(task);
                 }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Enqueue<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
-            where THandler : struct, ITaskHandler<TData>
-            where TData : struct
-        {
-            for (int i = 0; i < mainThreadIndex; i++)
-            {
-                buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, false));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void EnqueueMain<THandler, TData>(Span<ThreadArg<TData>> tasks, int mainThreadIndex, Queue<TaskDeferred> buffer)
-            where THandler : struct, ITaskHandler<TData>
-            where TData : struct
-        {
-            for (int i = mainThreadIndex; i < tasks.Length; i++)
-            {
-                buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = tasks[i].arg }, true));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Enqueue<THandler, TData>(Task<THandler, TData> task, bool isMainThread, Queue<TaskDeferred> buffer)
-           where THandler : struct, ITaskHandler<TData>
-           where TData : struct
-        {
-            buffer.Enqueue(new TaskDeferred(new Task<THandler, TData>() { arg = task.arg }, isMainThread));
         }
     }
 }

@@ -41,10 +41,8 @@ namespace AnotherECS.Core
         private Events _events;
         #endregion
 
-        #region thread support
-        private object _eventsLocker = new();
-        private object _tickStartedLocker = new();
-        private object _entitiesLocker = new();
+        #region threading
+        private readonly object _eventLock = new();
         #endregion
 
         #region data cache
@@ -83,7 +81,6 @@ namespace AnotherECS.Core
         internal void SetOption(StateOption option)
         {
             _option = option;
-            _dependencies->processingId = _option.processingId;
             SetParallelMax(_option.parallelMax);
             
         }
@@ -261,11 +258,7 @@ namespace AnotherECS.Core
             {
                 ResizeStorages(_dependencies->entities.GetCapacity());
             }
-            EntityId id = 0;
-            lock (_entitiesLocker)
-            {
-                id = _dependencies->entities.Allocate();
-            }
+            var id = _dependencies->entities.Allocate();
             _dependencies->archetype.Add(id);
             return id;
         }
@@ -302,11 +295,7 @@ namespace AnotherECS.Core
             }
 
             _dependencies->archetype.Remove(archetypeId, id);
-
-            lock (_entitiesLocker)
-            {
-                _dependencies->entities.Deallocate(id);
-            }
+            _dependencies->entities.Deallocate(id);
         }
 
         public uint Count(EntityId id)
@@ -637,7 +626,10 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
+            lock (_eventLock)
+            {
+                Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
+            }
         }
         #endregion
 
@@ -655,7 +647,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UnlockFilter()
         {
-            _dependencies->filters.Unlock(_option.isMultiThreadMode);
+            _dependencies->filters.Unlock();
         }
         #endregion
 
@@ -687,14 +679,11 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
         {
-            lock (_tickStartedLocker)
-            {
-                ++Tick;
-                _dependencies->stage1HAllocator.TickStarted(Tick);
-                _dependencies->stage0HAllocator.TickStarted(Tick);
+            ++Tick;
+            _dependencies->stage1HAllocator.TickStarted(Tick);
+            _dependencies->stage0HAllocator.TickStarted(Tick);
 
-                FlushEvents();
-            }
+            FlushEvents();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -785,11 +774,8 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            lock (_eventsLocker)
-            {
-                _events.Send(@event);
-                _nextTickForEvent = _events.NextTickForEvent;
-            }
+            _events.Send(@event);
+            _nextTickForEvent = _events.NextTickForEvent;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -806,7 +792,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void CollectEvent(uint tick, List<ITickEvent> result)
         {
-            lock (_eventsLocker)
+            lock (_eventLock)
             {
                 _events.CollectForProcessing(tick, result);
                 _nextTickForEvent = _events.NextTickForEvent;

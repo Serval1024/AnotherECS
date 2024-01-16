@@ -9,7 +9,8 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public struct ThreadWorker : IDisposable
+    public struct ThreadWorker<TTask> : IDisposable
+        where TTask : struct, ITask
     {
         private Worker[] _workers;
         private readonly Shared _shared;
@@ -66,7 +67,7 @@ namespace AnotherECS.Core.Threading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Schedule(ITask task)
+        public void Schedule(TTask task)
         {
             _shared.tasks.Enqueue(task);
             _shared.LockBusy();
@@ -76,21 +77,6 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetInWork()
             => _shared.GetInWork();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void LockWakeup()
-        {
-            _shared.LockWakeup();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UnlockWakeup()
-        {
-            _shared.UnlockWakeup();
-        }
-
-        public int GetWorkingThreadCount()
-            => _shared.GetWakeup();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
@@ -146,7 +132,7 @@ namespace AnotherECS.Core.Threading
         private static void __TryProcessingTask(Shared shared)
         {
             bool isExecute = false;
-            while (shared.tasks.TryDequeue(out ITask task))
+            while (shared.tasks.TryDequeue(out TTask task))
             {
                 task.Invoke();
                 isExecute = shared.UnlockBusy();
@@ -179,10 +165,9 @@ namespace AnotherECS.Core.Threading
 #endif
         private class Shared
         {
-            public readonly ConcurrentQueue<ITask> tasks = new();
+            public readonly ConcurrentQueue<TTask> tasks = new();
             public readonly ManualResetEvent waiterComplete = new(true);
             public int inWork;
-            public int wakeup;
             public Action onNotBusy;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -194,10 +179,6 @@ namespace AnotherECS.Core.Threading
                 => GetInWork() != 0;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public int GetWakeup()
-                => wakeup;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void LockBusy()
             {
                 Interlocked.Increment(ref inWork);
@@ -206,16 +187,6 @@ namespace AnotherECS.Core.Threading
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool UnlockBusy()
                 => Interlocked.Decrement(ref inWork) == 0;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void LockWakeup()
-            {
-                Interlocked.Increment(ref wakeup);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void UnlockWakeup()
-                => Interlocked.Decrement(ref wakeup);
         }
 
 #if ENABLE_IL2CPP
@@ -273,9 +244,7 @@ namespace AnotherECS.Core.Threading
                 while (_isLiving)
                 {
                     _waiterTask.WaitOne();
-                    _shared.LockWakeup();
                     __TryProcessingTask(_shared);
-                    _shared.UnlockWakeup();
                 }
                 _waiterTask.Dispose();
             }

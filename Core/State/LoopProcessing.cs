@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using AnotherECS.Core.Processing;
 
 namespace AnotherECS.Core
 {
@@ -22,7 +23,6 @@ namespace AnotherECS.Core
             {
                 isMultiThreadMode = !IsDeterministicSequence(),
                 parallelMax = GetParallelMax(),
-                processingId = _systemProcessing.GetProcessingId(),
             });
         }
 

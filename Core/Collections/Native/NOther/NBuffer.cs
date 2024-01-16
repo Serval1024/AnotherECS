@@ -6,7 +6,7 @@ namespace AnotherECS.Core.Collection
 {
     public unsafe struct NBuffer<TAllocator, T> : INative, ISerialize, IRebindMemoryHandle
         where TAllocator : unmanaged, IAllocator
-        where T : unmanaged, IComparable<T>
+        where T : unmanaged
     {
         private NList<TAllocator, T> _data;
 
@@ -44,11 +44,6 @@ namespace AnotherECS.Core.Collection
 #endif
             _data.RemoveLast();
             return *(_data.ReadPtr() + _data.Count);
-        }
-
-        public void Sort()
-        {
-            _data.Sort();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

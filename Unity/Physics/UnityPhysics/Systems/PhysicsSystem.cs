@@ -10,7 +10,6 @@ using AnotherECS.Essentials.Physics;
 using AnotherECS.Essentials.Physics.Components;
 using AnotherECS.Unity.Jobs;
 using EntityId = System.Int32;
-using AnotherECS.Core.Threading;
 
 namespace AnotherECS.Physics
 {    
@@ -37,7 +36,7 @@ namespace AnotherECS.Physics
         Rotation>;
     
     [SystemOrder(SystemOrder.First)]
-    public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IMainThread, IAsyncThread, IDisposable
+    public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IMainThread, IDisposable
     {
         private SimulationContext simulationContext;
         private Filter<Position, Rotation, IsPhysicsStatic> staticBodies;
@@ -51,27 +50,7 @@ namespace AnotherECS.Physics
 
         private State _state;
 
-        public void Restrictions(ref ThreadRestrictionsBuilder builder)
-        {
-            builder
-                .Use(staticBodies)
-                .Use(dynamicBodies)
-                .Use(joints)
-                .Use<Position>()
-                .Use<Position>()
-                .Use<PhysicsCollider>()
-                .Use<PhysicsVelocity>()
-                .Use<PhysicsCustomTags>()
-                .Use<PhysicsMass>()
-                .Use<PhysicsGravityFactor>()
-                .Use<PhysicsDamping>()
-                .Use<PhysicsMassOverride>()
-                .Use<PhysicsJoint>()
-                .Use<PhysicsConstrainedBodyPair>()
-                .Use<IsPhysicsStatic>()
-                .Use<PhysicsRestrictions>();
-        }
-
+     
         public void Init(State state)
         {
             _state = state;

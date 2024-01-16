@@ -2,8 +2,6 @@
 using AnotherECS.Unsafe;
 #endif
 
-using AnotherECS.Core.Threading;
-
 namespace AnotherECS.Core
 {
     public interface ISystem { }
@@ -75,8 +73,4 @@ namespace AnotherECS.Core
 
     public interface ISyncThread : ISystem { }
     public interface IMainThread : ISystem { }
-    public interface IAsyncThread : ISystem
-    {
-        void Restrictions(ref ThreadRestrictionsBuilder builder);
-    }
 }

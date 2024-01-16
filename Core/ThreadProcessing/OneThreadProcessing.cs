@@ -1,79 +1,121 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using AnotherECS.Core.Threading;
 
-namespace AnotherECS.Core.Threading
+namespace AnotherECS.Core.Processing
 {
     internal sealed class OneThreadProcessing<TThreadScheduler> : ISystemProcessing
-        where TThreadScheduler : struct, IThreadScheduler
+        where TThreadScheduler : struct, IThreadScheduler<Task>
     {
-        private MultiThreadProcessing<TThreadScheduler> _impl;
+        private readonly State _state;
+        private readonly TThreadScheduler _threadScheduler;
+
+        private Task _stateTickStart;
+        private Task _stateTickFinished;
+
+        private StateRevertToTaskHandler _stateRevertToTaskHandler;
+        private Task _stateRevertTo;
+
+        private Task[] _constructSystems;
+
+        private Task[] _initSystems;
+        private Task[] _tickSystems;
+        private Task[] _destroySystems;
+
+        private Task _receivers;
 
         public OneThreadProcessing(State state, TThreadScheduler threadScheduler)
         {
-            _impl = new MultiThreadProcessing<TThreadScheduler>(state, 1, threadScheduler);
-        }
-
-        public void StateTickStart()
-        {
-            _impl.StateTickStart();
-        }
-
-        public void StateTickFinished()
-        {
-            _impl.TickFinished();
+            _state = state;
+            _threadScheduler = threadScheduler;
         }
 
         public void Prepare(IGroupSystem systemGroup)
         {
-            _impl.Prepare(systemGroup);
+            var systems = systemGroup.GetSystemsAll().ToArray();
+
+            _stateTickStart = new Task(new StateTickStartTaskHandler() { State = _state }, false);
+            _stateTickFinished = new Task(new StateTickFinishedTaskHandler() { State = _state }, false);
+
+            _stateRevertToTaskHandler = new StateRevertToTaskHandler() { State = _state };
+            _stateRevertTo = new Task(_stateRevertToTaskHandler, false);
+
+            _constructSystems = CreateTasks<ConstructTaskHandler, IConstructModule>(systems);
+
+            _initSystems = CreateTasks<SystemInitTaskHandler, IInitSystem>(systems);
+            _tickSystems = CreateTasks<SystemTickTaskHandler, ITickSystem>(systems);
+            _destroySystems = CreateTasks<SystemDestroyTaskHandler, IDestroySystem>(systems);
+
+            _receivers = new Task(new ReceiversTaskHandler()
+            {
+                State = _state,
+                receivers = ProcessingUtils.ToReceivers(Filter<IReceiverSystem>(systems)),
+                events = _state.GetEventCache(),
+            }, false);
+        }
+
+        public void StateTickStart()
+        {
+            _threadScheduler.Run(_stateTickStart);
+        }
+
+
+        public void StateTickFinished()
+        {
+            _threadScheduler.Run(_stateTickFinished);
         }
 
         public void Construct()
         {
-            _impl.Construct();
+            _threadScheduler.Run(_constructSystems);
         }
 
         public void TickStart()
         {
-            _impl.TickStart();
+            _threadScheduler.Run(_stateTickStart);
         }
 
         public void TickFinished()
         {
-            _impl.TickFinished();
+            _threadScheduler.Run(_stateTickFinished);
         }
 
         public void Init()
         {
-            _impl.Init();
+            _threadScheduler.Run(_initSystems.AsSpan());
         }
 
         public void Tick()
         {
-            _impl.Tick();
+            _threadScheduler.Run(_tickSystems.AsSpan());
         }
 
         public void Destroy()
         {
-            _impl.Destroy();
+            _threadScheduler.Run(_destroySystems.AsSpan());
         }
 
         public void Receive()
         {
-            _impl.Receive();
+            _threadScheduler.Run(_receivers);
         }
 
         public void RevertTo(uint tick)
         {
-            _impl.RevertTo(tick);
+            _stateRevertToTaskHandler.tick = tick;
+            _stateRevertTo.handler = _stateRevertToTaskHandler;
+            _threadScheduler.Run(_stateRevertTo);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
-            => _impl.IsBusy();
+            => _threadScheduler.IsBusy();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetInWork()
-            => _impl.GetInWork();
+            => _threadScheduler.GetInWork();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetThreadMax()
@@ -86,36 +128,53 @@ namespace AnotherECS.Core.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
-            _impl.Wait();
+            _threadScheduler.Complete();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()
-            => _impl.IsDeterministicSequence();
+            => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetParallelMax()
-            => _impl.GetParallelMax();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int GetProcessingId()
-            => _impl.GetProcessingId();
+            => (uint)_threadScheduler.ParallelMax;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CallFromMainThread()
         {
-            _impl.CallFromMainThread();
+            _threadScheduler.CallFromMainThread();
         }
 
         public void Dispose()
         {
-            _impl.Dispose();
+            _threadScheduler.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFullLoop()
         {
-            _impl.TickFullLoop();
+            StateTickStart();
+            TickStart();
+            Receive();
+            Tick();
+            TickFinished();
+            StateTickFinished();
         }
+
+        private Task[] CreateTasks<THandler, TSystem>(ISystem[] systems)
+            where THandler : struct, ITaskHandler, ISystemTaskHandler<TSystem>
+            where TSystem : ISystem
+            => Filter<TSystem>(systems)
+            .Select(p => new Task(new THandler() { State = _state, System = p }, IsMainTread(p)))
+            .ToArray();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsMainTread(ISystem system)
+                => system is IMainThread;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IEnumerable<TType> Filter<TType>(ISystem[] systems)
+            => systems.OfType<TType>();
     }
 }
 
