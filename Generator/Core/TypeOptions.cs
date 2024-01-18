@@ -18,6 +18,7 @@ namespace AnotherECS.Generator
         public bool isDetach;
         public bool isMarker;
         public SparseMode sparseMode;
+        public AllocatorType allocatorType;
 
         public bool isCompileFastAccess;
 
@@ -32,7 +33,7 @@ namespace AnotherECS.Generator
         public ComponentUtils.FieldData[] rebindMemoryMembers;
 
         public bool isUnmanaged;
-        public bool isBlittable;
+        //public bool isBlittable;
 
         public bool isUseRecycle;
         public bool isBindToEntity;
@@ -55,6 +56,7 @@ namespace AnotherECS.Generator
             isAttach = ComponentUtils.IsAttach(type);
             isDetach = ComponentUtils.IsDetach(type);
             sparseMode = GetSparseMode(type);
+            allocatorType = ComponentUtils.GetAllocator(type);
 
             isCompileFastAccess = ComponentUtils.IsCompileFastAccess(type);
 
@@ -69,7 +71,7 @@ namespace AnotherECS.Generator
             rebindMemoryMembers = isRebindMemoryMembers ? ComponentUtils.GetFieldToMembers<IRebindMemoryHandle>(type) : Array.Empty<ComponentUtils.FieldData>();
 
             isUnmanaged = ComponentUtils.IsUnmanaged(type);
-            isBlittable = ComponentUtils.IsBlittable(type);
+            //isBlittable = ComponentUtils.IsBlittable(type);
 
             isUseRecycle = !isMarker && !isEmpty && !isSingle;
             isBindToEntity = !isSingle;

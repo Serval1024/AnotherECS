@@ -3,9 +3,9 @@ using System;
 
 namespace AnotherECS.Exceptions
 {
-    public class InvalideSystemOrderException : Exception
+    public class InvalidSystemOrderException : Exception
     {
-        public InvalideSystemOrderException(Type type, string message, Exception innerException = null)
+        public InvalidSystemOrderException(Type type, string message, Exception innerException = null)
             : base($"{DebugConst.TAG}the system '{type}' has order problems. Details: '{message}'.", innerException)
         { }
     }

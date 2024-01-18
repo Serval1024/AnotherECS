@@ -12,9 +12,9 @@ namespace AnotherECS.Core
             {
                 return OrderResolver.GetByOrder(types, OrderResolver.GetOrder(CreateElements(types)));
             }
-            catch (Exceptions.InvalideNodeTopologyException e)
+            catch (Exceptions.InvalidNodeTopologyException e)
             {
-                throw new Exceptions.InvalideSystemOrderException(types[e.Id0], e.Message, e);
+                throw new Exceptions.InvalidSystemOrderException(types[e.Id0], e.Message, e);
             }
         }
 
@@ -39,17 +39,17 @@ namespace AnotherECS.Core
             {
                 Validate(elements, OrderResolver.Element.FIRST_ID, OrderResolver.Element.Order.Before);
             }
-            catch (Exceptions.InvalideNodeTopologyException e)
+            catch (Exceptions.InvalidNodeTopologyException e)
             {
-                throw new Exceptions.InvalideSystemOrderException(types[e.Id0], $"The system '{types[e.Id0]}' cannot be earlier than the '{nameof(SystemOrder.First)}' marked system '{types[e.Id1]}'.");
+                throw new Exceptions.InvalidSystemOrderException(types[e.Id0], $"The system '{types[e.Id0]}' cannot be earlier than the '{nameof(SystemOrder.First)}' marked system '{types[e.Id1]}'.");
             }
             try
             {
                 Validate(elements, OrderResolver.Element.LAST_ID, OrderResolver.Element.Order.After);
             }
-            catch (Exceptions.InvalideNodeTopologyException e)
+            catch (Exceptions.InvalidNodeTopologyException e)
             {
-                throw new Exceptions.InvalideSystemOrderException(types[e.Id0], $"The system '{types[e.Id0]}' cannot be later than the '{nameof(SystemOrder.Last)}' marked system '{types[e.Id1]}'.");
+                throw new Exceptions.InvalidSystemOrderException(types[e.Id0], $"The system '{types[e.Id0]}' cannot be later than the '{nameof(SystemOrder.Last)}' marked system '{types[e.Id1]}'.");
             }
         }
 
@@ -68,7 +68,7 @@ namespace AnotherECS.Core
                                 var other = elements.First(p => p.id == id);
                                 if (other.relative.Any(p => p.id == valiadateId && p.order == validateOrder))
                                 {
-                                    throw new Exceptions.InvalideNodeTopologyException(element.id, other.id, string.Empty);
+                                    throw new Exceptions.InvalidNodeTopologyException(element.id, other.id, string.Empty);
                                 }
                             }
                         }

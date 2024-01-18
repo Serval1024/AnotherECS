@@ -1,9 +1,8 @@
-using AnotherECS.Core.Caller;
-using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using static PlasticPipe.PlasticProtocol.Messages.Serialization.ItemHandlerMessagesSerialization;
 
 namespace AnotherECS.Core
 {
@@ -26,6 +25,9 @@ namespace AnotherECS.Core
 
         public static bool IsHistory(Type type)
             => !IsOption(type, ComponentOptions.HistoryNonSync);
+
+        public static AllocatorType GetAllocator(Type type)
+            => IsHistory(type) ? AllocatorType.HAllocator : AllocatorType.BAllocator;
 
         public static bool IsUnmanaged(Type type)
         {
@@ -134,7 +136,7 @@ namespace AnotherECS.Core
                     result.Add(new FieldData
                     {
                         fieldName = member.GetMemberName(),
-                        argumentTypes = ReflectionUtils.ExtractGenericFromInterface<T>(member.GetMemberType()).ToArray(),
+                        injectParameterDatas = ReflectionUtils.ExtractInjectParameterData(member.GetMemberType()),
                     });
                 }
             }
@@ -146,7 +148,7 @@ namespace AnotherECS.Core
         public struct FieldData
         {
             public string fieldName;
-            public Type[] argumentTypes;
+            public InjectParameterData[] injectParameterDatas;
         }
     }
 }

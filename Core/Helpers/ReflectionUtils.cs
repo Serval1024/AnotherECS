@@ -3,13 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Collection;
 
 [assembly: InternalsVisibleTo("AnotherECS.Generator")]
 namespace AnotherECS.Core
 {
-    public static class ReflectionUtils
+
+    internal static class ReflectionUtils
     {
+        private struct Dummy { }
+
+        public static InjectParameterData[] ExtractInjectParameterData(Type type)
+        {
+            var interfaces = type.GetInterfaces().Where(p => p.Name.StartsWith($"{typeof(IInject).Name}`")).ToArray();
+
+            var construct = interfaces.Any()
+                ? interfaces
+                    .Select(p => type.GetInterfaceMap(p))
+                    .Select(p => p.TargetMethods.First())
+                    .Where(p => p != null)
+                    .First()
+                : null;
+
+            if (construct != null)
+            {
+                return construct
+                    .GetParameters()
+                    .Select(p => 
+                    new InjectParameterData()
+                    {
+                        type = p.ParameterType,
+                        maps = p.GetCustomAttributes<InjectMapAttribute>().ToArray()
+                    })
+                    .ToArray();
+            }
+            return Array.Empty<InjectParameterData>();
+        }
+            
         public static Type[] ExtractGenericFromInterface<T>(Type type)
         {
             var interfaces = type.GetInterfaces().Where(p => p.Name.StartsWith($"{typeof(T).Name}`"));
@@ -74,14 +103,6 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ReflectionInjectConstruct<T>(ref T component, ref InjectContainer injectContainer)
-            where T : struct
-            => ReflectionInject(ref component, ref injectContainer, nameof(IInject<WPtr<HAllocator>>.Construct));
-
-        public static void ReflectionInjectDeconstruct<T>(ref T component, ref InjectContainer injectContainer)
-            where T : struct
-            => ReflectionInject(ref component, ref injectContainer, nameof(IInject.Deconstruct));
-
         public static void ReflectionInject<T>(ref T component, ref InjectContainer injectContainer, string methodName)
             where T : struct
         {
@@ -115,12 +136,16 @@ namespace AnotherECS.Core
 
             static object[] GetArgs(Type type, ref InjectContainer injectContainer)
             {
-                var requirementTypes = ExtractGenericFromInterface<IInject>(type);
+                var requirementTypes = ExtractInjectParameterData(type);
                 var injectTypes = injectContainer.GetType().GetProperties();
                 var args = new object[requirementTypes.Length];
+                var injectContext = InjectContext.Create();
+                InjectContextUtils.PrepareContext(ref injectContext, ComponentUtils.GetAllocator(type));
+
                 for (var i = 0; i < args.Length; ++i)
                 {
-                    args[i] = injectTypes.First(p => p.PropertyType == requirementTypes[i]).GetValue(injectContainer);
+                    var findName = requirementTypes[i].Map(ref injectContext);
+                    args[i] = injectTypes.First(p => p.Name == findName).GetValue(injectContainer);
                 }
                 return args;
             }

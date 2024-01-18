@@ -5,14 +5,14 @@ namespace AnotherECS.Core
     internal static class InjectUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Contruct<T0, A0>(ref T0 structure, A0 argument)
+        public static void Construct<T0, A0>(ref T0 structure, A0 argument)
             where T0 : struct, IInject<A0>
         {
             structure.Construct(argument);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Decontruct<T0>(ref T0 structure)
+        public static void Deconstruct<T0>(ref T0 structure)
             where T0 : struct, IInject
         {
             structure.Deconstruct();

@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using AnotherECS.Core;
-using AnotherECS.Core.Threading;
 using AnotherECS.Views.Core;
 using EntityId = System.UInt32;
 
@@ -26,24 +25,24 @@ namespace AnotherECS.Views
         {
             state.Remove<ViewHandle>(id);
         }
-        /*
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this Entity entity)
             where T : IView
         {
-            CreateView<T>(entity.state, entity.id);
+            CreateView<T>(entity.State, entity.id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView(this Entity entity, uint viewId)
         {
-            CreateView(entity.state, entity.id, viewId);
+            CreateView(entity.State, entity.id, viewId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void DestroyView(this Entity entity)
         {
-            DestroyView(entity.state, entity.id);
-        }*/
+            DestroyView(entity.State, entity.id);
+        }
     }
 }

@@ -39,6 +39,9 @@ namespace AnotherECS.Core
 
         private StateOption _option;
         private Events _events;
+
+        private ushort _stateId;
+        private bool _isNeedRebindStateId;
         #endregion
 
         #region threading
@@ -58,7 +61,9 @@ namespace AnotherECS.Core
 
         public State(in StateConfig config)
         {
-            SystemInit(config, new TickProvider());
+            _stateId = GlobalStatesRegister.Register(this);
+
+            SystemInit(config);
 
             _layoutCount = 1;
             _callers = new ICaller[GetComponentArrayCount()];
@@ -75,37 +80,37 @@ namespace AnotherECS.Core
 
         public State(ref ReaderContextSerializer reader)
         {
+            _stateId = GlobalStatesRegister.Register(this);
+
             Unpack(ref reader);
         }
 
         internal void SetOption(StateOption option)
         {
             _option = option;
-            SetParallelMax(_option.parallelMax);
-            
         }
 
         private Dependencies* CreateDependencies()
-            => (Dependencies*)_allocator.Allocate((uint)sizeof(Dependencies)).pointer;
+            => (Dependencies*)_allocator.Allocate<Dependencies>().pointer;
 
-        private void SystemInit(in StateConfig config, in TickProvider tickProvider)
+        private void SystemInit(in StateConfig config)
         {
             _allocator = new RawAllocator();
             _dependencies = CreateDependencies();
 
             _dependencies->config = config;
-            _dependencies->tickProvider = tickProvider;
+            _dependencies->tickProvider = new TickProvider();
 
             _dependencies->bAllocator = new BAllocator(BASIC_ALLOCATOR_ID);
 
-            _dependencies->stage1HAllocator = new HAllocator(
+            _dependencies->stage0HAllocator = new HAllocator(
                 &_dependencies->bAllocator,
                 HISTORY_ALLOCATOR_STAGE0_ID,
                 _dependencies->config.general.chunkLimit,
                 _dependencies->config.history.buffersCapacity,
                 _dependencies->config.history.recordTickLength);
 
-            _dependencies->stage0HAllocator = new HAllocator(
+            _dependencies->stage1HAllocator = new HAllocator(
                 &_dependencies->bAllocator,
                 HISTORY_ALLOCATOR_STAGE1_ID,
                 _dependencies->config.general.chunkLimit,
@@ -114,12 +119,15 @@ namespace AnotherECS.Core
 
             _dependencies->componentTypesCount = GetComponentCount();
             _dependencies->entities = new Entities(_dependencies);
-            _dependencies->injectContainer = new InjectContainer(new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             _dependencies->filters = new Filters(_dependencies, 32);
+
+            _dependencies->injectContainer = new InjectContainer(_allocator, &_dependencies->bAllocator, &_dependencies->stage1HAllocator);
         }
 
         protected override void OnDispose()
         {
+            GlobalStatesRegister.Unregister(_stateId);
+
             foreach (var config in _configs)
             {
                 if (config is IDisposable disposable)
@@ -136,7 +144,9 @@ namespace AnotherECS.Core
                 }
             }
 
-            _dependencies->bAllocator.Dispose();    //Free all memory.
+            _dependencies->bAllocator.Dispose();        //Free all memory.
+
+            _dependencies->Dispose();                   //Free _dependencies.
             _allocator.Deallocate(_dependencies);
         }
         #endregion
@@ -146,12 +156,14 @@ namespace AnotherECS.Core
         {
             writer.AddDepency(new WPtr<Dependencies>(_dependencies));
             writer.AddDepency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
-            writer.AddDepency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             writer.AddDepency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            writer.AddDepency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+
+            writer.Write(_stateId);
 
             writer.Write(_dependencies->bAllocator.GetId());
-            writer.Write(_dependencies->stage1HAllocator.GetId());
             writer.Write(_dependencies->stage0HAllocator.GetId());
+            writer.Write(_dependencies->stage1HAllocator.GetId());
 
             _dependencies->Pack(ref writer);
             _events.Pack(ref writer);
@@ -174,9 +186,10 @@ namespace AnotherECS.Core
 
             reader.AddDepency(new WPtr<Dependencies>(_dependencies));
             reader.AddDepency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
-            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
             reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
+            var stateId = reader.ReadUInt32();
 
             _dependencies->Unpack(ref reader);
             _dependencies->filters = new Filters(_dependencies, FILTER_INIT_CAPACITY);
@@ -197,6 +210,12 @@ namespace AnotherECS.Core
 
             RebindMemoryHandles();
             CallConstruct();
+
+            if (_stateId != stateId)
+            {
+                _isNeedRebindStateId = true;
+                RebindStateId();
+            }
         }
 
         private void CommonInit()
@@ -273,7 +292,7 @@ namespace AnotherECS.Core
         }
 
         public Entity NewEntity()
-            => EntityExtensions.Pack(this, New());
+            => EntityExtensions.ToEntity(this, New());
 
         public void Delete(EntityId id)
         {
@@ -639,68 +658,6 @@ namespace AnotherECS.Core
             => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LockFilter()
-        {
-            _dependencies->filters.Lock();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void UnlockFilter()
-        {
-            _dependencies->filters.Unlock();
-        }
-        #endregion
-
-        #region Threading
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void EnterThreading()
-        {
-            LockFilter();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void ExitThreading()
-        {
-            UnlockFilter();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetParallelMax(uint value)
-        {
-            if (_dependencies != null)
-            {
-                _dependencies->stage0HAllocator.ParallelMax = value;
-                _dependencies->stage1HAllocator.ParallelMax = value;
-            }
-        }
-        #endregion
-
-        #region events
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void TickStarted()
-        {
-            ++Tick;
-            _dependencies->stage1HAllocator.TickStarted(Tick);
-            _dependencies->stage0HAllocator.TickStarted(Tick);
-
-            FlushEvents();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void TickFinished()
-        {
-            foreach (var tickFinished in _tickFinishedCallers)
-            {
-                tickFinished.TickFinished();
-            }
-
-            _dependencies->stage0HAllocator.TickFinished();
-            _dependencies->stage1HAllocator.TickFinished();
-        }
-        #endregion
-
-        #region internal api
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal T CreateFilter<T>(ref Mask mask)
             where T : BFilter, new()
         {
@@ -725,6 +682,44 @@ namespace AnotherECS.Core
             return _dependencies->filters.Create(ref mask);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void LockFilter()
+        {
+            _dependencies->filters.Lock();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void UnlockFilter()
+        {
+            _dependencies->filters.Unlock();
+        }
+        #endregion
+
+        #region events
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void TickStarted()
+        {
+            ++Tick;
+            _dependencies->stage0HAllocator.TickStarted(Tick);
+            _dependencies->stage1HAllocator.TickStarted(Tick);
+
+            FlushEvents();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void TickFinished()
+        {
+            foreach (var tickFinished in _tickFinishedCallers)
+            {
+                tickFinished.TickFinished();
+            }
+
+            _dependencies->stage0HAllocator.TickFinished();
+            _dependencies->stage1HAllocator.TickFinished();
+        }
+        #endregion
+
+        #region internal api
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ref readonly IdCollection<HAllocator> GetEntitiesByArchetype(uint archetypeId)
         {
@@ -804,6 +799,10 @@ namespace AnotherECS.Core
             => _nextTickForEvent;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ushort GetStateId()
+            => _stateId;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)
         {
 #if !ANOTHERECS_RELEASE
@@ -831,6 +830,10 @@ namespace AnotherECS.Core
                     {
                         RebindMemoryHandles();
                         CallConstruct();
+                        if (_isNeedRebindStateId)   //TODO SER
+                        {
+                            RebindStateId();
+                        }
                     }
 
                     CallRevertStage2();
@@ -841,6 +844,10 @@ namespace AnotherECS.Core
                     {
                         RebindMemoryHandles();
                         CallConstruct();
+                        if (_isNeedRebindStateId)
+                        {
+                            RebindStateId();
+                        }
                     }
                 }
 
@@ -929,6 +936,24 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RebindMemoryHandles()
+        {
+            var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->stage1HAllocator);
+            _dependencies->currentMemoryRebinder = memoryRebinder;
+
+            for (uint i = 1; i < _layoutCount; ++i)
+            {
+                _callers[i].RebindMemoryHandle(ref memoryRebinder);
+            }
+
+            MemoryRebinderCaller.Rebind(ref _dependencies->entities, ref memoryRebinder);
+            MemoryRebinderCaller.Rebind(ref _dependencies->archetype, ref memoryRebinder);
+
+            _dependencies->currentMemoryRebinder = default;
+            memoryRebinder.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RebindStateId()
         {
             var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->stage1HAllocator);
             _dependencies->currentMemoryRebinder = memoryRebinder;
@@ -1061,4 +1086,3 @@ namespace AnotherECS.Core
         #endregion
     }
 }
-

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using AnotherECS.Core.Collection;
-using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
@@ -33,6 +31,12 @@ namespace AnotherECS.Core
             }
         }
 
+        public bool IsValid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _rawAllocator != null;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId()
             => _id;
@@ -58,23 +62,17 @@ namespace AnotherECS.Core
             _pointerToSize.Add((ulong)pointer, new MemEntry() { id = _counter, size = size });
             _idToPointer.Add(_counter, (ulong)pointer);
 
-            var c = (ushort)(_counter & 0xffff);
-            var s = (ushort)(_counter >> 16);
-            return new() { pointer = pointer, chunk = c, segment = s };
+            return new() { pointer = pointer, id = _counter };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate(ref MemoryHandle memoryHandle)
         {
             _pointerToSize.Remove((ulong)memoryHandle.pointer);
-            _idToPointer.Remove(GetId(ref memoryHandle));
+            _idToPointer.Remove(memoryHandle.id);
 
             UnsafeMemory.Deallocate(ref memoryHandle.pointer);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetId(ref MemoryHandle memoryHandle)
-            => memoryHandle.chunk | (uint)(memoryHandle.segment << 16);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reuse(ref MemoryHandle memoryHandle, uint size)
@@ -130,7 +128,7 @@ namespace AnotherECS.Core
 
         public void Repair(ref MemoryHandle memoryHandle)
         {
-            memoryHandle.pointer = (void*)_idToPointer[GetId(ref memoryHandle)];
+            memoryHandle.pointer = (void*)_idToPointer[memoryHandle.id];
         }
 
         public void Pack(ref WriterContextSerializer writer)

@@ -54,10 +54,12 @@ namespace AnotherECS.Core
         {
             if (_isValid)
             {
+                /*  //TODO SER
                 var memPtr = _memories.Get(memoryHandle.chunk).Value;
                 var dPtr = _isDirties.Get(memoryHandle.chunk).Value;
                 memoryHandle.pointer = memPtr + (memoryHandle.segment << _segmentSizePower2);
                 memoryHandle.isNotDirty = dPtr + memoryHandle.segment;
+                */
             }
         }
 

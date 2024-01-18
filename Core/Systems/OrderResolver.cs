@@ -40,16 +40,16 @@ namespace AnotherECS.Core
             {
                 if (node.Value.after.Any(p => p.id == node.Key))
                 {
-                    throw new Exceptions.InvalideNodeTopologyException(node.Value.id, "Node refers to itself in the 'after' modifier.");
+                    throw new Exceptions.InvalidNodeTopologyException(node.Value.id, "Node refers to itself in the 'after' modifier.");
                 }
                 if (node.Value.before.Any(p => p.id == node.Key))
                 {
-                    throw new Exceptions.InvalideNodeTopologyException(node.Value.id, "Node refers to itself in the 'before' modifier");
+                    throw new Exceptions.InvalidNodeTopologyException(node.Value.id, "Node refers to itself in the 'before' modifier");
                 }
                 var nodeWithCrossRequirements = node.Value.after.FirstOrDefault(p => node.Value.before.Any(p0 => p0.id == p.id));
                 if (nodeWithCrossRequirements != null)
                 {
-                    throw new Exceptions.InvalideNodeTopologyException(nodeWithCrossRequirements.id, "Node requires to be 'after' and 'before' at the same time.");
+                    throw new Exceptions.InvalidNodeTopologyException(nodeWithCrossRequirements.id, "Node requires to be 'after' and 'before' at the same time.");
                 }
             }
         }

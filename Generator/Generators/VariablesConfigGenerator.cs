@@ -48,31 +48,44 @@ namespace AnotherECS.Generator
 
 
 
-        public static TemplateParser.Variables GetLayoutInstaller(Type[] components)
+        public static TemplateParser.Variables GetLayoutInstaller(Type[] componentTypes)
         {
+            var components = componentTypes.Select(p => new TypeOptions(p)).ToArray();
+            var injectContext = InjectContext.Create();
+
             TemplateParser.Variables variables = null;
             variables = new()
                 {
                     { "COMPONENT:COUNT", () => components.Length.ToString() },
-                    { "COMPONENT:NAME", () => components[variables.GetIndex(0)].Name },
-                    { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components[variables.GetIndex(0)]) },
-                    { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components[variables.GetIndex(0)]) },
+                    { "COMPONENT:NAME", () => components[variables.GetIndex(0)].type.Name },
+                    { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(components[variables.GetIndex(0)].type) },
+                    { "COMPONENT:FULL_NAME_AS_TEXT", () => ReflectionUtils.GetUnderLineFullName(components[variables.GetIndex(0)].type) },
 
-                    { "CALLER:TYPE_NAME", () => TypeOptionsGeneratorUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)])) },
+                    { "CALLER:TYPE_NAME", () => TypeOptionsGeneratorUtils.GetCallerFlags(new TypeOptions(components[variables.GetIndex(0)].type)) },
 
-                    { "INJECT", () => new TypeOptions(components[variables.GetIndex(0)]).isInject },
-                    { "INJECT:SELF", () => new TypeOptions(components[variables.GetIndex(0)]).isInjectComponent },
-                    { "INJECT:SELF:ARGS", () => GetInjectArguments(components[variables.GetIndex(0)]) },
+                    { "INJECT", () => components[variables.GetIndex(0)].isInject },
+                    { "INJECT:SELF", () => components[variables.GetIndex(0)].isInjectComponent },
+                    { "INJECT:SELF:ARGS", () =>
+                        {
+                            InjectContextUtils.PrepareContext(ref injectContext, components[variables.GetIndex(0)].allocatorType);
+                            return GetInjectArguments(ref injectContext, components[variables.GetIndex(0)].type);
+                        }
+                    },
 
-                    { "INJECT:FIELD:COUNT", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers.Length.ToString() },
-                    { "INJECT:FIELD:NAME", () => new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].fieldName },
-                    { "INJECT:FIELD:ARGS", () => GetInjectArguments(new TypeOptions(components[variables.GetIndex(0)]).injectMembers[variables.GetIndex(1)].argumentTypes) },
+                    { "INJECT:FIELD:COUNT", () => components[variables.GetIndex(0)].injectMembers.Length.ToString() },
+                    { "INJECT:FIELD:NAME", () => components[variables.GetIndex(0)].injectMembers[variables.GetIndex(1)].fieldName },
+                    { "INJECT:FIELD:ARGS", () =>
+                        {
+                            InjectContextUtils.PrepareContext(ref injectContext, components[variables.GetIndex(0)].allocatorType);
+                            return GetInjectArguments(ref injectContext, components[variables.GetIndex(0)].injectMembers[variables.GetIndex(1)].injectParameterDatas);
+                        }
+                    },
 
-                    { "REBINDMEMORY", () => new TypeOptions(components[variables.GetIndex(0)]).isRebindMemory },
-                    { "REBINDMEMORY:SELF", () => new TypeOptions(components[variables.GetIndex(0)]).isRebindMemoryComponent },
+                    { "REBINDMEMORY", () => components[variables.GetIndex(0)].isRebindMemory },
+                    { "REBINDMEMORY:SELF", () => (components[variables.GetIndex(0)]).isRebindMemoryComponent },
 
-                    { "REBINDMEMORY:FIELD:COUNT", () => new TypeOptions(components[variables.GetIndex(0)]).rebindMemoryMembers.Length.ToString() },
-                    { "REBINDMEMORY:FIELD:NAME", () => new TypeOptions(components[variables.GetIndex(0)]).rebindMemoryMembers[variables.GetIndex(1)].fieldName },
+                    { "REBINDMEMORY:FIELD:COUNT", () => components[variables.GetIndex(0)].rebindMemoryMembers.Length.ToString() },
+                    { "REBINDMEMORY:FIELD:NAME", () => components[variables.GetIndex(0)].rebindMemoryMembers[variables.GetIndex(1)].fieldName },
 
                 };
             return variables;
@@ -181,7 +194,7 @@ namespace AnotherECS.Generator
                 };
             return variables;
         }
-
+        /*
         private static string GetSystemNameByState(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
         {
             try
@@ -200,25 +213,28 @@ namespace AnotherECS.Generator
                 throw new Exception("Unable to sort generic system.", e);
             }
         }
-
-        private static string GetInjectArguments(Type type)
+        */
+        private static string GetInjectArguments(ref InjectContext context, Type type)
            => GetInjectArguments(
-               ReflectionUtils.ExtractGenericFromInterface<IInject>(type)
+               ref context,
+               ReflectionUtils.ExtractInjectParameterData(type)
                .ToArray()
                );
 
-        private static string GetInjectArguments(Type[] types)
+        private static string GetInjectArguments(ref InjectContext context, InjectParameterData[] injectParameterDatas)
         {
             var result = new StringBuilder();
 
             var injectContainer = typeof(InjectContainer);
             var icMembers =  injectContainer.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            for (int i = 0; i < types.Length; ++i)
+            for (int i = 0; i < injectParameterDatas.Length; ++i)
             {
-                var icMember = icMembers.First(p => p.GetMemberType() == types[i]);
-                result.Append($"injectContainer.{icMember.GetMemberName()}");
-                if (i < types.Length - 1)
+                var findName = injectParameterDatas[i].Map(ref context);
+                findName ??= injectParameterDatas[i].type.Name;
+
+                result.Append($"injectContainer.{findName}");
+                if (i < injectParameterDatas.Length - 1)
                 {
                     result.Append(",");
                 }

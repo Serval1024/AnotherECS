@@ -20,7 +20,7 @@ namespace AnotherECS.Gen.Project
             static void Construct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
-                ReflectionUtils.ReflectionInjectConstruct(ref component, ref injectContainer);
+                ComponentReflectionUtils.Construct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>
                 component.Construct(<#INJECT:SELF:ARGS#>);
@@ -34,7 +34,7 @@ namespace AnotherECS.Gen.Project
             static void Deconstruct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
-                ReflectionUtils.ReflectionInjectDeconstruct(ref component, ref injectContainer);
+                ComponentReflectionUtils.Deconstruct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>
                 component.Deconstruct();
@@ -48,7 +48,7 @@ namespace AnotherECS.Gen.Project
             static void MemoryRebind(ref MemoryRebinderContext rebinder, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
-                ReflectionUtils.ReflectionRebindMemoryHandle(ref component, ref rebinder);
+                ComponentReflectionUtils.RebindMemoryHandle(ref component, ref rebinder);
 #else
 ------<#IF REBINDMEMORY:SELF#>
                 component.RebindMemoryHandle(ref rebinder);

@@ -7,8 +7,7 @@ namespace AnotherECS.Core
     {
         internal void* pointer;
         internal bool* isNotDirty;
-        internal ushort chunk;
-        internal ushort segment;
+        internal uint id;
 
         public bool IsValid
         {
@@ -36,15 +35,13 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Write(chunk);
-            writer.Write(segment);
+            writer.Write(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            chunk = reader.ReadUInt16();
-            segment = reader.ReadUInt16();
+            id = reader.ReadUInt32();
         }
     }
 }

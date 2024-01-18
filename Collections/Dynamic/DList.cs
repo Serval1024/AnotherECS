@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<T> : IInject<WPtr<HAllocator>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRebindMemoryHandle
+    public struct DList<T> : IInject<WPtr<AllocatorSelector>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRebindMemoryHandle
         where T : unmanaged
     {
         private DArray<T> _data;
@@ -18,15 +18,15 @@ namespace AnotherECS.Collections
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
+        void IInject<WPtr<AllocatorSelector>>.Construct(WPtr<AllocatorSelector> allocator)
         { 
-            InjectUtils.Contruct(ref _data, allocator);
+            InjectUtils.Construct(ref _data, allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject.Deconstruct()
         {
-            InjectUtils.Decontruct(ref _data);
+            InjectUtils.Deconstruct(ref _data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -36,7 +36,7 @@ namespace AnotherECS.Collections
         }
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(WPtr<HAllocator> allocator)
+        public void Construct(WPtr<AllocatorSelector> allocator)
         {
             _data.Construct(allocator);
         }
@@ -143,7 +143,7 @@ namespace AnotherECS.Collections
             FArrayHelper.ThrowIfOutOfRange(index, Count);
             if (!_data.IsValid)
             {
-                throw new DArrayInvalideException(_data.GetType());
+                throw new DArrayInvalidException(_data.GetType());
             }
 #endif
             if (index == Count - 1)
@@ -169,7 +169,7 @@ namespace AnotherECS.Collections
             FArrayHelper.ThrowIfOutOfRange(index, Count);
             if (!_data.IsValid)
             {
-                throw new DArrayInvalideException(_data.GetType());
+                throw new DArrayInvalidException(_data.GetType());
             }
 #endif
             if (index == Count - 1)

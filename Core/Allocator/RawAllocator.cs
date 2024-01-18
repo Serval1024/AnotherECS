@@ -5,9 +5,20 @@ namespace AnotherECS.Core
 {
     public unsafe struct RawAllocator : IAllocator
     {
+        public bool IsValid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => true;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId()
             => 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public MemoryHandle Allocate<T>()
+            where T : unmanaged
+            => Allocate((uint)sizeof(T));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MemoryHandle Allocate(uint size)

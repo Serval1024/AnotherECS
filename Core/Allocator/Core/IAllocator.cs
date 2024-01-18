@@ -2,6 +2,7 @@
 {
     public interface IAllocator
     {
+        bool IsValid { get; }
         uint GetId();
         MemoryHandle Allocate(uint size);
         void Deallocate(ref MemoryHandle memoryHandle);

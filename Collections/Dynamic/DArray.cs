@@ -14,10 +14,10 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<T> : IInject<WPtr<HAllocator>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
+    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
         where T : unmanaged
     {
-        private NArray<HAllocator, T> _data;
+        private NArray<AllocatorSelector, T> _data;
 
         internal bool IsDirty
         {
@@ -25,7 +25,7 @@ namespace AnotherECS.Collections
             get => _data.IsDirty;
         }
 
-        internal DArray(HAllocator* allocator)
+        internal DArray(AllocatorSelector* allocator)
         {
             _data = default;
             _data.SetAllocator(allocator);
@@ -36,10 +36,15 @@ namespace AnotherECS.Collections
 
 #if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator)
         {
             _data.SetAllocator(allocator.Value);
+#if !ANOTHERECS_RELEASE
             Validate();
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,7 +95,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint length)
         {
-            if (!_data.GetAllocator()->IsValid)
+            if (!_data.IsAllocatorValid())
             {
                 throw new MissInjectException(typeof(DArray<T>));
             }
@@ -123,7 +128,7 @@ namespace AnotherECS.Collections
         {
             if (!IsValid)
             {
-                throw new DArrayInvalideException(this.GetType());
+                throw new DArrayInvalidException(this.GetType());
             }
             return ref _data.ReadRef(index);
         }
@@ -136,7 +141,7 @@ namespace AnotherECS.Collections
         {
             if (!IsValid)
             {
-                throw new DArrayInvalideException(GetType());
+                throw new DArrayInvalidException(GetType());
             }
             return ref _data.GetRef(index);
         }
@@ -156,7 +161,7 @@ namespace AnotherECS.Collections
         {
             if (!IsValid)
             {
-                throw new DArrayInvalideException(GetType());
+                throw new DArrayInvalidException(GetType());
             }
             _data.Set(index, ref value);
         }
@@ -242,7 +247,7 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
             if (!IsValid)
             {
-                throw new DArrayInvalideException(this.GetType());
+                throw new DArrayInvalidException(this.GetType());
             }
 #endif
             var array = ReadPtr();

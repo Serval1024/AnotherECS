@@ -167,7 +167,7 @@ namespace AnotherECS.Core.Threading
         {
             public readonly ConcurrentQueue<TTask> tasks = new();
             public readonly ManualResetEvent waiterComplete = new(true);
-            public int inWork;
+            public volatile int inWork;
             public Action onNotBusy;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

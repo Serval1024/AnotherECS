@@ -1,9 +1,11 @@
 using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 namespace AnotherECS.Core
 {
@@ -58,23 +60,6 @@ namespace AnotherECS.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _chunkAllocated;
         }
-
-#if !ANOTHERECS_HISTORY_DISABLE
-        public uint ParallelMax
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _history.ParallelMax;
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => _history.ParallelMax = value;
-        }
-#else
-        public uint ParallelMax
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => 0u;
-            set { };
-        }
-#endif
 
         public ulong TotalBytesAllocated
             => _allocator->TotalBytesAllocated;
@@ -154,7 +139,7 @@ namespace AnotherECS.Core
                 _history.Push(
                     _tick,
                     ref memoryHandle,
-                    GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment) << SEGMENT_POWER_2
+                    GetSegmentCountBySegment(memoryHandle.id) << SEGMENT_POWER_2
                     );
             }
 #endif
@@ -195,8 +180,7 @@ namespace AnotherECS.Core
             {
                 isNotDirty = chunk.GetPointerDirtyBySegment(location.segment),
                 pointer = chunk.GetPointerBySegment(location.segment),
-                chunk = (ushort)location.chunk,
-                segment = (ushort)location.segment
+                id = ToId(location.chunk, location.segment),
             };
 
             Dirty(ref memoryHandle);
@@ -210,8 +194,8 @@ namespace AnotherECS.Core
         {
             if (memoryHandle.IsValid)
             {
-
-                UnlockLocation(new Location() { chunk = memoryHandle.chunk, segment = memoryHandle.segment });
+                var (chunkId, segmentId) = ToChunkSegment(memoryHandle.id);
+                UnlockLocation(new Location() { chunk = chunkId, segment = segmentId });
                 memoryHandle = default;
             }
         }
@@ -227,19 +211,18 @@ namespace AnotherECS.Core
         {
             var requirementSegmentCount = GetSegmentCountBySize(size);
 
-            var currentSegmentCount = GetSegmentCountBySegment(memoryHandle.chunk, memoryHandle.segment);
+            var (chunkId, segmentId) = ToChunkSegment(memoryHandle.id);
+            var currentSegmentCount = GetSegmentCountBySegment(chunkId, segmentId);
 
             if (requirementSegmentCount > currentSegmentCount)
             {
-                var segment = memoryHandle.segment;
-
-                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
+                ref var chunk = ref _chunks.GetRef(chunkId);
                 var deltaCount = requirementSegmentCount - currentSegmentCount;
 
-                if (chunk.NextFree(segment + currentSegmentCount, deltaCount))
+                if (chunk.NextFree(segmentId + currentSegmentCount, deltaCount))
                 {
-                    chunk.LockSegments(segment + currentSegmentCount, deltaCount);
-                    chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+                    chunk.LockSegments(segmentId + currentSegmentCount, deltaCount);
+                    chunk.SetSegmentCount(segmentId, requirementSegmentCount);
 
                     UnsafeMemory.Clear(((byte*)memoryHandle.GetPtr()) + (currentSegmentCount << SEGMENT_POWER_2), deltaCount << SEGMENT_POWER_2);
                     return true;
@@ -249,9 +232,9 @@ namespace AnotherECS.Core
             }
             else if (requirementSegmentCount != currentSegmentCount)
             {
-                ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-                chunk.UnlockSegments(memoryHandle.segment + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
-                chunk.SetSegmentCount(memoryHandle.segment, requirementSegmentCount);
+                ref var chunk = ref _chunks.GetRef(chunkId);
+                chunk.UnlockSegments(segmentId + requirementSegmentCount, currentSegmentCount - requirementSegmentCount);
+                chunk.SetSegmentCount(segmentId, requirementSegmentCount);
             }
 
             Dirty(ref memoryHandle);
@@ -299,9 +282,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Repair(ref MemoryHandle memoryHandle)
         {
-            ref var chunk = ref _chunks.GetRef(memoryHandle.chunk);
-            memoryHandle.pointer = chunk.GetPointerBySegment(memoryHandle.segment);
-            memoryHandle.isNotDirty = chunk.GetPointerDirtyBySegment(memoryHandle.segment);
+            var (chunkId, segmentId) = ToChunkSegment(memoryHandle.id);
+            ref var chunk = ref _chunks.GetRef(chunkId);
+            memoryHandle.pointer = chunk.GetPointerBySegment(segmentId);
+            memoryHandle.isNotDirty = chunk.GetPointerDirtyBySegment(segmentId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -360,6 +344,25 @@ namespace AnotherECS.Core
             {
                 _chunks.GetRef(i).SetDirty(isNotDirty);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint ToId(uint chunk, uint segment)
+            => (chunk << 16) | segment;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint ToId(ushort chunk, ushort segment)
+            => ((uint)chunk << 16) | segment;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private (ushort chunk, ushort segment) ToChunkSegment(uint id)
+            => ((ushort)(id >> 16), (ushort)(id & 0xffff));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private uint GetSegmentCountBySegment(uint id)
+        {
+            var (chunkId, segmentId) = ToChunkSegment(id);
+            return _chunks.GetRef(chunkId).GetSegmentCount(segmentId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

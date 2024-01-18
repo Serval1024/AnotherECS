@@ -38,7 +38,7 @@ namespace AnotherECS.Views
             }
             var inst = prototype.Create();
             _byIdInstances.Add(id, inst);
-            inst.Construct(state, EntityExtensions.Pack(state, id));
+            inst.Construct(state, EntityExtensions.ToEntity(state, id));
             inst.Created();
         }
 

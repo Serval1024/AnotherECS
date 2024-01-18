@@ -199,7 +199,10 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TickFinished() { }
+        public void TickFinished()
+        {
+            TryDropRefreshReference();  //TODO SER
+        }
 
         public void Pack(ref WriterContextSerializer writer)
         {

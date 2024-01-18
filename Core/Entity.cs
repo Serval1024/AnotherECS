@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System;
 using EntityId = System.UInt32;
 
+[assembly: InternalsVisibleTo("AnotherECS.Views")]
 namespace AnotherECS.Core
 {
     public struct Entity : IEquatable<Entity>
@@ -11,42 +12,60 @@ namespace AnotherECS.Core
 
         internal EntityId id;
         internal ushort generation;
-        internal State state;
+        internal ushort stateId;
+
+        internal State State
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+#if !ANOTHERECS_RELEASE
+                if (stateId == 0)
+                {
+                    throw new Exceptions.NullEntityException();
+                }
+#endif
+                return GlobalStatesRegister.Get(stateId);
+            }
+        }
+
+      
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas()
-            => state.IsHas(id, generation);
+            => State.IsHas(id, generation);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Count()
-            => state.Count(id);
+            => State.Count(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete()
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Delete(id);
+            State.Delete(id);
+            this = default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            return state.Read(id, index);
+            return State.Read(id, index);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Set(id, index, component);
+            State.Set(id, index, component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,9 +73,9 @@ namespace AnotherECS.Core
           where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            return ref state.Read<T>(id);
+            return ref State.Read<T>(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,9 +83,9 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            return ref state.Get<T>(id);
+            return ref State.Get<T>(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,9 +93,9 @@ namespace AnotherECS.Core
           where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Set(id, ref data);
+            State.Set(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,9 +103,9 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Set(id, ref data);
+            State.Set(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,9 +113,9 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            return ref state.Add<T>(id);
+            return ref State.Add<T>(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -104,9 +123,9 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Add(id, ref data);
+            State.Add(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,9 +133,9 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Add(id, ref data);
+            State.Add(id, ref data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,9 +143,9 @@ namespace AnotherECS.Core
           where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.AddVoid<T>(id);
+            State.AddVoid<T>(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,14 +153,14 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ThrowIfInvalide();
+            ThrowIfInvalid();
 #endif
-            state.Remove<T>(id);
+            State.Remove<T>(id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Entity p0, Entity p1)
-            => p0.id == p1.id && p0.generation == p1.generation && p0.state == p1.state;
+            => p0.id == p1.id && p0.generation == p1.generation && p0.State == p1.State;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Entity p0, Entity p1)
@@ -157,14 +176,14 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
-            => (int)id ^ generation ^ state.GetHashCode();
+            => (int)id ^ generation ^ State.GetHashCode();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other)
             => id.CompareTo(other.id);
 
 #if !ANOTHERECS_RELEASE
-        private void ThrowIfInvalide()
+        private void ThrowIfInvalid()
         {
             if (!IsHas())
             {

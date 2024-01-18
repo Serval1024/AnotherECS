@@ -78,7 +78,7 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint elementCount)
         {
-            if (_allocator != null)
+            if (IsAllocatorValid())
             {
                 Dispose();
                 this = new(_allocator, elementCount);
@@ -88,6 +88,9 @@ namespace AnotherECS.Core.Collection
                 throw new InvalidOperationException();
             }
         }
+
+        internal bool IsAllocatorValid()
+            => _allocator != null && _allocator->IsValid;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TAllocator* GetAllocator()
