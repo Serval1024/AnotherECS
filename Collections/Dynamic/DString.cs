@@ -10,13 +10,17 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<WPtr<AllocatorSelector>>, ICString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
+    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, IFString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
     {
         private DList<char> _data;
 
-#if !ANOTHERECS_RELEASE
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(WPtr<AllocatorSelector> allocator)
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator
+            )
         {
             InjectUtils.Construct(ref _data, allocator);
         }
@@ -32,25 +36,6 @@ namespace AnotherECS.Collections
         {
             MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
         }
-#else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(WPtr<AllocatorSelector> allocator)
-        {
-            _data.Construct(allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct()
-        {
-            _data.Deconstruct();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
-        {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-        }
-#endif
 
         public uint Capacity
         {

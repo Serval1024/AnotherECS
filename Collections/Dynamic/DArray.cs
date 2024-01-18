@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, ICArray, IRebindMemoryHandle
+    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, IFArray, IRebindMemoryHandle
         where T : unmanaged
     {
         private NArray<AllocatorSelector, T> _data;
@@ -34,7 +34,6 @@ namespace AnotherECS.Collections
 #endif
         }
 
-#if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<WPtr<AllocatorSelector>>.Construct(
             [InjectMap(nameof(BAllocator), "allocatorType=1")]
@@ -56,30 +55,9 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
         {
-            if (_data.IsValid)
-            {
-                MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-            }
-        }
-#else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(WPtr<HAllocator> allocator)
-        {
-            _data.SetAllocator(allocator.Value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct()
-        {
-            Deallocate();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
-        {
             MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
         }
-#endif
+
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -215,10 +193,10 @@ namespace AnotherECS.Collections
             _data.Unpack(ref reader);
         }
 
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => Get(index);
 
-        void ICArray.Set(uint index, object value)
+        void IFArray.Set(uint index, object value)
         {
             Set(index, (T)value);
         }

@@ -5,6 +5,7 @@ namespace AnotherECS.Core
 {
     public unsafe struct MemoryHandle : ISerialize
     {
+        //internal uint __MEMORY_MARKER = 0xAAAA_AAAA; //TODO maybe by marker rebind
         internal void* pointer;
         internal bool* isNotDirty;
         internal uint id;

@@ -149,6 +149,13 @@ namespace AnotherECS.Core
         public ref Chunk GetChunk(uint chunk)
             => ref _chunks.ReadRef(chunk);
 
+
+        public byte* GetPointerById(uint id)
+        {
+            var (chunkId, segmentId) = ToChunkSegment(id);
+            return GetChunk(chunkId).GetPointerBySegment(segmentId);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public MemoryHandle Allocate(uint size)
         {

@@ -26,7 +26,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray<#ELEMENT_COUNT#><TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray<#ELEMENT_COUNT#><TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data<#ELEMENT_COUNT#><TData> _data;
@@ -212,11 +212,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }

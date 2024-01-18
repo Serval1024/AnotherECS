@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
 {
 <#ARRAY [0..STRUCT_COUNT]#>
     [ForceBlittable]
-    public unsafe struct FString<#ELEMENT_COUNT#> : IEquatable<FString<#ELEMENT_COUNT#>>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString<#ELEMENT_COUNT#> : IEquatable<FString<#ELEMENT_COUNT#>>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString<#ELEMENT_COUNT#> Empty = new();
 	
@@ -71,9 +71,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString<#ELEMENT_COUNT#> a, FString<#ELEMENT_COUNT#> b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString<#ELEMENT_COUNT#> a, FString<#ELEMENT_COUNT#> b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString<#ELEMENT_COUNT#> a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString<#ELEMENT_COUNT#> a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -113,6 +119,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -126,6 +136,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }

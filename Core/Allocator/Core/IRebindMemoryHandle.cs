@@ -4,7 +4,7 @@ using AnotherECS.Core.Collection;
 
 namespace AnotherECS.Core
 {
-    internal interface IRebindMemoryHandle
+    public interface IRebindMemoryHandle
     {
         void RebindMemoryHandle(ref MemoryRebinderContext rebinder);
     }

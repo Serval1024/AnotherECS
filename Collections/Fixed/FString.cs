@@ -14,7 +14,7 @@ using AnotherECS.Core;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public unsafe struct FString2 : IEquatable<FString2>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString2 : IEquatable<FString2>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString2 Empty = new();
 	
@@ -70,9 +70,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString2 a, FString2 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString2 a, FString2 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString2 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString2 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -112,6 +118,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -125,6 +135,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
@@ -190,7 +233,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString4 : IEquatable<FString4>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString4 : IEquatable<FString4>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString4 Empty = new();
 	
@@ -246,9 +289,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString4 a, FString4 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString4 a, FString4 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString4 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString4 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -288,6 +337,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -301,6 +354,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
@@ -366,7 +452,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString8 : IEquatable<FString8>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString8 : IEquatable<FString8>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString8 Empty = new();
 	
@@ -422,9 +508,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString8 a, FString8 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString8 a, FString8 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString8 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString8 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -464,6 +556,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -477,6 +573,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
@@ -542,7 +671,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString16 : IEquatable<FString16>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString16 : IEquatable<FString16>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString16 Empty = new();
 	
@@ -598,9 +727,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString16 a, FString16 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString16 a, FString16 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString16 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString16 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -640,6 +775,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -653,6 +792,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
@@ -718,7 +890,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString32 : IEquatable<FString32>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString32 : IEquatable<FString32>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString32 Empty = new();
 	
@@ -774,9 +946,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString32 a, FString32 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString32 a, FString32 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString32 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString32 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -816,6 +994,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -829,6 +1011,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
@@ -894,7 +1109,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString64 : IEquatable<FString64>, IEnumerable<char>, ICString<char>
+    public unsafe struct FString64 : IEquatable<FString64>, IEnumerable<char>, IFString<char>
     {
 		public static readonly FString64 Empty = new();
 	
@@ -950,9 +1165,15 @@ namespace AnotherECS.Collections
 
         public static bool operator ==(FString64 a, FString64 b)
             => a.Equals(ref b);
-			
+
         public static bool operator !=(FString64 a, FString64 b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(FString64 a, IFString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString64 a, IFString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -992,6 +1213,10 @@ namespace AnotherECS.Collections
             {
                 return Equals(fString);
             }
+            else if (obj is IFString icString)
+            {
+                return Equals(icString);
+            }
             return false;
         }
 
@@ -1005,6 +1230,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (_data[i] != other._data[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+         public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, IFString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(IFString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }

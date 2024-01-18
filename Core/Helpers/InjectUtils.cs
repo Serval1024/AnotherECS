@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    internal static class InjectUtils
+    public static class InjectUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Construct<T0, A0>(ref T0 structure, A0 argument)

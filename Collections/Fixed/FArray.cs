@@ -25,7 +25,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray2<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray2<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data2<TData> _data;
@@ -211,11 +211,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -278,7 +278,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray4<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray4<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data4<TData> _data;
@@ -468,11 +468,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -535,7 +535,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray8<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray8<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data8<TData> _data;
@@ -733,11 +733,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -800,7 +800,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray16<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray16<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data16<TData> _data;
@@ -1014,11 +1014,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -1081,7 +1081,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray32<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray32<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data32<TData> _data;
@@ -1327,11 +1327,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }
@@ -1394,7 +1394,7 @@ namespace AnotherECS.Collections
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray64<TData> : ICArray<TData>, ISerialize, IEnumerable<TData>
+    public struct FArray64<TData> : IFArray<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
 		private Data64<TData> _data;
@@ -1704,11 +1704,11 @@ namespace AnotherECS.Collections
         }
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        object ICArray.Get(uint index)
+        object IFArray.Get(uint index)
             => this[index];
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ICArray.Set(uint index, object @value)
+        void IFArray.Set(uint index, object @value)
         {
             this[index] = (TData)@value;
         }

@@ -23,10 +23,10 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.Construct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>
-                component.Construct(<#INJECT:SELF:ARGS#>);
+                InjectUtils.Construct(ref component, <#INJECT:SELF:ARGS#>);
 ------<#END#>
 ------<#ARRAY [0..INJECT:FIELD:COUNT]#>
-                component.<#INJECT:FIELD:NAME#>.Construct(<#INJECT:FIELD:ARGS#>);
+                InjectUtils.Construct(ref component.<#INJECT:FIELD:NAME#>, <#INJECT:FIELD:ARGS#>);
 ------<#END#>
 #endif
             }
@@ -37,27 +37,28 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.Deconstruct(ref component, ref injectContainer);
 #else
 ------<#IF INJECT:SELF#>
-                component.Deconstruct();
+                InjectUtils.Deconstruct(ref component);
 ------<#END#>
 ------<#ARRAY [0..INJECT:FIELD:COUNT]#>
-                component.<#INJECT:FIELD:NAME#>.Deconstruct();
+                InjectUtils.Deconstruct(ref component.<#INJECT:FIELD:NAME#>);
 ------<#END#>
 #endif
             }
-
+------<#IF REBINDMEMORY#>
             static void MemoryRebind(ref MemoryRebinderContext rebinder, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
                 ComponentReflectionUtils.RebindMemoryHandle(ref component, ref rebinder);
 #else
-------<#IF REBINDMEMORY:SELF#>
+---------<#IF REBINDMEMORY:SELF#>
                 component.RebindMemoryHandle(ref rebinder);
-------<#END#>
-------<#ARRAY [0..REBINDMEMORY:FIELD:COUNT]#>
+---------<#END#>
+---------<#ARRAY [0..REBINDMEMORY:FIELD:COUNT]#>
                 component.<#REBINDMEMORY:FIELD:NAME#>.RebindMemoryHandle(ref rebinder);
-------<#END#>
+---------<#END#>
 #endif
             }
+------<#END#>
         }
 ---<#ELSE#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

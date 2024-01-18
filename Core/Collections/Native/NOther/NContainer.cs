@@ -176,7 +176,7 @@ namespace AnotherECS.Core.Collection
             MemoryHandle memoryHandle = default;
             memoryHandle.Unpack(ref reader);
 
-            if (memoryHandle.segment != 0 && memoryHandle.chunk != 0 )
+            if (memoryHandle.id != 0)
             {
                 uint allocatorId = reader.ReadUInt32();
                 this = new NContainer<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);

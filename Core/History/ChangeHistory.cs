@@ -90,8 +90,7 @@ namespace AnotherECS.Core
             newMeta.tick = tick;
             newMeta.size = size;
             newMeta.bufferIndex = dataIndex;
-            newMeta.destChunk = memoryHandle.chunk;
-            newMeta.destSegment = memoryHandle.segment;
+            newMeta.destId = memoryHandle.id;
 
             SaveMemory(dataIndex, memoryHandle.pointer, newMeta.size);
         }
@@ -162,7 +161,7 @@ namespace AnotherECS.Core
         private void IndexRevertTo(ref HAllocator destination, ref Meta frame)
         {
             RestoreMemory(
-                        destination.GetChunk(frame.destChunk).GetPointerBySegment(frame.destSegment),
+                        destination.GetPointerById(frame.destId),
                         _buffer.GetPtr(frame.bufferIndex),
                         frame.size
                         );
@@ -258,8 +257,7 @@ namespace AnotherECS.Core
             public uint tick;
             public uint size;
             public uint bufferIndex;
-            public uint destChunk;
-            public uint destSegment;
+            public uint destId;
         }
     }
 }

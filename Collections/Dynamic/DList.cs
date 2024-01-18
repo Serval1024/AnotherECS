@@ -16,9 +16,12 @@ namespace AnotherECS.Collections
         private DArray<T> _data;
         private uint _count;
 
-#if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(WPtr<AllocatorSelector> allocator)
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator
+            )
         { 
             InjectUtils.Construct(ref _data, allocator);
         }
@@ -34,25 +37,6 @@ namespace AnotherECS.Collections
         {
             MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
         }
-#else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(WPtr<AllocatorSelector> allocator)
-        {
-            _data.Construct(allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct()
-        {
-            _data.Deconstruct();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
-        {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-        }
-#endif
 
         public bool IsValid
         { 

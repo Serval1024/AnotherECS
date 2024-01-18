@@ -1,12 +1,12 @@
 ﻿namespace AnotherECS.Collections
 {
-    public interface ICString
+    public interface IFString
     {
         public uint Capacity { get; }
         public uint Length { get; }
     }
 
-    public interface ICString<TData> : ICString
+    public interface IFString<TData> : IFString
         where TData : struct
     {
         TData this[uint index] { get; set; }
