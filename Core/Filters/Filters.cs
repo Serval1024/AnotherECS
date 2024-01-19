@@ -191,14 +191,14 @@ namespace AnotherECS.Core
         public NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider> archetypeIdToFilterId;
         public NList<BAllocator, FilterData> filters;
 
-        private NHashSet<BAllocator, uint, U4U4HashProvider> _temp;
+        private NHashSetZero<BAllocator, uint, U4U4HashProvider> _temp;
 
         public static unsafe FilterUpdater Create(BAllocator* allocator, uint capacity)
         {
             FilterUpdater inst = default;
             inst.archetypeIdToFilterId = new NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider>(allocator, capacity);
             inst.filters = new NList<BAllocator, FilterData>(allocator, capacity);
-            inst._temp = new NHashSet<BAllocator, uint, U4U4HashProvider>(allocator, capacity);
+            inst._temp = new NHashSetZero<BAllocator, uint, U4U4HashProvider>(allocator, capacity);
             return inst;
         }
 

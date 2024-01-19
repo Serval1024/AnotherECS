@@ -10,7 +10,7 @@ namespace AnotherECS.Core.Collection
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged, IEquatable<TValue>
-        where THashProvider : struct, IHash<TKey, uint>
+        where THashProvider : struct, IHashProvider<TKey, uint>
     {
         private NArray<TAllocator, int> _buckets;
         private NArray<TAllocator, Entry> _entries;

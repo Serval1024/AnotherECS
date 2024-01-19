@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Serializer;
+using UnityEditor.Graphs;
 
 namespace AnotherECS.Core.Collection
 {
@@ -10,8 +11,11 @@ namespace AnotherECS.Core.Collection
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
-        where THashProvider : struct, IHash<TKey, uint>
+        where THashProvider : struct, IHashProvider<TKey, uint>
     {
+        private const uint _EMPTY = 0x8000_0000;
+        private const uint _MASK = 0x7FFFFFFF;
+
         private NArray<TAllocator, int> _buckets;
         private NArray<TAllocator, Entry> _entries;
 
@@ -98,7 +102,7 @@ namespace AnotherECS.Core.Collection
             var count = _count;
             for (int i = 0; i < count; i++)
             {
-                if (_entries.ReadRef(i).hashCode != 0 && _entries.ReadRef(i).value.Equals(value))
+                if (_entries.ReadRef(i).hashCode < _EMPTY && _entries.ReadRef(i).value.Equals(value))
                 {
                     return true;
                 }
@@ -109,9 +113,10 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int FindEntry(TKey key)
         {
-            for (int i = _buckets.Get(_hashProvider.GetHash(ref key) % _buckets.Length); i >= 0; i = _entries.ReadRef(i).next)
+            var hashCode = _hashProvider.GetHash(ref key) & _MASK;
+            for (int i = _buckets.Get(hashCode % _buckets.Length); i >= 0; i = _entries.ReadRef(i).next)
             {
-                if (_hashProvider.GetHash(ref key) == _entries.ReadRef(i).hashCode && _entries.ReadRef(i).key.Equals(key))
+                if (hashCode == _entries.ReadRef(i).hashCode && _entries.ReadRef(i).key.Equals(key))
                 {
                     return i;
                 }
@@ -122,8 +127,8 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Insert(TKey key, TValue value, bool add)
         {
-            var hashCode = _hashProvider.GetHash(ref key);
-            ulong targetBucket = hashCode % _buckets.Length;
+            var hashCode = _hashProvider.GetHash(ref key) & _MASK;
+            uint targetBucket = hashCode % _buckets.Length;
 
             _entries.Dirty();
             _buckets.Dirty();
@@ -196,7 +201,7 @@ namespace AnotherECS.Core.Collection
                 ref var entry = ref _entries.ReadRef(i);
                 if (!entry.value.Equals(default))
                 {
-                    ulong bucket = entry.hashCode % size;
+                    uint bucket = entry.hashCode % size;
                     entry.next = newBuckets.Read(bucket);
                     newBuckets.ReadRef(bucket) = i;
                 }
@@ -207,8 +212,8 @@ namespace AnotherECS.Core.Collection
 
         public bool Remove(TKey key)
         {
-            ulong hashcode = _hashProvider.GetHash(ref key);
-            ulong bucket = hashcode % _buckets.Length;
+            uint hashCode = _hashProvider.GetHash(ref key) & _MASK;
+            uint bucket = hashCode % _buckets.Length;
             int last = -1;
 
             _entries.Dirty();
@@ -217,7 +222,7 @@ namespace AnotherECS.Core.Collection
             for (int i = _buckets.Read(bucket); i >= 0; last = i, i = _entries.ReadRef(i).next)
             {
                 ref var entry = ref _entries.ReadRef(i);
-                if (hashcode == _entries.ReadRef(i).hashCode && entry.key.Equals(key))
+                if (hashCode == _entries.ReadRef(i).hashCode && entry.key.Equals(key))
                 {
                     if (last < 0)
                     {
@@ -227,7 +232,7 @@ namespace AnotherECS.Core.Collection
                     {
                         _entries.ReadRef(last).next = entry.next;
                     }
-                    entry.hashCode = 0;
+                    entry.hashCode = _EMPTY;
                     entry.next = _freeList;
                     entry.key = default;
                     entry.value = default;
@@ -250,13 +255,6 @@ namespace AnotherECS.Core.Collection
             value = default;
             return false;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<Pair> GetEnumerator()
-            => new Enumerator(ref this);
-
-        IEnumerator IEnumerable.GetEnumerator()
-            => GetEnumerator();
 
         public void Dispose()
         {
@@ -308,6 +306,13 @@ namespace AnotherECS.Core.Collection
             _freeList = reader.ReadInt32();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerator<Pair> GetEnumerator()
+          => new Enumerator(ref this);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        IEnumerator IEnumerable.GetEnumerator()
+            => GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
@@ -316,9 +321,24 @@ namespace AnotherECS.Core.Collection
             RepairMemoryCaller.Repair(ref _entries, ref repairMemoryContext);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsAllocatorValid()
+           => _buckets.IsAllocatorValid() && _entries.IsAllocatorValid();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal TAllocator* GetAllocator()
+            => _buckets.GetAllocator();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetAllocator(TAllocator* allocator)
+        {
+            _buckets.SetAllocator(allocator);
+            _entries.SetAllocator(allocator);
+        }
+
         private struct Entry
         {
-            public ulong hashCode;
+            public uint hashCode;
             public int next;            // Index of next entry, -1 if last
             public TKey key;            // Key of entry
             public TValue value;        // Value of entry
@@ -352,7 +372,7 @@ namespace AnotherECS.Core.Collection
             {
                 while (_index < _data.Count)
                 {
-                    if (_data._entries.ReadRef(_index).hashCode >= 0)
+                    if (_data._entries.ReadRef(_index).hashCode < _EMPTY)
                     {
                         ref var entry = ref _data._entries.ReadRef(_index);
                         _current.key = entry.key;

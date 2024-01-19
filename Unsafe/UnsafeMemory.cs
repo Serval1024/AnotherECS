@@ -62,6 +62,15 @@ namespace AnotherECS.Unsafe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Deallocate(void* ptr)
+        {
+            if (ptr != null)
+            {
+                Free(ptr);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Clear(void* destination, long size)
         {
             if (destination != null)

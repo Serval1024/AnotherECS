@@ -12,7 +12,7 @@ namespace AnotherECS.Core
         private readonly FilterData* _filterData;
 
         private int _current;
-        private NHashSet<HAllocator, uint, U4U4HashProvider>.Enumerator _currentCollection;
+        private NHashSetZero<HAllocator, uint, U4U4HashProvider>.Enumerator _currentCollection;
 
         public EntityIdEnumerator(BEntityIdFilter filter)
         {

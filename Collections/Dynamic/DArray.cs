@@ -53,9 +53,9 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext rebinder)
         {
-            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref _data, ref rebinder);
         }
 
         public uint Length

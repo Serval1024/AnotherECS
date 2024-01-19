@@ -5,7 +5,7 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core
 {
-    internal unsafe struct Mask : IHash<Mask, uint>, IEquatable<Mask>
+    internal unsafe struct Mask : IHashProvider<Mask, uint>, IEquatable<Mask>
     {
         public Items includes;
         public Items excludes;
@@ -56,7 +56,7 @@ namespace AnotherECS.Core
             => includes.GetHash() ^ excludes.GetHash();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        uint IHash<Mask, uint>.GetHash(ref Mask key)
+        uint IHashProvider<Mask, uint>.GetHash(ref Mask key)
             => key.Hash;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

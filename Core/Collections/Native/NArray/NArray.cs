@@ -89,17 +89,13 @@ namespace AnotherECS.Core.Collection
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool IsAllocatorValid()
             => _allocator != null && _allocator->IsValid;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal TAllocator* GetAllocator()
-        {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
-#endif
-            return _allocator;
-        }
+            => _allocator;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SetAllocator(TAllocator* allocator)

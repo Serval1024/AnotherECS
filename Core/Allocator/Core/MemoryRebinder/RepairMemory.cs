@@ -6,14 +6,14 @@ namespace AnotherECS.Core
     public unsafe struct RepairMemory<TAllocator> : IRepairMemory
         where TAllocator : IAllocator
     {
-        private TAllocator _hAllocatorCopy;
+        private TAllocator _allocatorCopy;
         private bool _isValid;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RepairMemory(TAllocator hAllocator)
         {
-            _hAllocatorCopy = hAllocator;
-            _isValid = _hAllocatorCopy.IsValid;
+            _allocatorCopy = hAllocator;
+            _isValid = _allocatorCopy.IsValid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -21,7 +21,7 @@ namespace AnotherECS.Core
         {
             if (_isValid)
             {
-                _hAllocatorCopy.Repair(ref memoryHandle);
+                _allocatorCopy.Repair(ref memoryHandle);
             }
         }
     }

@@ -13,8 +13,11 @@ namespace AnotherECS.Core.Collection
     public unsafe struct NHashSet<TAllocator, TKey, THashProvider> : INative, ISerialize, IEnumerable<TKey>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
-        where THashProvider : struct, IHash<TKey, uint>
+        where THashProvider : struct, IHashProvider<TKey, uint>
     {
+        private const uint _EMPTY = 0x8000_0000;
+        private const uint _MASK = 0x7FFFFFFF;
+
         private NArray<TAllocator, int> _buckets;
         private NArray<TAllocator, Slot> _slots;
 
@@ -35,11 +38,17 @@ namespace AnotherECS.Core.Collection
             get => _count;
         }
 
+        internal bool IsDirty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _buckets.IsDirty || _slots.IsDirty;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NHashSet(TAllocator* allocator, INArray<TKey> list)
         {
             this = new NHashSet<TAllocator, TKey, THashProvider>(allocator, list.Length);
-            foreach(var element in list)
+            foreach (var element in list)
             {
                 Add(element);
             }
@@ -59,11 +68,27 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TKey item)
-        {            
-            for (int i = _buckets.Read(_hashProvider.GetHash(ref item) % _buckets.Length) - 1; i >= 0; i = _slots.ReadRef(i).next)
+        public void Allocate(uint elementCount)
+        {
+            if (IsAllocatorValid())
             {
-                if (_slots.ReadRef(i).item.Equals(item))
+                Dispose();
+                this = new NHashSet<TAllocator, TKey, THashProvider>(GetAllocator(), elementCount);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Contains(TKey item)
+        {
+            var hashCode = _hashProvider.GetHash(ref item) & _MASK;
+            
+            for (int i = _buckets.Read(hashCode % _buckets.Length) - 1; i >= 0; i = _slots.ReadRef(i).next)
+            {
+                if (hashCode == _slots.ReadRef(i).hashCode && _slots.ReadRef(i).item.Equals(item))
                 {
                     return true;
                 }
@@ -83,7 +108,8 @@ namespace AnotherECS.Core.Collection
             _slots.Dirty();
             _buckets.Dirty();
 
-            uint bucketId = _hashProvider.GetHash(ref item) % _buckets.Length;
+            var hashCode = _hashProvider.GetHash(ref item) & _MASK;
+            uint bucketId = hashCode % _buckets.Length;
 
             int index;
             if (_freeList >= 0)
@@ -96,12 +122,13 @@ namespace AnotherECS.Core.Collection
                 if (_lastIndex == _slots.Length)
                 {
                     Resize();
-                    bucketId = _hashProvider.GetHash(ref item) % _buckets.Length;
+                    bucketId = hashCode % _buckets.Length;
                 }
                 index = _lastIndex++;
             }
             ref var slot = ref _slots.ReadRef(index);
             ref var bucket = ref _buckets.ReadRef(bucketId);
+            slot.hashCode = hashCode;
             slot.item = item;
             slot.next = bucket - 1;
             bucket = index + 1;
@@ -114,11 +141,12 @@ namespace AnotherECS.Core.Collection
             _slots.Dirty();
             _buckets.Dirty();
 
-            uint bucketId = _hashProvider.GetHash(ref item) % _buckets.Length;
+            uint hashCode = _hashProvider.GetHash(ref item);
+            uint bucketId = hashCode % _buckets.Length;
             int lastId = -1;
             for (int i = _buckets.Get(bucketId) - 1; i >= 0; lastId = i, i = _slots.ReadRef(i).next)
             {
-                if (_slots.ReadRef(i).item.Equals(item))
+                if (_slots.ReadRef(i).hashCode == hashCode && _slots.ReadRef(i).item.Equals(item))
                 {
                     if (lastId < 0)
                     {
@@ -129,6 +157,7 @@ namespace AnotherECS.Core.Collection
                         _slots.ReadRef(lastId).next = _slots.ReadRef(i).next;
                     }
                     ref var slot = ref _slots.ReadRef(i);
+                    slot.hashCode = _EMPTY;
                     slot.item = default;
                     slot.next = _freeList;
 
@@ -231,7 +260,7 @@ namespace AnotherECS.Core.Collection
             for (int i = 0; i < lastIndex; i++)
             {
                 var slot = _slots.ReadRef(i);
-                uint bucket = _hashProvider.GetHash(ref slot.item) % newSize;
+                uint bucket = slot.hashCode % newSize;
                 slot.next = newBuckets.ReadRef(bucket) - 1;
                 newBuckets.ReadRef(bucket) = i + 1;
             }
@@ -244,6 +273,22 @@ namespace AnotherECS.Core.Collection
         {
             _buckets.Dispose();
             _slots.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void EnterCheckChanges()
+        {
+            _buckets.EnterCheckChanges();
+            _slots.EnterCheckChanges();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool ExitCheckChanges()
+        {
+            var result = false;
+            result |= _buckets.ExitCheckChanges();
+            result |= _slots.ExitCheckChanges();
+            return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -265,8 +310,25 @@ namespace AnotherECS.Core.Collection
             RepairMemoryCaller.Repair(ref _slots, ref repairMemoryContext);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsAllocatorValid()
+            => _buckets.IsAllocatorValid() && _slots.IsAllocatorValid();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal TAllocator* GetAllocator()
+            => _buckets.GetAllocator();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetAllocator(TAllocator* allocator)
+        {
+            _buckets.SetAllocator(allocator);
+            _slots.SetAllocator(allocator);
+        }
+
+
         private struct Slot
         {
+            public uint hashCode;
             public int next;      // Index of next entry, -1 if last
             public TKey item;
         }
@@ -299,9 +361,9 @@ namespace AnotherECS.Core.Collection
             {
                 while (_index < _data._lastIndex)
                 {
-                    if (!_data._slots.GetRef(_index).item.Equals(default))
+                    if (_data._slots.ReadRef(_index).hashCode < _EMPTY)
                     {
-                        _current = _data._slots.GetRef(_index).item;
+                        _current = _data._slots.ReadRef(_index).item;
                         ++_index;
                         return true;
                     }

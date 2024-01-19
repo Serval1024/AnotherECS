@@ -29,7 +29,7 @@ namespace AnotherECS.Core
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionAddCache;
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionRemoveCache;
         private NBuffer<BAllocator, BufferEntry> _changesBuffer;
-        private NHashSet<BAllocator, ushort, U2U4HashProvider> _isTemporaries;
+        private NHashSetZero<BAllocator, ushort, U2U4HashProvider> _isTemporaries;
 
         private int locked;
 
@@ -50,7 +50,7 @@ namespace AnotherECS.Core
             _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
             _changesBuffer = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
 
-            _isTemporaries = new NHashSet<BAllocator, ushort, U2U4HashProvider>(&_dependencies->bAllocator, isTemporaries);
+            _isTemporaries = new NHashSetZero<BAllocator, ushort, U2U4HashProvider>(&_dependencies->bAllocator, isTemporaries);
             _temporaries = new NList<BAllocator, MoveCollection>(&_dependencies->bAllocator, _isTemporaries.Count);
 
             locked = default;
@@ -823,7 +823,7 @@ namespace AnotherECS.Core
     internal unsafe struct IdCollection<TAllocator> : ISerialize, IDisposable, IEnumerable<uint>
         where TAllocator : unmanaged, IAllocator
     {
-        private NHashSet<TAllocator, uint, U4U4HashProvider> _data;
+        private NHashSetZero<TAllocator, uint, U4U4HashProvider> _data;
 
         public uint Count
         { 
@@ -834,7 +834,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IdCollection(TAllocator* allocator, uint capacity)
         {
-            _data = new NHashSet<TAllocator, uint, U4U4HashProvider>(allocator, capacity);
+            _data = new NHashSetZero<TAllocator, uint, U4U4HashProvider>(allocator, capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -874,7 +874,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NHashSet<TAllocator, uint, U4U4HashProvider>.Enumerator GetEnumerator()
+        public NHashSetZero<TAllocator, uint, U4U4HashProvider>.Enumerator GetEnumerator()
             => _data.GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
