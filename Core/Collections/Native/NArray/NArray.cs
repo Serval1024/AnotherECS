@@ -579,11 +579,16 @@ namespace AnotherECS.Core.Collection
             default(NArraySerializer<TAllocator, T>)
                 .UnpackBlittable(ref reader, ref this);
         }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<T> GetEnumerator()
-          => new Enumerator(ref this);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator()
+          => new(ref this);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+            => GetEnumerator();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 

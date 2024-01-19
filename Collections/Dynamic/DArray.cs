@@ -14,10 +14,10 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, IFArray, IRepairMemoryHandle
-        where T : unmanaged
+    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, IFArray, IRepairMemoryHandle
+        where TValue : unmanaged
     {
-        private NArray<AllocatorSelector, T> _data;
+        private NArray<AllocatorSelector, TValue> _data;
 
         internal bool IsDirty
         {
@@ -75,7 +75,7 @@ namespace AnotherECS.Collections
         {
             if (!_data.IsAllocatorValid())
             {
-                throw new MissInjectException(typeof(DArray<T>));
+                throw new MissInjectException(typeof(DArray<TValue>));
             }
 
             _data.Allocate(length);
@@ -101,7 +101,7 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Read(uint index)
+        public ref readonly TValue Read(uint index)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValid)
@@ -114,7 +114,7 @@ namespace AnotherECS.Collections
             => ref _data.ReadRef(index);
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Get(uint index)
+        public ref TValue Get(uint index)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValid)
@@ -128,13 +128,13 @@ namespace AnotherECS.Collections
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(uint index, T value)
+        public void Set(uint index, TValue value)
         {
             Set(index, ref value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(uint index, ref T value)
+        public void Set(uint index, ref TValue value)
 #if !ANOTHERECS_RELEASE
         {
             if (!IsValid)
@@ -147,23 +147,23 @@ namespace AnotherECS.Collections
             => _data.Set(index, ref value);
 #endif
 
-        public int IndexOf(T item)
+        public int IndexOf(TValue item)
             => IndexOf(ref item, _data.Length);
         
-        public bool Contains(T item)
+        public bool Contains(TValue item)
             => IndexOf(ref item, _data.Length) != -1;
 
-        public void CopyTo(T[] array)
+        public void CopyTo(TValue[] array)
         {
             CopyTo(array, 0, Length);
         }
 
-        public void CopyTo(T[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, _data.Length);
         }
 
-        public T this[uint index]
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Read(index);
@@ -178,7 +178,7 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe Span<T> AsSpan()
+        public unsafe Span<TValue> AsSpan()
             => new(ReadPtr(), (int)Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -198,7 +198,7 @@ namespace AnotherECS.Collections
 
         void IFArray.Set(uint index, object value)
         {
-            Set(index, (T)value);
+            Set(index, (TValue)value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -206,21 +206,21 @@ namespace AnotherECS.Collections
             => GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] ToArray()
+        public TValue[] ToArray()
             => _data.ToArray();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void CopyTo(T[] array, uint startIndex, uint count)
+        public unsafe void CopyTo(TValue[] array, uint startIndex, uint count)
         {
             _data.CopyTo(array, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe int IndexOf(ref T item, uint count)
+        internal unsafe int IndexOf(ref TValue item, uint count)
         {
 #if !ANOTHERECS_RELEASE
             if (!IsValid)
@@ -230,7 +230,7 @@ namespace AnotherECS.Collections
 #endif
             var array = ReadPtr();
 
-            var comparer = EqualityComparer<T>.Default;
+            var comparer = EqualityComparer<TValue>.Default;
             for (int i = 0; i < count; ++i)
             {
                 if (comparer.Equals(array[i], item))
@@ -242,11 +242,11 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe T* ReadPtr()
+        internal unsafe TValue* ReadPtr()
             => _data.ReadPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe T* GetPtr()
+        internal unsafe TValue* GetPtr()
             => _data.GetPtr();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -261,21 +261,21 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
         private void Validate()
         {
-            if (!ComponentUtils.IsSimple(typeof(T)))
+            if (!ComponentUtils.IsSimple(typeof(TValue)))
             {
-                throw new DArraySimpleException(typeof(T));
+                throw new DArraySimpleException(typeof(TValue));
             }
         }
 #endif
 
 
-        public struct Enumerator : IEnumerator<T>
+        public struct Enumerator : IEnumerator<TValue>
         {
-            private readonly DArray<T> _data;
+            private readonly DArray<TValue> _data;
             private uint _current;
             private readonly uint _length;
 
-            public Enumerator(ref DArray<T> data)
+            public Enumerator(ref DArray<TValue> data)
             {
                 _data = data;
                 _length = _data.Length;
@@ -284,7 +284,7 @@ namespace AnotherECS.Collections
                 _data.EnterCheckChanges();
             }
 
-            public T Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data.Read(_current);

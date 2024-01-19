@@ -14,10 +14,11 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DHashSet<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, IRepairMemoryHandle
-        where TValue : unmanaged, IEquatable<TValue>
+    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ISerialize, IRepairMemoryHandle
+        where TKey : unmanaged, IEquatable<TKey>
+        where TValue : unmanaged
     {
-        private NHashSet<AllocatorSelector, TValue, HashProvider> _data;
+        private NDictionary<AllocatorSelector, TKey, TValue, HashProvider> _data;
 
         internal bool IsDirty
         {
@@ -25,7 +26,7 @@ namespace AnotherECS.Collections
             get => _data.IsDirty;
         }
 
-        internal DHashSet(AllocatorSelector* allocator)
+        internal DDictionary(AllocatorSelector* allocator)
         {
             _data = default;
             _data.SetAllocator(allocator);
@@ -74,7 +75,7 @@ namespace AnotherECS.Collections
         {
             if (!_data.IsAllocatorValid())
             {
-                throw new MissInjectException(typeof(DHashSet<TValue>));
+                throw new MissInjectException(typeof(DDictionary<TKey, TValue>));
             }
 
             _data.Allocate(length);
@@ -86,14 +87,14 @@ namespace AnotherECS.Collections
             _data.Dispose();
         }
 
-        public bool Contains(TValue item)
-            => _data.Contains(item);
+        public bool ContainsKey(TKey key)
+            => _data.ContainsKey(key);
 
-        public void Add(TValue item)
-            => _data.Add(item);
+        public void Add(TKey key, TValue value)
+            => _data.Add(key, value);
 
-        public bool Remove(TValue item)
-            => _data.Remove(item);
+        public bool Remove(TKey key)
+            => _data.Remove(key);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
@@ -118,12 +119,12 @@ namespace AnotherECS.Collections
           => new(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
-            => GetEnumerator();
+        IEnumerator<Pair<TKey, TValue>> IEnumerable<Pair<TKey, TValue>>.GetEnumerator()
+            => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
-            => GetEnumerator();
+            => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void EnterCheckChanges()
@@ -137,6 +138,10 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
         private void Validate()
         {
+            if (!ComponentUtils.IsSimple(typeof(TKey)))
+            {
+                throw new DArraySimpleException(typeof(TKey));
+            }
             if (!ComponentUtils.IsSimple(typeof(TValue)))
             {
                 throw new DArraySimpleException(typeof(TValue));
@@ -144,20 +149,20 @@ namespace AnotherECS.Collections
         }
 #endif
 
-        private struct HashProvider : IHashProvider<TValue, uint>
+        private struct HashProvider : IHashProvider<TKey, uint>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public uint GetHash(ref TValue key)
+            public uint GetHash(ref TKey key)
                 => (uint)key.GetHashCode();
         }
 
-        public struct Enumerator : IEnumerator<TValue>, IEnumerator, IDisposable
+        public struct Enumerator : IEnumerator<Pair<TKey, TValue>>, IEnumerator, IDisposable
         {
-            private DHashSet<TValue> _data;
-            private NHashSet<AllocatorSelector, TValue, HashProvider>.Enumerator _enumerator;
+            private DDictionary<TKey, TValue> _data;
+            private NDictionary<AllocatorSelector, TKey, TValue, HashProvider>.Enumerator _enumerator;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Enumerator(ref DHashSet<TValue> data)
+            internal Enumerator(ref DDictionary<TKey, TValue> data)
             {
                 _data = data;
                 _enumerator = data._data.GetEnumerator();
@@ -175,7 +180,7 @@ namespace AnotherECS.Collections
             public bool MoveNext()
                 => _enumerator.MoveNext();
 
-            public TValue Current
+            public Pair<TKey, TValue> Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _enumerator.Current;

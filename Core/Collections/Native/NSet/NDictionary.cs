@@ -3,11 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Serializer;
-using UnityEditor.Graphs;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NDictionary<TAllocator, TKey, TValue, THashProvider> : INative, ISerialize, IEnumerable<NDictionary<TAllocator, TKey, TValue, THashProvider>.Pair>, IRepairMemoryHandle
+    public unsafe struct NDictionary<TAllocator, TKey, TValue, THashProvider> : INative, ISerialize, IEnumerable<Pair<TKey, TValue>>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
@@ -25,6 +24,21 @@ namespace AnotherECS.Core.Collection
 
         private THashProvider _hashProvider;
 
+        public bool IsValid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _buckets.IsValid && _entries.IsValid;
+        }
+
+        public uint Count
+            => _count - _freeCount;
+
+        internal bool IsDirty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _buckets.IsDirty || _entries.IsDirty;
+        }
+
         public NDictionary(TAllocator* allocator, uint capacity)
         {
             _count = 0;
@@ -41,14 +55,19 @@ namespace AnotherECS.Core.Collection
             _hashProvider = default;
         }
 
-        public bool IsValid
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate(uint elementCount)
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _buckets.IsValid && _entries.IsValid;
+            if (IsAllocatorValid())
+            {
+                Dispose();
+                this = new NDictionary<TAllocator, TKey, TValue, THashProvider>(GetAllocator(), elementCount);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
         }
-
-        public uint Count
-            => _count - _freeCount;
 
         public TValue this[TKey key]
         {
@@ -173,6 +192,23 @@ namespace AnotherECS.Core.Collection
             entry.key = key;
             entry.value = value;
             _buckets.ReadRef(targetBucket) = index;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void EnterCheckChanges()
+        {
+            _buckets.EnterCheckChanges();
+            _entries.EnterCheckChanges();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool ExitCheckChanges()
+        {
+            var result = false;
+            result |= _buckets.ExitCheckChanges();
+            result |= _entries.ExitCheckChanges();
+            return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -307,8 +343,12 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<Pair> GetEnumerator()
-          => new Enumerator(ref this);
+        public Enumerator GetEnumerator()
+          => new(ref this);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        IEnumerator<Pair<TKey, TValue>> IEnumerable<Pair<TKey, TValue>>.GetEnumerator()
+            => GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
@@ -336,6 +376,7 @@ namespace AnotherECS.Core.Collection
             _entries.SetAllocator(allocator);
         }
 
+
         private struct Entry
         {
             public uint hashCode;
@@ -344,18 +385,11 @@ namespace AnotherECS.Core.Collection
             public TValue value;        // Value of entry
         }
 
-        public struct Pair
-        {
-            public TKey key;
-            public TValue value;
-        }
-
-
-        public struct Enumerator : IEnumerator<Pair>, IEnumerator
+        public struct Enumerator : IEnumerator<Pair<TKey, TValue>>, IEnumerator
         {
             private NDictionary<TAllocator, TKey, TValue, THashProvider> _data;
             private uint _index;
-            private Pair _current;
+            private Pair<TKey, TValue> _current;
 
             internal Enumerator(ref NDictionary<TAllocator, TKey, TValue, THashProvider> data)
             {
@@ -387,7 +421,7 @@ namespace AnotherECS.Core.Collection
                 return false;
             }
 
-            public Pair Current
+            public Pair<TKey, TValue> Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _current;
@@ -412,5 +446,11 @@ namespace AnotherECS.Core.Collection
                 _current = default;
             }
         }
+    }
+
+    public struct Pair<TKey, TValue>
+    {
+        public TKey key;
+        public TValue value;
     }
 }
