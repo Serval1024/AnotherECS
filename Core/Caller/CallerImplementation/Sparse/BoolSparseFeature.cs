@@ -21,8 +21,10 @@ namespace AnotherECS.Core.Caller
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(Dependencies* dependencies, ushort callerId) { }
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -75,7 +77,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
             where AIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct, IEachData
+            where TEachData : struct
         {
             AIterable iterable = default;
 
@@ -93,14 +95,17 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, EntityId id, ushort denseIndex)
-        {
-            layout.sparse.GetPtr()[id] = true;
-        }
+        public ref bool ReadSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, EntityId id)
+            => ref layout.sparse.ReadRef(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref bool GetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, EntityId id)
             => ref layout.sparse.GetRef(id);
+
+        public void SetSparse(ref ULayout<TAllocator, bool, TDense, ushort> layout, uint id, ushort denseIndex)
+        {
+            layout.sparse.GetRef(id) = true;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, ushort> layout)

@@ -248,9 +248,11 @@ namespace AnotherECS.Serializer
 
             public T[] Get(T obj, T[] objs)
             {
-                var array = arrays[objs.Length];
+                int length = (objs != null) ? objs.Length : 0;
+
+                var array = arrays[length];
                 array[0] = obj;
-                for (int i = 0; i < objs.Length; ++i)
+                for (int i = 0; i < length; ++i)
                 {
                     array[i + 1] = objs[i];
                 }

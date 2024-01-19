@@ -63,6 +63,14 @@ namespace AnotherECS.Generator
             {
                 result.Append("Inj");
             }
+            if (option.isRepairMemory)
+            {
+                result.Append("Rm");
+            }
+            if (option.isRepairStateId)
+            {
+                result.Append("Rs");
+            }
             if (option.isBindToEntity)
             {
                 result.Append("NoBE");
@@ -108,7 +116,6 @@ namespace AnotherECS.Generator
 
             var extraSpace = new string('\t', 4);
 
-            var nothing = nameof(Nothing);
             var nothingSCDTC = $"{typeof(Nothing<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
             var singleFeature = $"{typeof(SingleFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
 
@@ -187,7 +194,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isDefault)
             {
-                result.Append($"{typeof(DefaultFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
+                result.Append($"{typeof(DefaultFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
             }
             else
             {
@@ -293,7 +300,7 @@ namespace AnotherECS.Generator
             }
             else
             {
-                result.Append(nothing);
+                result.Append(nothingSCDTC);
             }
             result.Append(",");
 
@@ -323,9 +330,21 @@ namespace AnotherECS.Generator
             result.Append(",");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isRebindMemory)
+            if (option.isRepairMemory)
             {
-                result.Append($"{typeof(RebindMemoryFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(RepairMemoryFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
+            }
+            else
+            {
+                result.Append(nothingSCDTC);
+            }
+
+            result.Append(",");
+            result.Append(Environment.NewLine);
+            result.Append(extraSpace);
+            if (option.isRepairStateId)
+            {
+                result.Append($"{typeof(RepairStateIdFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
             }
             else
             {

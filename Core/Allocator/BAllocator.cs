@@ -123,8 +123,8 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal MemoryRebinder GetMemoryRebinder()
-            => new(0, default, default);
+        internal RepairMemory<BAllocator> GetRepairMemory()
+            => new(this);
 
         public void Repair(ref MemoryHandle memoryHandle)
         {
@@ -136,6 +136,7 @@ namespace AnotherECS.Core
             writer.Write(_id);
             writer.Write(_counter);
             writer.Write(_pointerToSize.Count);
+
             foreach (var element in _pointerToSize)
             {
                 writer.Write(element.value.id);
@@ -151,6 +152,7 @@ namespace AnotherECS.Core
 
             _counter = reader.ReadUInt32();
             var count = reader.ReadUInt32();
+
             for(uint i = 0; i < count; ++i)
             {
                 var pointerToSizeId = reader.ReadUInt32();
@@ -158,8 +160,8 @@ namespace AnotherECS.Core
                 var ptr = _rawAllocator->Allocate(pointerToSizeSize).GetPtr();
                 reader.Read(ptr, pointerToSizeSize);
 
-                _pointerToSize.Add((ulong)ptr, new MemEntry() { id = id, size = pointerToSizeSize });
-                _idToPointer.Add(id, (ulong)ptr);
+                _pointerToSize.Add((ulong)ptr, new MemEntry() { id = pointerToSizeId, size = pointerToSizeSize });
+                _idToPointer.Add(pointerToSizeId, (ulong)ptr);
             }
         }
 

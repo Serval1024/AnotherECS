@@ -6,7 +6,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public static class GlobalStatesRegister
+    public static class StateGlobalRegister
     {
         private static readonly MRecycle _recycle = new(16);
         private static readonly List<State> _data = new();

@@ -4,25 +4,25 @@ namespace AnotherECS.Serializer
 {
     public class DefaultSerializer : ISerializer
     {
-        private readonly ISerializer _serializerImpl;
+        private readonly ISerializer _impl;
 
         public DefaultSerializer()
         {
-            _serializerImpl = new LightSerializer(new SerializeToUIntConverter(LightSerializer.START_CUSTOM_RANGE_CODES));
+            _impl = new LightSerializer(new SerializeToUIntConverter(LightSerializer.START_CUSTOM_RANGE_CODES));
             
         }
 
         public byte[] Pack(object data)
-            => _serializerImpl.Pack(data);
+            => _impl.Pack(data);
 
         public object Unpack(byte[] data)
-            => _serializerImpl.Unpack(data);
+            => _impl.Unpack(data);
 
         public byte[] PackCompress(object data)
             => CompressUtils.Compress(Pack(data));
 
         public object UnpackCompress(byte[] data)
-            => _serializerImpl.Unpack(CompressUtils.Decompress(data));
+            => _impl.Unpack(CompressUtils.Decompress(data));
 
         public T Unpack<T>(byte[] data)
             => (T)Unpack(data);

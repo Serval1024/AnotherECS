@@ -10,7 +10,7 @@ namespace AnotherECS.Core.Collection
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct NHashSet<TAllocator, TKey, THashProvider> : INative, ISerialize, IEnumerable<TKey>, IRebindMemoryHandle
+    public unsafe struct NHashSet<TAllocator, TKey, THashProvider> : INative, ISerialize, IEnumerable<TKey>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where THashProvider : struct, IHash<TKey, uint>
@@ -259,10 +259,10 @@ namespace AnotherECS.Core.Collection
             => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _buckets, ref rebinder);
-            MemoryRebinderCaller.Rebind(ref _slots, ref rebinder);
+            RepairMemoryCaller.Repair(ref _buckets, ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref _slots, ref repairMemoryContext);
         }
 
         private struct Slot

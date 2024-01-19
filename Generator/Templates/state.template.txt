@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using AnotherECS.Converter;
 using AnotherECS.Core;
 using AnotherECS.Gen.Common;
+using AnotherECS.Serializer;
 
 namespace AnotherECS.Gen.Project
 {
@@ -15,6 +16,10 @@ namespace AnotherECS.Gen.Project
         private FastAccess _fast;
         public ref readonly FastAccess Fast => ref _fast;
 
+
+        public <#STATE:GEN_NAME#>() : base() { }
+        public <#STATE:GEN_NAME#>(in StateConfig config) : base(in config) { }
+        public <#STATE:GEN_NAME#>(ref ReaderContextSerializer reader) : base(ref reader) { }
 
         protected override void BindingCodeGenerationStage(in StateConfig config)
         {

@@ -57,8 +57,11 @@ namespace AnotherECS.Core
             return new FilterBuilder<T0>(_state, _mask);
         }
 
-        public Filter<T0> Build()
-            => _state.CreateFilter<Filter<T0>>(ref _mask);
+        public IdFilter<T0> BuildAsId()
+            => _state.CreateFilter<IdFilter<T0>>(ref _mask);
+
+        public EntityFilter<T0> BuildAsEntity()
+            => _state.CreateFilter<EntityFilter<T0>>(ref _mask);
     }
 
     public struct FilterBuilder<T0, T1>
@@ -88,8 +91,11 @@ namespace AnotherECS.Core
             return new FilterBuilder<T0, T1>(_state, _mask);
         }
 
-        public Filter<T0, T1> Build()
-            => _state.CreateFilter<Filter<T0, T1>>(ref _mask);
+        public IdFilter<T0, T1> BuildAsId()
+            => _state.CreateFilter<IdFilter<T0, T1>>(ref _mask);
+
+        public EntityFilter<T0, T1> BuildAsEntity()
+            => _state.CreateFilter<EntityFilter<T0, T1>>(ref _mask);
     }
 
     public struct FilterBuilder<T0, T1, T2>
@@ -120,8 +126,11 @@ namespace AnotherECS.Core
             return new FilterBuilder<T0, T1, T2>(_state, _mask);
         }
 
-        public Filter<T0, T1, T2> Build()
-            => _state.CreateFilter<Filter<T0, T1, T2>>(ref _mask);
+        public IdFilter<T0, T1, T2> BuildAsId()
+            => _state.CreateFilter<IdFilter<T0, T1, T2>>(ref _mask);
+
+        public EntityFilter<T0, T1, T2> BuildAsEntity()
+            => _state.CreateFilter<EntityFilter<T0, T1, T2>>(ref _mask);
     }
 
     public struct FilterBuilder<T0, T1, T2, T3>
@@ -153,8 +162,11 @@ namespace AnotherECS.Core
             return new FilterBuilder<T0, T1, T2, T3>(_state, _mask);
         }
 
-        public Filter<T0, T1, T2, T3> Build()
-            => _state.CreateFilter<Filter<T0, T1, T2, T3>>(ref _mask);
+        public IdFilter<T0, T1, T2, T3> BuildAsId()
+            => _state.CreateFilter<IdFilter<T0, T1, T2, T3>>(ref _mask);
+
+        public EntityFilter<T0, T1, T2, T3> BuildAsEntity()
+            => _state.CreateFilter<EntityFilter<T0, T1, T2, T3>>(ref _mask);
     }
 
     public struct FilterBuilder<T0, T1, T2, T3, T4>
@@ -187,8 +199,11 @@ namespace AnotherECS.Core
             return new FilterBuilder<T0, T1, T2, T3, T4>(_state, _mask);
         }
 
-        public Filter<T0, T1, T2, T3, T4> Build()
-            => _state.CreateFilter<Filter<T0, T1, T2, T3, T4>>(ref _mask);
+        public IdFilter<T0, T1, T2, T3, T4> BuildAsId()
+            => _state.CreateFilter<IdFilter<T0, T1, T2, T3, T4>>(ref _mask);
+
+        public EntityFilter<T0, T1, T2, T3, T4> BuildAsEntity()
+            => _state.CreateFilter<EntityFilter<T0, T1, T2, T3, T4>>(ref _mask);
     }
 
     public struct FilterBuilder<T0, T1, T2, T3, T4, T5>
@@ -208,7 +223,10 @@ namespace AnotherECS.Core
             _mask = mask;
         }
 
-        public Filter<T0, T1, T2, T3, T4, T5> Build()
-           => _state.CreateFilter<Filter<T0, T1, T2, T3, T4, T5>>(ref _mask);
+        public IdFilter<T0, T1, T2, T3, T4, T5> BuildAsId()
+           => _state.CreateFilter<IdFilter<T0, T1, T2, T3, T4, T5>>(ref _mask);
+
+        public EntityFilter<T0, T1, T2, T3, T4, T5> BuildAsEntity()
+           => _state.CreateFilter<EntityFilter<T0, T1, T2, T3, T4, T5>>(ref _mask);
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Converter;
 using AnotherECS.Core.Collection;
@@ -6,27 +7,8 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Core.Caller
 {
     [IgnoreCompile]
-    internal unsafe struct Nothing : IData, IBoolConst, IBinderToFilters
-    {
-        public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
-        public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose() { }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, Dependencies* dependencies) { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(ref Dependencies dependencies) { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref Dependencies dependencies, uint id, ushort elementId) { }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref Dependencies dependencies, uint id, ushort elementId) { }
-    }
-
-    [IgnoreCompile]
     internal unsafe struct Nothing<TAllocator, TSparse, TDense, TDenseIndex> :
-        IData,
+        IData<TAllocator>,
         ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>,
         ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>,
         IInject<TAllocator, TSparse, TDense, TDenseIndex>,
@@ -41,8 +23,12 @@ namespace AnotherECS.Core.Caller
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
         IIterator<TAllocator, TSparse, TDense, TDenseIndex>,
         IRevertFinished,
-        IRebindMemory<TAllocator, TSparse, TDense, TDenseIndex>,
-        ISerialize
+        IRepairMemory<TDense>,
+        IRepairStateId<TDense>,
+        IRepairMemoryHandle,
+        IBinderToFilters,
+        ISerialize,
+        IDisposable
 
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
@@ -50,17 +36,13 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
-        public bool IsRevert { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
-        public bool IsTickFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsRevertFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
+        public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
             where TSparseBoolConst : struct, IBoolConst
             => false; 
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, Dependencies* dependencies) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies) { }
@@ -116,7 +98,7 @@ namespace AnotherECS.Core.Caller
         public void UpdateGeneration(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint id) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemory(ref ComponentFunction<TDense> componentFunction, ref MemoryRebinderContext rebinder, ref TDense component) { }
+        public void RepairMemory(ref ComponentFunction<TDense> componentFunction, ref RepairMemoryContext repairMemoryContext, ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Construct(ref ComponentFunction<TDense> componentFunction, ref Dependencies dependencies, ref TDense component) { }
@@ -153,5 +135,21 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RepairStateId(ref ComponentFunction<TDense> componentFunction, ushort stateId, ref TDense component) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator> { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(ref Dependencies dependencies, uint id, ushort elementId) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Remove(ref Dependencies dependencies, uint id, ushort elementId) { }
     }
 }

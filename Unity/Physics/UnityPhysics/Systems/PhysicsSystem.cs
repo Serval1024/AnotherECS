@@ -39,9 +39,9 @@ namespace AnotherECS.Physics
     public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IMainThread, IDisposable
     {
         private SimulationContext simulationContext;
-        private Filter<Position, Rotation, IsPhysicsStatic> staticBodies;
-        private Filter<Position, Rotation, PhysicsVelocity> dynamicBodies;
-        private Filter<PhysicsJoint, PhysicsConstrainedBodyPair> joints;
+        private IdFilter<Position, Rotation, IsPhysicsStatic> staticBodies;
+        private IdFilter<Position, Rotation, PhysicsVelocity> dynamicBodies;
+        private IdFilter<PhysicsJoint, PhysicsConstrainedBodyPair> joints;
 
         private DispatchPairSequencer scheduler = new();
 
@@ -59,23 +59,23 @@ namespace AnotherECS.Physics
 
             physicsWorldInternal = new PhysicsWorld(0, 0, 0);
 
-            staticBodies = state.CreateFilterBuilder()
+            staticBodies = state.CreateFilter()
                 .With<Position>()
                 .With<Rotation>()
                 .With<IsPhysicsStatic>()
-                .Build();
+                .BuildAsId();
 
-            dynamicBodies = state.CreateFilterBuilder()
+            dynamicBodies = state.CreateFilter()
                 .With<Position>()
                 .With<Rotation>()
                 .With<PhysicsVelocity>()
                 .Without<IsPhysicsStatic>()
-                .Build();
+                .BuildAsId();
 
-            joints = state.CreateFilterBuilder()
+            joints = state.CreateFilter()
                 .With<PhysicsJoint>()
                 .With<PhysicsConstrainedBodyPair>()
-                .Build();
+                .BuildAsId();
         }
 
         public void Dispose()

@@ -2,13 +2,15 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DefaultFeature<TDense> : IData, IDefaultSetter<TDense>
+    internal unsafe struct DefaultFeature<TAllocator, TDense> : IData<TAllocator>, IDefaultSetter<TDense>
+        where TAllocator : unmanaged, IAllocator
         where TDense : struct, IDefault
     {
         public State state;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, Dependencies* dependencies)
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
         {
             this.state = state;
         }

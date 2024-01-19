@@ -14,7 +14,7 @@ namespace AnotherECS.Core.Collection
 #endif
     [System.Diagnostics.DebuggerTypeProxy(typeof(NArray<,>.NArrayDebugView))]
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct NArray<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRebindMemoryHandle
+    public unsafe struct NArray<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
@@ -640,24 +640,24 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
             if (IsValid)
             {
-                rebinder.Rebind(_allocator->GetId(), ref _data);
-                RebindMemoryHandleElement(ref rebinder);
+                repairMemoryContext.Repair(_allocator->GetId(), ref _data);
+                RepairMemoryHandleElement(ref repairMemoryContext);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RebindMemoryHandleElement(ref MemoryRebinderContext rebinder)
+        private void RepairMemoryHandleElement(ref RepairMemoryContext repairMemoryContext)
         {
-            if (typeof(T) is IRebindMemoryHandle)
+            if (typeof(T) is IRepairMemoryHandle)
             {
                 for (uint i = 0; i < Length; ++i)
                 {
-                    var rmh = (IRebindMemoryHandle)ReadRef(i);
-                    rmh.RebindMemoryHandle(ref rebinder);
+                    var rmh = (IRepairMemoryHandle)ReadRef(i);
+                    rmh.RepairMemoryHandle(ref repairMemoryContext);
                     ReadRef(i) = (T)rmh;
                 }
             }

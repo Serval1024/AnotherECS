@@ -39,7 +39,7 @@ namespace AnotherECS.Physics
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
-    public unsafe struct PhysicsCollider : IComponent, IInject<WPtr<HAllocator>>, IRebindMemoryHandle
+    public unsafe struct PhysicsCollider : IComponent, IInject<WPtr<HAllocator>>, IRepairMemoryHandle
     {
         private static readonly BlobAssetReference<Collider> _empty = BlobAssetReference<Collider>.Create(default(BlobAssetReferenceData));
 
@@ -73,7 +73,6 @@ namespace AnotherECS.Physics
         public MassProperties MassProperties
             => Value.IsCreated ? Value.Value.MassProperties : MassProperties.UnitSphere;
 
-#if !ANOTHERECS_RELEASE
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
         {
@@ -87,29 +86,10 @@ namespace AnotherECS.Physics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
-#else
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Construct(WPtr<HAllocator> allocator)
-        {
-            _data.SetAllocator(allocator.Value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct()
-        {
-            _data.Dispose();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
-        {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-        }
-#endif
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]

@@ -34,7 +34,8 @@ namespace AnotherECS.Core.Caller
         TBinderToFilters,
         TVersion,
         TSerialize,
-        TRebindMemory
+        TRepairMemory,
+        TRepairStateId
         >
         : ICaller<TDense>, ITickFinishedCaller, IRevertFinishedCaller, IRevertStages, IAttachCaller, IDetachCaller, IResizableCaller, IInjectCaller
 
@@ -47,17 +48,18 @@ namespace AnotherECS.Core.Caller
         where TUintNextNumber : struct, INumberProvier<TDenseIndex>
         where TInject : struct, IInject<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TIdAllocator : struct, IIdAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
-        where TDefaultSetter : struct, IData, IDefaultSetter<TDense>
+        where TDefaultSetter : struct, IData<TAllocator>, IDefaultSetter<TDense>
         
-        where TAttachDetachStorage : struct, IData, IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, ISerialize
+        where TAttachDetachStorage : struct, IData<TAllocator>, IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, ISerialize, IRepairMemoryHandle, IDisposable
         where TAttach : struct, IAttach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TDetach : struct, IDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
-        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterator<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IExternalFromCallerConfig
+        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterator<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IData<TAllocator>
         where TDenseStorage : struct, IStartIndexProvider, IDenseProvider<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
         where TBinderToFilters : struct, IBinderToFilters
         where TVersion : struct, IChange<TAllocator, TSparse, TDense, TDenseIndex>, IVersion<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IRevertFinished, IBoolConst
         where TSerialize : struct, ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
-        where TRebindMemory : struct, IRebindMemory<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
+        where TRepairMemory : struct, IRepairMemory<TDense>, IBoolConst
+        where TRepairStateId : struct, IRepairStateId<TDense>, IBoolConst
     {
         private ULayout<TAllocator, TSparse, TDense, TDenseIndex>* _layout;
         private TAllocator* _allocator;
@@ -157,6 +159,12 @@ namespace AnotherECS.Core.Caller
             get => _attachDetachStorage.Is;
         }
 
+        public bool IsRepairStateId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => default(TRepairStateId).Is;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ULayout<TAllocator, TSparse, TDense, TDenseIndex>* GetLayout()
             => _layout;
@@ -176,9 +184,9 @@ namespace AnotherECS.Core.Caller
             _allocator = default(TMemoryAllocatorProvider).GetStage1(_dependencies);
             
             _elementId = id;
-            _attachDetachStorage.Config(state, dependencies);
-            _defaultSetter.Config(state, dependencies);
-            _sparseStorage.Config(dependencies, id);
+            _attachDetachStorage.Config<TMemoryAllocatorProvider>(state, dependencies, id);
+            _defaultSetter.Config<TMemoryAllocatorProvider>(state, dependencies, id);
+            _sparseStorage.Config<TMemoryAllocatorProvider>(state, dependencies, id);
             _componentFunction = componentFunction;
         }
         
@@ -191,9 +199,6 @@ namespace AnotherECS.Core.Caller
             layoutAllocator.LayoutAllocate(
                 ref *_layout,
                 ref *_dependencies,
-                default(TMemoryAllocatorProvider).GetStage1(_dependencies),
-                default(TMemoryAllocatorProvider).GetStage1(_dependencies),
-                default(TMemoryAllocatorProvider).GetStage1(_dependencies),
                 default(TMemoryAllocatorProvider).GetStage1(_dependencies)
                 );
 
@@ -499,7 +504,7 @@ namespace AnotherECS.Core.Caller
         {
             writer.Write(_allocator->GetId());
             _layoutMemoryHandle.Pack(ref writer);
-
+            
             default(TSerialize).Pack(ref writer, _layout);
             _attachDetachStorage.Pack(ref writer);
         }
@@ -509,7 +514,7 @@ namespace AnotherECS.Core.Caller
         {
             var allocatorId = reader.ReadUInt32();
             _layoutMemoryHandle.Unpack(ref reader);
-            reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
+            reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
             default(TSerialize).Unpack(ref reader, _layout);
@@ -565,7 +570,7 @@ namespace AnotherECS.Core.Caller
             default(TBinderToFilters).Add(ref *_dependencies, id, _elementId);
             if (_sparseStorage.IsUseSparse)
             {
-                _sparseStorage.SetSparse(ref *_layout, ref *_dependencies, id, denseIndex);
+                _sparseStorage.SetSparse(ref *_layout, id, denseIndex);
             }
             return denseIndex;
         }
@@ -609,18 +614,35 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            rebinder.Rebind(_allocator->GetId(), ref _layoutMemoryHandle);
+            repairMemoryContext.Repair(_allocator->GetId(), ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
-            MemoryRebinderCaller.Rebind(ref *_layout, ref rebinder);
+            RepairMemoryCaller.Repair(ref *_layout, ref repairMemoryContext);
+            _attachDetachStorage.RepairMemoryHandle(ref repairMemoryContext);
 
-            if (default(TRebindMemory).Is)
+            if (default(TRepairMemory).Is)
             { 
-                var data = new RebindMemoryData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction };
+                var data = new RepairMemoryFunctionData<TDense>()
+                {
+                    repairMemoryContext = repairMemoryContext,
+                    componentFunction = _componentFunction,
+                };
                 _sparseStorage
-                    .ForEach<RebindMemoryIterable<TAllocator, TSparse, TDense, TDenseIndex>, RebindMemoryData<TDense>>
+                    .ForEach<RepairMemoryIterable<TDense>, RepairMemoryFunctionData<TDense>>
+                    (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            if (default(TRepairStateId).Is)
+            {
+                var data = new ComponentFunctionData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction };
+                _sparseStorage
+                    .ForEach<RepairStateIdIterable<TDense>, ComponentFunctionData<TDense>>
                     (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
             }
         }

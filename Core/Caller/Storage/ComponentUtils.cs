@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using static PlasticPipe.PlasticProtocol.Messages.Serialization.ItemHandlerMessagesSerialization;
 
 namespace AnotherECS.Core
 {
@@ -115,12 +114,20 @@ namespace AnotherECS.Core
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
 
-        public static bool IsRebindMemory(Type type)
-            => typeof(IRebindMemoryHandle).IsAssignableFrom(type);
+        public static bool IsRepairMemory(Type type)
+            => typeof(IRepairMemoryHandle).IsAssignableFrom(type);
 
-        public static bool IsRebindMemoryMembers(Type type)
+        public static bool IsRepairMemoryMembers(Type type)
             => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
-            .Any(p => typeof(IRebindMemoryHandle).IsAssignableFrom(p.GetMemberType()));
+            .Any(p => typeof(IRepairMemoryHandle).IsAssignableFrom(p.GetMemberType()));
+
+        public static bool IsRepairStateId(Type type)
+            => typeof(IRepairStateId).IsAssignableFrom(type);
+
+        public static bool IsRepairStateIdMembers(Type type)
+            => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
+                .Any(p => typeof(IRepairStateId).IsAssignableFrom(p.GetMemberType()));
+
 
         public static int GetTypeSize(Type type)            
             => System.Runtime.InteropServices.Marshal.SizeOf(type);

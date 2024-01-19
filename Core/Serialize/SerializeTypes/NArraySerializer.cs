@@ -36,7 +36,7 @@ namespace AnotherECS.Serializer
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
 
-                data = new NArray<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
+                data = new NArray<TAllocator, T>(reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 return;
             }
             data = default;
@@ -103,7 +103,7 @@ namespace AnotherECS.Serializer
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
                 
-                data = new NArray<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
+                data = new NArray<TAllocator, T>(reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
@@ -180,7 +180,7 @@ namespace AnotherECS.Serializer
                 MemoryHandle memoryHandle = default;
                 memoryHandle.Unpack(ref reader);
 
-                var nArray = new NArray<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
+                var nArray = new NArray<TAllocator, T>(reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle, elementCount);
                 var buffer = nArray.ReadPtr();
 
                 T element = default;

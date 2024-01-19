@@ -54,7 +54,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, ushort> layout, ushort index)
             => ref layout.dense.ReadRef(index);
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetCapacity(ref ULayout<TAllocator, TSparse, TDense, ushort> layout)
             => layout.dense.Length;

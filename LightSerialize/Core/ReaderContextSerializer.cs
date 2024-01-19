@@ -19,9 +19,9 @@ namespace AnotherECS.Serializer
             _dependencies = new Dictionary<Type, Dictionary<uint, object>>();
             if (dependencies != null)
             {
-                foreach (var depency in dependencies)
+                foreach (var dependency in dependencies)
                 {
-                    AddDepency(depency.Item1, depency.Item2);
+                    AddDependency(dependency.Item1, dependency.Item2);
                 }
             }
         }
@@ -34,35 +34,35 @@ namespace AnotherECS.Serializer
         public uint Position
             => _stream.Position;
 
-        public void AddDepency<T>(T depency)
+        public void AddDependency<T>(T dependency)
         {
-            AddDepencyInternal(typeof(T), 0, depency);
+            AddDependencyInternal(typeof(T), 0, dependency);
         }
 
-        public void AddDepency<T>(uint depencyId, T depency)
+        public void AddDependency<T>(uint dependencyId, T dependency)
         {
-            AddDepencyInternal(typeof(T), depencyId, depency);
+            AddDependencyInternal(typeof(T), dependencyId, dependency);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddDepencyInternal(Type type, uint depencyId, object depency)
+        private void AddDependencyInternal(Type type, uint dependencyId, object dependency)
         {
             if (_dependencies.TryGetValue(type, out var dict))
             {
-                dict.Add(depencyId, depency);
+                dict.Add(dependencyId, dependency);
             }
             else
             {
-                _dependencies.Add(type, new Dictionary<uint, object>() { { depencyId, depency } });
+                _dependencies.Add(type, new Dictionary<uint, object>() { { dependencyId, dependency } });
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetDepency<T>(uint depencyId)
-            => (T)_dependencies[typeof(T)][depencyId];
+        public T GetDependency<T>(uint dependencyId)
+            => (T)_dependencies[typeof(T)][dependencyId];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetDepency<T>()
+        public T GetDependency<T>()
             => (T)_dependencies[typeof(T)][0];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

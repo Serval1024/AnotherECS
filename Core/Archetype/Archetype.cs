@@ -12,7 +12,7 @@ namespace AnotherECS.Core
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe struct Archetype : IRebindMemoryHandle, ISerialize
+    internal unsafe struct Archetype : IRepairMemoryHandle, ISerialize
     {
         public const int FIND_DEEP = 1024;
         public const int ARCHETYPE_COUNT = 1024;
@@ -748,9 +748,9 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _collections, ref rebinder);
+            RepairMemoryCaller.Repair(ref _collections, ref repairMemoryContext);
         }
 
         public void Pack(ref WriterContextSerializer writer)
@@ -767,7 +767,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.GetDepency<WPtr<Dependencies>>().Value;
+            _dependencies = reader.GetDependency<WPtr<Dependencies>>().Value;
             _nodes.UnpackBlittable(ref reader);
             _collections.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);

@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace AnotherECS.Serializer
+﻿namespace AnotherECS.Serializer
 {
     public struct TypeMeta
     {

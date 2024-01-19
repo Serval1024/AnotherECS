@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace AnotherECS.Core.Processing
 {
@@ -42,6 +41,30 @@ namespace AnotherECS.Core.Processing
         public void Invoke()
         {
             System.Construct(State);
+        }
+    }
+
+    internal struct SystemTickStartTaskHandler : ITaskHandler, ISystemTaskHandler<ITickStartModule>
+    {
+        public State State { set; get; }
+        public ITickStartModule System { set; get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            System.TickStarted(State);
+        }
+    }
+
+    internal struct SystemTickFinishedTaskHandler : ITaskHandler, ISystemTaskHandler<ITickFinishedModule>
+    {
+        public State State { set; get; }
+        public ITickFinishedModule System { set; get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            System.TickFinished(State);
         }
     }
 

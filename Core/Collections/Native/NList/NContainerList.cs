@@ -6,7 +6,7 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NContainerList<TAllocator, TElementAllocator, T> : IDisposable, ISerialize, IEnumerable<T>, INArray<T>, IRebindMemoryHandle
+    public unsafe struct NContainerList<TAllocator, TElementAllocator, T> : IDisposable, ISerialize, IEnumerable<T>, INArray<T>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TElementAllocator : unmanaged, IAllocator
         where T : unmanaged
@@ -415,9 +415,9 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public struct Enumerator : IEnumerator<T>

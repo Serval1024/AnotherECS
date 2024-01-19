@@ -18,7 +18,7 @@ namespace AnotherECS.Core
         public Filters filters;
         public uint componentTypesCount;
 
-        public MemoryRebinderContext currentMemoryRebinder;
+        public ushort stateId;
 
         public void Dispose()
         {
@@ -36,6 +36,7 @@ namespace AnotherECS.Core
             writer.WriteStruct(config);
             writer.WriteStruct(tickProvider);
             writer.Write(componentTypesCount);
+            writer.Write(stateId);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
@@ -49,6 +50,7 @@ namespace AnotherECS.Core
             config = reader.ReadStruct<StateConfig>();
             tickProvider = reader.ReadStruct<TickProvider>();
             componentTypesCount = reader.ReadUInt32();
+            stateId = reader.ReadUInt16();
         }
     }
 }

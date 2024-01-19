@@ -32,7 +32,12 @@ namespace AnotherECS.Generator
                     { "LAYOUT:TSparse", () => callers[variables.GetIndex(0)].declaration.TSparse },
                     { "LAYOUT:TDenseIndex", () => callers[variables.GetIndex(0)].declaration.TDenseIndex },
 
-                    { "INJECT", () => callers[variables.GetIndex(0)].typeOption.isInject },
+                    { "COMPONENT_FUNCTION", () =>
+                        {
+                            var typeOption = callers[variables.GetIndex(0)].typeOption;
+                            return typeOption.isInject || typeOption.isRepairMemory || typeOption.isRepairStateId;
+                        }
+                    },
 
                 };
             return variables;
@@ -81,11 +86,17 @@ namespace AnotherECS.Generator
                         }
                     },
 
-                    { "REBINDMEMORY", () => components[variables.GetIndex(0)].isRebindMemory },
-                    { "REBINDMEMORY:SELF", () => (components[variables.GetIndex(0)]).isRebindMemoryComponent },
+                    { "REPAIR_MEMORY", () => components[variables.GetIndex(0)].isRepairMemory },
+                    { "REPAIR_MEMORY:SELF", () => (components[variables.GetIndex(0)]).isRepairMemoryComponent },
 
-                    { "REBINDMEMORY:FIELD:COUNT", () => components[variables.GetIndex(0)].rebindMemoryMembers.Length.ToString() },
-                    { "REBINDMEMORY:FIELD:NAME", () => components[variables.GetIndex(0)].rebindMemoryMembers[variables.GetIndex(1)].fieldName },
+                    { "REPAIR_MEMORY:FIELD:COUNT", () => components[variables.GetIndex(0)].repairMemoryMembers.Length.ToString() },
+                    { "REPAIR_MEMORY:FIELD:NAME", () => components[variables.GetIndex(0)].repairMemoryMembers[variables.GetIndex(1)].fieldName },
+
+                    { "REPAIR_STATEID", () => components[variables.GetIndex(0)].isRepairStateId },
+                    { "REPAIR_STATEID:SELF", () => (components[variables.GetIndex(0)]).isRepairStateIdComponent },
+
+                    { "REPAIR_STATEID:FIELD:COUNT", () => components[variables.GetIndex(0)].repairStateIdMembers.Length.ToString() },
+                    { "REPAIR_STATEID:FIELD:NAME", () => components[variables.GetIndex(0)].repairStateIdMembers[variables.GetIndex(1)].fieldName },
 
                 };
             return variables;

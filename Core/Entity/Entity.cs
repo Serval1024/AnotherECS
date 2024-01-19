@@ -5,7 +5,7 @@ using EntityId = System.UInt32;
 [assembly: InternalsVisibleTo("AnotherECS.Views")]
 namespace AnotherECS.Core
 {
-    public struct Entity : IEquatable<Entity>
+    public struct Entity : IEquatable<Entity>, IRepairStateId
     {
         public const EntityId Zero = 0;
         public static readonly Entity Null = new();
@@ -25,7 +25,7 @@ namespace AnotherECS.Core
                     throw new Exceptions.NullEntityException();
                 }
 #endif
-                return GlobalStatesRegister.Get(stateId);
+                return StateGlobalRegister.Get(stateId);
             }
         }
 
@@ -181,6 +181,12 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other)
             => id.CompareTo(other.id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            this.stateId = stateId;
+        }
 
 #if !ANOTHERECS_RELEASE
         private void ThrowIfInvalid()

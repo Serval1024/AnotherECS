@@ -6,7 +6,7 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NDictionary<TAllocator, TKey, TValue, THashProvider> : INative, ISerialize, IEnumerable<NDictionary<TAllocator, TKey, TValue, THashProvider>.Pair>, IRebindMemoryHandle
+    public unsafe struct NDictionary<TAllocator, TKey, TValue, THashProvider> : INative, ISerialize, IEnumerable<NDictionary<TAllocator, TKey, TValue, THashProvider>.Pair>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
@@ -310,10 +310,10 @@ namespace AnotherECS.Core.Collection
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _buckets, ref rebinder);
-            MemoryRebinderCaller.Rebind(ref _entries, ref rebinder);
+            RepairMemoryCaller.Repair(ref _buckets, ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref _entries, ref repairMemoryContext);
         }
 
         private struct Entry

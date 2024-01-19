@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, IFString<char>, IEnumerable<char>, ISerialize, IRebindMemoryHandle
+    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, IFString<char>, IEnumerable<char>, ISerialize, IRepairMemoryHandle
     {
         private DList<char> _data;
 
@@ -32,9 +32,9 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public uint Capacity

@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<T> : IInject<WPtr<AllocatorSelector>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRebindMemoryHandle
+    public struct DList<T> : IInject<WPtr<AllocatorSelector>>, ICList<T>, IList<T>, IEnumerable<T>, ISerialize, IRepairMemoryHandle
         where T : unmanaged
     {
         private DArray<T> _data;
@@ -33,9 +33,9 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public bool IsValid

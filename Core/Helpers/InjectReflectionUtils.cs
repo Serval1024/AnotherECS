@@ -12,8 +12,12 @@ namespace AnotherECS.Core
             where T : struct
             => ReflectionUtils.ReflectionInject(ref component, ref injectContainer, nameof(IInject.Deconstruct));
 
-        public static void RebindMemoryHandle<T>(ref T component, ref MemoryRebinderContext rebinder)
+        public static void RepairMemoryHandle<T>(ref T component, ref RepairMemoryContext repairMemoryContext)
             where T : struct
-            => ReflectionUtils.ReflectionRebindMemoryHandle<T>(ref component, ref rebinder);
+            => ReflectionUtils.ReflectionRepairMemoryHandle(ref component, ref repairMemoryContext);
+
+        public static void RepairStateId<T>(ref T component, ushort stateId)
+            where T : struct
+            => ReflectionUtils.ReflectionRepairStateId(ref component, stateId);
     }
 }

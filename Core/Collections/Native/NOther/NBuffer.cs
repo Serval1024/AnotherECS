@@ -4,7 +4,7 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NBuffer<TAllocator, T> : INative, ISerialize, IRebindMemoryHandle
+    public unsafe struct NBuffer<TAllocator, T> : INative, ISerialize, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
@@ -77,9 +77,9 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
     }
 }

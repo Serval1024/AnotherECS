@@ -16,7 +16,7 @@ namespace AnotherECS.Core.Caller
         }
     }
 
-    internal unsafe struct InjectData<TDense> : IEachData
+    internal unsafe struct InjectData<TDense>
         where TDense : unmanaged
     {
         public Dependencies* dependencies;

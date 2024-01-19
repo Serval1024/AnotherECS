@@ -68,7 +68,7 @@ namespace AnotherECS.Core
 
                 for (int i = 0; i < tickCount; ++i)
                 {
-                    _loopProcessing.Tick();
+                    _loopProcessing.Tick();   
                 }
 
             }

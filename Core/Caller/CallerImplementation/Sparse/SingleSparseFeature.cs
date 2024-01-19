@@ -23,7 +23,9 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(Dependencies* dependencies, ushort callerId) { }
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
+        { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -62,7 +64,7 @@ namespace AnotherECS.Core.Caller
         }
         public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
             where AIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct, IEachData
+            where TEachData : struct
         {
             if (layout.sparse.ReadPtr()[0])
             {
@@ -71,14 +73,17 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, EntityId id, uint denseIndex)
-        {
-            layout.sparse.GetPtr()[0] = true;
-        }
+        public ref bool ReadSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, EntityId id)
+            => ref layout.sparse.ReadRef(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref bool GetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, EntityId id)
             => ref layout.sparse.GetRef(0);
+
+        public void SetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, uint id, uint denseIndex)
+        {
+            layout.sparse.GetRef(0) = true;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, uint> layout)

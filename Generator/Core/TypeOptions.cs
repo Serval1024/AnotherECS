@@ -1,5 +1,6 @@
 ﻿using System;
 using AnotherECS.Core;
+using AnotherECS.Core.Caller;
 
 namespace AnotherECS.Generator
 {
@@ -27,10 +28,15 @@ namespace AnotherECS.Generator
         public bool isInjectMembers;
         public ComponentUtils.FieldData[] injectMembers;
 
-        public bool isRebindMemory;
-        public bool isRebindMemoryComponent;
-        public bool isRebindMemoryMembers;
-        public ComponentUtils.FieldData[] rebindMemoryMembers;
+        public bool isRepairMemory;
+        public bool isRepairMemoryComponent;
+        public bool isRepairMemoryMembers;
+        public ComponentUtils.FieldData[] repairMemoryMembers;
+
+        public bool isRepairStateId;
+        public bool isRepairStateIdComponent;
+        public bool isRepairStateIdMembers;
+        public ComponentUtils.FieldData[] repairStateIdMembers;
 
         public bool isUnmanaged;
         //public bool isBlittable;
@@ -65,10 +71,15 @@ namespace AnotherECS.Generator
             isInject = isInjectComponent | isInjectMembers;
             injectMembers = isInjectMembers ? ComponentUtils.GetFieldToMembers<IInject>(type) : Array.Empty<ComponentUtils.FieldData>();
 
-            isRebindMemoryComponent = !isEmpty && ComponentUtils.IsRebindMemory(type);
-            isRebindMemoryMembers = !isEmpty && ComponentUtils.IsRebindMemoryMembers(type);
-            isRebindMemory = isRebindMemoryComponent | isRebindMemoryMembers;
-            rebindMemoryMembers = isRebindMemoryMembers ? ComponentUtils.GetFieldToMembers<IRebindMemoryHandle>(type) : Array.Empty<ComponentUtils.FieldData>();
+            isRepairMemoryComponent = !isEmpty && ComponentUtils.IsRepairMemory(type);
+            isRepairMemoryMembers = !isEmpty && ComponentUtils.IsRepairMemoryMembers(type);
+            isRepairMemory = isRepairMemoryComponent | isRepairMemoryMembers;
+            repairMemoryMembers = isRepairMemoryMembers ? ComponentUtils.GetFieldToMembers<IRepairMemoryHandle>(type) : Array.Empty<ComponentUtils.FieldData>();
+
+            isRepairStateIdComponent = !isEmpty && ComponentUtils.IsRepairStateId(type);
+            isRepairStateIdMembers = !isEmpty && ComponentUtils.IsRepairStateIdMembers(type);
+            isRepairStateId = isRepairStateIdComponent | isRepairStateIdMembers;
+            repairStateIdMembers = isRepairStateIdMembers ? ComponentUtils.GetFieldToMembers<IRepairStateId>(type) : Array.Empty<ComponentUtils.FieldData>();
 
             isUnmanaged = ComponentUtils.IsUnmanaged(type);
             //isBlittable = ComponentUtils.IsBlittable(type);

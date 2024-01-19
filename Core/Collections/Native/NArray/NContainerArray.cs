@@ -13,7 +13,7 @@ namespace AnotherECS.Core.Collection
 #endif
     [System.Diagnostics.DebuggerTypeProxy(typeof(NContainerArray<,,>.NArrayDebugView))]
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct NContainerArray<TAllocator, TElementAllocator, T> : INArray<T>, IDisposable, ISerialize, IEnumerable<T>, IRebindMemoryHandle
+    public unsafe struct NContainerArray<TAllocator, TElementAllocator, T> : INArray<T>, IDisposable, ISerialize, IEnumerable<T>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TElementAllocator : unmanaged, IAllocator
         where T : unmanaged
@@ -487,7 +487,7 @@ namespace AnotherECS.Core.Collection
             _data.UnpackBlittable(ref reader);
             var elementAllocatorId = reader.ReadUInt32();
 
-            _elementAllocator = reader.GetDepency<WPtr<TElementAllocator>>(elementAllocatorId).Value;
+            _elementAllocator = reader.GetDependency<WPtr<TElementAllocator>>(elementAllocatorId).Value;
 
             for (uint i = 0; i < _data.Length; ++i)
             {
@@ -513,21 +513,21 @@ namespace AnotherECS.Core.Collection
             => _data.ExitCheckChanges();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-            RebindMemoryHandleElement(ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+            RepairMemoryHandleElement(ref repairMemoryContext);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RebindMemoryHandleElement(ref MemoryRebinderContext rebinder)
+        private void RepairMemoryHandleElement(ref RepairMemoryContext repairMemoryContext)
         {
-            if (typeof(T) is IRebindMemoryHandle)
+            if (typeof(T) is IRepairMemoryHandle)
             {
                 for (uint i = 0; i < _data.Length; ++i)
                 {
-                    var rmh = (IRebindMemoryHandle)ReadRef(i);
-                    rmh.RebindMemoryHandle(ref rebinder);
+                    var rmh = (IRepairMemoryHandle)ReadRef(i);
+                    rmh.RepairMemoryHandle(ref repairMemoryContext);
                     ReadRef(i) = (T)rmh;
                 }
             }

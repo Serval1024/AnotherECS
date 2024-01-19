@@ -32,17 +32,13 @@ namespace AnotherECS.Core.Caller
         public void LayoutAllocate(
             ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout,
             ref Dependencies dependencies,
-
-            TAllocator* allocator0,
-            TAllocator* allocator1,
-            TAllocator* allocator2,
-            TAllocator* allocator3
+            TAllocator* allocator
             )
         {
-            default(TAllocator0).LayoutAllocate(ref layout, allocator0, ref dependencies);
-            default(TAllocator1).LayoutAllocate(ref layout, allocator1, ref dependencies);
-            default(TAllocator2).LayoutAllocate(ref layout, allocator2, ref dependencies);
-            default(TAllocator3).LayoutAllocate(ref layout, allocator3, ref dependencies);
+            default(TAllocator0).LayoutAllocate(ref layout, allocator, ref dependencies);
+            default(TAllocator1).LayoutAllocate(ref layout, allocator, ref dependencies);
+            default(TAllocator2).LayoutAllocate(ref layout, allocator, ref dependencies);
+            default(TAllocator3).LayoutAllocate(ref layout, allocator, ref dependencies);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

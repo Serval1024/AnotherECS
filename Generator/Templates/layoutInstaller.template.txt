@@ -11,23 +11,23 @@ namespace AnotherECS.Gen.Project
     public static class LayoutInstaller
     {
 <#ARRAY [0..COMPONENT:COUNT]#>
----<#IF INJECT || REBINDMEMORY#>
+---<#IF INJECT || REPAIR_MEMORY || REPAIR_STATEID#>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Install_<#COMPONENT:FULL_NAME_AS_TEXT#>(State state)
         {
-            CommonLayoutInstaller.Install_<#CALLER:TYPE_NAME#><<#COMPONENT:FULL_NAME#>>(state, new ComponentFunction<<#COMPONENT:FULL_NAME#>>() { <#IF INJECT#>construct = &Construct, deconstruct = &Deconstruct, <#END#><#IF REBINDMEMORY#>memoryRebind = &MemoryRebind <#END#>});
-
+            CommonLayoutInstaller.Install_<#CALLER:TYPE_NAME#><<#COMPONENT:FULL_NAME#>>(state, new ComponentFunction<<#COMPONENT:FULL_NAME#>>() { <#IF INJECT#>construct = &Construct, deconstruct = &Deconstruct, <#END#><#IF REPAIR_MEMORY#>repairMemory = &RepairMemory, <#END#><#IF REPAIR_STATEID#>repairStateId = &RepairStateId, <#END#>});
+------<#IF INJECT#>
             static void Construct(ref InjectContainer injectContainer, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
                 ComponentReflectionUtils.Construct(ref component, ref injectContainer);
 #else
-------<#IF INJECT:SELF#>
+---------<#IF INJECT:SELF#>
                 InjectUtils.Construct(ref component, <#INJECT:SELF:ARGS#>);
-------<#END#>
-------<#ARRAY [0..INJECT:FIELD:COUNT]#>
+---------<#END#>
+---------<#ARRAY [0..INJECT:FIELD:COUNT]#>
                 InjectUtils.Construct(ref component.<#INJECT:FIELD:NAME#>, <#INJECT:FIELD:ARGS#>);
-------<#END#>
+---------<#END#>
 #endif
             }
 
@@ -36,25 +36,41 @@ namespace AnotherECS.Gen.Project
 #if !ANOTHERECS_RELEASE
                 ComponentReflectionUtils.Deconstruct(ref component, ref injectContainer);
 #else
-------<#IF INJECT:SELF#>
+---------<#IF INJECT:SELF#>
                 InjectUtils.Deconstruct(ref component);
-------<#END#>
-------<#ARRAY [0..INJECT:FIELD:COUNT]#>
+---------<#END#>
+---------<#ARRAY [0..INJECT:FIELD:COUNT]#>
                 InjectUtils.Deconstruct(ref component.<#INJECT:FIELD:NAME#>);
-------<#END#>
+---------<#END#>
 #endif
             }
-------<#IF REBINDMEMORY#>
-            static void MemoryRebind(ref MemoryRebinderContext rebinder, ref <#COMPONENT:FULL_NAME#> component)
+------<#END#>
+------<#IF REPAIR_MEMORY#>
+            static void RepairMemory(ref RepairMemoryContext repairMemoryContext, ref <#COMPONENT:FULL_NAME#> component)
             {
 #if !ANOTHERECS_RELEASE
-                ComponentReflectionUtils.RebindMemoryHandle(ref component, ref rebinder);
+                ComponentReflectionUtils.RepairMemoryHandle(ref component, ref repairMemoryContext);
 #else
----------<#IF REBINDMEMORY:SELF#>
-                component.RebindMemoryHandle(ref rebinder);
+---------<#IF REPAIR_MEMORY:SELF#>
+                component.RepairMemoryHandle(ref repairMemoryContext);
 ---------<#END#>
----------<#ARRAY [0..REBINDMEMORY:FIELD:COUNT]#>
-                component.<#REBINDMEMORY:FIELD:NAME#>.RebindMemoryHandle(ref rebinder);
+---------<#ARRAY [0..REPAIR_MEMORY:FIELD:COUNT]#>
+                component.<#REPAIR_MEMORY:FIELD:NAME#>.RepairMemoryHandle(ref repairMemoryContext);
+---------<#END#>
+#endif
+            }
+------<#END#>
+------<#IF REPAIR_STATEID#>
+            static void RepairStateId(ushort stateId, ref <#COMPONENT:FULL_NAME#> component)
+            {
+#if !ANOTHERECS_RELEASE
+                ComponentReflectionUtils.RepairStateId(ref component, stateId);
+#else
+---------<#IF REPAIR_STATEID:SELF#>
+                component.RepairMemoryHandle(stateId);
+---------<#END#>
+---------<#ARRAY [0..REPAIR_STATEID:FIELD:COUNT]#>
+                component.<#REPAIR_STATEID:FIELD:NAME#>.RepairStateId(stateId);
 ---------<#END#>
 #endif
             }

@@ -17,10 +17,12 @@ namespace AnotherECS.Core.Caller
         TStage1Allocator* GetStage1(Dependencies* dependencies);
     }
 
-    internal unsafe interface IData : IDisposable
+    internal unsafe interface IData<TAllocator>
+        where TAllocator : unmanaged, IAllocator
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Config(State state, Dependencies* dependencies);
+        void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>;
     }
 
     internal interface IStateProvider
@@ -97,12 +99,7 @@ namespace AnotherECS.Core.Caller
         public bool IsUseSparse { get; }
     }
 
-    internal unsafe interface IExternalFromCallerConfig
-    {
-        void Config(Dependencies* dependencies, ushort callerId);
-    }
-
-    internal interface ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex> : IUseSparse, IExternalFromCallerConfig
+    internal interface ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex> : IUseSparse, IData<TAllocator>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
@@ -116,14 +113,17 @@ namespace AnotherECS.Core.Caller
         TDenseIndex ConvertToDenseIndex(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref TSparse GetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void SetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, EntityId id, TDenseIndex denseIndex);
+        ref TSparse ReadSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         WArray<T> ReadSparse<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
             where T : unmanaged;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ref TSparse GetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void SetSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id, TDenseIndex denseIndex);
     }
 
     internal unsafe interface ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>
@@ -303,7 +303,7 @@ namespace AnotherECS.Core.Caller
     {
         void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
             where AIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct, IEachData;
+            where TEachData : struct;
     }
 
     internal unsafe interface IDataIterable<TDense, TEachData>
@@ -313,8 +313,6 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Each(ref TEachData data, uint index, ref TDense component);
     }
-
-    internal unsafe interface IEachData { }
 
     internal unsafe interface ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
@@ -340,15 +338,17 @@ namespace AnotherECS.Core.Caller
             (ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies);
     }
 
-    internal interface IRebindMemory { }
-
-    internal interface IRebindMemory<TAllocator, TSparse, TDense, TDenseIndex> : IRebindMemory
-        where TAllocator : unmanaged, IAllocator
-        where TSparse : unmanaged
+    internal interface IRepairMemory<TDense>
         where TDense : unmanaged
-        where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void RebindMemory(ref ComponentFunction<TDense> componentFunction, ref MemoryRebinderContext rebinder, ref TDense component);
+        void RepairMemory(ref ComponentFunction<TDense> componentFunction, ref RepairMemoryContext repairMemoryContext, ref TDense component);
+    }
+
+    internal interface IRepairStateId<TDense>
+        where TDense : unmanaged
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void RepairStateId(ref ComponentFunction<TDense> componentFunction, ushort stateId, ref TDense component);
     }
 }

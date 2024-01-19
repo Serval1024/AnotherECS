@@ -33,7 +33,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0> CreateR<T0>(Filter<T0> filter)
+			public static JobBagR<T0> CreateR<T0>(IdFilter<T0> filter)
 				where T0 : unmanaged, IComponent
 
 				=> BagJobFactory.CreateR<T0>(filter.GetState(), filter.GetFilterData()->GetEntities());
@@ -60,7 +60,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1> CreateR<T0, T1>(Filter<T0, T1> filter)
+			public static JobBagR<T0, T1> CreateR<T0, T1>(IdFilter<T0, T1> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 
@@ -93,7 +93,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2> CreateR<T0, T1, T2>(Filter<T0, T1, T2> filter)
+			public static JobBagR<T0, T1, T2> CreateR<T0, T1, T2>(IdFilter<T0, T1, T2> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -132,7 +132,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2, T3> CreateR<T0, T1, T2, T3>(Filter<T0, T1, T2, T3> filter)
+			public static JobBagR<T0, T1, T2, T3> CreateR<T0, T1, T2, T3>(IdFilter<T0, T1, T2, T3> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -177,7 +177,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2, T3, T4> CreateR<T0, T1, T2, T3, T4>(Filter<T0, T1, T2, T3, T4> filter)
+			public static JobBagR<T0, T1, T2, T3, T4> CreateR<T0, T1, T2, T3, T4>(IdFilter<T0, T1, T2, T3, T4> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -228,7 +228,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2, T3, T4, T5> CreateR<T0, T1, T2, T3, T4, T5>(Filter<T0, T1, T2, T3, T4, T5> filter)
+			public static JobBagR<T0, T1, T2, T3, T4, T5> CreateR<T0, T1, T2, T3, T4, T5>(IdFilter<T0, T1, T2, T3, T4, T5> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -285,7 +285,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2, T3, T4, T5, T6> CreateR<T0, T1, T2, T3, T4, T5, T6>(Filter<T0, T1, T2, T3, T4, T5, T6> filter)
+			public static JobBagR<T0, T1, T2, T3, T4, T5, T6> CreateR<T0, T1, T2, T3, T4, T5, T6>(IdFilter<T0, T1, T2, T3, T4, T5, T6> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -348,7 +348,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBagR<T0, T1, T2, T3, T4, T5, T6, T7> CreateR<T0, T1, T2, T3, T4, T5, T6, T7>(Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
+			public static JobBagR<T0, T1, T2, T3, T4, T5, T6, T7> CreateR<T0, T1, T2, T3, T4, T5, T6, T7>(IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -378,7 +378,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0> Create<T0>(Filter<T0> filter)
+			public static JobBag<T0> Create<T0>(IdFilter<T0> filter)
 				where T0 : unmanaged, IComponent
 
 				=> BagJobFactory.Create<T0>(filter.GetState(), filter.GetFilterData()->GetEntities());
@@ -405,7 +405,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1> Create<T0, T1>(Filter<T0, T1> filter)
+			public static JobBag<T0, T1> Create<T0, T1>(IdFilter<T0, T1> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 
@@ -438,7 +438,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2> Create<T0, T1, T2>(Filter<T0, T1, T2> filter)
+			public static JobBag<T0, T1, T2> Create<T0, T1, T2>(IdFilter<T0, T1, T2> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -477,7 +477,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2, T3> Create<T0, T1, T2, T3>(Filter<T0, T1, T2, T3> filter)
+			public static JobBag<T0, T1, T2, T3> Create<T0, T1, T2, T3>(IdFilter<T0, T1, T2, T3> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -522,7 +522,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2, T3, T4> Create<T0, T1, T2, T3, T4>(Filter<T0, T1, T2, T3, T4> filter)
+			public static JobBag<T0, T1, T2, T3, T4> Create<T0, T1, T2, T3, T4>(IdFilter<T0, T1, T2, T3, T4> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -573,7 +573,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2, T3, T4, T5> Create<T0, T1, T2, T3, T4, T5>(Filter<T0, T1, T2, T3, T4, T5> filter)
+			public static JobBag<T0, T1, T2, T3, T4, T5> Create<T0, T1, T2, T3, T4, T5>(IdFilter<T0, T1, T2, T3, T4, T5> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -630,7 +630,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2, T3, T4, T5, T6> Create<T0, T1, T2, T3, T4, T5, T6>(Filter<T0, T1, T2, T3, T4, T5, T6> filter)
+			public static JobBag<T0, T1, T2, T3, T4, T5, T6> Create<T0, T1, T2, T3, T4, T5, T6>(IdFilter<T0, T1, T2, T3, T4, T5, T6> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -693,7 +693,7 @@ namespace AnotherECS.Unity.Jobs
                 return bag;
             }
 
-			public static JobBag<T0, T1, T2, T3, T4, T5, T6, T7> Create<T0, T1, T2, T3, T4, T5, T6, T7>(Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
+			public static JobBag<T0, T1, T2, T3, T4, T5, T6, T7> Create<T0, T1, T2, T3, T4, T5, T6, T7>(IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter)
 				where T0 : unmanaged, IComponent
 				where T1 : unmanaged, IComponent
 				where T2 : unmanaged, IComponent
@@ -707,20 +707,20 @@ namespace AnotherECS.Unity.Jobs
 
 
 		}
-		public static JobHandle AsJobParallelR<TJob, T0>(this Filter<T0> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0>(this IdFilter<T0> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0>>
             where T0 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1>(this Filter<T0, T1> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1>(this IdFilter<T0, T1> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2>(this Filter<T0, T1, T2> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2>(this IdFilter<T0, T1, T2> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -728,7 +728,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3>(this Filter<T0, T1, T2, T3> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3>(this IdFilter<T0, T1, T2, T3> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2, T3>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -737,7 +737,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4>(this Filter<T0, T1, T2, T3, T4> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4>(this IdFilter<T0, T1, T2, T3, T4> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2, T3, T4>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -747,7 +747,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5>(this Filter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5>(this IdFilter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2, T3, T4, T5>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -758,7 +758,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5, T6>(this Filter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5, T6>(this IdFilter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2, T3, T4, T5, T6>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -770,7 +770,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
-		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
+		public static JobHandle AsJobParallelR<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBagR<T0, T1, T2, T3, T4, T5, T6, T7>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -784,25 +784,25 @@ namespace AnotherECS.Unity.Jobs
 			=> job.Schedule(BagJobFactory.CreateR(filter));
         
 
-        public static JobHandle AsJobR<TJob, T0>(this Filter<T0> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0>(this IdFilter<T0> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0>>
             where T0 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1>(this Filter<T0, T1> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1>(this IdFilter<T0, T1> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2>(this Filter<T0, T1, T2> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2>(this IdFilter<T0, T1, T2> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
             where T2 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2, T3>(this Filter<T0, T1, T2, T3> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2, T3>(this IdFilter<T0, T1, T2, T3> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2, T3>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -810,7 +810,7 @@ namespace AnotherECS.Unity.Jobs
             where T3 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4>(this Filter<T0, T1, T2, T3, T4> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4>(this IdFilter<T0, T1, T2, T3, T4> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2, T3, T4>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -819,7 +819,7 @@ namespace AnotherECS.Unity.Jobs
             where T4 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5>(this Filter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5>(this IdFilter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2, T3, T4, T5>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -829,7 +829,7 @@ namespace AnotherECS.Unity.Jobs
             where T5 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5, T6>(this Filter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5, T6>(this IdFilter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2, T3, T4, T5, T6>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -840,7 +840,7 @@ namespace AnotherECS.Unity.Jobs
             where T6 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
-        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
+        public static JobHandle AsJobR<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBagR<T0, T1, T2, T3, T4, T5, T6, T7>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -853,20 +853,20 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.CreateR(filter));
 
-		public static JobHandle AsJobParallel<TJob, T0>(this Filter<T0> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0>(this IdFilter<T0> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0>>
             where T0 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1>(this Filter<T0, T1> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1>(this IdFilter<T0, T1> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2>(this Filter<T0, T1, T2> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2>(this IdFilter<T0, T1, T2> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -874,7 +874,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3>(this Filter<T0, T1, T2, T3> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3>(this IdFilter<T0, T1, T2, T3> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2, T3>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -883,7 +883,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4>(this Filter<T0, T1, T2, T3, T4> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4>(this IdFilter<T0, T1, T2, T3, T4> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2, T3, T4>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -893,7 +893,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5>(this Filter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5>(this IdFilter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2, T3, T4, T5>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -904,7 +904,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5, T6>(this Filter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5, T6>(this IdFilter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2, T3, T4, T5, T6>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -916,7 +916,7 @@ namespace AnotherECS.Unity.Jobs
 
 			=> job.Schedule(BagJobFactory.Create(filter));
         
-		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
+		public static JobHandle AsJobParallel<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
             where TJob : struct, IJobParallelForBag<JobBag<T0, T1, T2, T3, T4, T5, T6, T7>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -930,25 +930,25 @@ namespace AnotherECS.Unity.Jobs
 			=> job.Schedule(BagJobFactory.Create(filter));
         
 
-        public static JobHandle AsJob<TJob, T0>(this Filter<T0> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0>(this IdFilter<T0> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0>>
             where T0 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1>(this Filter<T0, T1> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1>(this IdFilter<T0, T1> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2>(this Filter<T0, T1, T2> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2>(this IdFilter<T0, T1, T2> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
             where T2 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2, T3>(this Filter<T0, T1, T2, T3> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2, T3>(this IdFilter<T0, T1, T2, T3> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2, T3>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -956,7 +956,7 @@ namespace AnotherECS.Unity.Jobs
             where T3 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4>(this Filter<T0, T1, T2, T3, T4> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4>(this IdFilter<T0, T1, T2, T3, T4> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2, T3, T4>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -965,7 +965,7 @@ namespace AnotherECS.Unity.Jobs
             where T4 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5>(this Filter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5>(this IdFilter<T0, T1, T2, T3, T4, T5> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2, T3, T4, T5>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -975,7 +975,7 @@ namespace AnotherECS.Unity.Jobs
             where T5 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5, T6>(this Filter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5, T6>(this IdFilter<T0, T1, T2, T3, T4, T5, T6> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2, T3, T4, T5, T6>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent
@@ -986,7 +986,7 @@ namespace AnotherECS.Unity.Jobs
             where T6 : unmanaged, IComponent
 
 			=> job.Schedule(BagJobFactory.Create(filter));
-        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this Filter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
+        public static JobHandle AsJob<TJob, T0, T1, T2, T3, T4, T5, T6, T7>(this IdFilter<T0, T1, T2, T3, T4, T5, T6, T7> filter, TJob job = default)
             where TJob : struct, IJobForBag<JobBag<T0, T1, T2, T3, T4, T5, T6, T7>>
             where T0 : unmanaged, IComponent
             where T1 : unmanaged, IComponent

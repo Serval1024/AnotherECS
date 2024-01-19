@@ -69,5 +69,4 @@ namespace AnotherECS.Core.Collection
             return GetPrime(newSize);
         }
     }
-
 }

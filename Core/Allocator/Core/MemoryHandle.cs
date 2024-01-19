@@ -3,13 +3,18 @@ using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
 {
+    //[StructLayout(LayoutKind.Explicit)]
     public unsafe struct MemoryHandle : ISerialize
     {
-        //internal uint __MEMORY_MARKER = 0xAAAA_AAAA; //TODO maybe by marker rebind
         internal void* pointer;
         internal bool* isNotDirty;
         internal uint id;
-
+        /*
+        [FieldOffset(0)] internal void* pointer;
+        [FieldOffset(8)] internal bool* isNotDirty;
+        [FieldOffset(16)] internal uint __MEMORY_MARKER0;// = 0xAAAA_AAAA; //TODO maybe repair by mem marker
+        [FieldOffset(20)] internal uint id;
+        */
         public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

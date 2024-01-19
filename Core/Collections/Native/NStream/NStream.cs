@@ -10,7 +10,7 @@ using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NStream<TAllocator> : INative, ISerialize, IEnumerable<byte>, IRebindMemoryHandle
+    public unsafe struct NStream<TAllocator> : INative, ISerialize, IEnumerable<byte>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
     {
         private NArray<TAllocator, byte> _data;
@@ -336,9 +336,9 @@ namespace AnotherECS.Core.Collection
             => _data.GetEnumerator();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

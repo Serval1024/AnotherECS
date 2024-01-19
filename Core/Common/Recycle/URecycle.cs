@@ -10,7 +10,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe struct URecycle<TNumber, TNumberProvider>: IRebindMemoryHandle, ISerialize
+    internal unsafe struct URecycle<TNumber, TNumberProvider>: IRepairMemoryHandle, ISerialize
         where TNumber : unmanaged
         where TNumberProvider : struct, INumberProvier<TNumber>
     {
@@ -66,9 +66,9 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        public void RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public void Pack(ref WriterContextSerializer writer)

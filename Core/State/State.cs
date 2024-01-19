@@ -41,7 +41,7 @@ namespace AnotherECS.Core
         private Events _events;
 
         private ushort _stateId;
-        private bool _isNeedRebindStateId;
+        private NeedRefreshByTick _reference;
         #endregion
 
         #region threading
@@ -51,6 +51,7 @@ namespace AnotherECS.Core
         #region data cache
         private ITickFinishedCaller[] _tickFinishedCallers;  //TODO SER MTHREAD
         private IRevertStages[] _revertStagesCallers;  //TODO SER MTHREAD
+        private IRepairStateId[] _repairStateIdCallers;  //TODO SER MTHREAD
         private ResizableData[] _resizableCallers;  //TODO SER MTHREAD
         private List<ITickEvent> _eventsCache;
         #endregion
@@ -61,7 +62,7 @@ namespace AnotherECS.Core
 
         public State(in StateConfig config)
         {
-            _stateId = GlobalStatesRegister.Register(this);
+            _stateId = StateGlobalRegister.Register(this);
 
             SystemInit(config);
 
@@ -80,7 +81,7 @@ namespace AnotherECS.Core
 
         public State(ref ReaderContextSerializer reader)
         {
-            _stateId = GlobalStatesRegister.Register(this);
+            _stateId = StateGlobalRegister.Register(this);
 
             Unpack(ref reader);
         }
@@ -122,11 +123,12 @@ namespace AnotherECS.Core
             _dependencies->filters = new Filters(_dependencies, 32);
 
             _dependencies->injectContainer = new InjectContainer(_allocator, &_dependencies->bAllocator, &_dependencies->stage1HAllocator);
+            _dependencies->stateId = _stateId;
         }
 
         protected override void OnDispose()
         {
-            GlobalStatesRegister.Unregister(_stateId);
+            StateGlobalRegister.Unregister(_stateId);
 
             foreach (var config in _configs)
             {
@@ -154,12 +156,10 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.AddDepency(new WPtr<Dependencies>(_dependencies));
-            writer.AddDepency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
-            writer.AddDepency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            writer.AddDepency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
-
-            writer.Write(_stateId);
+            writer.AddDependency(new WPtr<Dependencies>(_dependencies));
+            writer.AddDependency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
+            writer.AddDependency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            writer.AddDependency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
             writer.Write(_dependencies->bAllocator.GetId());
             writer.Write(_dependencies->stage0HAllocator.GetId());
@@ -181,15 +181,13 @@ namespace AnotherECS.Core
             _dependencies = CreateDependencies();
 
             var bAllocatorId = reader.ReadUInt32();
-            var hAllocatorId = reader.ReadUInt32();
-            var altHAllocatorId = reader.ReadUInt32();
+            var stage0HAllocatorId = reader.ReadUInt32();
+            var stage1HAllocatorId = reader.ReadUInt32();
 
-            reader.AddDepency(new WPtr<Dependencies>(_dependencies));
-            reader.AddDepency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
-            reader.AddDepency(altHAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            reader.AddDepency(hAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
-
-            var stateId = reader.ReadUInt32();
+            reader.AddDependency(new WPtr<Dependencies>(_dependencies));
+            reader.AddDependency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
+            reader.AddDependency(stage0HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            reader.AddDependency(stage1HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
             _dependencies->Unpack(ref reader);
             _dependencies->filters = new Filters(_dependencies, FILTER_INIT_CAPACITY);
@@ -208,13 +206,14 @@ namespace AnotherECS.Core
 
             _configs = reader.Unpack<IConfig[]>();
 
-            RebindMemoryHandles();
+            RepairMemoryHandles();
             CallConstruct();
 
-            if (_stateId != stateId)
+            if (_dependencies->stateId != _stateId)
             {
-                _isNeedRebindStateId = true;
-                RebindStateId();
+                _dependencies->stateId = _stateId;
+                _reference.Set(Tick);
+                TryRepairStateId();
             }
         }
 
@@ -233,6 +232,7 @@ namespace AnotherECS.Core
                 .ToArray();
 
             _revertStagesCallers = _callers.Skip(1).Where(p => p.IsCallRevertStages && p is IRevertStages).Cast<IRevertStages>().ToArray();
+            _repairStateIdCallers = _callers.Skip(1).Where(p => p.IsRepairStateId && p is IRepairStateId).Cast<IRepairStateId>().ToArray();
             _eventsCache = new List<ITickEvent>();
             _nextTickForEvent = _events.NextTickForEvent;
         }
@@ -290,9 +290,6 @@ namespace AnotherECS.Core
                 _resizableCallers[i].caller.Resize(capacity);
             }
         }
-
-        public Entity NewEntity()
-            => EntityExtensions.ToEntity(this, New());
 
         public void Delete(EntityId id)
         {
@@ -654,7 +651,7 @@ namespace AnotherECS.Core
 
         #region filters
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FilterBuilder CreateFilterBuilder()
+        public FilterBuilder CreateFilter()
             => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -666,7 +663,7 @@ namespace AnotherECS.Core
 #endif
             if (!mask.IsValid)
             {
-                throw new Exceptions.MaskIsEmptyException();
+                throw new MaskIsEmptyException();
             }
 
             var filter = new T();
@@ -698,7 +695,7 @@ namespace AnotherECS.Core
         #region events
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickStarted()
-        {
+        {            
             ++Tick;
             _dependencies->stage0HAllocator.TickStarted(Tick);
             _dependencies->stage1HAllocator.TickStarted(Tick);
@@ -716,6 +713,8 @@ namespace AnotherECS.Core
 
             _dependencies->stage0HAllocator.TickFinished();
             _dependencies->stage1HAllocator.TickFinished();
+
+            TryDropRepairStateId();
         }
         #endregion
 
@@ -821,19 +820,16 @@ namespace AnotherECS.Core
 
                     if (_dependencies->stage0HAllocator.RevertTo(tick))
                     {
-                        RebindMemoryHandles();
+                        RepairMemoryHandles();
                     }
 
                     CallRevertStage1();
 
                     if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
-                        RebindMemoryHandles();
+                        RepairMemoryHandles();
                         CallConstruct();
-                        if (_isNeedRebindStateId)   //TODO SER
-                        {
-                            RebindStateId();
-                        }
+                        TryRepairStateId();
                     }
 
                     CallRevertStage2();
@@ -842,12 +838,9 @@ namespace AnotherECS.Core
                 {
                     if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
-                        RebindMemoryHandles();
+                        RepairMemoryHandles();
                         CallConstruct();
-                        if (_isNeedRebindStateId)
-                        {
-                            RebindStateId();
-                        }
+                        TryRepairStateId();
                     }
                 }
 
@@ -935,39 +928,35 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RebindMemoryHandles()
+        private void RepairMemoryHandles()
         {
-            var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->stage1HAllocator);
-            _dependencies->currentMemoryRebinder = memoryRebinder;
+            var repairMemory = RepairMemoryUtils.Create(&_dependencies->bAllocator, &_dependencies->stage0HAllocator, &_dependencies->stage1HAllocator);
 
             for (uint i = 1; i < _layoutCount; ++i)
             {
-                _callers[i].RebindMemoryHandle(ref memoryRebinder);
+                _callers[i].RepairMemoryHandle(ref repairMemory);
             }
 
-            MemoryRebinderCaller.Rebind(ref _dependencies->entities, ref memoryRebinder);
-            MemoryRebinderCaller.Rebind(ref _dependencies->archetype, ref memoryRebinder);
-
-            _dependencies->currentMemoryRebinder = default;
-            memoryRebinder.Dispose();
+            RepairMemoryCaller.Repair(ref _dependencies->entities, ref repairMemory);
+            RepairMemoryCaller.Repair(ref _dependencies->archetype, ref repairMemory);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RebindStateId()
+        private void TryRepairStateId()
         {
-            var memoryRebinder = MemoryRebinderUtils.Create(&_dependencies->bAllocator, &_dependencies->stage1HAllocator);
-            _dependencies->currentMemoryRebinder = memoryRebinder;
-
-            for (uint i = 1; i < _layoutCount; ++i)
+            if (_reference.IsActive)
             {
-                _callers[i].RebindMemoryHandle(ref memoryRebinder);
+                for (uint i = 0; i < _repairStateIdCallers.Length; ++i)
+                {
+                    _repairStateIdCallers[i].RepairStateId(_stateId);
+                }
             }
+        }
 
-            MemoryRebinderCaller.Rebind(ref _dependencies->entities, ref memoryRebinder);
-            MemoryRebinderCaller.Rebind(ref _dependencies->archetype, ref memoryRebinder);
-
-            _dependencies->currentMemoryRebinder = default;
-            memoryRebinder.Dispose();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void TryDropRepairStateId()
+        {
+            _reference.TryDrop(Tick);
         }
 
         private NArray<BAllocator, ushort> GetTemporaryIndexes()

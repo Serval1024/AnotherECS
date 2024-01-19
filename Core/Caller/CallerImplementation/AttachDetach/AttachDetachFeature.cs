@@ -1,20 +1,22 @@
-﻿using AnotherECS.Core.Actions;
+﻿using System;
+using System.Runtime.CompilerServices;
+using AnotherECS.Core.Actions;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
-using System.Runtime.CompilerServices;
-using Unity.Collections;
 
 namespace AnotherECS.Core.Caller
 {
     internal unsafe struct AttachDetachFeature<TAllocator, TSparse, TDense, TDenseIndex> :
         IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>,
-        IData,
+        IData<TAllocator>,
         IBoolConst,
         ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>,
         ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>,
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
-        ISerialize
+        IRepairMemoryHandle,
+        ISerialize,
+        IDisposable
 
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
@@ -30,9 +32,11 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config(State state, Dependencies* dependencies)
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+           where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
         {
             this.state = state;
+            _allocator = default(TMemoryAllocatorProvider).GetStage0(dependencies);
             _temp = new NContainer<BAllocator, NArray<BAllocator, byte>>(&dependencies->bAllocator, default);
             _temp.GetRef() = new NArray<BAllocator, byte>(&dependencies->bAllocator, dependencies->config.general.componentCapacity);
         }
@@ -40,10 +44,9 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
-            _allocator = allocator;
-            _layoutMemoryHandle = allocator->Allocate((uint)sizeof(GenerationULayout<TAllocator>));
+            _layoutMemoryHandle = _allocator->Allocate((uint)sizeof(GenerationULayout<TAllocator>));
             _layout = GetLayoutPtr();
-            _layout->generation = new NArray<TAllocator, byte>(allocator, dependencies.config.general.componentCapacity);
+            _layout->generation = new NArray<TAllocator, byte>(_allocator, dependencies.config.general.componentCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,7 +117,7 @@ namespace AnotherECS.Core.Caller
         {
             var allocatorId = reader.ReadUInt32();
             _layoutMemoryHandle.Unpack(ref reader);
-            reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
+            reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
             SerializeActions.UnpackStorageBlittable(ref reader, _layout);
@@ -123,5 +126,13 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private GenerationULayout<TAllocator>* GetLayoutPtr()
             => (GenerationULayout<TAllocator>*)_layoutMemoryHandle.GetPtr();
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        {
+            repairMemoryContext.Repair(_allocator->GetId(), ref _layoutMemoryHandle);
+            _layout = GetLayoutPtr();
+        }
     }
 }

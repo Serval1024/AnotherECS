@@ -1,11 +1,11 @@
 using System;
-using System.Buffers;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
-using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
-using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
+using static AnotherECS.Core.HAllocator;
 
 namespace AnotherECS.Core
 {
@@ -104,6 +104,7 @@ namespace AnotherECS.Core
             _tick = tick;
 #if !ANOTHERECS_HISTORY_DISABLE
             SetDirty(true);
+            _history.TickStarted(tick);
 #endif
         }
 
@@ -137,7 +138,6 @@ namespace AnotherECS.Core
             if (*memoryHandle.isNotDirty)
             {
                 _history.Push(
-                    _tick,
                     ref memoryHandle,
                     GetSegmentCountBySegment(memoryHandle.id) << SEGMENT_POWER_2
                     );
@@ -276,7 +276,6 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-
             for (uint i = ChunkDownBound; i < _chunkAllocated; ++i)
             {
                 _chunks.GetRef(i).Dispose();
@@ -314,7 +313,7 @@ namespace AnotherECS.Core
         public void Unpack(ref ReaderContextSerializer reader)
         {
             var allocatorId = reader.ReadUInt32();
-            _allocator = reader.GetDepency<WPtr<BAllocator>>(allocatorId).Value;
+            _allocator = reader.GetDependency<WPtr<BAllocator>>(allocatorId).Value;
 #if !ANOTHERECS_RELEASE
             _memoryChecker = new MemoryChecker<BAllocator>(_allocator);
 #endif
@@ -331,18 +330,8 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal MemoryRebinder GetMemoryRebinder()
-        {
-            var dirties = new NArray<BAllocator, WPtr<bool>>(_allocator, _chunkAllocated);
-            var memories = new NArray<BAllocator, WPtr<byte>>(_allocator, _chunkAllocated);
-            for(uint i = ChunkDownBound; i < _chunkAllocated; ++i)
-            {
-                dirties.GetRef(i) = new(_chunks.GetRef(i).GetIsDirtyPtr());
-                memories.GetRef(i) = new(_chunks.GetRef(i).GetMemoryPtr());
-            }
-
-            return new MemoryRebinder(SEGMENT_POWER_2, dirties, memories);
-        }
+        internal RepairMemory<HAllocator> GetRepairMemory()
+            => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetDirty(bool isNotDirty)

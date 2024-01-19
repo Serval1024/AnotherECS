@@ -5,7 +5,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Core.Collection
 {
     [System.Diagnostics.DebuggerTypeProxy(typeof(NContainer<,>.NContainerDebugView))]
-    public unsafe struct NContainer<TAllocator, T> : INative, ISerialize, IRebindMemoryHandle
+    public unsafe struct NContainer<TAllocator, T> : INative, ISerialize, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
@@ -179,7 +179,7 @@ namespace AnotherECS.Core.Collection
             if (memoryHandle.id != 0)
             {
                 uint allocatorId = reader.ReadUInt32();
-                this = new NContainer<TAllocator, T>(reader.GetDepency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
+                this = new NContainer<TAllocator, T>(reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {
@@ -202,22 +202,22 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
             if (IsValid)
             {
-                rebinder.Rebind(_allocator->GetId(), ref _data);
-                RebindMemoryHandleElement(ref rebinder);
+                repairMemoryContext.Repair(_allocator->GetId(), ref _data);
+                RepairMemoryHandleElement(ref repairMemoryContext);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RebindMemoryHandleElement(ref MemoryRebinderContext rebinder)
+        private void RepairMemoryHandleElement(ref RepairMemoryContext repairMemoryContext)
         {
-            if (typeof(T) is IRebindMemoryHandle)
+            if (typeof(T) is IRepairMemoryHandle)
             {
-                var rmh = (IRebindMemoryHandle)ReadRef();
-                rmh.RebindMemoryHandle(ref rebinder);
+                var rmh = (IRepairMemoryHandle)ReadRef();
+                rmh.RepairMemoryHandle(ref repairMemoryContext);
                 ReadRef() = (T)rmh;
             }
         }

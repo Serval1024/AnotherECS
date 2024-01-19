@@ -37,7 +37,7 @@ namespace AnotherECS.Core.Caller
         }
 
 
-        private struct VersionDetachData : IEachData
+        private struct VersionDetachData
         {
             public State state;
             public NArray<BAllocator, byte> generation;
@@ -56,7 +56,7 @@ namespace AnotherECS.Core.Caller
             }
         }
 
-        private struct DetachData : IEachData
+        private struct DetachData
         {
             public State state;
         }

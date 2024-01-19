@@ -9,7 +9,7 @@ namespace AnotherECS.Core.Caller
 {
     public interface ICallerReference { }
 
-    internal interface ICaller : ICallerReference, ISerialize, IRebindMemoryHandle
+    internal interface ICaller : ICallerReference, ISerialize, IRepairMemoryHandle, IRepairStateId
     {
         ushort ElementId { get; }
         bool IsSingle { get; }
@@ -21,7 +21,8 @@ namespace AnotherECS.Core.Caller
         bool IsInject { get; }
         bool IsTemporary { get; }
         bool IsCallRevertStages { get; }
-        
+        bool IsRepairStateId { get; }
+
         uint GetDenseMemoryAllocated { get; }
 
         internal void AllocateLayout();

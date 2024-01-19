@@ -6,7 +6,7 @@ using AnotherECS.Core.Collection;
 namespace AnotherECS.Core
 {
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct ULayout<TAllocator, TSparse, TDense, TDenseIndex> : IDisposable, IRebindMemoryHandle
+    public unsafe struct ULayout<TAllocator, TSparse, TDense, TDenseIndex> : IDisposable, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
@@ -55,23 +55,23 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
             if (sparse.IsValid)
             {
-                MemoryRebinderCaller.Rebind(ref sparse, ref rebinder);
+                RepairMemoryCaller.Repair(ref sparse, ref repairMemoryContext);
             }
             if (dense.IsValid)
             {
-                MemoryRebinderCaller.Rebind(ref dense, ref rebinder);
+                RepairMemoryCaller.Repair(ref dense, ref repairMemoryContext);
             }
             if (recycle.IsValid)
             {
-                MemoryRebinderCaller.Rebind(ref recycle, ref rebinder);
+                RepairMemoryCaller.Repair(ref recycle, ref repairMemoryContext);
             }
             if (tickVersion.IsValid)
             {
-                MemoryRebinderCaller.Rebind(ref tickVersion, ref rebinder);
+                RepairMemoryCaller.Repair(ref tickVersion, ref repairMemoryContext);
             }
         }
     }
@@ -82,11 +82,12 @@ namespace AnotherECS.Core
     {
         public delegate*<ref InjectContainer, ref TDense, void> construct;
         public delegate*<ref InjectContainer, ref TDense, void> deconstruct;
-        public delegate*<ref MemoryRebinderContext, ref TDense, void> memoryRebind;
+        public delegate*<ref RepairMemoryContext, ref TDense, void> repairMemory;
+        public delegate*<ushort, ref TDense, void> repairStateId;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct GenerationULayout<TAllocator> : IDisposable, IRebindMemoryHandle
+    public unsafe struct GenerationULayout<TAllocator> : IDisposable, IRepairMemoryHandle
        where TAllocator : unmanaged, IAllocator
     {
         public NArray<TAllocator, byte> generation;
@@ -104,11 +105,11 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
             if (generation.IsValid)
             {
-                MemoryRebinderCaller.Rebind(ref generation, ref rebinder);
+                RepairMemoryCaller.Repair(ref generation, ref repairMemoryContext);
             }
         }
     }

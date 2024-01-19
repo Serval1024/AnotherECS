@@ -13,8 +13,8 @@ namespace AnotherECS.Core
         private NArray<BAllocator, byte> _buffer;
         private uint _recordHistoryLength;
         private uint _current;
-        private bool _isNeedRefreshReference;
-        private NArray<BAllocator, bool> _notReadyToUse;
+        private uint _tick;
+        private NeedRefreshByTick _reference;
 
         public ulong TotalBytesSaved
         {
@@ -38,23 +38,23 @@ namespace AnotherECS.Core
             _buffer = new NArray<BAllocator, byte>(allocator, capacity);
             _recordHistoryLength = recordHistoryLength;
             _current = 0;
-            _isNeedRefreshReference = false;
-            _notReadyToUse = default;
+            _tick = 0;
+            _reference = default;
         }
 
         public IHistory Create(BAllocator* allocator, uint historyCapacity, uint recordHistoryLength)
             => new ChangeHistory(allocator, historyCapacity, recordHistoryLength);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Push(uint tick, ref MemoryHandle memoryHandle, uint size)
+        public void Push(ref MemoryHandle memoryHandle, uint size)
         {
             ref var zeroMeta = ref _meta.GetRef(0);
-            if (tick > _recordHistoryLength + zeroMeta.tick)
+            if (_tick > _recordHistoryLength + zeroMeta.tick)
             {
                 var index = GetStartMemoryEnough(size);
                 if (index != uint.MaxValue)
                 {
-                    if (tick > _recordHistoryLength + _meta.GetRef(index).tick)
+                    if (_tick > _recordHistoryLength + _meta.GetRef(index).tick)
                     {
                         for (uint i = 0; i <= index; ++i)
                         {
@@ -87,7 +87,7 @@ namespace AnotherECS.Core
             }
 
             ref var newMeta = ref _meta.GetRef(_current);
-            newMeta.tick = tick;
+            newMeta.tick = _tick;
             newMeta.size = size;
             newMeta.bufferIndex = dataIndex;
             newMeta.destId = memoryHandle.id;
@@ -99,7 +99,7 @@ namespace AnotherECS.Core
         public unsafe bool RevertTo(ref HAllocator destination, uint tick)
         {
             RevertToInternal(ref destination, tick);
-            return _isNeedRefreshReference;
+            return _reference.IsActive;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -169,47 +169,33 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryDropRefreshReference()
-        {
-            if (_isNeedRefreshReference)
-            {
-                for (uint i = 0; i < _notReadyToUse.Length; ++i)
-                {
-                    if (!_notReadyToUse.Get(i))
-                    {
-                        return false;
-                    }
-                }
-                _isNeedRefreshReference = false;
-                _notReadyToUse.Dispose();
-            }
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNeedDropRefreshReference()
-            => _isNeedRefreshReference;
+            => _reference.TryDrop(_tick);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             _meta.Dispose();
             _buffer.Dispose();
-            _notReadyToUse.Dispose();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TickStarted(uint tick)
+        {
+            _tick = tick;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TickFinished()
         {
-            TryDropRefreshReference();  //TODO SER
+            TryDropRefreshReference();
         }
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            _isNeedRefreshReference = true;
-
             _meta.PackBlittable(ref writer);
             _buffer.PackBlittable(ref writer);
             writer.Write(_recordHistoryLength);
+            writer.Write(_tick);
             writer.Write(_current);
         }
 
@@ -218,9 +204,10 @@ namespace AnotherECS.Core
             _meta.UnpackBlittable(ref reader);
             _buffer.UnpackBlittable(ref reader);
             _recordHistoryLength = reader.ReadUInt32();
+            _tick = reader.ReadUInt32();
             _current = reader.ReadUInt32();
 
-            _notReadyToUse = new NArray<BAllocator, bool>(_meta.GetAllocator(), _meta.Length);
+            _reference.Set(_tick);
         }
 
 

@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, IFArray, IRebindMemoryHandle
+    public unsafe struct DArray<T> : IInject<WPtr<AllocatorSelector>>, IEnumerable<T>, ISerialize, IFArray, IRepairMemoryHandle
         where T : unmanaged
     {
         private NArray<AllocatorSelector, T> _data;
@@ -53,9 +53,9 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public uint Length

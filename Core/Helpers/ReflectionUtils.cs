@@ -10,6 +10,9 @@ namespace AnotherECS.Core
 
     internal static class ReflectionUtils
     {
+        private const BindingFlags DATA_FREE_FLAGS =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
         private struct Dummy { }
 
         public static InjectParameterData[] ExtractInjectParameterData(Type type)
@@ -73,34 +76,10 @@ namespace AnotherECS.Core
             => GetGenericFullName(type, map)
             .Replace('+', '.');
 
-        public static void ReflectionRebindMemoryHandle<T>(ref T component, ref MemoryRebinderContext rebinder)
+        public static void ReflectionRepairMemoryHandle<T>(ref T component, ref RepairMemoryContext repairMemoryContext)
             where T : struct
         {
-            var methodName = nameof(IRebindMemoryHandle.RebindMemoryHandle);
-            var args = new object[] { rebinder };
-            if (typeof(IRebindMemoryHandle).IsAssignableFrom(typeof(T)))
-            {
-                var boxing = (IRebindMemoryHandle)component;
-                var method = GetMethod(typeof(T), methodName);
-                method.Invoke(boxing, args);
-                component = (T)boxing;
-            }
-
-            foreach (var member in
-                typeof(T)
-                .GetFieldsAndProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()))
-                )
-            {
-                var memberOfComponent = member.GetValue(component);
-                var method = GetMethod(member.GetMemberType(), methodName);
-
-                method.Invoke(memberOfComponent, args);
-
-                object copy = component;
-                member.SetValue(copy, memberOfComponent);
-                component = (T)copy;
-            }
+            ReflectionCall<IRepairMemoryHandle, T, RepairMemoryContext>(ref component, ref repairMemoryContext, nameof(IRepairMemoryHandle.RepairMemoryHandle));
         }
 
         public static void ReflectionInject<T>(ref T component, ref InjectContainer injectContainer, string methodName)
@@ -117,7 +96,7 @@ namespace AnotherECS.Core
 
             foreach (var member in
                 typeof(T)
-                .GetFieldsAndProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .GetFieldsAndProperties(DATA_FREE_FLAGS)
                 .Where(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()))
                 )
             {
@@ -131,7 +110,6 @@ namespace AnotherECS.Core
                 member.SetValue(copy, memberOfComponent);
                 component = (T)copy;
             }
-
 
 
             static object[] GetArgs(Type type, ref InjectContainer injectContainer)
@@ -150,6 +128,43 @@ namespace AnotherECS.Core
                 return args;
             }
         }
+
+        public static void ReflectionRepairStateId<T>(ref T component, ushort stateId)
+            where T : struct
+        {
+            ReflectionCall<IRepairStateId, T, ushort>(ref component, ref stateId, nameof(IRepairStateId.RepairStateId));
+        }
+
+        private static void ReflectionCall<TInterface, T, TData>(ref T component, ref TData data, string methodName)
+            where T : struct
+            where TData : struct
+        {
+            var args = new object[] { data };
+            if (typeof(TInterface).IsAssignableFrom(typeof(T)))
+            {
+                var boxing = (object)component;
+                var method = GetMethod(typeof(T), methodName);
+                method.Invoke(boxing, args);
+                component = (T)boxing;
+            }
+
+            foreach (var member in
+                typeof(T)
+                .GetFieldsAndProperties(DATA_FREE_FLAGS)
+                .Where(p => typeof(TInterface).IsAssignableFrom(p.GetMemberType()))
+                )
+            {
+                var memberOfComponent = member.GetValue(component);
+                var method = GetMethod(member.GetMemberType(), methodName);
+
+                method.Invoke(memberOfComponent, args);
+
+                object copy = component;
+                member.SetValue(copy, memberOfComponent);
+                component = (T)copy;
+            }
+        }
+
 
         public static string GetMemberName(this MemberInfo memberInfo)
             => memberInfo.MemberType switch

@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Caller
         }
 
 
-        private struct VersionAttachData : IEachData
+        private struct VersionAttachData
         {
             public State state;
             public NArray<BAllocator, byte> generation;
@@ -56,7 +56,7 @@ namespace AnotherECS.Core.Caller
                 }
             }
         }
-        private struct AttachData : IEachData
+        private struct AttachData
         {
             public State state;
         }

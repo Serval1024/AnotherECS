@@ -15,18 +15,19 @@ namespace AnotherECS.Serializer
 
         public SerializeToUIntConverter(uint startId)
         {
-            var iSerializers = new IgnoresTypeToIdConverter<uint, IElementSerializer>().GetAssociationTable();
+            var iElementSerializers = new IgnoresTypeToIdConverter<uint, IElementSerializer>().GetAssociationTable();
             var iSerializes = new IgnoresTypeToIdConverter<uint, ISerialize>().GetAssociationTable();
             var iComponents = new IgnoresTypeToIdConverter<uint, IComponent>().GetAssociationTable();
+            var iConfigs = new IgnoresTypeToIdConverter<uint, IConfig>().GetAssociationTable();
             var iEvents = new IgnoresTypeToIdConverter<uint, IEvent>().GetAssociationTable();
             
             var serializeAttributes = TypeUtils.GetAllowHasAttributeFromTypesAcrossAll<SerializeAttribute>();
 
             uint id = startId;
             _reverse = new();
-            _iSerializeres = new (uint id, Type type)[iSerializers.Count];
+            _iSerializeres = new (uint id, Type type)[iElementSerializers.Count];
 
-            foreach (var item in iSerializers.Values
+            foreach (var item in iElementSerializers.Values
                 .OrderBy(p => p.Name))
             {
                 var type = ExtractElementTypeFromISerializerType(item);
@@ -41,6 +42,7 @@ namespace AnotherECS.Serializer
 
             foreach (var item in iSerializes.Values
                 .Union(iComponents.Values)
+                .Union(iConfigs.Values)
                 .Union(iEvents.Values)
                 .Union(serializeAttributes)
                 .OrderBy(p => p.Name)

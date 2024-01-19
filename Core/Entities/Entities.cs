@@ -2,7 +2,6 @@ using System;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
-using AnotherECS.Core.Threading;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
@@ -12,7 +11,7 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe struct Entities : ISerialize, IDisposable, IRebindMemoryHandle
+    internal unsafe struct Entities : ISerialize, IDisposable, IRepairMemoryHandle
     {
         internal const ushort AllocateGeneration = 32768;
 
@@ -147,16 +146,16 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.GetDepency<WPtr<Dependencies>>().Value;
+            _dependencies = reader.GetDependency<WPtr<Dependencies>>().Value;
             _data.Unpack(ref reader);
             _recycle.Unpack(ref reader);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRebindMemoryHandle.RebindMemoryHandle(ref MemoryRebinderContext rebinder)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
         {
-            MemoryRebinderCaller.Rebind(ref _data, ref rebinder);
-            MemoryRebinderCaller.Rebind(ref _recycle, ref rebinder);
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref _recycle, ref repairMemoryContext);
     }
     }
 }
