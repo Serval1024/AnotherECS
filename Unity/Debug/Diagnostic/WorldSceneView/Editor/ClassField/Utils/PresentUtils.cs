@@ -5,8 +5,15 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
 {
     internal static class PresentUtils
     {
+        public static VisualElement CreateGroupBox(string label)
+        {
+            var container = CreateGroup(label);
+            container.Q("group-content").style.paddingLeft = new StyleLength(new Length(15, LengthUnit.Pixel));
+            return container;
+        }
+
         public static VisualElement CreateGroup(string label)
-        { 
+        {
             var container = new VisualElement();
 
             if (!string.IsNullOrEmpty(label))
@@ -20,14 +27,13 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             {
                 name = "group-content"
             };
-            groupContent.style.paddingLeft = new StyleLength(new Length(15, LengthUnit.Pixel));
 
             container.Add(groupContent);
 
             return container;
         }
 
-        public static VisualElement CreateHorizontalGroup(string label)
+        public static VisualElement CreateHorizontal(string label)
         {
             var container = CreateGroup(label);
             container.Q("group-content").style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);

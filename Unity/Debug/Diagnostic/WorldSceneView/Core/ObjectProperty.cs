@@ -117,8 +117,11 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         public object GetFieldValue()
             => _target;
 
-        public string GetFieldName()
+        public string GetFieldDisplayName()
             => _name;
+
+        public ObjectProperty ToFieldDisplayName(string value)
+            => new(_root, _target, _path, value);
 
         public PathIterator GetPathIterator()
             => new(_path);
