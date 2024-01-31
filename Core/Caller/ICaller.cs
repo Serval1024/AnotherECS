@@ -27,8 +27,13 @@ namespace AnotherECS.Core.Caller
 
         internal void AllocateLayout();
         Type GetElementType();
+
+        bool IsHas(EntityId id);
+
+        void Add(EntityId id, IComponent data);
         void Remove(EntityId id);
         void RemoveRaw(EntityId id);
+
         IComponent GetCopy(EntityId id);
         void Set(EntityId id, IComponent data);
 
@@ -49,7 +54,6 @@ namespace AnotherECS.Core.Caller
     {
         unsafe void Config(Dependencies* dependencies, ushort id, State state, ComponentFunction<TComponent> componentFunction);
         TComponent Create();
-        bool IsHas(EntityId id);
         void Add(EntityId id, ref TComponent component);
         ref TComponent Add(EntityId id);
         ref readonly TComponent Read(EntityId id);

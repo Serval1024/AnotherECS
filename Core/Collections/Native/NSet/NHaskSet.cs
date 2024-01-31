@@ -268,6 +268,59 @@ namespace AnotherECS.Core.Collection
             _buckets = newBuckets;
         }
 
+        public object Get(uint index)
+        {
+#if !ANOTHERECS_RELEASE
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            int counterIndex = 0;
+            while (counterIndex < _lastIndex)
+            {
+                if (_slots.ReadRef(counterIndex).hashCode < _EMPTY)
+                {
+                    if (counterIndex == index)
+                    {
+                        return _slots.ReadRef(counterIndex).item;
+                    }
+                    ++counterIndex;
+                }
+            }
+            
+            throw new IndexOutOfRangeException(nameof(index));
+        }
+
+        public void Set(uint index, object value)
+        {
+#if !ANOTHERECS_RELEASE
+            if (value == null || typeof(TKey) != value.GetType())
+            {
+                throw new ArgumentException(nameof(value));
+            }
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            int counterIndex = 0;
+            while (counterIndex < _lastIndex)
+            {
+                if (_slots.ReadRef(counterIndex).hashCode < _EMPTY)
+                {
+                    if (counterIndex == index)
+                    {
+                        var key = _slots.ReadRef(counterIndex).item;
+                        Remove(key);
+                        Add((TKey)value);
+                        return;
+                    }
+                    ++counterIndex;
+                }
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {

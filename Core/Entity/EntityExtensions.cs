@@ -44,5 +44,12 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool EqualsTo(this in Entity a, in Entity b)
             => a.id == b.id && a.generation == b.generation && a.stateId == b.stateId;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Entity CreateRaw(uint id)
+            => new ()
+            {
+                id = id,
+            };
     }
 }

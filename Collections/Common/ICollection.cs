@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Collections
 {
-    public interface IFArray
+    public interface ICollection
     {
         uint Length { get; }
         object Get(uint index);
@@ -8,7 +8,7 @@
         void Clear();
     }
 
-    public interface IFArray<TData> : IFArray
+    public interface ICollection<TData> : ICollection
        where TData : struct
     {
         TData this[uint index] { get; set; }

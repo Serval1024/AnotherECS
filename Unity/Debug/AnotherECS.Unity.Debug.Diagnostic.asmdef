@@ -1,0 +1,20 @@
+{
+    "name": "AnotherECS.Unity.Debug.Diagnostic",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e95cae816c3572d4f860aff8b4579eb0",
+        "GUID:185412ded22da324b997fab2a6989df0",
+        "GUID:d92f56491da65f14eb5f193697329f8e",
+        "GUID:10da87c2b052553459d757eb5f6b4790",
+        "GUID:4ac170ea42203d04bbfc283fc883d7d5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

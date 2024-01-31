@@ -24,6 +24,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 // Internal representation is identical to IEEE binary32 floating point numbers
@@ -898,6 +899,30 @@ public partial struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, ICompara
     public string ToString(string format) => ((float)this).ToString(format);
     public string ToString(IFormatProvider provider) => ((float)this).ToString(provider);
     public string ToStringInv() => ((float)this).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    public static bool TryParse(string str, NumberStyles numberStyles, CultureInfo cultureInfo, out sfloat value)
+    {
+        if (float.TryParse(str, numberStyles, cultureInfo, out var floatValue))
+        {
+            value = (sfloat)floatValue;
+            return true;
+        }
+
+        value = zero;
+        return false;
+    }
+
+    public static bool TryParse(string str, out sfloat value)
+    {
+        if (float.TryParse(str, out var floatValue))
+        {
+            value = (sfloat)floatValue;
+            return true;
+        }
+
+        value = zero;
+        return false;
+    }
 
     /// <summary>
     /// Returns the absolute value of the given sfloat number

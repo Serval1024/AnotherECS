@@ -16,6 +16,7 @@ namespace AnotherECS.Core
         {
             if (!IsDisposed)
             {
+                IsDisposed = true;
                 OnDispose();
                 GC.SuppressFinalize(this);
             }

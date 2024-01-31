@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, IFArray, IRepairMemoryHandle
+    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, ICollection, IRepairMemoryHandle
         where TValue : unmanaged
     {
         private NArray<AllocatorSelector, TValue> _data;
@@ -193,10 +193,10 @@ namespace AnotherECS.Collections
             _data.Unpack(ref reader);
         }
 
-        object IFArray.Get(uint index)
-            => Get(index);
+        object ICollection.Get(uint index)
+            => Read(index);
 
-        void IFArray.Set(uint index, object value)
+        void ICollection.Set(uint index, object value)
         {
             Set(index, (TValue)value);
         }

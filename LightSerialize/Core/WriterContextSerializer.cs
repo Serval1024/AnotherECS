@@ -111,6 +111,32 @@ namespace AnotherECS.Serializer
             => _serializer.WriteStruct(ref this, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Write<T>(T value)
+            where T : unmanaged, Enum
+        {
+            if (sizeof(T) == 1)
+            {
+                Write(*(byte*)&value);
+            }
+            else if (sizeof(T) == 2)
+            {
+                Write(*(ushort*)&value);
+            }
+            else if (sizeof(T) == 4)
+            {
+                Write(*(uint*)&value);
+            }
+            else if (sizeof(T) == 8)
+            {
+                Write(*(ulong*)&value);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(bool value)
             => _stream.Write(value);
 

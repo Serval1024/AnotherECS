@@ -36,7 +36,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
@@ -258,7 +258,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
@@ -480,7 +480,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
@@ -702,7 +702,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
@@ -924,7 +924,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
@@ -1146,7 +1146,7 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 

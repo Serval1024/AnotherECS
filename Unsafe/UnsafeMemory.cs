@@ -75,10 +75,7 @@ namespace AnotherECS.Unsafe
         {
             if (destination != null)
             {
-#if UNITY_5_3_OR_NEWER
-                Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear(destination, size);
-#else
-#endif
+                MemClear(destination, size);
             }
         }
 

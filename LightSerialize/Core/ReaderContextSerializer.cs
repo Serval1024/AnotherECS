@@ -113,6 +113,35 @@ namespace AnotherECS.Serializer
             where T : struct
             => _serializer.ReadStruct<T>(ref this);
 
+        public unsafe T ReadEnum<T>()
+            where T : unmanaged, Enum
+        {
+            if (sizeof(T) == 1)
+            {
+                var value = ReadByte();
+                return *(T*)&value;
+            }
+            else if (sizeof(T) == 2)
+            {
+                var value = ReadUInt16();
+                return *(T*)&value;
+            }
+            else if (sizeof(T) == 4)
+            {
+                var value = ReadUInt32();
+                return *(T*)&value;
+            }
+            else if (sizeof(T) == 8)
+            {
+                var value = ReadUInt64();
+                return *(T*)&value;
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ReadBoolean()
             => _stream.ReadBoolean();

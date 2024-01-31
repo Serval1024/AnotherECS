@@ -49,15 +49,14 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfExists<T>(State state, EntityId id, ICaller<T> caller)
-           where T : unmanaged, IComponent
+        public static void ThrowIfExists(State state, EntityId id, ICaller caller)
         {
             ThrowIfDisposed(state);
             ThrowIfNotMultiAccess(state, id, caller);
 
-            if (state.IsHas<T>(id))
+            if (caller.IsHas(id))
             {
-                throw new ComponentExistsException(typeof(T));
+                throw new ComponentExistsException(caller.GetElementType());
             }
         }
 

@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace AnotherECS.Serializer
 {
     public class DefaultSerializer : ISerializer

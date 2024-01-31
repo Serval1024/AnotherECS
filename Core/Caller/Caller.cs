@@ -354,6 +354,11 @@ namespace AnotherECS.Core.Caller
             AddPostInternal(ref component);
         }
 
+        public void Add(uint id, IComponent data)
+        {
+            Add(id, (TDense)data);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(EntityId id, TDense data)
         {

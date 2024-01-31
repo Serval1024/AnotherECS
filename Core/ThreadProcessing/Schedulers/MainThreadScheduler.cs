@@ -17,9 +17,7 @@ namespace AnotherECS.Core.Processing
         }
 
         public static MainThreadScheduler Create()
-            => new()
-            {
-            };
+            => new() { };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run(Task task)

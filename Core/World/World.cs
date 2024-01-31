@@ -1,32 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using AnotherECS.Core.Processing;
+using AnotherECS.Debug.Diagnostic;
 
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
 {
     public class World : BDisposable, IWorld
     {
+        public string Name { get; set; }
         public uint CurrentTick => _state.Tick;
         public uint RequestTick { get; private set; }
 
 #if !ANOTHERECS_RELEASE
         private bool _isInit = false;
+        private IDiagnostic _diagnostic;
 #endif
         private readonly IGroupSystemInternal _systems;
         private readonly State _state;
         private readonly LoopProcessing _loopProcessing;
 
+        public World(IEnumerable<ISystem> systems, State state)
+            : this(systems, state, WorldThreadingLevel.MainThreadOnly) { }
+
+        public World(IEnumerable<ISystem> systems, State state, WorldThreadingLevel threadingLevel)
+            : this (systems, state, SystemProcessingFactory.Create(state, threadingLevel)) { }
+
         public World(IEnumerable<ISystem> systems, State state, ISystemProcessing systemProcessing = default)
         {
+            if (systemProcessing == null)
+            {
+                throw new ArgumentNullException(nameof(systemProcessing));
+            }
+
             _systems = new SystemGroup(
                 systems ?? throw new ArgumentNullException(nameof(systems))
                 );
 
             _state = state ?? throw new ArgumentNullException(nameof(state));
 
-            _loopProcessing = new LoopProcessing(
-                systemProcessing ?? SystemProcessingFactory.Create(state, WorldThreadingLevel.MainThreadOnly)
-                );
+            _loopProcessing = new LoopProcessing(systemProcessing);
         }
 
         public void Init()
@@ -57,10 +71,11 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
+
+            UpdateDiagnostic();
 #endif
             if (tickCount != 0)
             {
-
 #if !ANOTHERECS_HISTORY_DISABLE
                 _loopProcessing.TryRevertTo(RequestTick, _state.GetNextTickForEvent());
 #endif
@@ -70,13 +85,16 @@ namespace AnotherECS.Core
                 {
                     _loopProcessing.Tick();   
                 }
-
             }
+
+#if !ANOTHERECS_RELEASE
+            UpdateDiagnostic();
+#endif
         }
 
-        public void RevertTo(uint tickCount)
+        public void RevertTo(uint tick)
         {
-            _loopProcessing.RevertTo(tickCount);
+            _loopProcessing.RevertTo(tick);
         }
 
         public void Destroy()
@@ -119,12 +137,38 @@ namespace AnotherECS.Core
             _loopProcessing.Wait();
         }
 
+        public void SetDiagnostic(IDiagnostic diagnostic)
+        {
+#if !ANOTHERECS_RELEASE
+            _diagnostic?.Detach(this);
+            
+            _diagnostic = diagnostic;
+            _diagnostic.Attach(this);
+#endif
+        }
+
+        internal State GetState()
+            => _state;
+
         protected override void OnDispose()
         {
+#if !ANOTHERECS_RELEASE
+            _diagnostic?.Detach(this);
+#endif
             _loopProcessing.Dispose();  //with waiting work threads.
 
             _systems.Dispose();
             _state.Dispose();
         }
+
+#if !ANOTHERECS_RELEASE
+        private void UpdateDiagnostic()
+        {
+            if (!_loopProcessing.IsBusy())
+            {
+                _diagnostic?.Update(this);
+            }
+        }
+#endif
     }
 }

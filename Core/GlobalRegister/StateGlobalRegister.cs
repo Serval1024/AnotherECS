@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 
 namespace AnotherECS.Core
 {
@@ -9,13 +9,13 @@ namespace AnotherECS.Core
     public static class StateGlobalRegister
     {
         private static readonly MRecycle _recycle = new(16);
-        private static readonly List<State> _data = new();
+        private static State[] _data = Array.Empty<State>();
 
 #if UNITY_EDITOR
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ReloadDomainOptimizationHack()
         {
-            _data.Clear();
+            Array.Clear(_data, 0, _data.Length);
         }
 #endif
 
@@ -24,9 +24,9 @@ namespace AnotherECS.Core
             lock (_data)
             {
                 var id = _recycle.Allocate();
-                while (id >= _data.Count)
+                if (id >= _data.Length)
                 {
-                    _data.Add(default);
+                    Array.Resize(ref _data, id + 1);
                 }
 
                 _data[id] = state;

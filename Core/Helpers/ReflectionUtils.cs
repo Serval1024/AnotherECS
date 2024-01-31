@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("AnotherECS.Generator")]
 namespace AnotherECS.Core
@@ -102,9 +103,16 @@ namespace AnotherECS.Core
             {
                 var memberOfComponent = member.GetValue(component);
                 var method = GetMethod(member.GetMemberType(), methodName);
-                var args = GetArgs(member.GetMemberType(), ref injectContainer);
 
-                method.Invoke(memberOfComponent, args);
+                if (method.GetParameters().Length == 0)
+                {
+                    method.Invoke(memberOfComponent, null);
+                }
+                else
+                {
+                    var args = GetArgs(member.GetMemberType(), ref injectContainer);
+                    method.Invoke(memberOfComponent, args);
+                }
 
                 object copy = component;
                 member.SetValue(copy, memberOfComponent);
@@ -206,7 +214,16 @@ namespace AnotherECS.Core
         }
 
         private static MethodInfo GetMethod(Type type, string methodName)
-              => type.GetInterfaces().Select(p => p.GetMethod(methodName)).First(p => p != null);
+            => type.GetInterfaces()
+                .Select(p => p.GetMethod(methodName))
+                .First(p => p != null);
+
+        public static MemberInfo GetFieldOrProperty(this Type type, string name, BindingFlags bindingFlags)
+            => type
+                .GetFields(bindingFlags)
+                .Cast<MemberInfo>()
+                .Union(type.GetProperties(bindingFlags))
+                .First(p => p.GetMemberName() == name);
 
         public static IEnumerable<MemberInfo> GetFieldsAndProperties(this Type type, BindingFlags bindingFlags)
             => type

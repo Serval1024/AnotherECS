@@ -60,7 +60,7 @@ namespace AnotherECS.Collections
         public bool IsReadOnly
             => false;
 
-        int ICollection<TValue>.Count => (int)Count;
+        int System.Collections.Generic.ICollection<TValue>.Count => (int)Count;
 
         public TValue this[int index]
         {

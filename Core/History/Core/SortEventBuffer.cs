@@ -47,7 +47,7 @@ namespace AnotherECS.Core
                 EnsureCapacity();
             }
 
-            if (_values[^1].tick - _values[0].tick > _tickLimit)
+            if (_values[^1].key - _values[0].key > _tickLimit)
             {
                 Array.Copy(_keys, 1, _keys, 0, _count - index);     //lost first
                 Array.Copy(_values, 1, _values, 0, _count - index); //lost first
@@ -68,15 +68,16 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetTickByIndex(int index)
-            => ToTick(_values[index].tick);
+            => ToTick(_values[index].key);
 
         public int Find(uint tick, List<ITickEvent> result)
         {
+            var key = MakeFakeId(tick);
             int findIndex = _count - 1;
             for (; findIndex >= 0; --findIndex)
             {
-                var valueTick = _values[findIndex].tick;
-                if (valueTick < tick)
+                var valueKey = _values[findIndex].key;
+                if (valueKey < key)
                 {
                     break;
                 }
@@ -84,7 +85,7 @@ namespace AnotherECS.Core
 
             for (int i = findIndex + 1; i < _count; ++i)
             {
-                var valueTick = _values[i].tick;
+                var valueTick = ToTick(_values[i].key);
                 if (valueTick == tick)
                 {
                     result.Add(_values[i].@event);
@@ -101,6 +102,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ulong MakeId(uint tick)
           => (ulong)tick << 32 | unchecked(++_counter);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ulong MakeFakeId(uint tick)
+          => (ulong)tick << 32;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint ToTick(ulong key)
@@ -140,24 +145,24 @@ namespace AnotherECS.Core
 
         private struct EventData : ISerialize
         {
-            public ulong tick;
+            public ulong key;
             public ITickEvent @event;
 
             public EventData(ulong tick, ITickEvent content)
             {
-                this.tick = tick;
+                this.key = tick;
                 this.@event = content;
             }
 
             public void Pack(ref WriterContextSerializer writer)
             {
-                writer.Write(tick);
+                writer.Write(key);
                 writer.Pack(@event);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
-                tick = reader.ReadUInt64();
+                key = reader.ReadUInt64();
                 @event = reader.Unpack<ITickEvent>();
             }
         }

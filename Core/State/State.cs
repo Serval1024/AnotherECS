@@ -35,6 +35,7 @@ namespace AnotherECS.Core
         private IModuleData[] _moduleDatas;
 
         private ICaller[] _callers;
+        private Dictionary<Type, ICaller> _callerByType;
         private IConfig[] _configs;
 
         private StateOption _option;
@@ -53,7 +54,9 @@ namespace AnotherECS.Core
         private IRevertStages[] _revertStagesCallers;  //TODO SER MTHREAD
         private IRepairStateId[] _repairStateIdCallers;  //TODO SER MTHREAD
         private ResizableData[] _resizableCallers;  //TODO SER MTHREAD
-        private List<ITickEvent> _eventsCache;
+        private List<ITickEvent> _eventsTemp;
+        private EntityId[] _entityIdsTemp;
+
         #endregion
 
         #region construct & destruct
@@ -233,8 +236,11 @@ namespace AnotherECS.Core
 
             _revertStagesCallers = _callers.Skip(1).Where(p => p.IsCallRevertStages && p is IRevertStages).Cast<IRevertStages>().ToArray();
             _repairStateIdCallers = _callers.Skip(1).Where(p => p.IsRepairStateId && p is IRepairStateId).Cast<IRepairStateId>().ToArray();
-            _eventsCache = new List<ITickEvent>();
+            _eventsTemp = new List<ITickEvent>();
+            _entityIdsTemp = Array.Empty<EntityId>();
             _nextTickForEvent = _events.NextTickForEvent;
+
+            _callerByType = _callers.Skip(1).ToDictionary(k => k.GetElementType(), v => v);
         }
         #endregion
 
@@ -282,15 +288,6 @@ namespace AnotherECS.Core
             return id;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ResizeStorages(uint capacity)
-        {
-            for (int i = 0; i < _resizableCallers.Length; ++i)
-            {
-                _resizableCallers[i].caller.Resize(capacity);
-            }
-        }
-
         public void Delete(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
@@ -314,7 +311,7 @@ namespace AnotherECS.Core
             _dependencies->entities.Deallocate(id);
         }
 
-        public uint Count(EntityId id)
+        public uint GetCount(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id);
@@ -351,14 +348,39 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHas(EntityId id, uint index)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return index < GetCount(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHas(EntityId id, Type type)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(type));
+#endif
+            return GetCaller(type).IsHas(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas<T>(EntityId id)
           where T : unmanaged, IComponent
         {
-
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller<T>());
 #endif
             return GetCaller<T>().IsHas(id);
+        }
+
+        public void Add(EntityId id, IComponent data)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(data.GetType()));
+#endif
+            GetCaller(data.GetType()).Add(id, data);
         }
 
         public void Add<T>(EntityId id, T data)
@@ -392,6 +414,14 @@ namespace AnotherECS.Core
             Add<T>(id);
         }
 
+        public void Remove(EntityId id, uint index)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+#endif
+            GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).Remove(id);
+        }
+
         public void Remove<T>(EntityId id)
             where T : unmanaged, IComponent
         {
@@ -404,7 +434,7 @@ namespace AnotherECS.Core
         public IComponent Read(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
 #endif
             return GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).GetCopy(id);
         }
@@ -432,7 +462,7 @@ namespace AnotherECS.Core
         public void Set(EntityId id, uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, index, Count(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
 #endif
             GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).Set(id, component);
         }
@@ -445,6 +475,38 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller<T>().Set(id, ref data);
+        }
+
+        public EntityId[] CollectAllEntityIds()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            if (_entityIdsTemp.Length != EntityCount)
+            {
+                _entityIdsTemp = new EntityId[EntityCount];
+            }
+
+            int index = 0;
+            for(uint i = 1, iMax = _dependencies->entities.GetAllocated(); i < iMax; ++i)
+            {
+                if (_dependencies->entities.IsHas(i))
+                {
+                    _entityIdsTemp[index++] = i;
+                }
+            }
+
+            return _entityIdsTemp;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ResizeStorages(uint capacity)
+        {
+            for (int i = 0; i < _resizableCallers.Length; ++i)
+            {
+                _resizableCallers[i].caller.Resize(capacity);
+            }
         }
         #endregion
 
@@ -775,13 +837,13 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void FlushEvents()
         {
-            _eventsCache.Clear();
-            CollectEvent(Tick, _eventsCache);
+            _eventsTemp.Clear();
+            CollectEvent(Tick, _eventsTemp);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal List<ITickEvent> GetEventCache() 
-            => _eventsCache;
+            => _eventsTemp;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void CollectEvent(uint tick, List<ITickEvent> result)
@@ -869,6 +931,15 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Dependencies* GetDependencies()
             => _dependencies;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetEntityIdMax()
+        {    
+#if !ANOTHERECS_RELEASE
+                ExceptionHelper.ThrowIfDisposed(this);
+#endif
+                return _dependencies->entities.GetAllocated();
+        }
         #endregion
 
         #region private
@@ -996,6 +1067,10 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ICaller GetCaller(uint index)
             => _callers[index];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ICaller GetCaller(Type type)
+            => _callerByType[type];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddLayout<UCaller, TDense>(ComponentFunction<TDense> componentFunction = default)

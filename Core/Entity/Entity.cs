@@ -9,7 +9,6 @@ namespace AnotherECS.Core
     {
         public const EntityId Zero = 0;
         public static readonly Entity Null = new();
-
         internal EntityId id;
         internal ushort generation;
         internal ushort stateId;
@@ -29,8 +28,11 @@ namespace AnotherECS.Core
             }
         }
 
-      
-
+        public bool IsValid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => id != 0 && stateId != 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsHas()
@@ -38,7 +40,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Count()
-            => State.Count(id);
+            => State.GetCount(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete()
