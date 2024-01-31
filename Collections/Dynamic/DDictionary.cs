@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ISerialize, IRepairMemoryHandle
+    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ICollection, ISerialize, IRepairMemoryHandle
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
@@ -95,6 +95,32 @@ namespace AnotherECS.Collections
 
         public bool Remove(TKey key)
             => _data.Remove(key);
+
+        public object Get(uint index)
+        {
+#if !ANOTHERECS_RELEASE
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            return _data.Get(index);
+        }
+
+        public void Set(uint index, object value)
+        {
+#if !ANOTHERECS_RELEASE
+            if (value == null || typeof(TValue) != value.GetType())
+            {
+                throw new ArgumentException(nameof(value));
+            }
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            _data.Set(index, (TValue)value);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()

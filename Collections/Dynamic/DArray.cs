@@ -70,6 +70,8 @@ namespace AnotherECS.Collections
             get => _data.IsValid;
         }
 
+        uint ICollection.Count => Length;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint length)
         {

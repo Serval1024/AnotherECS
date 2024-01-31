@@ -137,12 +137,17 @@ namespace AnotherECS.Collections
 
         object ICollection.Get(uint index)
             => _data.Get(index);
-
-        void ICollection.Set(uint index, object value)
-        { 
-            _data.Set(index, value);
-        }
         
+        void ICollection.Set(uint index, object value)
+        {
+#if !ANOTHERECS_RELEASE
+            if (value == null || typeof(TValue) != value.GetType())
+            {
+                throw new ArgumentException(nameof(value));
+            }
+#endif
+            _data.Set(index, (TValue)value);
+        }
 
 #if !ANOTHERECS_RELEASE
         private void Validate()

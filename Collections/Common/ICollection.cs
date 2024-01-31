@@ -2,7 +2,7 @@
 {
     public interface ICollection
     {
-        uint Length { get; }
+        uint Count { get; }
         object Get(uint index);
         void Set(uint index, object value);
         void Clear();

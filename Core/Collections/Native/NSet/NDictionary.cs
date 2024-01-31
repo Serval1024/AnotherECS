@@ -292,6 +292,58 @@ namespace AnotherECS.Core.Collection
             return false;
         }
 
+        public TValue Get(uint index)
+        {
+#if !ANOTHERECS_RELEASE
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            int cIndex = 0;
+            var count = Count;
+            while (cIndex < count)
+            {
+                if (_entries.ReadRef(cIndex).hashCode < _EMPTY)
+                {
+                    if (index == cIndex)
+                    {
+                        return _entries.ReadRef(cIndex).value;
+                    }
+                    ++cIndex;       
+                }
+            }
+
+            throw new IndexOutOfRangeException(nameof(index));
+        }
+
+        public void Set(uint index, TValue value)
+        {
+#if !ANOTHERECS_RELEASE
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+
+            int cIndex = 0;
+            var count = Count;
+            while (cIndex < count)
+            {
+                if (_entries.ReadRef(cIndex).hashCode < _EMPTY)
+                {
+                    if (index == cIndex)
+                    {
+                        var key = _entries.ReadRef(cIndex).key;
+                        Remove(key);
+                        Add(key, value);
+                        return;
+                    }
+                    ++cIndex;
+                }
+            }
+        }
+
         public void Dispose()
         {
             _buckets.Dispose();

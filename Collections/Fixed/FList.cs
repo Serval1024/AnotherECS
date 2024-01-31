@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
 {
     [Serializable]
     [ForceBlittable]
-    public struct FList2<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList2<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray2<TData> _data;
@@ -36,10 +36,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
@@ -237,7 +236,7 @@ namespace AnotherECS.Collections
     }
     [Serializable]
     [ForceBlittable]
-    public struct FList4<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList4<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray4<TData> _data;
@@ -258,10 +257,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
@@ -459,7 +457,7 @@ namespace AnotherECS.Collections
     }
     [Serializable]
     [ForceBlittable]
-    public struct FList8<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList8<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray8<TData> _data;
@@ -480,10 +478,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
@@ -681,7 +678,7 @@ namespace AnotherECS.Collections
     }
     [Serializable]
     [ForceBlittable]
-    public struct FList16<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList16<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray16<TData> _data;
@@ -702,10 +699,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
@@ -903,7 +899,7 @@ namespace AnotherECS.Collections
     }
     [Serializable]
     [ForceBlittable]
-    public struct FList32<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList32<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray32<TData> _data;
@@ -924,10 +920,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
@@ -1125,7 +1120,7 @@ namespace AnotherECS.Collections
     }
     [Serializable]
     [ForceBlittable]
-    public struct FList64<TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList64<TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray64<TData> _data;
@@ -1146,10 +1141,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()

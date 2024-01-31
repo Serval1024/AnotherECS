@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, ICList<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IRepairMemoryHandle
+    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, IListCollection<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IRepairMemoryHandle
         where TValue : unmanaged
     {
         private DArray<TValue> _data;
@@ -141,7 +141,7 @@ namespace AnotherECS.Collections
                     Resize((Count + 1) << 1);
                 }
 
-                MoveRigth(index, Count);
+                MoveRight(index, Count);
                 _data.Set(index, ref item);
                 ++Count;
             }
@@ -168,7 +168,7 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void MoveRigth(uint index, uint count)
+        private unsafe void MoveRight(uint index, uint count)
         {
             if (count == 0)
             {
@@ -302,15 +302,15 @@ namespace AnotherECS.Collections
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
 
-        object ICList.Get(uint index)
+        object ICollection.Get(uint index)
             => this[index];
 
-        void ICList.Set(uint index, object value)
+        void ICollection.Set(uint index, object value)
         {
             this[index] = (TValue)value;
         }
 
-        void ICList.Add(object value)
+        void IListCollection.Add(object value)
         {
             Add((TValue)value);
         }

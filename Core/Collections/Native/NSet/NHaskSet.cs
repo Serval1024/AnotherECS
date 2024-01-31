@@ -10,10 +10,10 @@ namespace AnotherECS.Core.Collection
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public unsafe struct NHashSet<TAllocator, TKey, THashProvider> : INative, ISerialize, IEnumerable<TKey>, IRepairMemoryHandle
+    public unsafe struct NHashSet<TAllocator, TValue, THashProvider> : INative, ISerialize, IEnumerable<TValue>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
-        where TKey : unmanaged, IEquatable<TKey>
-        where THashProvider : struct, IHashProvider<TKey, uint>
+        where TValue : unmanaged, IEquatable<TValue>
+        where THashProvider : struct, IHashProvider<TValue, uint>
     {
         private const uint _EMPTY = 0x8000_0000;
         private const uint _MASK = 0x7FFFFFFF;
@@ -45,9 +45,9 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NHashSet(TAllocator* allocator, INArray<TKey> list)
+        public NHashSet(TAllocator* allocator, INArray<TValue> list)
         {
-            this = new NHashSet<TAllocator, TKey, THashProvider>(allocator, list.Length);
+            this = new NHashSet<TAllocator, TValue, THashProvider>(allocator, list.Length);
             foreach (var element in list)
             {
                 Add(element);
@@ -73,7 +73,7 @@ namespace AnotherECS.Core.Collection
             if (IsAllocatorValid())
             {
                 Dispose();
-                this = new NHashSet<TAllocator, TKey, THashProvider>(GetAllocator(), elementCount);
+                this = new NHashSet<TAllocator, TValue, THashProvider>(GetAllocator(), elementCount);
             }
             else
             {
@@ -82,7 +82,7 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TKey item)
+        public bool Contains(TValue item)
         {
             var hashCode = _hashProvider.GetHash(ref item) & _MASK;
             
@@ -97,7 +97,7 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey item)
+        public void Add(TValue item)
         {
 #if !ANOTHERECS_RELEASE
             if (Contains(item))
@@ -136,7 +136,7 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Remove(TKey item)
+        public bool Remove(TValue item)
         {
             _slots.Dirty();
             _buckets.Dirty();
@@ -268,7 +268,7 @@ namespace AnotherECS.Core.Collection
             _buckets = newBuckets;
         }
 
-        public object Get(uint index)
+        public TValue Get(uint index)
         {
 #if !ANOTHERECS_RELEASE
             if (index >= Count)
@@ -292,13 +292,9 @@ namespace AnotherECS.Core.Collection
             throw new IndexOutOfRangeException(nameof(index));
         }
 
-        public void Set(uint index, object value)
+        public void Set(uint index, TValue value)
         {
 #if !ANOTHERECS_RELEASE
-            if (value == null || typeof(TKey) != value.GetType())
-            {
-                throw new ArgumentException(nameof(value));
-            }
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -311,9 +307,9 @@ namespace AnotherECS.Core.Collection
                 {
                     if (counterIndex == index)
                     {
-                        var key = _slots.ReadRef(counterIndex).item;
-                        Remove(key);
-                        Add((TKey)value);
+                        var oldValue = _slots.ReadRef(counterIndex).item;
+                        Remove(oldValue);
+                        Add(value);
                         return;
                     }
                     ++counterIndex;
@@ -349,7 +345,7 @@ namespace AnotherECS.Core.Collection
             => new(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
+        IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
             => new Enumerator(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -383,17 +379,17 @@ namespace AnotherECS.Core.Collection
         {
             public uint hashCode;
             public int next;      // Index of next entry, -1 if last
-            public TKey item;
+            public TValue item;
         }
 
-        public struct Enumerator : IEnumerator<TKey>, IEnumerator
+        public struct Enumerator : IEnumerator<TValue>, IEnumerator
         {
-            private NHashSet<TAllocator, TKey, THashProvider> _data;
+            private NHashSet<TAllocator, TValue, THashProvider> _data;
             private int _index;
-            private TKey _current;
+            private TValue _current;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Enumerator(ref NHashSet<TAllocator, TKey, THashProvider> data)
+            internal Enumerator(ref NHashSet<TAllocator, TValue, THashProvider> data)
             {
                 _data = data;
                 _index = 0;
@@ -425,7 +421,7 @@ namespace AnotherECS.Core.Collection
                 return false;
             }
 
-            public TKey Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _current;

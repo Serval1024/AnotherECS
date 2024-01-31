@@ -36,6 +36,8 @@ namespace AnotherECS.Collections
             get => Data2<TData>.LENGTH;
         }
 
+        uint ICollection.Count => Length;
+
         public bool IsReadOnly => false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -288,6 +290,8 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data4<TData>.LENGTH;
         }
+
+        uint ICollection.Count => Length;
 
         public bool IsReadOnly => false;
 
@@ -545,6 +549,8 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data8<TData>.LENGTH;
         }
+
+        uint ICollection.Count => Length;
 
         public bool IsReadOnly => false;
 
@@ -810,6 +816,8 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data16<TData>.LENGTH;
         }
+
+        uint ICollection.Count => Length;
 
         public bool IsReadOnly => false;
 
@@ -1091,6 +1099,8 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data32<TData>.LENGTH;
         }
+
+        uint ICollection.Count => Length;
 
         public bool IsReadOnly => false;
 
@@ -1404,6 +1414,8 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Data64<TData>.LENGTH;
         }
+
+        uint ICollection.Count => Length;
 
         public bool IsReadOnly => false;
 

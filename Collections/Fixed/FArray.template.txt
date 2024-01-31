@@ -37,6 +37,8 @@ namespace AnotherECS.Collections
             get => Data<#ELEMENT_COUNT#><TData>.LENGTH;
         }
 
+        uint ICollection.Count => Length;
+
         public bool IsReadOnly => false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

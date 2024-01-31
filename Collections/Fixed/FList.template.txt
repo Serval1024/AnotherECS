@@ -16,7 +16,7 @@ namespace AnotherECS.Collections
 <#ARRAY [0..STRUCT_COUNT]#>
     [Serializable]
     [ForceBlittable]
-    public struct FList<#ELEMENT_COUNT#><TData> : ICList<TData>, IList<TData>, ISerialize, IEnumerable<TData>
+    public struct FList<#ELEMENT_COUNT#><TData> : IListCollection<TData>, IList<TData>, ISerialize, IEnumerable<TData>
         where TData : unmanaged
     {
         public FArray<#ELEMENT_COUNT#><TData> _data;
@@ -37,10 +37,9 @@ namespace AnotherECS.Collections
 
         public bool IsReadOnly => false;
 
-        int ICollection<TData>.Count => (int)Count;
-
         public TData this[int index] { get => this[(uint)index]; set => this[(uint)index] = value; }
 
+        int System.Collections.Generic.ICollection<TData>.Count => (int)Count;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ExtendToCapacity()
