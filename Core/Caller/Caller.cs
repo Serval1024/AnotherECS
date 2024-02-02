@@ -279,7 +279,7 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent GetCopy(EntityId id)
-            => Get(id);
+            => Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(EntityId id, IComponent data)
@@ -294,10 +294,6 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TDense Read(EntityId id)
-            => ref UnsafeDirectRead(id);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense UnsafeDirectRead(EntityId id)
             => ref default(TDenseStorage).ReadDense(ref *_layout, _sparseStorage.ConvertToDenseIndex(ref *_layout, id));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

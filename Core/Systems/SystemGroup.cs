@@ -4,24 +4,26 @@ using System.Collections.Generic;
 
 namespace AnotherECS.Core
 {
-    public class SystemGroup :
+    public struct SystemGroup :
         IGroupSystemInternal,
         IEnumerable<ISystem>,
         IDisposable
     {
-        private readonly List<ISystem> _systems = new();
-
-        private readonly SortOrder _order;
+        private bool _isInit;
         private bool _isDisposed;
-
+        private readonly List<ISystem> _systems;
+        private readonly SortOrder _order;
 
         public SystemGroup(SortOrder order = SortOrder.Attributes)
         {
+            _isInit = true;
             _order = order;
+            _systems = new List<ISystem>();
+            _isDisposed = false;
         }
 
         public SystemGroup(IEnumerable<ISystem> systems, SortOrder order = SortOrder.Attributes)
-            :this(order)
+            : this(order)
         {
             if (systems == null)
             {
@@ -44,6 +46,7 @@ namespace AnotherECS.Core
                 throw new ArgumentNullException(nameof(system));
             }
 
+            Init();
             _systems.Add(system);
             return this;
         }
@@ -55,11 +58,15 @@ namespace AnotherECS.Core
                 throw new ArgumentNullException(nameof(system));
             }
 
+            Init();
             _systems.Remove(system);
         }
 
         public IEnumerator<ISystem> GetEnumerator()
-            => _systems.GetEnumerator();
+        {
+            Init();
+            return _systems.GetEnumerator();
+        }
 
         public void Dispose()
         {
@@ -67,20 +74,23 @@ namespace AnotherECS.Core
             {
                 _isDisposed = true;
 
-                for (int i = 0; i < _systems.Count; ++i)
+                if (_systems != null)
                 {
-                    if (_systems[i] is IDisposable disposable)
+                    for (int i = 0; i < _systems.Count; ++i)
                     {
-                        disposable.Dispose();
+                        if (_systems[i] is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
                     }
+                    _systems.Clear();
                 }
-
-                _systems.Clear();
             }
         }
 
         public IEnumerable<ISystem> GetSystemsAll()
         {
+            Init();
             foreach (var system in _systems)
             {
                 if (system is IEnumerable<ISystem> enumerable)
@@ -98,7 +108,10 @@ namespace AnotherECS.Core
         }
 
         internal IEnumerable<ISystem> GetSystems()
-            => _systems;
+        {
+            Init(); 
+            return _systems;
+        }
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
@@ -107,6 +120,8 @@ namespace AnotherECS.Core
         {
             if (_order == SortOrder.Attributes)
             {
+                Init();
+
                 var order = SystemGlobalRegister.GetOrders();
                 _systems.Sort((p0, p1) =>
                      (order.TryGetValue(p0.GetType(), out int v0) && order.TryGetValue(p1.GetType(), out int v1)) 
@@ -118,7 +133,16 @@ namespace AnotherECS.Core
 
         void IGroupSystemInternal.Prepend(ISystem system)
         {
+            Init();
             _systems.Insert(0, system);
+        }
+
+        private void Init()
+        {
+            if (!_isInit)
+            {
+                this = new SystemGroup(SortOrder.Attributes);
+            }
         }
 
 #if !ANOTHERECS_RELEASE
