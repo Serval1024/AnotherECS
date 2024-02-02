@@ -46,7 +46,7 @@ namespace AnotherECS.Core
             => a.id == b.id && a.generation == b.generation && a.stateId == b.stateId;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Entity CreateRaw(uint id)
+        internal static Entity CreateRaw(EntityId id)
             => new ()
             {
                 id = id,

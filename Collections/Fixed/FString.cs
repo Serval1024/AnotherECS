@@ -14,7 +14,7 @@ using AnotherECS.Core;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public unsafe struct FString2 : IEquatable<FString2>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString2 : IEquatable<FString2>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString2 Empty = new();
 	
@@ -74,10 +74,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString2 a, FString2 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString2 a, IFString<char> b)
+        public static bool operator ==(FString2 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString2 a, IFString<char> b)
+        public static bool operator !=(FString2 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString2 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString2 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -86,6 +92,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -112,15 +123,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
             if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -145,7 +176,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -161,7 +192,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {
@@ -233,7 +264,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString4 : IEquatable<FString4>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString4 : IEquatable<FString4>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString4 Empty = new();
 	
@@ -293,10 +324,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString4 a, FString4 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString4 a, IFString<char> b)
+        public static bool operator ==(FString4 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString4 a, IFString<char> b)
+        public static bool operator !=(FString4 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString4 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString4 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -305,6 +342,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -331,15 +373,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
-            if (obj is FString4 fString)
+            if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -364,7 +426,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -380,7 +442,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {
@@ -452,7 +514,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString8 : IEquatable<FString8>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString8 : IEquatable<FString8>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString8 Empty = new();
 	
@@ -512,10 +574,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString8 a, FString8 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString8 a, IFString<char> b)
+        public static bool operator ==(FString8 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString8 a, IFString<char> b)
+        public static bool operator !=(FString8 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString8 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString8 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -524,6 +592,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -550,15 +623,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
-            if (obj is FString8 fString)
+            if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -583,7 +676,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -599,7 +692,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {
@@ -671,7 +764,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString16 : IEquatable<FString16>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString16 : IEquatable<FString16>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString16 Empty = new();
 	
@@ -731,10 +824,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString16 a, FString16 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString16 a, IFString<char> b)
+        public static bool operator ==(FString16 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString16 a, IFString<char> b)
+        public static bool operator !=(FString16 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString16 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString16 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -743,6 +842,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -769,15 +873,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
-            if (obj is FString16 fString)
+            if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -802,7 +926,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -818,7 +942,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {
@@ -890,7 +1014,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString32 : IEquatable<FString32>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString32 : IEquatable<FString32>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString32 Empty = new();
 	
@@ -950,10 +1074,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString32 a, FString32 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString32 a, IFString<char> b)
+        public static bool operator ==(FString32 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString32 a, IFString<char> b)
+        public static bool operator !=(FString32 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString32 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString32 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -962,6 +1092,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -988,15 +1123,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
-            if (obj is FString32 fString)
+            if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -1021,7 +1176,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -1037,7 +1192,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {
@@ -1109,7 +1264,7 @@ namespace AnotherECS.Collections
         }
     }
     [ForceBlittable]
-    public unsafe struct FString64 : IEquatable<FString64>, IEnumerable<char>, IFString<char>
+    public unsafe struct FString64 : IEquatable<FString64>, IEquatable<string>, IEquatable<ICString<char>>, IEnumerable<char>, ICString<char>
     {
 		public static readonly FString64 Empty = new();
 	
@@ -1169,10 +1324,16 @@ namespace AnotherECS.Collections
         public static bool operator !=(FString64 a, FString64 b)
             => !a.Equals(ref b);
 
-        public static bool operator ==(FString64 a, IFString<char> b)
+        public static bool operator ==(FString64 a, ICString<char> b)
             => a.Equals(b);
 
-        public static bool operator !=(FString64 a, IFString<char> b)
+        public static bool operator !=(FString64 a, ICString<char> b)
+            => !a.Equals(b);
+
+        public static bool operator ==(FString64 a, string b)
+            => a.Equals(b);
+
+        public static bool operator !=(FString64 a, string b)
             => !a.Equals(b);
 
         public char this[uint index]
@@ -1181,6 +1342,11 @@ namespace AnotherECS.Collections
             get => _data[index];
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public void Set(string text)
+        {
+            this = new(text);
         }
 
         public override string ToString()
@@ -1207,15 +1373,35 @@ namespace AnotherECS.Collections
             }
         }
 
-        public override bool Equals(object obj)
+         public override bool Equals(object obj)
         {
-            if (obj is FString64 fString)
+            if (obj is FString2 fString)
             {
-                return Equals(fString);
+                return Equals(ref fString);
             }
-            else if (obj is IFString icString)
+            else if (obj is ICString<char> iString)
             {
-                return Equals(icString);
+                return Equals(iString);
+            }
+            else if (obj is string cString)
+            {
+                return Equals(cString);
+            }
+            return false;
+        }
+
+        public bool Equals(string other)
+        {
+            if (Length == other.Length)
+            {
+                for (int i = 0; i < Length; ++i)
+                {
+                    if (_data[i] != other[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
             }
             return false;
         }
@@ -1240,7 +1426,7 @@ namespace AnotherECS.Collections
         }
 
          public bool Equals<TCString>(ref TCString other)
-            where TCString : struct, IFString<char>
+            where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
             {
@@ -1256,7 +1442,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-        public bool Equals(IFString<char> other)
+        public bool Equals(ICString<char> other)
         {
             if (Length == other.Length)
             {

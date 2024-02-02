@@ -1,6 +1,6 @@
 ﻿using System;
-using AnotherECS.Debug.Diagnostic.Editor.UIElements;
 using AnotherECS.Mathematics;
+using AnotherECS.Debug.Diagnostic.Editor.UIElements;
 using UnityEngine.UIElements;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Editor
@@ -9,9 +9,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(sfloat);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new SFloatField(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<SFloatField, sfloat>(value, container);
+            => PresentUtils.CreateField<SFloatField, sfloat>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<SFloatField, sfloat>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<sfloat>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -20,10 +20,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(float2);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Float2Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Float2Field, float2>(value, container);
-
+            => PresentUtils.CreateField<Float2Field, float2, SFloatField, sfloat>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Float2Field, float2>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<float2>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -32,10 +31,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(float3);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Float3Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Float3Field, float3>(value, container);
-
+            => PresentUtils.CreateField<Float3Field, float3, SFloatField, sfloat>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Float3Field, float3>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<float3>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -44,9 +42,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(float4);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Float4Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Float4Field, float4>(value, container);
+            => PresentUtils.CreateField<Float4Field, float4, SFloatField, sfloat>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Float4Field, float4>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<float4>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -55,9 +53,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(int2);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Int2Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Int2Field, int2>(value, container);
+            => PresentUtils.CreateField<Int2Field, int2, IntegerField, int>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Int2Field, int2>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<int2>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -66,9 +64,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(int3);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Int3Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Int3Field, int3>(value, container);
+            => PresentUtils.CreateField<Int3Field, int3, IntegerField, int>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Int3Field, int3>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<int3>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -77,9 +75,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(int4);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new Int4Field(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<Int4Field, int4>(value, container);
+            => PresentUtils.CreateField<Int4Field, int4, IntegerField, int>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<Int4Field, int4>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<int4>>((e) => onChange(property, e.previousValue, e.newValue));
     }
@@ -88,9 +86,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
     {
         Type IPresent.Type => typeof(quaternion);
         VisualElement IPresent.Create(ObjectProperty property)
-            => new QuaternionField(property.GetFieldDisplayName());
-        void IPresent.Set(ObjectProperty value, VisualElement container)
-            => PresentUtils.SetWithCheck<QuaternionField, quaternion>(value, container);
+            => PresentUtils.CreateField<QuaternionField, quaternion, SFloatField, sfloat>(ref property);
+        void IPresent.Set(ObjectProperty property, VisualElement container)
+            => PresentUtils.SetWithCheck<QuaternionField, quaternion>(ref property, container);
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
             => container.RegisterCallback<ChangeEvent<quaternion>>((e) => onChange(property, e.previousValue, e.newValue));
     }

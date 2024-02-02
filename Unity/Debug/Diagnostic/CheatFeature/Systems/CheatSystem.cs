@@ -1,3 +1,4 @@
+using AnotherECS.Collections;
 using AnotherECS.Core;
 using AnotherECS.Debug;
 using AnotherECS.Serializer;
@@ -58,7 +59,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                             try
                             {
                                 var property = new ObjectProperty(component, @event.pathInsideComponent);
-                                property.SetValue(@event.value);
+                                property.SetValue(TryConvertValue(state, property.GetValue(), @event.value));
                                 component = property.GetRoot().GetValue<IComponent>();
                             }
                             catch
@@ -71,6 +72,21 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                         break;
                     }
             }
+        }
+
+        private object TryConvertValue(State state, object oldValue, object newValue)
+        {
+            if (newValue is Entity newValueEntity)
+            {
+                return state.ToEntity(newValueEntity.id);
+            }
+            else if (newValue is string newValueString && oldValue is ICString<char> oldValueCString)
+            {
+                oldValueCString.Set(newValueString);
+                return oldValueCString;
+            }
+
+            return newValue;
         }
     }
 

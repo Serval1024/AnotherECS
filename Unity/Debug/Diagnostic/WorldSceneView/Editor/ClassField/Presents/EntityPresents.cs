@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine.UIElements;
 using AnotherECS.Core;
+using EntityId = System.UInt32;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Editor
 {
@@ -30,8 +31,8 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
                 name = "entity__button"
             };
 
-            button.clicked += ()=> OnClickButton(container, (Entity)property.GetValue());
-            button.schedule.Execute(() => button.SetEnabled(((Entity)property.GetValue()).IsValid)).Every(100);
+            button.clicked += ()=> OnClickButton(container, property.GetValue<Entity>());
+            button.schedule.Execute(() => button.SetEnabled(property.GetValue<Entity>().IsValid)).Every(100);
 
             content.Add(button);
 
@@ -44,10 +45,15 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             present.Set(value.GetPrivateChild("id"), container.Q("entity__input"));
 
         }
+
         void IPresent.Register(ObjectProperty property, VisualElement container, Action<ObjectProperty, object, object> onChange)
         {
             IPresent present = new UintPresent();
-            present.Register(property.GetPrivateChild("id"), container.Q("entity__input"), onChange);
+            present.Register(
+                property.GetPrivateChild("id"),
+                container.Q("entity__input"),
+                (op, pv, v) => onChange(property, EntityExtensions.CreateRaw((EntityId)pv), EntityExtensions.CreateRaw((EntityId)v))
+                );
         }
 
         private static void OnClickButton(VisualElement container, Entity entity)

@@ -594,11 +594,21 @@ namespace AnotherECS.Core.Collection
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void EnterCheckChanges()
-            => _allocator->EnterCheckChanges(ref _data);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfNArrayBroken(this);    
+#endif
+            _allocator->EnterCheckChanges(ref _data);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges()
-            => _allocator->ExitCheckChanges(ref _data);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfNArrayBroken(this);
+#endif
+            return _allocator->ExitCheckChanges(ref _data);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ResizeInternal(uint byteLength)

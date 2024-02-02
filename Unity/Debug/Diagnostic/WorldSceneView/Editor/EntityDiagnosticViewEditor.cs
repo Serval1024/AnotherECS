@@ -25,13 +25,13 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
         {
             var container = new VisualElement();
 
-            var dynamicField = new ClassField("Components");
-            dynamicField.SetValueWithoutNotify(Target.visualData.components);
-            dynamicField.name = "components-field";
+            var classField = new ClassField("Components");
+            classField.SetValueWithoutNotify(Target.visualData.components);
+            classField.name = "components-field";
 
-            dynamicField.RegisterValueChangeCallback(OnChange);
+            classField.RegisterValueChangeCallback(OnChange);
 
-            container.Add(dynamicField);
+            container.Add(classField);
 
             container.RegisterCallback<EntityPresent.EntityLocatedButtonEvent>(p => OnLocateEntity(p.id));
 

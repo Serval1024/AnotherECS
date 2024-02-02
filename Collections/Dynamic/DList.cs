@@ -125,7 +125,7 @@ namespace AnotherECS.Collections
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!_data.IsValid)
+            if (!IsValid)
             {
                 throw new DArrayInvalidException(_data.GetType());
             }
@@ -151,7 +151,7 @@ namespace AnotherECS.Collections
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!_data.IsValid)
+            if (!IsValid)
             {
                 throw new DArrayInvalidException(_data.GetType());
             }

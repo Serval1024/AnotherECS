@@ -40,11 +40,35 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             return container;
         }
 
-        public static void SetWithCheck<TTextValueField, TValue>(ObjectProperty value, VisualElement container)
+        public static TTextValueField CreateField<TTextValueField, TValue>(ref ObjectProperty property)
+            where TTextValueField : TextInputBaseField<TValue>, new()
+            => new()
+            {
+                label = property.GetFieldDisplayName(),
+                isDelayed = true,
+            };
+
+
+        public static TTextValueField CreateField<TTextValueField, TValue, TSubTextValueField, TSubValue>(ref ObjectProperty property)
+            where TTextValueField : AnotherECS.Debug.Diagnostic.Editor.UIElements.BaseCompositeField<TValue, TSubTextValueField, TSubValue>, new()
+            where TSubTextValueField : TextValueField<TSubValue>, new()
+            => new()
+            {
+                label = property.GetFieldDisplayName(),
+                isDelayed = true,
+            };
+
+        public static Toggle CreateFieldBool(ref ObjectProperty property)
+            => new()
+            {
+                label = property.GetFieldDisplayName(),
+            };
+
+        public static void SetWithCheck<TTextValueField, TValue>(ref ObjectProperty property, VisualElement container)
             where TTextValueField : BaseField<TValue>
         {
             var textValueField = (BaseField<TValue>)container;
-            var newValue = value.GetValue<TValue>();
+            var newValue = property.GetValue<TValue>();
             if (!EqualityComparer<TValue>.Default.Equals(textValueField.value, newValue))
             {
                 textValueField.SetValueWithoutNotify(newValue);

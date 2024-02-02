@@ -104,30 +104,26 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TValue Read(uint index)
-#if !ANOTHERECS_RELEASE
         {
+#if !ANOTHERECS_RELEASE
             if (!IsValid)
             {
                 throw new DArrayInvalidException(this.GetType());
             }
+#endif
             return ref _data.ReadRef(index);
         }
-#else
-            => ref _data.ReadRef(index);
-#endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue Get(uint index)
-#if !ANOTHERECS_RELEASE
         {
+#if !ANOTHERECS_RELEASE
             if (!IsValid)
             {
-                throw new DArrayInvalidException(GetType());
+                throw new DArrayInvalidException(this.GetType());
             }
+#endif
             return ref _data.GetRef(index);
         }
-#else
-            => ref _data.GetRef(index);
-#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(uint index, TValue value)
@@ -137,17 +133,15 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(uint index, ref TValue value)
-#if !ANOTHERECS_RELEASE
         {
+#if !ANOTHERECS_RELEASE
             if (!IsValid)
             {
                 throw new DArrayInvalidException(GetType());
             }
+#endif
             _data.Set(index, ref value);
         }
-#else
-            => _data.Set(index, ref value);
-#endif
 
         public int IndexOf(TValue item)
             => IndexOf(ref item, _data.Length);
@@ -157,11 +151,23 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TValue[] array)
         {
+#if !ANOTHERECS_RELEASE
+            if (!IsValid)
+            {
+                throw new DArrayInvalidException(GetType());
+            }
+#endif
             CopyTo(array, 0, Length);
         }
 
         public void CopyTo(TValue[] array, uint arrayIndex)
         {
+#if !ANOTHERECS_RELEASE
+            if (!IsValid)
+            {
+                throw new DArrayInvalidException(GetType());
+            }
+#endif
             CopyTo(array, arrayIndex, _data.Length);
         }
 
@@ -176,6 +182,12 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            if (!IsValid)
+            {
+                throw new DArrayInvalidException(GetType());
+            }
+#endif
             _data.Clear();
         }
 
@@ -218,6 +230,12 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void CopyTo(TValue[] array, uint startIndex, uint count)
         {
+#if !ANOTHERECS_RELEASE
+            if (!IsValid)
+            {
+                throw new DArrayInvalidException(GetType());
+            }
+#endif
             _data.CopyTo(array, startIndex, count);
         }
 
@@ -269,7 +287,6 @@ namespace AnotherECS.Collections
             }
         }
 #endif
-
 
         public struct Enumerator : IEnumerator<TValue>
         {

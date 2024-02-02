@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, IFString<char>, IEnumerable<char>, ISerialize, IRepairMemoryHandle
+    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, ICString<char>, IEnumerable<char>, ISerialize, IRepairMemoryHandle
     {
         private DList<char> _data;
 
@@ -116,6 +116,11 @@ namespace AnotherECS.Collections
 
         public override unsafe string ToString()
         {
+            if (!_data.IsValid)
+            {
+                return string.Empty;
+            }
+
 #pragma warning disable CS0162
             if (Capacity <= 16)
             {

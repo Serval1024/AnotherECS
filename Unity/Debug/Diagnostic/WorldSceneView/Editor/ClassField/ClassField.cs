@@ -14,9 +14,9 @@ namespace AnotherECS.Debug.Diagnostic.Editor.UIElements
         public static readonly string noLabelVariantUssClassName = ussClassName + "--no-label";
 
         private object _value;
-        private event Action<ObjectProperty, object, object> _changed;
+        private readonly UnknowPresent _unknowPresent;
 
-        private IPresent _unknowPresent;
+        private event Action<ObjectProperty, object, object> _changed;
 
         public Label labelElement { get; private set; }
         public VisualElement inputElement { get; private set; }
@@ -93,17 +93,15 @@ namespace AnotherECS.Debug.Diagnostic.Editor.UIElements
             {
                 AddToClassList(noLabelVariantUssClassName);
             }
-
-            _unknowPresent = new UnknowPresent();
         }
 
-        public void SetValueWithoutNotify(object newValue)
+        public void SetValueWithoutNotify(object value)
         {
-            if (_value == null || _value.GetType() != newValue.GetType())
+            if (_value == null || _value.GetType() != value.GetType())
             {
                 inputElement?.RemoveFromHierarchy();
 
-                var objectProperty = new ObjectProperty(newValue);
+                var objectProperty = new ObjectProperty(value);
                 var view = _unknowPresent.Create(objectProperty);
                 view.AddToClassList(inputUssClassName);
                 Add(view);
@@ -114,11 +112,11 @@ namespace AnotherECS.Debug.Diagnostic.Editor.UIElements
             }
             else
             {
-                var objectProperty = new ObjectProperty(newValue);
+                var objectProperty = new ObjectProperty(value);
                 _unknowPresent.Set(objectProperty, inputElement);
             }
 
-            _value = newValue;
+            _value = value;
         }
 
         public void RegisterValueChangeCallback(Action<ObjectProperty, object, object> callback)

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using AnotherECS.Core;
 using ReflectionUtils = AnotherECS.Debug.Diagnostic.Editor.UIElements.ReflectionUtils;
+using static UnityEngine.GraphicsBuffer;
 
 
 namespace AnotherECS.Unity.Debug.Diagnostic
@@ -91,7 +92,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             else
             {
                 var target = _target;
-                return _target
+                return target
                     .GetType()
                     .GetFieldsAndProperties(ReflectionUtils.publicFlags)
                     .Select(p => new ObjectProperty(root, p.GetValue(target), PathCombine(path, p.GetMemberName()), p.GetMemberName()));

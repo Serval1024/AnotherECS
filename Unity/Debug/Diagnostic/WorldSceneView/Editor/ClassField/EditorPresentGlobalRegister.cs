@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AnotherECS.Collections;
+using System;
 using System.Linq;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Editor
@@ -22,7 +23,30 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
                 .ToArray();
 
         public static IPresent Get(Type type)
-            => Gets().FirstOrDefault(p => type.IsAssignableFrom(p.Type));
+        {
+            var variants = Gets()
+                .Where(p => p.Type.IsAssignableFrom(type))
+                .OrderByDescending(p => p.Priority)
+                .ToArray();
+
+            for (int i = 0; i < variants.Length; ++i)
+            { 
+                int count = 0;
+                for (int j = i + 1; j < variants.Length; ++j)
+                {
+                    if (variants[i].Type.IsAssignableFrom(variants[j].Type))
+                    {
+                        ++count;
+                        break;
+                    }
+                }
+                if (count == 0)
+                {
+                    return variants[i];
+                }
+            }
+            return null;
+        }
     }
 }
 

@@ -84,6 +84,26 @@ namespace AnotherECS.Debug.Diagnostic.Editor.UIElements
             }
         }
 
+        public bool isDelayed
+        {
+            get
+            {
+                bool summary = true;
+                for (int i = 0; i < m_Fields.Count; ++i)
+                {
+                    summary &= m_Fields[i].isDelayed;
+                }
+                return summary;
+            }
+            set
+            {
+                for (int i = 0; i < m_Fields.Count; ++i)
+                {
+                    m_Fields[i].isDelayed = value;
+                }
+            }
+        }
+
         private VisualElement GetSpacer()
         {
             VisualElement visualElement = new VisualElement();
