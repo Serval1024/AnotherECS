@@ -39,7 +39,7 @@ namespace AnotherECS.Physics
     }
 
     [CompileComponentOption(ComponentOptions.ForceUseSparse)]
-    public unsafe struct PhysicsCollider : IComponent, IInject<WPtr<HAllocator>>, IRepairMemoryHandle
+    public unsafe struct PhysicsCollider : IComponent, IInject<WPtr<AllocatorSelector>>, IRepairMemoryHandle
     {
         private static readonly BlobAssetReference<Collider> _empty = BlobAssetReference<Collider>.Create(default(BlobAssetReferenceData));
 
@@ -62,7 +62,7 @@ namespace AnotherECS.Physics
             }
         }
 
-        private NArray<HAllocator, byte> _data;
+        private NArray<AllocatorSelector, byte> _data;
 
         public bool IsValid
             => Value.IsCreated;
@@ -73,8 +73,12 @@ namespace AnotherECS.Physics
         public MassProperties MassProperties
             => Value.IsCreated ? Value.Value.MassProperties : MassProperties.UnitSphere;
 
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<HAllocator>>.Construct(WPtr<HAllocator> allocator)
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator)
         {
             _data.SetAllocator(allocator.Value);
         }

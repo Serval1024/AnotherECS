@@ -1,0 +1,21 @@
+{
+    "name": "AnotherECS.Unity.Debug.Diagnostic.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:524fc94e7461b7b449f58ff265f1a5d5",
+        "GUID:e95cae816c3572d4f860aff8b4579eb0",
+        "GUID:10da87c2b052553459d757eb5f6b4790",
+        "GUID:30a10550f499dff44876440be488d575"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

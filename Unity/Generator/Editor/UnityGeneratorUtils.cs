@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
 using AnotherECS.Generator;
+using AnotherECS.Unity.Editor.Common;
 
 namespace AnotherECS.Unity.Editor.Generator
 {
@@ -51,19 +52,7 @@ namespace AnotherECS.Unity.Editor.Generator
         }
 
         public static string FindRootDirectory()
-        {
-            var asms = AssetDatabase.FindAssets("t:asmdef");
-            foreach (var asm in asms)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(asm);
-                if (Path.GetFileName(path) == GeneratorSettings.EcsRoot)
-                {
-                    return Path.Combine(Path.GetDirectoryName(path), @"..\");
-                }
-            }
-
-            throw new Exception($"Assembly '{GeneratorSettings.EcsRoot}' not found.");
-        }
+            => AssetDatabaseUtils.FindAnchorDirectory(GeneratorSettings.EcsRoot);
 
         public static void SaveFile(string path, string content)
         {

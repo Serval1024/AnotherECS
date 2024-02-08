@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AnotherECS.Core
 {
@@ -11,10 +12,19 @@ namespace AnotherECS.Core
     {
         private bool _isInit;
         private bool _isDisposed;
+        private SortOrder _order;
         private readonly List<ISystem> _systems;
-        private readonly SortOrder _order;
 
-        public SystemGroup(SortOrder order = SortOrder.Attributes)
+        public SortOrder SortOrder
+        {
+            get => _order;
+            set => _order = value;
+        }
+
+        public int SystemCount
+            => _systems.Count;
+
+        public SystemGroup(SortOrder order = SortOrder.Declaration)
         {
             _isInit = true;
             _order = order;
@@ -22,7 +32,18 @@ namespace AnotherECS.Core
             _isDisposed = false;
         }
 
-        public SystemGroup(IEnumerable<ISystem> systems, SortOrder order = SortOrder.Attributes)
+        public SystemGroup(ISystem system, SortOrder order = SortOrder.Declaration)
+            : this(order)
+        {
+            if (system == null)
+            {
+                throw new ArgumentNullException(nameof(system));
+            }
+
+            _systems.Add(system);
+        }
+
+        public SystemGroup(IEnumerable<ISystem> systems, SortOrder order = SortOrder.Declaration)
             : this(order)
         {
             if (systems == null)
@@ -30,9 +51,14 @@ namespace AnotherECS.Core
                 throw new ArgumentNullException(nameof(systems));
             }
 
-            foreach (var system in systems)
+            _systems.AddRange(systems);
+
+            for (int i = 0; i < _systems.Count; ++i)
             {
-                Add(system);
+                if (_systems[i] == null)
+                {
+                    throw new ArgumentNullException(nameof(systems));
+                }
             }
         }
 
@@ -53,6 +79,9 @@ namespace AnotherECS.Core
 
         public void Remove(ISystem system)
         {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
             if (system == null)
             {
                 throw new ArgumentNullException(nameof(system));
@@ -64,6 +93,9 @@ namespace AnotherECS.Core
 
         public IEnumerator<ISystem> GetEnumerator()
         {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
             Init();
             return _systems.GetEnumerator();
         }
@@ -90,6 +122,9 @@ namespace AnotherECS.Core
 
         public IEnumerable<ISystem> GetSystemsAll()
         {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
             Init();
             foreach (var system in _systems)
             {
@@ -109,32 +144,77 @@ namespace AnotherECS.Core
 
         internal IEnumerable<ISystem> GetSystems()
         {
-            Init(); 
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
+            Init();
             return _systems;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
+        void IInstallSystem.Install(ref InstallContext context)
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
+            Init();
+
+            for (int i = 0; i < _systems.Count; ++i)
+            {
+                if (_systems[i] is IInstallSystem iInstallSystem)
+                {
+                    var childContext = new InstallContext(context.World);
+                    iInstallSystem.Install(ref childContext);
+                    childContext.AddSystem(_systems[i]);
+                    var systemGroup = childContext.GetSystemGroup();
+                    _systems[i] = systemGroup.SystemCount == 1 ? systemGroup.First() : systemGroup;
+                }
+            }
+        }
+
+        void IGroupSystemInternal.Append(ISystem system)
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
+            Init();
+            _systems.Add(system);
+        }
+
+        void IGroupSystemInternal.Prepend(ISystem system)
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
+            Init();
+            _systems.Insert(0, system);
+        }
+
         void IGroupSystemInternal.Sort()
         {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
             if (_order == SortOrder.Attributes)
             {
                 Init();
 
                 var order = SystemGlobalRegister.GetOrders();
                 _systems.Sort((p0, p1) =>
-                     (order.TryGetValue(p0.GetType(), out int v0) && order.TryGetValue(p1.GetType(), out int v1)) 
+                     (order.TryGetValue(p0.GetType(), out int v0) && order.TryGetValue(p1.GetType(), out int v1))
                      ? (v0 - v1)
-                     : 0
-                );
-            }
-        }
+                     : 0);
 
-        void IGroupSystemInternal.Prepend(ISystem system)
-        {
-            Init();
-            _systems.Insert(0, system);
+                for (int i = 0; i < _systems.Count; ++i)
+                {
+                    if (_systems[i] is IGroupSystemInternal group)
+                    {
+                        group.Sort();
+                    }
+                }
+            }
         }
 
         private void Init()
@@ -155,10 +235,11 @@ namespace AnotherECS.Core
         }
 #endif
 
-        public enum SortOrder
-        {
-            Attributes,
-            Declaration,
-        }
+    }
+
+    public enum SortOrder
+    {
+        Declaration,
+        Attributes,
     }
 }

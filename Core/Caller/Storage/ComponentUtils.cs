@@ -10,6 +10,9 @@ namespace AnotherECS.Core
         private const BindingFlags DATA_FREE_FLAGS =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        private const BindingFlags DATA_ACTIVE_FLAGS =
+            BindingFlags.Instance | BindingFlags.Public;
+
         public static bool IsOption(Type type, ComponentOptions option)
         {
             var attribute = type.GetCustomAttribute<CompileComponentOptionAttribute>();
@@ -111,21 +114,21 @@ namespace AnotherECS.Core
             => typeof(IInject).IsAssignableFrom(type);
 
         public static bool IsInjectMembers(Type type)
-            => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
+            => type.GetFieldsAndProperties(DATA_ACTIVE_FLAGS)
             .Any(p => typeof(IInject).IsAssignableFrom(p.GetMemberType()));
 
         public static bool IsRepairMemory(Type type)
             => typeof(IRepairMemoryHandle).IsAssignableFrom(type);
 
         public static bool IsRepairMemoryMembers(Type type)
-            => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
-            .Any(p => typeof(IRepairMemoryHandle).IsAssignableFrom(p.GetMemberType()));
+            => type.GetFieldsAndProperties(DATA_ACTIVE_FLAGS)
+                .Any(p => typeof(IRepairMemoryHandle).IsAssignableFrom(p.GetMemberType()));
 
         public static bool IsRepairStateId(Type type)
             => typeof(IRepairStateId).IsAssignableFrom(type);
 
         public static bool IsRepairStateIdMembers(Type type)
-            => type.GetFieldsAndProperties(DATA_FREE_FLAGS)
+            => type.GetFieldsAndProperties(DATA_ACTIVE_FLAGS)
                 .Any(p => typeof(IRepairStateId).IsAssignableFrom(p.GetMemberType()));
 
 
@@ -136,9 +139,9 @@ namespace AnotherECS.Core
         {
             var result = new List<FieldData>();
 
-            foreach (var member in type.GetFieldsAndProperties(DATA_FREE_FLAGS))
+            foreach (var member in type.GetFieldsAndProperties(DATA_ACTIVE_FLAGS))
             {
-                if (typeof(IInject).IsAssignableFrom(member.GetMemberType()))
+                if (typeof(T).IsAssignableFrom(member.GetMemberType()))
                 {
                     result.Add(new FieldData
                     {

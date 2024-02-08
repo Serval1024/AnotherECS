@@ -2,8 +2,5 @@
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe interface INative : IDisposable
-    {
-        bool IsValid { get; }
-    }
+    public interface INative : IValid, IDisposable { }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -146,7 +145,6 @@ namespace AnotherECS.Generator
                 { "STATE:GEN_NAME", () => states.IdToType(variables.GetIndexAsId(0)).Name },
 
                 { "SYSTEM:COUNT", () => systems.Count() },
-                //{ "SYSTEM:NAME", () => GetSystemNameByState(states, systems, variables.GetIndexAsId(0), variables.GetIndexAsId(1)) },
                 { "SYSTEM:NAME", () => ReflectionUtils.GetDotFullName(systems.IdToType(variables.GetIndexAsId(0))) },
 
                 { "SYSTEM:AUTO_ATTACH:COUNT", () => autoAttaches.Length },
@@ -205,26 +203,7 @@ namespace AnotherECS.Generator
                 };
             return variables;
         }
-        /*
-        private static string GetSystemNameByState(ITypeToUshort states, ITypeToUshort systems, ushort id0, ushort id1)
-        {
-            try
-            {
-                var state = states.IdToType(id0);
-                var typeMapTemp = new Dictionary<Type, Type>
-                {
-                    { typeof(IState), state },
-                    { typeof(State), state }
-                };
-
-                return ReflectionUtils.GetDotFullName(systems.IdToType(id1), typeMapTemp);
-            }
-            catch (InvalidOperationException e)
-            {
-                throw new Exception("Unable to sort generic system.", e);
-            }
-        }
-        */
+        
         private static string GetInjectArguments(ref InjectContext context, Type type)
            => GetInjectArguments(
                ref context,
@@ -235,9 +214,6 @@ namespace AnotherECS.Generator
         private static string GetInjectArguments(ref InjectContext context, InjectParameterData[] injectParameterDatas)
         {
             var result = new StringBuilder();
-
-            var injectContainer = typeof(InjectContainer);
-            var icMembers =  injectContainer.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             for (int i = 0; i < injectParameterDatas.Length; ++i)
             {

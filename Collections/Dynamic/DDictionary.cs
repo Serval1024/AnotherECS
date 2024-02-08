@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ICollection, ISerialize, IRepairMemoryHandle
+    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ICollection, IValid, ISerialize, IRepairMemoryHandle
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
@@ -193,7 +193,10 @@ namespace AnotherECS.Collections
                 _data = data;
                 _enumerator = data._data.GetEnumerator();
 
-                _data.EnterCheckChanges();
+                if (_data.Count != 0)
+                {
+                    _data.EnterCheckChanges();
+                }
             }
 
             public bool IsValid
@@ -225,7 +228,10 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                if (_data.Count != 0)
+                {
+                    ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

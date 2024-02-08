@@ -53,7 +53,7 @@ namespace AnotherECS.Core.Processing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Receive(State state, BaseEvent @event)
+        public void Receive(State state, IEvent @event)
         {
             var value = @event.GetType();
             while (value != null)

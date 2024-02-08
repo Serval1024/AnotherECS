@@ -1,0 +1,29 @@
+.vertical-space
+{
+	width: 10px;
+	height: 10px;
+}
+.vertical-space-small
+{
+	width: 5px;
+	height: 5px;
+}
+.group-content
+{
+	padding-left: 15px;
+}
+.label-head
+{
+	background-color: #282828;
+}
+.tabmenu-field__tab
+{
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+#system-statistic-container
+{
+	border-left-color: #282828;
+	border-left-width: 2px;
+}
+

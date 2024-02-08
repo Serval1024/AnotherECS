@@ -37,16 +37,7 @@ namespace AnotherECS.Core.Caller
         IComponent GetCopy(EntityId id);
         void Set(EntityId id, IComponent data);
 
-        WArray<T> ReadSparse<T>()
-            where T : unmanaged;
-        WArray<T> GetDense<T>()
-            where T : unmanaged, IComponent;
         WArray<uint> ReadVersion();
-    }
-
-    public interface IFastAccess
-    {
-        internal unsafe void Config(ICaller caller);
     }
 
     internal interface ICaller<TComponent> : ICaller
@@ -60,6 +51,17 @@ namespace AnotherECS.Core.Caller
         ref TComponent Get(EntityId id);
         void Set(EntityId id, ref TComponent component);
         void SetOrAdd(EntityId id, ref TComponent component);
+
+        WArray<T> ReadSparse<T>()
+           where T : unmanaged;
+
+        WArray<TComponent> ReadDense();
+        WArray<TComponent> GetDense();
+    }
+
+    public interface IFastAccess
+    {
+        internal unsafe void Config(ICaller caller);
     }
 
     internal interface IResizableCaller : ICaller

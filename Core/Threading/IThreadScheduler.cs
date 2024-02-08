@@ -7,6 +7,10 @@ namespace AnotherECS.Core.Threading
     {
         int ParallelMax { get; set; }
 
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        ITimerStatistic Statistic { get; set; }
+#endif
+
         void Run(TTask task);
         void Run(Span<TTask> task);
 

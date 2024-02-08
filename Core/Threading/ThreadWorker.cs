@@ -9,12 +9,19 @@ namespace AnotherECS.Core.Threading
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    public struct ThreadWorker<TTask> : IDisposable
+    internal struct ThreadWorker<TTask, TWorkObserver> : IDisposable
         where TTask : struct, ITask
+        where TWorkObserver : struct, IWorkObserver<TTask>
     {
         private Worker[] _workers;
         private readonly Shared _shared;
         private int _workersOffset;
+
+        public TWorkObserver Observer
+        {
+            get => _shared.observer;
+            set => _shared.observer = value;
+        }
 
         public int Count
         {
@@ -134,7 +141,9 @@ namespace AnotherECS.Core.Threading
             bool isExecute = false;
             while (shared.tasks.TryDequeue(out TTask task))
             {
+                shared.observer.OnStartedTask(ref task);
                 task.Invoke();
+                shared.observer.OnFinishedTask(ref task);
                 isExecute = shared.UnlockBusy();
             }
 
@@ -159,6 +168,7 @@ namespace AnotherECS.Core.Threading
             }
         }
 
+
 #if ENABLE_IL2CPP
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -169,6 +179,7 @@ namespace AnotherECS.Core.Threading
             public readonly ManualResetEvent waiterComplete = new(true);
             public volatile int inWork;
             public Action onNotBusy;
+            public TWorkObserver observer;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetInWork()
@@ -250,10 +261,25 @@ namespace AnotherECS.Core.Threading
             }
         }
     }
-
     public interface ITask
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Invoke();
+    }
+
+    internal interface IWorkObserver<TTask>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void OnStartedTask(ref TTask task);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void OnFinishedTask(ref TTask task);
+    }
+
+    internal struct NoObserver<TTask> : IWorkObserver<TTask>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void OnFinishedTask(ref TTask task) { }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void OnStartedTask(ref TTask task) { }
     }
 }

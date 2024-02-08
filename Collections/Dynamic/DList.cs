@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, IListCollection<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IRepairMemoryHandle
+    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, IListCollection<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IValid, IRepairMemoryHandle
         where TValue : unmanaged
     {
         private DArray<TValue> _data;
@@ -343,7 +343,10 @@ namespace AnotherECS.Collections
                 _count = _data.Count;
                 _current = uint.MaxValue;
 
-                _data.EnterCheckChanges();
+                if (_data.Count != 0)
+                {
+                    _data.EnterCheckChanges();
+                }
             }
 
             public TValue Current
@@ -368,7 +371,10 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                if (_data.Count != 0)
+                {
+                    ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                }
             }
         }
     }

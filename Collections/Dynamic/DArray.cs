@@ -6,6 +6,7 @@ using AnotherECS.Core;
 using AnotherECS.Core.Collection;
 using AnotherECS.Exceptions;
 using AnotherECS.Serializer;
+using UnityEngine.UIElements;
 
 namespace AnotherECS.Collections
 {
@@ -14,7 +15,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, ICollection, IRepairMemoryHandle
+    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, ICollection, IValid, IRepairMemoryHandle
         where TValue : unmanaged
     {
         private NArray<AllocatorSelector, TValue> _data;
@@ -300,7 +301,10 @@ namespace AnotherECS.Collections
                 _length = _data.Length;
                 _current = uint.MaxValue;
 
-                _data.EnterCheckChanges();
+                if (_length != 0)
+                {
+                    _data.EnterCheckChanges();
+                }
             }
 
             public TValue Current
@@ -325,7 +329,10 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                if (_length != 0)
+                {
+                    ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                }
             }
         }
     }

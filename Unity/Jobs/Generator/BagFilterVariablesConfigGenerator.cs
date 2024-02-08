@@ -14,6 +14,9 @@ namespace AnotherECS.Unity.Jobs.Generator
                     { "RW:READ_ONLY:TAG", () => variables.GetIndex(0) == 0 ? "[ReadOnly]" : "" },
                     { "RW:READ_ONLY", () => variables.GetIndex(0) == 1 },
 
+                    { "R", () => variables.GetIndex(0) == 0 },
+                    { "RW", () => variables.GetIndex(0) == 1 },
+
                     { "STRUCT_COUNT", () => count },
                     { "GENERIC_COUNT", () => variables.GetIndex(1) + 1 },
                     { "SEPARATOR1:,", () =>

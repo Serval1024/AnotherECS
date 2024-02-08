@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
-    internal interface IRepairStateId
+    public interface IRepairStateId
     {
         void RepairStateId(ushort stateId);
     }

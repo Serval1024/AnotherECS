@@ -11,8 +11,13 @@ namespace AnotherECS.Core.Processing
 #endif
     internal struct OneNonBlockThreadScheduler : IThreadScheduler<Task>, IDisposable
     {
-        private ThreadWorker<Task> _worker;
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        private ThreadWorker<Task, StatisticObserver> _worker;
+#else
+        private ThreadWorker<Task, NoObserver<Task>> _worker;
+#endif
         private Queue<Task> _tasks;
+        private ITimerStatistic _statistic;
 
         public int ParallelMax
         {
@@ -20,10 +25,29 @@ namespace AnotherECS.Core.Processing
             set { }
         }
 
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        public ITimerStatistic Statistic
+        { 
+            get => _statistic;
+            set
+            {
+                if (_statistic != value)
+                {
+                    _statistic = value;
+                    _worker.Observer = new StatisticObserver(Statistic);
+                }
+            }
+        }
+#endif
+
         public static OneNonBlockThreadScheduler Create()
             => new()
             {
-                _worker = new ThreadWorker<Task>(1),
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+                _worker = new ThreadWorker<Task, StatisticObserver>(1),
+#else
+                _worker = new ThreadWorker<Task, NoObserver<Task>>(1),
+#endif
                 _tasks = new Queue<Task>(),
             };
 
@@ -56,7 +80,8 @@ namespace AnotherECS.Core.Processing
             _worker.Wait();
             while (_tasks.Count > 0)
             {
-                _tasks.Dequeue().Invoke();
+                var task = _tasks.Dequeue();
+                Invoke(ref task);
             }
         }
 
@@ -69,7 +94,7 @@ namespace AnotherECS.Core.Processing
                     var task = _tasks.Dequeue();
                     if (task.isMainThread)
                     {
-                        task.Invoke();   
+                        Invoke(ref task);
                     }
                     else
                     {
@@ -128,5 +153,59 @@ namespace AnotherECS.Core.Processing
                 }
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Invoke(ref Task task)
+        {
+            StartTimer(ref task);
+            task.Invoke();
+            StopTimer(ref task);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void StartTimer(ref Task task)
+        {
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            if (Statistic != null)
+            {
+                Statistic.StartTimer(task.id);
+            }
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void StopTimer(ref Task task)
+        {
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            if (Statistic != null)
+            {
+                Statistic.StopTimer(task.id);
+            }
+#endif
+        }
+
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        private struct StatisticObserver : IWorkObserver<Task>
+        {
+            private ITimerStatistic _statistic;
+
+            public StatisticObserver(ITimerStatistic statistic)
+            {
+                _statistic = statistic;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void OnStartedTask(ref Task task)
+            {
+                _statistic.StartTimer(task.id);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void OnFinishedTask(ref Task task)
+            {
+                _statistic.StopTimer(task.id);
+            }
+        }
     }
+#endif
 }

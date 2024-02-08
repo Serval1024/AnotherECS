@@ -23,10 +23,10 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.Construct(ref component, ref injectContainer);
 #else
 ---------<#IF INJECT:SELF#>
-                InjectUtils.Construct(ref component, <#INJECT:SELF:ARGS#>);
+                ComponentCompileUtils.Construct(ref component, <#INJECT:SELF:ARGS#>);
 ---------<#END#>
 ---------<#ARRAY [0..INJECT:FIELD:COUNT]#>
-                InjectUtils.Construct(ref component.<#INJECT:FIELD:NAME#>, <#INJECT:FIELD:ARGS#>);
+                ComponentCompileUtils.Construct(ref component.<#INJECT:FIELD:NAME#>, <#INJECT:FIELD:ARGS#>);
 ---------<#END#>
 #endif
             }
@@ -37,10 +37,10 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.Deconstruct(ref component, ref injectContainer);
 #else
 ---------<#IF INJECT:SELF#>
-                InjectUtils.Deconstruct(ref component);
+                ComponentCompileUtils.Deconstruct(ref component);
 ---------<#END#>
 ---------<#ARRAY [0..INJECT:FIELD:COUNT]#>
-                InjectUtils.Deconstruct(ref component.<#INJECT:FIELD:NAME#>);
+                ComponentCompileUtils.Deconstruct(ref component.<#INJECT:FIELD:NAME#>);
 ---------<#END#>
 #endif
             }
@@ -52,10 +52,10 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.RepairMemoryHandle(ref component, ref repairMemoryContext);
 #else
 ---------<#IF REPAIR_MEMORY:SELF#>
-                component.RepairMemoryHandle(ref repairMemoryContext);
+                ComponentCompileUtils.RepairMemoryHandle(ref component, ref repairMemoryContext);
 ---------<#END#>
 ---------<#ARRAY [0..REPAIR_MEMORY:FIELD:COUNT]#>
-                component.<#REPAIR_MEMORY:FIELD:NAME#>.RepairMemoryHandle(ref repairMemoryContext);
+                ComponentCompileUtils.RepairMemoryHandle(ref component.<#REPAIR_MEMORY:FIELD:NAME#>, ref repairMemoryContext);
 ---------<#END#>
 #endif
             }
@@ -67,10 +67,10 @@ namespace AnotherECS.Gen.Project
                 ComponentReflectionUtils.RepairStateId(ref component, stateId);
 #else
 ---------<#IF REPAIR_STATEID:SELF#>
-                component.RepairMemoryHandle(stateId);
+                ComponentCompileUtils(ref component, stateId);
 ---------<#END#>
 ---------<#ARRAY [0..REPAIR_STATEID:FIELD:COUNT]#>
-                component.<#REPAIR_STATEID:FIELD:NAME#>.RepairStateId(stateId);
+                ComponentCompileUtils.RepairStateId(ref component.<#REPAIR_STATEID:FIELD:NAME#>, stateId);
 ---------<#END#>
 #endif
             }

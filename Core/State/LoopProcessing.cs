@@ -29,8 +29,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Init()
         {
-            _systemProcessing.Construct();
-            _systemProcessing.Init();
+            _systemProcessing.CreateModule();
+            _systemProcessing.Create();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

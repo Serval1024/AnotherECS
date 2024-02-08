@@ -6,6 +6,6 @@
         void Tick(uint tickCount);
         void Destroy();
         void Dispose();
-        void Send(BaseEvent @event);
+        void Send(IEvent @event);
     }
 }

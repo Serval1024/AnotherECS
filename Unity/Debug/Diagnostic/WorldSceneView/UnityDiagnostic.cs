@@ -1,20 +1,22 @@
 using System.Collections.Generic;
 using AnotherECS.Core;
-using AnotherECS.Debug.Diagnostic;
 using UnityEngine;
 
 namespace AnotherECS.Unity.Debug.Diagnostic
 {
-    public class UnityDiagnostic : IDiagnostic
+    public struct UnityDiagnostic
     {
-        private readonly string _ecsLabel = "AnotherECS";
+        private const string _ecsLabel = "AnotherECS";
 
+        private bool _isInit;
         private Transform _root;
-        private readonly Dictionary<World, WorldDiagnosticView> _views = new();
+        private Dictionary<World, WorldDiagnosticView> _views;
 
 
-        void IDiagnostic.Attach(World world)
+        public void Attach(World world)
         {
+            Init();
+
             if (_root == null)
             {
                 _root = new GameObject(_ecsLabel).transform;
@@ -22,7 +24,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             CreateView(world);
         }
 
-        void IDiagnostic.Update(World world)
+        public void Update(World world)
         {
             if (_views.TryGetValue(world, out var view))
             {
@@ -37,9 +39,18 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             }
         }
 
-        void IDiagnostic.Detach(World world)
+        public void Detach(World world)
         {
             DestroyView(world);
+        }
+
+        private void Init()
+        {
+            if (!_isInit)
+            {
+                _isInit = false;
+                _views = new();
+            }
         }
 
         private void CreateView(World world)

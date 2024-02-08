@@ -1,18 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
-using static AnotherECS.Core.HAllocator;
 
 namespace AnotherECS.Core
 {
     public unsafe struct HAllocator : IAllocator, IDisposable, ISerialize
     {
         private const int CHUNK_PREALLOCATION_COUNT = 1;
-        private const int SEGMENT_POWER_2 = 8;
+        private const int SEGMENT_POWER_2 = 7;
         private const int SEGMENT_SIZE_BYTE = 1 << SEGMENT_POWER_2;
         private const uint SEGMENT_LIMIT = ushort.MaxValue;
 
@@ -61,8 +58,26 @@ namespace AnotherECS.Core
             get => _chunkAllocated;
         }
 
-        public ulong TotalBytesAllocated
-            => _allocator->TotalBytesAllocated;
+        public ulong BytesAllocatedTotal
+        {
+            get
+            {
+                ulong result = 0;
+                for (uint i = ChunkDownBound; i < ChunkCount; ++i)
+                {
+                    result += _chunks.ReadRef(i).MemoryTotal;
+                }
+                return result;
+            }
+        }
+
+        public ulong HistoryBytesAllocatedTotal
+#if !ANOTHERECS_HISTORY_DISABLE
+            => _history.BytesAllocatedTotal;
+#else
+            => 0;
+#endif
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId()
@@ -137,6 +152,8 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_HISTORY_DISABLE
             if (*memoryHandle.isNotDirty)
             {
+                *memoryHandle.isNotDirty = false;
+
                 _history.Push(
                     ref memoryHandle,
                     GetSegmentCountBySegment(memoryHandle.id) << SEGMENT_POWER_2
@@ -460,6 +477,9 @@ namespace AnotherECS.Core
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _segmentUpBound; 
             }
+
+            public ulong MemoryTotal
+                => _isDirty.ByteLength + _sizeSegments.ByteLength + _freeSegments.ByteLength + _memory.ByteLength;
 
             public void Allocate(BAllocator* allocator, uint capacity)
             {

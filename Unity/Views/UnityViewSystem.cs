@@ -7,7 +7,7 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Views
 {
     [SystemOrder(SystemOrder.Last)]
-    public class UnityViewSystem : IViewSystem, IMainThread, IConstructModule, ITickFinishedModule
+    public class UnityViewSystem : IViewSystem, IMainThread, ICreateModule, ITickFinishedModule
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
@@ -18,12 +18,12 @@ namespace AnotherECS.Views
             _commandBuffer = new ConcurrentQueue<Command>();
         }
 
-        public void Construct(State state)
+        public void OnCreateModule(State state)
         {
             state.SetOrAddConfig(new ViewSystemReference() { system = this });
         }
 
-        public void TickFinished(State state)
+        public void OnTickFinished(State state)
         {
             while (!_commandBuffer.IsEmpty)
             {

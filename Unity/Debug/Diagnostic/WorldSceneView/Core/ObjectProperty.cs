@@ -4,9 +4,7 @@ using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using AnotherECS.Core;
-using ReflectionUtils = AnotherECS.Debug.Diagnostic.Editor.UIElements.ReflectionUtils;
-using static UnityEngine.GraphicsBuffer;
-
+using ReflectionUtils = AnotherECS.Debug.Diagnostic.UIElements.ReflectionUtils;
 
 namespace AnotherECS.Unity.Debug.Diagnostic
 {
@@ -14,6 +12,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
     {
         private object _root;
         private readonly object _target;
+        private readonly Type _targetType;
         private readonly string _path;
         private readonly string _name;
 
@@ -21,70 +20,110 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         public string Path => _path;
 
         public ObjectProperty(object target)
+            : this(target, target.GetType()) { }
+
+        public ObjectProperty(object target, Type type)
         {
-            _root = target;
-            _target = target;
+            _root = target ?? throw new ArgumentNullException(nameof(target));
+            _target = target ?? throw new ArgumentNullException(nameof(target));
+            _targetType = type ?? throw new ArgumentNullException(nameof(type));
             _path = string.Empty;
-            _name = _target.GetType().Name;
+            _name = type.Name;
         }
 
         public ObjectProperty(object root, string path)
         {
-            _root = root;
-            _path = path;
+            _root = root ?? throw new ArgumentNullException(nameof(root));
+            _path = path ?? throw new ArgumentNullException(nameof(path));
             _target = default;
             _name = default;
 
             var iterator = new PathIterator(path);
-            var target = _root;
+            var target = (_root, _root.GetType());
             while(!iterator.IsEnd())
             {
                 target = Get(ref iterator, target);
                 _name = iterator.GetName();
                 iterator = iterator.Next();
 
-                if (target == null)
+                if (target.Item2 == null)
                 {
                     throw new InvalidOperationException();
                 }
             }
-            _target = target;
+            _target = target.Item1;
+            _targetType = target.Item2;
         }
 
-        private ObjectProperty(object root, object target, string path, string name)
+        private ObjectProperty(object root, object target, Type type, string path, string name)
         {
-            _root = root;
+            _root = root ?? throw new ArgumentNullException(nameof(root));
             _target = target;
-            _path = path;
-            _name = name;
+            _path = path ?? throw new ArgumentNullException(nameof(path));
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _targetType = type ?? throw new ArgumentNullException(nameof(type));
         }
 
         public ObjectProperty GetPrivateChild(string name)
-            => new(_root,
-                _target.GetType().GetFieldOrProperty(name, ReflectionUtils.instanceFlags).GetValue(_target),
-                PathCombine(_path, name),
-                name);
-
+            => GetChildInternal(name, ReflectionUtils.instanceFlags);
+                
         public ObjectProperty GetRoot()
-            => new (_root, _root, string.Empty, _root.GetType().Name);
+            => new(_root, _root, _root.GetType(), string.Empty, _root.GetType().Name);
 
         public ObjectProperty GetChild(string name)
-            => new(_root,
-                _target.GetType().GetFieldOrProperty(name, ReflectionUtils.publicFlags).GetValue(_target),
+            => GetChildInternal(name, ReflectionUtils.publicFlags);
+
+        private ObjectProperty GetChildInternal(string name, System.Reflection.BindingFlags bindingFlags)
+        {
+            var field = _targetType.GetFieldOrProperty(name, bindingFlags);
+
+            return new(_root,
+                _target != null ? field.GetValue(_target) : null,
+                field.GetMemberType(),
                 PathCombine(_path, name),
                 name);
+        }
+
+        public int ChildCount()
+        {
+            if (typeof(IEnumerable).IsAssignableFrom(_target.GetType()))
+            {
+                if (_target == null)
+                {
+                    return 0;
+                }
+
+                return (_target as IEnumerable)
+                    .Cast<object>()
+                    .Count();
+            }
+            else
+            {
+                return _targetType
+                    .GetType()
+                    .GetFieldsAndProperties(ReflectionUtils.publicFlags)
+                    .Count();
+            }
+        }
 
         public IEnumerable<ObjectProperty> GetChildren()
         {
             var root = _root;
             var path = _path;
-            if (typeof(IEnumerable).IsAssignableFrom(_target.GetType()))
+            if (typeof(IEnumerable).IsAssignableFrom(_targetType))
             {
-                return (_target as IEnumerable)
+                if (_target == null)
+                {
+                    return Enumerable.Empty<ObjectProperty>();
+                }
+
+                var iEnumerable = _target as IEnumerable;
+                return iEnumerable
                     .Cast<object>()
                     .Select((p, i) => new ObjectProperty(
                         root,
                         p,
+                        TryGetType(p, iEnumerable),
                         PathCombine(path, i.ToString()),
                         $"[{i}] {p.GetType().Name}"
                         ));
@@ -92,12 +131,20 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             else
             {
                 var target = _target;
-                return target
-                    .GetType()
+                return _targetType
                     .GetFieldsAndProperties(ReflectionUtils.publicFlags)
-                    .Select(p => new ObjectProperty(root, p.GetValue(target), PathCombine(path, p.GetMemberName()), p.GetMemberName()));
+                    .Select(p => new ObjectProperty(
+                        root,
+                        target != null ? p.GetValue(target) : null,
+                        p.GetMemberType(),
+                        PathCombine(path, p.GetMemberName()),
+                        p.GetMemberName())
+                    );
             }
         }
+
+        public bool IsValueType()
+            => _targetType.IsValueType;
 
         public object GetValue()
             => _target;
@@ -112,8 +159,11 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         public T GetValue<T>()
             => (T)_target;
 
+        public bool IsValueNull()
+            => _target == null;
+
         public Type GetFieldType()
-            => _target.GetType();
+            => _targetType;
 
         public object GetFieldValue()
             => _target;
@@ -122,12 +172,12 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             => _name;
 
         public ObjectProperty ToFieldDisplayName(string value)
-            => new(_root, _target, _path, value);
+            => new(_root, _target, _targetType, _path, value);
 
         public PathIterator GetPathIterator()
             => new(_path);
 
-        private static object Get(ref PathIterator iterator, object target)
+        private static (object, Type) Get(ref PathIterator iterator, object target)
         {
             if (iterator.IsIndex())
             {
@@ -138,7 +188,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                     {
                         if (index == 0)
                         {
-                            return e;
+                            return (e, TryGetType(e, iEnumerable));
                         }
                         --index;
                     }
@@ -146,9 +196,25 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             }
             else
             {
-                return target.GetType().GetFieldOrProperty(iterator.GetName(), ReflectionUtils.instanceFlags).GetValue(target);
+                var field = target.GetType().GetFieldOrProperty(iterator.GetName(), ReflectionUtils.instanceFlags);
+                return (field.GetValue(target), field.GetMemberType());
             }
 
+            return default;
+        }
+
+        private static Type TryGetType(object target, IEnumerable iEnumerable)
+            => (target != null) 
+                ? target.GetType()
+                : ExtractTypeFromIEnumerable(iEnumerable);
+            
+        private static Type ExtractTypeFromIEnumerable(IEnumerable iEnumerable)
+        {
+            var interfaceEnumerableGeneric = iEnumerable.GetType().GetInterface($"{typeof(IEnumerable).Name}`1");
+            if (interfaceEnumerableGeneric != null)
+            {
+                return interfaceEnumerableGeneric.GenericTypeArguments[0];
+            }
             return null;
         }
 

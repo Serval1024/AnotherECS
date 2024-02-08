@@ -396,7 +396,7 @@ namespace AnotherECS.Core.Collection
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
-          => new(ref this);
+            => new(ref this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator<Pair<TKey, TValue>> IEnumerable<Pair<TKey, TValue>>.GetEnumerator()

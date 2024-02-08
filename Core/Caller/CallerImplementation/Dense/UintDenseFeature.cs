@@ -64,18 +64,11 @@ namespace AnotherECS.Core.Caller
             => layout.denseIndex;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> GetDense<T>(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
-           where T : unmanaged, IComponent
-        {
-#if !ANOTHERECS_RELEASE
-            if (typeof(T) == typeof(TDense))
-#endif
-            {
-                return new WArray<T>((T*)layout.dense.GetPtr(), layout.dense.Length);
-            }
-#if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(typeof(T).Name);
-#endif
-        }
+        public WArray<TDense> ReadDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
+            => new(layout.dense.ReadPtr(), layout.dense.Length);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<TDense> GetDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
+            => new(layout.dense.GetPtr(), layout.dense.Length);
     }
 }

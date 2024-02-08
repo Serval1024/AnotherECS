@@ -3,16 +3,22 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Processing
 {
-    internal interface ISystemTaskHandler<T>
+    internal interface ISystemTaskHandler
+    {
+        State State { get; set; }
+        ISystem AsSystem { get; }
+    }
+
+    internal interface ISystemTaskHandler<T> : ISystemTaskHandler
         where T : ISystem
     {
-        State State { set; get; }
-        T System { set; get; }
+        T System { get; set; }
+        ISystem ISystemTaskHandler.AsSystem { get => System; }
     }
 
     internal struct StateTickStartTaskHandler : ITaskHandler
     {
-        public State State { set; get; }
+        public State State { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
@@ -23,7 +29,7 @@ namespace AnotherECS.Core.Processing
 
     internal struct StateTickFinishedTaskHandler : ITaskHandler
     {
-        public State State { set; get; }
+        public State State { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
@@ -32,80 +38,80 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct ConstructTaskHandler : ITaskHandler, ISystemTaskHandler<IConstructModule>
+    internal struct ConstructTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateModule>
     {
-        public State State { set; get; }
-        public IConstructModule System { set; get; }
+        public State State { get; set; }
+        public ICreateModule System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.Construct(State);
+            System.OnCreateModule(State);
         }
     }
 
-    internal struct SystemTickStartTaskHandler : ITaskHandler, ISystemTaskHandler<ITickStartModule>
+    internal struct SystemTickStartTaskHandler : ITaskHandler, ISystemTaskHandler<ITickStartedModule>
     {
-        public State State { set; get; }
-        public ITickStartModule System { set; get; }
+        public State State { get; set; }
+        public ITickStartedModule System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.TickStarted(State);
+            System.OnTickStarted(State);
         }
     }
 
     internal struct SystemTickFinishedTaskHandler : ITaskHandler, ISystemTaskHandler<ITickFinishedModule>
     {
-        public State State { set; get; }
-        public ITickFinishedModule System { set; get; }
+        public State State { get; set; }
+        public ITickFinishedModule System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.TickFinished(State);
+            System.OnTickFinished(State);
         }
     }
 
-    internal struct SystemInitTaskHandler : ITaskHandler, ISystemTaskHandler<IInitSystem>
+    internal struct SystemCreateTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateSystem>
     {
-        public State State { set; get; }
-        public IInitSystem System { set; get; }
+        public State State { get; set; }
+        public ICreateSystem System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.Init(State);
+            System.OnCreate(State);
         }
     }
 
     internal struct SystemTickTaskHandler : ITaskHandler, ISystemTaskHandler<ITickSystem>
     {
-        public State State { set; get; }
-        public ITickSystem System { set; get; }
+        public State State { get; set; }
+        public ITickSystem System { get; set; }
 
         public void Invoke()
         {
-            System.Tick(State);
+            System.OnTick(State);
         }
     }
 
     internal struct SystemDestroyTaskHandler : ITaskHandler, ISystemTaskHandler<IDestroySystem>
     {
-        public State State { set; get; }
-        public IDestroySystem System { set; get; }
+        public State State { get; set; }
+        public IDestroySystem System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.Destroy(State);
+            System.OnDestroy(State);
         }
     }
 
     internal struct StateRevertToTaskHandler : ITaskHandler
     {
-        public State State { set; get; }
+        public State State { get; set; }
         public uint tick;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,7 +123,7 @@ namespace AnotherECS.Core.Processing
 
     internal struct ReceiversTaskHandler : ITaskHandler
     {
-        public State State { set; get; }
+        public State State { get; set; }
         public Receivers receivers;
         public List<ITickEvent> events;
 

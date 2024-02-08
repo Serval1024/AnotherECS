@@ -3,18 +3,18 @@ namespace AnotherECS.Core
     public interface IModule : ISystem { }
     
 
-    public interface IConstructModule : IModule
+    public interface ICreateModule : IModule
     {
-        void Construct(State state);
+        void OnCreateModule(State state);
     }
 
-    public interface ITickStartModule : IModule
+    public interface ITickStartedModule : IModule
     {
-        void TickStarted(State state);
+        void OnTickStarted(State state);
     }
 
     public interface ITickFinishedModule : IModule
     {
-        void TickFinished(State state);
+        void OnTickFinished(State state);
     }
 }

@@ -1,6 +1,4 @@
-﻿using AnotherECS.Core.Collection;
-
-namespace AnotherECS.Core
+﻿namespace AnotherECS.Core
 {
     internal static class RepairMemoryUtils
     {

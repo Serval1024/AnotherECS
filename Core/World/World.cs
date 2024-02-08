@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Processing;
-using AnotherECS.Debug.Diagnostic;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
@@ -15,17 +14,20 @@ namespace AnotherECS.Core
 
 #if !ANOTHERECS_RELEASE
         private bool _isInit = false;
-        private IDiagnostic _diagnostic;
+#endif
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        private readonly IWorldStatistic _statistic;
 #endif
         private readonly IGroupSystemInternal _systems;
         private readonly State _state;
         private readonly LoopProcessing _loopProcessing;
 
-        public World(IEnumerable<ISystem> systems, State state)
-            : this(systems, state, WorldThreadingLevel.MainThreadOnly) { }
 
-        public World(IEnumerable<ISystem> systems, State state, WorldThreadingLevel threadingLevel)
-            : this (systems, state, SystemProcessingFactory.Create(state, threadingLevel)) { }
+        public World(ISystem system, State state, WorldThreadingLevel threadingLevel = WorldThreadingLevel.MainThreadOnly)
+            : this(new SystemGroup(system), state, SystemProcessingFactory.Create(state, threadingLevel)) { }
+
+        public World(IGroupSystem systems, State state, WorldThreadingLevel threadingLevel = WorldThreadingLevel.MainThreadOnly)
+            : this(systems, state, SystemProcessingFactory.Create(state, threadingLevel)) { }
 
         public World(IEnumerable<ISystem> systems, State state, ISystemProcessing systemProcessing = default)
         {
@@ -40,6 +42,11 @@ namespace AnotherECS.Core
 
             _state = state ?? throw new ArgumentNullException(nameof(state));
 
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            _statistic = new Debug.Diagnostic.WorldStatistic();
+            _statistic.Construct(this);
+            systemProcessing.SetStatistic(_statistic);
+#endif
             _loopProcessing = new LoopProcessing(systemProcessing);
         }
 
@@ -53,6 +60,11 @@ namespace AnotherECS.Core
             {
                 _systems.Prepend((ISystem)Activator.CreateInstance(system));
             }
+
+            _systems.Sort();
+            var context = new InstallContext(this);
+            _systems.Install(ref context);
+            _systems.Append(context.GetSystemGroup());
             _systems.Sort();
 
             _state.FirstStartup();
@@ -60,6 +72,9 @@ namespace AnotherECS.Core
             RequestTick = CurrentTick;
             _loopProcessing.Prepare(_state, _systems);
             _loopProcessing.Init();
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            _statistic.UpdateSystemGraph(_systems);
+#endif
         }
 
         public void Tick()
@@ -71,8 +86,6 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
-
-            UpdateDiagnostic();
 #endif
             if (tickCount != 0)
             {
@@ -86,10 +99,6 @@ namespace AnotherECS.Core
                     _loopProcessing.Tick();   
                 }
             }
-
-#if !ANOTHERECS_RELEASE
-            UpdateDiagnostic();
-#endif
         }
 
         public void RevertTo(uint tick)
@@ -113,7 +122,7 @@ namespace AnotherECS.Core
             _loopProcessing.CallFromMainThread();
         }
 
-        public void Send(BaseEvent @event)
+        public void Send(IEvent @event)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldDisposed(this, _isInit);
@@ -137,38 +146,22 @@ namespace AnotherECS.Core
             _loopProcessing.Wait();
         }
 
-        public void SetDiagnostic(IDiagnostic diagnostic)
-        {
-#if !ANOTHERECS_RELEASE
-            _diagnostic?.Detach(this);
-            
-            _diagnostic = diagnostic;
-            _diagnostic.Attach(this);
+        public WorldStatisticData GetStatistic()
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            => _statistic.GetStatistic();
+#else
+            => default;
 #endif
-        }
 
         internal State GetState()
             => _state;
 
         protected override void OnDispose()
         {
-#if !ANOTHERECS_RELEASE
-            _diagnostic?.Detach(this);
-#endif
             _loopProcessing.Dispose();  //with waiting work threads.
 
             _systems.Dispose();
             _state.Dispose();
         }
-
-#if !ANOTHERECS_RELEASE
-        private void UpdateDiagnostic()
-        {
-            if (!_loopProcessing.IsBusy())
-            {
-                _diagnostic?.Update(this);
-            }
-        }
-#endif
     }
 }

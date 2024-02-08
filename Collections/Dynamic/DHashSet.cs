@@ -14,7 +14,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DHashSet<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ICollection, ISerialize, IRepairMemoryHandle
+    public unsafe struct DHashSet<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ICollection, IValid, ISerialize, IRepairMemoryHandle
         where TValue : unmanaged, IEquatable<TValue>
     {
         private NHashSet<AllocatorSelector, TValue, HashProvider> _data;
@@ -69,8 +69,6 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data.IsValid;
         }
-
-        public uint Length => Count;
 
         public void Allocate(uint length)
         {
@@ -177,7 +175,10 @@ namespace AnotherECS.Collections
                 _data = data;
                 _enumerator = data._data.GetEnumerator();
 
-                _data.EnterCheckChanges();
+                if (_data.Count != 0)
+                {
+                    _data.EnterCheckChanges();
+                }
             }
 
             public bool IsValid
@@ -209,7 +210,10 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose()
             {
-                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                if (_data.Count != 0)
+                {
+                    ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -15,18 +15,18 @@ namespace AnotherECS.Core.Processing
         void CallFromMainThread();
     }
 
-    public interface ISystemProcessing : IThreadProcessing, IDisposable
+    public interface ISystemProcessing : IThreadProcessing, IStatisticProcessing, IDisposable
     {
         void Prepare(IGroupSystem systemGroup);
 
         void StateTickStart();
         void StateTickFinished();
 
-        void Construct();
+        void CreateModule();
         void TickStart();
         void TickFinished();
         
-        void Init();
+        void Create();
         void Tick();
         void Destroy();
 
@@ -35,5 +35,10 @@ namespace AnotherECS.Core.Processing
         void RevertTo(uint tick);
 
         void TickFullLoop();
+    }
+
+    public interface IStatisticProcessing
+    {
+        void SetStatistic(ITimerStatistic timerStatistic);
     }
 }

@@ -699,7 +699,7 @@ namespace AnotherECS.Core
             }
         }
 
-        public void Send(BaseEvent @event)
+        public void Send(IEvent @event)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
@@ -864,6 +864,14 @@ namespace AnotherECS.Core
             => _stateId;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ulong GetMemoryTotal()
+            => _dependencies->bAllocator.BytesAllocatedTotal;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ulong GetHistoryMemoryTotal()
+            => _dependencies->stage0HAllocator.HistoryBytesAllocatedTotal + _dependencies->stage1HAllocator.HistoryBytesAllocatedTotal;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void RevertTo(uint tick)
         {
 #if !ANOTHERECS_RELEASE
@@ -913,7 +921,7 @@ namespace AnotherECS.Core
 
         #region raw api
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal WArray<TSparse> GetSparse<T, TSparse>()
+        internal WArray<TSparse> ReadSparse<T, TSparse>()
             where T : unmanaged, IComponent
             where TSparse : unmanaged
             => GetCaller<T>().ReadSparse<TSparse>();
@@ -921,10 +929,15 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal WArray<T> GetDense<T>()
             where T : unmanaged, IComponent
-            => GetCaller<T>().GetDense<T>();
+            => GetCaller<T>().GetDense();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal WArray<uint> GetVersion<T>()
+        internal WArray<T> ReadDense<T>()
+            where T : unmanaged, IComponent
+            => GetCaller<T>().ReadDense();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<uint> ReadVersion<T>()
             where T : unmanaged, IComponent
             => GetCaller<T>().ReadVersion();
 
@@ -1112,11 +1125,11 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EFastAccess CreateFA<TComponent, EFastAccess>()
+        public TFastAccess CreateFA<TComponent, TFastAccess>()
             where TComponent : IComponent
-            where EFastAccess : struct, IFastAccess
+            where TFastAccess : struct, IFastAccess
         {
-            EFastAccess fastAccess = default;
+            TFastAccess fastAccess = default;
             fastAccess.Config(_callers[GetIndex<TComponent>()]);
             return fastAccess;
         }

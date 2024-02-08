@@ -30,7 +30,11 @@ namespace AnotherECS.Core
             }
         }
 
+        public ulong BytesAllocatedTotal 
+            => TotalBytesSaved + _meta.Length;
+
         public uint ParallelMax { get => 1; set { } }
+
 
         public ChangeHistory(BAllocator* allocator, uint capacity, uint recordHistoryLength)
         {

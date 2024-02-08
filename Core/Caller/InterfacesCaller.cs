@@ -78,10 +78,10 @@ namespace AnotherECS.Core.Caller
         where TDenseIndex : unmanaged
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref TDense GetDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
+        ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
+        ref TDense GetDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TDenseIndex index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         uint GetCapacity(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
@@ -90,8 +90,10 @@ namespace AnotherECS.Core.Caller
         uint GetAllocated(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> GetDense<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
-            where T : unmanaged, IComponent;
+        public WArray<TDense> ReadDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<TDense> GetDense(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout);
     }
 
     internal interface IUseSparse

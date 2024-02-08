@@ -10,7 +10,7 @@ using AnotherECS.Serializer;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, ICString<char>, IEnumerable<char>, ISerialize, IRepairMemoryHandle
+    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, ICString<char>, ICollection<char>, IEnumerable<char>, ISerialize, IValid, IRepairMemoryHandle
     {
         private DList<char> _data;
 
@@ -48,7 +48,16 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _data.Count;
         }
-       
+
+        public uint Count => Length;
+
+        public bool IsValid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.IsValid;
+        }
+
+
         public static implicit operator string(DString fstring) => fstring.ToString();
 
         public static bool operator ==(DString a, DString b)
@@ -63,6 +72,19 @@ namespace AnotherECS.Collections
             get => _data[index];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => _data[index] = value;
+        }
+
+        public object Get(uint index)
+            => this[index];
+
+        public void Set(uint index, object value)
+        {
+            this[index] = (char)value;
+        }
+
+        public void Clear()
+        {
+            _data.Clear();
         }
 
         public unsafe void Set(string str)
@@ -220,7 +242,6 @@ namespace AnotherECS.Collections
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
 
-
         public struct Enumerator : IEnumerator<char>
         {
             private readonly DString _data;
@@ -230,7 +251,11 @@ namespace AnotherECS.Collections
             {
                 _data = data;
                 _current = uint.MaxValue;
-                _data.EnterCheckChanges();
+
+                if (_data.Length != 0)
+                {
+                    _data.EnterCheckChanges();
+                }
             }
 
             public char Current
@@ -255,7 +280,10 @@ namespace AnotherECS.Collections
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose() 
             {
-                ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                if (_data.Length != 0)
+                {
+                    ExceptionHelper.ThrowIfChange(_data.ExitCheckChanges());
+                }
             }
         }
     }

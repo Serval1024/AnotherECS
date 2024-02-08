@@ -5,12 +5,12 @@ namespace AnotherECS.Core
 {
     public interface IEventInvoke
     {
-        void Invoke(State context, BaseEvent @event);
+        void Invoke(State context, IEvent @event);
     }
 
     public struct EventContainer<UState, UEvent> : IEventInvoke
         where UState : State
-        where UEvent : BaseEvent
+        where UEvent : IEvent
     {
         private readonly Action<UState, UEvent> _call;
 
@@ -21,7 +21,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke(State context, BaseEvent @event)
+        public void Invoke(State context, IEvent @event)
             => _call((UState)context, (UEvent)@event);
     }
 }

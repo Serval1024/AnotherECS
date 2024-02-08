@@ -36,7 +36,7 @@ namespace AnotherECS.Physics
         Rotation>;
     
     [SystemOrder(SystemOrder.First)]
-    public sealed class PhysicsSystem : ISystem, IInitSystem, ITickSystem, IMainThread, IDisposable
+    public sealed class PhysicsSystem : ISystem, ICreateSystem, ITickSystem, IMainThread, IDisposable
     {
         private SimulationContext simulationContext;
         private IdFilter<Position, Rotation, IsPhysicsStatic> staticBodies;
@@ -51,7 +51,7 @@ namespace AnotherECS.Physics
         private State _state;
 
      
-        public void Init(State state)
+        public void OnCreate(State state)
         {
             _state = state;
             _state.SetOrAdd(new PhysicData() { gravity = new float3(sfloat.zero, -9.8f, sfloat.zero), deltaTime = 1f / 20f });
@@ -306,7 +306,7 @@ namespace AnotherECS.Physics
             }
         }
 
-        public void Tick(State context)
+        public void OnTick(State context)
         {
             var marker = new ProfilerMarker("[Physics] Reset World");
             marker.Begin();

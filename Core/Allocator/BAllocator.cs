@@ -20,7 +20,7 @@ namespace AnotherECS.Core
 
         private uint _id;
 
-        public ulong TotalBytesAllocated
+        public ulong BytesAllocatedTotal
         {
             get
             {

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AnotherECS.Core.Threading;
+using UnityEngine.Rendering.VirtualTexturing;
 
 namespace AnotherECS.Core.Processing
 {
@@ -10,7 +11,7 @@ namespace AnotherECS.Core.Processing
         where TThreadScheduler : struct, IThreadScheduler<Task>
     {
         private readonly State _state;
-        private readonly TThreadScheduler _threadScheduler;
+        private TThreadScheduler _threadScheduler;
 
         private Task _stateTickStart;
         private Task _stateTickFinished;
@@ -18,11 +19,11 @@ namespace AnotherECS.Core.Processing
         private StateRevertToTaskHandler _stateRevertToTaskHandler;
         private Task _stateRevertTo;
 
-        private Task[] _constructSystems;
-        private Task[] _tickStartSystems;
+        private Task[] _createModuleSystems;
+        private Task[] _tickStartedSystems;
         private Task[] _tickFinishedSystems;
 
-        private Task[] _initSystems;
+        private Task[] _createSystems;
         private Task[] _tickSystems;
         private Task[] _destroySystems;
 
@@ -34,30 +35,38 @@ namespace AnotherECS.Core.Processing
             _threadScheduler = threadScheduler;
         }
 
+        public void SetStatistic(ITimerStatistic timerStatistic)
+        {
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            _threadScheduler.Statistic = timerStatistic;
+#endif
+        }
+
         public void Prepare(IGroupSystem systemGroup)
         {
             var systems = systemGroup.GetSystemsAll().ToArray();
 
-            _stateTickStart = new Task(new StateTickStartTaskHandler() { State = _state }, false);
-            _stateTickFinished = new Task(new StateTickFinishedTaskHandler() { State = _state }, false);
+            
+            _stateTickStart = CreateTask(new StateTickStartTaskHandler() { State = _state });
+            _stateTickFinished = CreateTask(new StateTickFinishedTaskHandler() { State = _state });
 
             _stateRevertToTaskHandler = new StateRevertToTaskHandler() { State = _state };
-            _stateRevertTo = new Task(_stateRevertToTaskHandler, false);
+            _stateRevertTo = CreateTask(_stateRevertToTaskHandler);
 
-            _constructSystems = CreateTasks<ConstructTaskHandler, IConstructModule>(systems);
-            _tickStartSystems = CreateTasks<SystemTickStartTaskHandler, ITickStartModule>(systems);
+            _createModuleSystems = CreateTasks<ConstructTaskHandler, ICreateModule>(systems);
+            _tickStartedSystems = CreateTasks<SystemTickStartTaskHandler, ITickStartedModule>(systems);
             _tickFinishedSystems = CreateTasks<SystemTickFinishedTaskHandler, ITickFinishedModule>(systems);
 
-            _initSystems = CreateTasks<SystemInitTaskHandler, IInitSystem>(systems);
+            _createSystems = CreateTasks<SystemCreateTaskHandler, ICreateSystem>(systems);
             _tickSystems = CreateTasks<SystemTickTaskHandler, ITickSystem>(systems);
             _destroySystems = CreateTasks<SystemDestroyTaskHandler, IDestroySystem>(systems);
 
-            _receivers = new Task(new ReceiversTaskHandler()
+            _receivers = CreateTask(new ReceiversTaskHandler()
             {
                 State = _state,
                 receivers = ProcessingUtils.ToReceivers(Filter<IReceiverSystem>(systems)),
                 events = _state.GetEventCache(),
-            }, false);
+            });
         }
 
         public void StateTickStart()
@@ -71,14 +80,14 @@ namespace AnotherECS.Core.Processing
             _threadScheduler.Run(_stateTickFinished);
         }
 
-        public void Construct()
+        public void CreateModule()
         {
-            _threadScheduler.Run(_constructSystems);
+            _threadScheduler.Run(_createModuleSystems);
         }
 
         public void TickStart()
         {
-            _threadScheduler.Run(_tickStartSystems);
+            _threadScheduler.Run(_tickStartedSystems);
         }
 
         public void TickFinished()
@@ -86,9 +95,9 @@ namespace AnotherECS.Core.Processing
             _threadScheduler.Run(_tickFinishedSystems);
         }
 
-        public void Init()
+        public void Create()
         {
-            _threadScheduler.Run(_initSystems.AsSpan());
+            _threadScheduler.Run(_createSystems.AsSpan());
         }
 
         public void Tick()
@@ -165,12 +174,42 @@ namespace AnotherECS.Core.Processing
             StateTickFinished();
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Task[] CreateTasks<THandler, TSystem>(ISystem[] systems)
             where THandler : struct, ITaskHandler, ISystemTaskHandler<TSystem>
             where TSystem : ISystem
             => Filter<TSystem>(systems)
-            .Select(p => new Task(new THandler() { State = _state, System = p }, IsMainTread(p)))
-            .ToArray();
+                .Select(p => CreateTask<THandler, TSystem>(p))
+                .ToArray();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Task CreateTask<THandler>(THandler handler)
+            where THandler : struct, ITaskHandler
+            => new Task(
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+                typeof(THandler).Name,
+#endif
+                handler,
+                false);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Task CreateTask<THandler, TSystem>(TSystem system)
+            where THandler : struct, ITaskHandler, ISystemTaskHandler<TSystem>
+            where TSystem : ISystem
+            => new(
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+                GetTaskId(system.GetType(), typeof(TSystem)),
+#endif
+                new THandler() { State = _state, System = system },
+                IsMainTread(system)
+                );
+
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string GetTaskId(Type obj, Type phase)
+            => $"{obj.Name}:{phase.Name}";
+#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsMainTread(ISystem system)

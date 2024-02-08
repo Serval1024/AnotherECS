@@ -492,9 +492,12 @@ namespace AnotherECS.Core.Caller
             => _sparseStorage.ReadSparse<T>(ref *_layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> GetDense<T>()
-            where T : unmanaged, IComponent
-            => default(TDenseStorage).GetDense<T>(ref *_layout);
+        public WArray<TDense> ReadDense()
+            => default(TDenseStorage).ReadDense(ref *_layout);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<TDense> GetDense()
+            => default(TDenseStorage).GetDense(ref *_layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WArray<uint> ReadVersion()

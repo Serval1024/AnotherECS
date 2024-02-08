@@ -17,7 +17,7 @@
                recycleCapacity = 32,
 
                componentCapacity = 32,
-               archetypeCapacity = 32,
+               archetypeCapacity = 16,
 
                chunkLimit = 32,
            };

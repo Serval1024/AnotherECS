@@ -16,13 +16,19 @@ namespace AnotherECS.Core.Processing
             set { }
         }
 
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+        public ITimerStatistic Statistic { get; set; }
+#endif
+
         public static MainThreadScheduler Create()
             => new() { };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Run(Task task)
         {
+            StartTimer(ref task);
             task.Invoke();
+            StopTimer(ref task);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,5 +59,27 @@ namespace AnotherECS.Core.Processing
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void StartTimer(ref Task task)
+        {
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            if (Statistic != null)
+            {
+                Statistic.StartTimer(task.id);
+            }
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void StopTimer(ref Task task)
+        {
+#if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
+            if (Statistic != null)
+            {
+                Statistic.StopTimer(task.id);
+            }
+#endif
+        }
     }
 }
