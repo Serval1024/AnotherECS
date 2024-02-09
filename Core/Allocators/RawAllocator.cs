@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using AnotherECS.Unsafe;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     public unsafe struct RawAllocator : IAllocator
     {

@@ -1,6 +1,6 @@
-using System.Runtime.CompilerServices;
 using AnotherECS.Core;
 using AnotherECS.Views.Core;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace AnotherECS.Views

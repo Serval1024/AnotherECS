@@ -1,6 +1,7 @@
-﻿using System;
-using AnotherECS.Core;
-using AnotherECS.Core.Caller;
+﻿using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using System;
 
 namespace AnotherECS.Generator
 {
@@ -101,15 +102,15 @@ namespace AnotherECS.Generator
         {
             if (!isUnmanaged)
             {
-                throw new Exceptions.OptionsConflictException(type, $"The component must not contain reference types.");
+                throw new OptionsConflictException(type, $"The component must not contain reference types.");
             }
             if (isMarker && isHistory)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(IMarker)}, Any history option.");
+                throw new OptionsConflictException(type, $"{nameof(IMarker)}, Any history option.");
             }
             if (isDefault && isEmpty)
             {
-                throw new Exceptions.OptionsConflictException(type, $"{nameof(IDefault)}, {nameof(ComponentOptions.DataFree)}.");
+                throw new OptionsConflictException(type, $"{nameof(IDefault)}, {nameof(ComponentOptions.DataFree)}.");
             }
         }
 

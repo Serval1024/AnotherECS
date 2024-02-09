@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Text;
+﻿using AnotherECS.Core;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using AnotherECS.Core;
+using System.Linq;
+using System.Text;
 using ReflectionUtils = AnotherECS.Debug.Diagnostic.UIElements.ReflectionUtils;
 
 namespace AnotherECS.Unity.Debug.Diagnostic

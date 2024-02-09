@@ -1,10 +1,12 @@
-﻿using System;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using AnotherECS.Serializer;
+using AnotherECS.Unsafe;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using AnotherECS.Serializer;
-using AnotherECS.Unsafe;
 
 namespace AnotherECS.Core.Collection
 {
@@ -107,7 +109,7 @@ namespace AnotherECS.Core.Collection
         internal MemoryHandle GetMemoryHandle()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _data;
         }
@@ -117,7 +119,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return (T*)_data.pointer;
         }
@@ -217,7 +219,7 @@ namespace AnotherECS.Core.Collection
         public T* GetPtr()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             Dirty();
             return ReadPtr();
@@ -369,7 +371,7 @@ namespace AnotherECS.Core.Collection
         public void Resize(uint elementCount)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             ResizeInternal(elementCount * (uint)sizeof(T));
         }
@@ -393,7 +395,7 @@ namespace AnotherECS.Core.Collection
         public void SetAll(uint start, uint elementCount, T element)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             var ptr = GetPtr();
             for(uint i = start, iMax = elementCount + start; i < iMax; ++i)
@@ -412,7 +414,7 @@ namespace AnotherECS.Core.Collection
         public void SetAllByte(uint start, uint byteLength, byte value)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
             if (ByteLength < byteLength + start)
             {
                 throw new OutOfMemoryException();
@@ -431,7 +433,7 @@ namespace AnotherECS.Core.Collection
         public void CreateFrom(in NArray<TAllocator, T> other, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(other);
+            ExceptionHelper.ThrowIfBroken(other);
             if (count > other.Length)
             {
                 throw new ArgumentOutOfRangeException(nameof(count));
@@ -458,8 +460,8 @@ namespace AnotherECS.Core.Collection
         public void CopyFrom(in NArray<TAllocator, T> other)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
-            ExceptionHelper.ThrowIfNArrayBroken(other);
+            ExceptionHelper.ThrowIfBroken(this);
+            ExceptionHelper.ThrowIfBroken(other);
 #endif
             Dirty();
             UnsafeMemory.MemCopy(other.ReadPtr(), ReadPtr(), Math.Min(ByteLength, other.ByteLength));
@@ -481,7 +483,7 @@ namespace AnotherECS.Core.Collection
         public void Clear(uint start, uint elementCount)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
             if (_length < elementCount + start)
             {
                 throw new ArgumentOutOfRangeException($"{nameof(elementCount)} or {nameof(start)}");
@@ -525,7 +527,7 @@ namespace AnotherECS.Core.Collection
         public unsafe void CopyTo(T[] array, uint startIndex, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
             if (count > Length)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(Length)}': {Length}");
@@ -596,7 +598,7 @@ namespace AnotherECS.Core.Collection
         public void EnterCheckChanges()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);    
+            ExceptionHelper.ThrowIfBroken(this);    
 #endif
             _allocator->EnterCheckChanges(ref _data);
         }
@@ -605,7 +607,7 @@ namespace AnotherECS.Core.Collection
         public bool ExitCheckChanges()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _allocator->ExitCheckChanges(ref _data);
         }
@@ -614,7 +616,7 @@ namespace AnotherECS.Core.Collection
         private void ResizeInternal(uint byteLength)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             if (byteLength != ByteLength)
             {

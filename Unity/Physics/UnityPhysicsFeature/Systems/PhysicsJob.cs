@@ -1,11 +1,11 @@
+using AnotherECS.Essentials.Physics;
 using System;
 using System.Diagnostics;
 using Unity.Burst;
-using Unity.Jobs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
-using AnotherECS.Essentials.Physics;
 
 namespace AnotherECS.Physics
 {

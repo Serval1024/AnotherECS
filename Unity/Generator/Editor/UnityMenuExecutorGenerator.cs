@@ -1,10 +1,10 @@
+using AnotherECS.Core;
+using AnotherECS.Generator;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using AnotherECS.Generator;
 using Logger = AnotherECS.Debug.Logger;
-using AnotherECS.Core;
 
 namespace AnotherECS.Unity.Editor.Generator
 {

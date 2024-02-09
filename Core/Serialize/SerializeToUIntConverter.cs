@@ -1,8 +1,8 @@
-﻿using System;
+﻿using AnotherECS.Converter;
+using AnotherECS.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using AnotherECS.Converter;
-using AnotherECS.Core;
 
 namespace AnotherECS.Serializer
 {

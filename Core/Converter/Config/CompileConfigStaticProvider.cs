@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using AnotherECS.Core;
 
-namespace AnotherECS.Converter
+namespace AnotherECS.Core.Converter
 {
     public static class CompileConfigIdProvider<EState, TType>
        where EState : IState

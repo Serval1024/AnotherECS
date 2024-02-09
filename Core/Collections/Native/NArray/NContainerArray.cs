@@ -1,9 +1,11 @@
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
@@ -70,7 +72,7 @@ namespace AnotherECS.Core.Collection
         public TAllocator* GetAllocator()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _data.GetAllocator();
         }
@@ -79,7 +81,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return (T*)_data.ReadPtr(index)->pointer;
         }
@@ -94,7 +96,7 @@ namespace AnotherECS.Core.Collection
         public MemoryHandle GetMemoryHandle(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _data.GetRef(index);
         }
@@ -103,7 +105,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return (T*)_data.ReadPtr(index)->pointer;
         }
@@ -112,7 +114,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return (T*)_data.ReadPtr(index)->pointer;
         }
@@ -123,7 +125,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return ref *ReadPtr(index);
         }
@@ -132,7 +134,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return ref *ReadPtr(index);
         }
@@ -141,7 +143,7 @@ namespace AnotherECS.Core.Collection
         public ref T ReadRef(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return ref *ReadPtr(index);
         }
@@ -152,7 +154,7 @@ namespace AnotherECS.Core.Collection
         public T Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return *ReadPtr(index);
         }
@@ -161,7 +163,7 @@ namespace AnotherECS.Core.Collection
         public T Read(int index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return *ReadPtr(index);
         }
@@ -170,7 +172,7 @@ namespace AnotherECS.Core.Collection
         public T Read(ulong index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return *ReadPtr(index);
         }
@@ -338,7 +340,7 @@ namespace AnotherECS.Core.Collection
         public void Resize(uint elementCount)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             var lastLength = _data.Length;
 
@@ -448,7 +450,7 @@ namespace AnotherECS.Core.Collection
         public unsafe void CopyTo(T[] array, uint startIndex, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
             if (count > Length)
             {
                 throw new ArgumentOutOfRangeException($"'{nameof(count)}':{count} must be less or equal than '{nameof(Length)}': {Length}");

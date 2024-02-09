@@ -1,8 +1,7 @@
-﻿using System;
+﻿using AnotherECS.Core;
+using System;
 using System.Collections.Generic;
-using AnotherECS.Core;
 using UnityEngine.UIElements;
-using static Codice.CM.WorkspaceServer.WorkspaceTreeDataStore;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Present
 {

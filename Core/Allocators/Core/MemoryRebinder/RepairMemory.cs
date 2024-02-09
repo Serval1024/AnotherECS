@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     public unsafe struct RepairMemory<TAllocator> : IRepairMemory
         where TAllocator : IAllocator

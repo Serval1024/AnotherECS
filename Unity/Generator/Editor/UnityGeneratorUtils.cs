@@ -1,12 +1,12 @@
-﻿using System;
+﻿using AnotherECS.Generator;
+using AnotherECS.Unity.Editor.Common;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
-using AnotherECS.Generator;
-using AnotherECS.Unity.Editor.Common;
 
 namespace AnotherECS.Unity.Editor.Generator
 {

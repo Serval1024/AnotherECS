@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core.Threading
 {
-    public interface IThreadScheduler<TTask> : IDisposable
+    internal interface IThreadScheduler<TTask> : IDisposable
         where TTask : struct, ITask
     {
         int ParallelMax { get; set; }

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using AnotherECS.Serializer;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
 {

@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System;
 
 namespace AnotherECS.Core.Threading
 {
-    public static class ReflectionUtils
+    internal static class ReflectionUtils
     {
         public static Dictionary<Type, IEventInvoke> GetEventMap(IReceiverSystem receiverSystem)
         {

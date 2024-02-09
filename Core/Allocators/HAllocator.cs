@@ -4,7 +4,7 @@ using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using AnotherECS.Unsafe;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     public unsafe struct HAllocator : IAllocator, IDisposable, ISerialize
     {

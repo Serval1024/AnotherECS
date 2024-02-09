@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using static AnotherECS.Mathematics.math;
-using System.Diagnostics;
 using tfloat = sfloat;
 
 namespace AnotherECS.Mathematics

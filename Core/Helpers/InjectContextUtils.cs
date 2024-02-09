@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core
+﻿using AnotherECS.Core.Allocators;
+
+namespace AnotherECS.Core
 {
     internal static class InjectContextUtils
     {

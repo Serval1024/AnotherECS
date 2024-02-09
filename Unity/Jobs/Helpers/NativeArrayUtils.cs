@@ -1,8 +1,8 @@
-using System.Runtime.CompilerServices;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Collections;
-using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
+using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unity.Jobs
 {
@@ -20,9 +20,9 @@ namespace AnotherECS.Unity.Jobs
             => ToNativeArray<T>(narray.GetPtr(), narray.Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeArray<T> ToNativeArray<T>(WArray<T> rarray)
+        public static NativeArray<T> ToNativeArray<T>(WArray<T> warray)
            where T : unmanaged
-           => ToNativeArray<T>(rarray.GetPtr(), rarray.Length);
+           => ToNativeArray<T>(warray.GetPtr(), warray.Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NativeArray<T> CopyNativeArray<T>(void* ptr, uint length)

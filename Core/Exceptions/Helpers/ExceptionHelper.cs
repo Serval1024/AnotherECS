@@ -1,11 +1,9 @@
-using System;
-using System.Runtime.CompilerServices;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
-using AnotherECS.Exceptions;
+using System;
 using EntityId = System.UInt32;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Exceptions
 {
     internal static class ExceptionHelper
     {
@@ -144,14 +142,14 @@ namespace AnotherECS.Core
         public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, ulong index)
             where TNArray : struct, INArray
         {
-            ThrowIfNArrayBroken(narray);
+            ThrowIfBroken(narray);
             ThrowIfNArrayBroken(narray, index, narray.ByteLength / narray.ElementSize);
         }
 
         public static void ThrowIfNArrayBroken<TNArray>(TNArray narray, ulong index, ulong count)
             where TNArray : struct, INArray
         {
-            ThrowIfNArrayBroken(narray);
+            ThrowIfBroken(narray);
             if (index < 0)
             {
                 throw new ArgumentOutOfRangeException($"{nameof(index)}, value '{index}'");
@@ -162,12 +160,12 @@ namespace AnotherECS.Core
             }
         }
 
-        public static void ThrowIfNArrayBroken<TNArray>(TNArray narray)
-            where TNArray : struct, INArray
+        public static void ThrowIfBroken<TNative>(TNative native)
+            where TNative : struct, INative
         {
-            if (!narray.IsValid)
+            if (!native.IsValid)
             {
-                throw new InvalidOperationException(nameof(narray.IsValid));
+                throw new InvalidOperationException(nameof(native.IsValid));
             }
         }
 
@@ -177,15 +175,6 @@ namespace AnotherECS.Core
             if (!container.IsValid)
             {
                 throw new InvalidOperationException(nameof(container.IsValid));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowIfChange(bool isChange)
-        {
-            if (isChange)
-            {
-                throw new CollectionWasModifiedException();
             }
         }
 

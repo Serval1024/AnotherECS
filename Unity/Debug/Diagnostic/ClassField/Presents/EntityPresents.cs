@@ -1,6 +1,6 @@
-﻿using System;
+﻿using AnotherECS.Core;
+using System;
 using UnityEngine.UIElements;
-using AnotherECS.Core;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Present

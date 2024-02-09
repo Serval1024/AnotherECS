@@ -1,10 +1,10 @@
+using AnotherECS.Converter;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using AnotherECS.Core;
 
-namespace AnotherECS.Converter
+namespace AnotherECS.Core.Converter
 {
     public class RuntimeBindStateTypeToIdConverter<UId, TType, EState> : IgnoresTypeToIdConverter<UId, TType>
         where UId : unmanaged

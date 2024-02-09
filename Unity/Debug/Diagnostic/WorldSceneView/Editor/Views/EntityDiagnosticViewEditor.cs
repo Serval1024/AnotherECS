@@ -1,9 +1,9 @@
+using AnotherECS.Debug.Diagnostic.UIElements;
+using AnotherECS.Unity.Debug.Diagnostic.Present;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using AnotherECS.Debug.Diagnostic.UIElements;
 using EntityId = System.UInt32;
-using AnotherECS.Unity.Debug.Diagnostic.Present;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Editor
 {

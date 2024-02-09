@@ -1,8 +1,7 @@
-﻿using AnotherECS.Core;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace AnotherECS.Converter
+namespace AnotherECS.Core.Converter
 {
     public static class CompileComponentIdProvider<EState, TType>
        where EState : IState

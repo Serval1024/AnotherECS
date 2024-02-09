@@ -1,11 +1,12 @@
+using AnotherECS.Collections.Exceptions;
+using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core;
-using AnotherECS.Core.Collection;
-using AnotherECS.Exceptions;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {
@@ -88,17 +89,33 @@ namespace AnotherECS.Collections
         }
 
         public bool ContainsKey(TKey key)
-            => _data.ContainsKey(key);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.ContainsKey(key);
+        }
 
         public void Add(TKey key, TValue value)
-            => _data.Add(key, value);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            _data.Add(key, value);
+        }
 
         public bool Remove(TKey key)
-            => _data.Remove(key);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.Remove(key);
+        }
 
         public object Get(uint index)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -110,6 +127,7 @@ namespace AnotherECS.Collections
         public void Set(uint index, object value)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (value == null || typeof(TValue) != value.GetType())
             {
                 throw new ArgumentException(nameof(value));
@@ -125,6 +143,9 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _data.Clear();
         }
 

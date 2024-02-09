@@ -1,6 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using AnotherECS.Core;
+using System.Runtime.CompilerServices;
 using UnityEngine;
-using AnotherECS.Core;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic.Editor")]

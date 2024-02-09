@@ -1,11 +1,12 @@
+using AnotherECS.Core.Allocators;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
-{    
+{
     public unsafe struct NMultiDictionary<TAllocator, TKey, TValue, THashProvider> : INative, ISerialize, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where TKey : unmanaged, IEquatable<TKey>

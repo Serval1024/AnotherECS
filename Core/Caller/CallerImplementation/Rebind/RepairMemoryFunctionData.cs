@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core.Caller
+﻿using AnotherECS.Core.Allocators;
+
+namespace AnotherECS.Core.Caller
 {
     internal unsafe struct RepairMemoryFunctionData<TDense>
        where TDense : unmanaged

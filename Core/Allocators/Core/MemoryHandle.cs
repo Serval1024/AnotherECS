@@ -1,7 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
+﻿using AnotherECS.Serializer;
+using System.Runtime.CompilerServices;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     //[StructLayout(LayoutKind.Explicit)]
     public unsafe struct MemoryHandle : ISerialize

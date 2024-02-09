@@ -1,9 +1,9 @@
-﻿using AnotherECS.Core;
+﻿using AnotherECS.Converter;
 using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace AnotherECS.Converter
+namespace AnotherECS.Core.Converter
 {
     public class RuntimeConfigConverter<EState> : RuntimeBindStateTypeToIdConverter<ushort, IConfig, EState>, ITypeToUshort
         where EState : IState

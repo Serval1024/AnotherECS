@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core
+﻿using AnotherECS.Core.Allocators;
+
+namespace AnotherECS.Core
 {
     public unsafe interface IHistory
     {

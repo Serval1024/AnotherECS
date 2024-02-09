@@ -1,8 +1,8 @@
+using AnotherECS.Core.Allocators;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-
     internal unsafe struct HistoryAllocatorProvider : IAllocatorProvider<HAllocator, HAllocator>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

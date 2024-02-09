@@ -1,9 +1,9 @@
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unity.Jobs
-{    
+{
     [JobProducerType(typeof(IJobForBagParallelForExtensions.JobProcess<,>))]
     public interface IJobParallelForBag<T>
         where T : struct, IJobBag

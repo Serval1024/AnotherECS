@@ -1,9 +1,8 @@
-﻿using System;
-using System.Linq;
+﻿using AnotherECS.Core.Threading;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Threading;
-using UnityEngine.Rendering.VirtualTexturing;
 
 namespace AnotherECS.Core.Processing
 {

@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace AnotherECS.Unity.Jobs
 {

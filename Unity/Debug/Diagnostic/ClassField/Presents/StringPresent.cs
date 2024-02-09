@@ -1,5 +1,5 @@
-﻿using System;
-using AnotherECS.Collections;
+﻿using AnotherECS.Collections;
+using System;
 using UnityEngine.UIElements;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Present

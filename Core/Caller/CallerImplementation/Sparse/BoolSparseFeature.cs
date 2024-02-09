@@ -1,4 +1,5 @@
-﻿using AnotherECS.Core.Collection;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 

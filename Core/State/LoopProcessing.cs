@@ -1,6 +1,6 @@
-﻿using System;
+﻿using AnotherECS.Core.Processing;
+using System;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Processing;
 
 namespace AnotherECS.Core
 {

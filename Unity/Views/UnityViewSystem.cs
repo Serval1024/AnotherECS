@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using AnotherECS.Core;
 using AnotherECS.Views.Core;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Views

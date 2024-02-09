@@ -1,5 +1,5 @@
-﻿using System.Runtime.CompilerServices;
-using AnotherECS.Core.Threading;
+﻿using AnotherECS.Core.Threading;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Processing
 {

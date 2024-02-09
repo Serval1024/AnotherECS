@@ -1,11 +1,12 @@
-﻿using System;
+﻿using AnotherECS.Collections.Exceptions;
+using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core;
-using AnotherECS.Core.Collection;
-using AnotherECS.Exceptions;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {
@@ -69,22 +70,41 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate(uint length)
+        {
+            _data.Allocate(length);
+            _count = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deallocate()
+        {
+            _data.Deallocate();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TValue Read(uint index)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException($"Index {index} is out of range Length {Count}.");
             }
+#endif
             return ref _data.Read(index);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue Get(uint index)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException($"Index {index} is out of range Length {Count}.");
             }
+#endif
             return ref _data.Get(index);
         }
 
@@ -108,6 +128,9 @@ namespace AnotherECS.Collections
 
         public void Add(ref TValue item)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             if (Count == Capacity)
             {
                 Resize((Count + 1) << 1);
@@ -124,11 +147,8 @@ namespace AnotherECS.Collections
         public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(_data.GetType());
-            }
 #endif
             if (index == Count - 1)
             {
@@ -150,11 +170,8 @@ namespace AnotherECS.Collections
         public void RemoveAt(uint index)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             FArrayHelper.ThrowIfOutOfRange(index, Count);
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(_data.GetType());
-            }
 #endif
             if (index == Count - 1)
             {
@@ -201,19 +218,32 @@ namespace AnotherECS.Collections
             => IndexOf(ref item);
 
         public unsafe int IndexOf(ref TValue item)
-            => _data.IndexOf(ref item, Count);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.IndexOf(ref item, Count);
+        }
 
         public bool Contains(TValue item)
             => Contains(ref item);
 
         public bool Contains(ref TValue item)
-            => _data.IndexOf(ref item, Count) != -1;
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.IndexOf(ref item, Count) != -1;
+        }
 
         public bool Remove(TValue item)
             => Remove(ref item);
 
         public bool Remove(ref TValue item)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             var index = _data.IndexOf(ref item, Count);
             if (index != -1)
             {
@@ -225,11 +255,17 @@ namespace AnotherECS.Collections
 
         public void CopyTo(TValue[] array, uint arrayIndex)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _data.CopyTo(array, arrayIndex, Count);
         }
 
         public void RemoveLast()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             if (Count != 0)
             {
                 this[--Count] = default;
@@ -238,6 +274,9 @@ namespace AnotherECS.Collections
 
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _data.Clear();
         }
 
@@ -256,6 +295,9 @@ namespace AnotherECS.Collections
 
         public void ExtendToCapacity()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             while (Count != Capacity)
             {
                 _data.Set(Count++, default);
@@ -284,7 +326,12 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<TValue> AsSpan()
-            => _data.AsSpan()[..(int)Count];
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.AsSpan()[..(int)Count];
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe TValue* ReadPtr()

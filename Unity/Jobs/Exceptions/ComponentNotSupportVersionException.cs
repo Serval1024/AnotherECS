@@ -1,6 +1,6 @@
-using System;
 using AnotherECS.Core;
 using AnotherECS.Debug;
+using System;
 
 namespace AnotherECS.Unity.Jobs.Exceptions
 {

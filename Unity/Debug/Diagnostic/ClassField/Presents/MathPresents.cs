@@ -1,6 +1,6 @@
-﻿using System;
+﻿using AnotherECS.Debug.Diagnostic.UIElements;
 using AnotherECS.Mathematics;
-using AnotherECS.Debug.Diagnostic.UIElements;
+using System;
 using UnityEngine.UIElements;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Present

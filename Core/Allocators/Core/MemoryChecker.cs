@@ -1,8 +1,8 @@
-﻿using System;
+﻿using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Collection;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     internal unsafe struct MemoryChecker<TAllocator> : IDisposable
         where TAllocator : unmanaged, IAllocator

@@ -1,6 +1,5 @@
 namespace AnotherECS.Core
 {
-
     public struct InstallContext
     {
         private readonly World _world;

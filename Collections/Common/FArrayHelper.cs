@@ -1,8 +1,8 @@
+using AnotherECS.Serializer;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Collections.LowLevel.Unsafe;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {

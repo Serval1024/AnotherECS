@@ -2,7 +2,6 @@ namespace AnotherECS.Core
 {
     public interface IModule : ISystem { }
     
-
     public interface ICreateModule : IModule
     {
         void OnCreateModule(State state);

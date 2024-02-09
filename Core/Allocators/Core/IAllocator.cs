@@ -1,4 +1,4 @@
-﻿namespace AnotherECS.Core
+﻿namespace AnotherECS.Core.Allocators
 {
     public interface IAllocator
     {

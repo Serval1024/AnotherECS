@@ -1,11 +1,13 @@
+using AnotherECS.Collections.Exceptions;
+using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using AnotherECS.Core;
-using AnotherECS.Core.Collection;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {
@@ -199,6 +201,11 @@ namespace AnotherECS.Collections
 
         public override unsafe int GetHashCode()
         {
+            if (!IsValid)
+            {
+                return 0;
+            }
+
             HashCode hash = default;
             hash.Add(Length);
             var dataPtr = _data.ReadPtr();
@@ -236,7 +243,7 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void EnterCheckChanges()
-         => _data.EnterCheckChanges();
+            => _data.EnterCheckChanges();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool ExitCheckChanges()

@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     internal static class RepairMemoryCaller
     {

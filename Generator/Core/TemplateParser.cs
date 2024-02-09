@@ -1,9 +1,9 @@
-﻿using System;
+﻿using AnotherECS.Converter;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using AnotherECS.Converter;
 using static AnotherECS.Generator.TemplateParser;
 
 namespace AnotherECS.Generator

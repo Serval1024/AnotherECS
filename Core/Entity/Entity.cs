@@ -1,5 +1,5 @@
-using System.Runtime.CompilerServices;
 using System;
+using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Views")]

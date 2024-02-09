@@ -1,11 +1,9 @@
+using AnotherECS.Debug;
+using System;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.Compilation;
-using System.Linq;
-using AnotherECS.Debug;
-using System;
-using AnotherECS.Generator;
-using UnityEngine.SocialPlatforms;
 
 namespace AnotherECS.Unity.Editor.Generator
 {

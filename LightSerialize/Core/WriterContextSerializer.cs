@@ -1,7 +1,7 @@
-﻿using System;
+﻿using AnotherECS.Serializer.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer.Exceptions;
 
 namespace AnotherECS.Serializer
 {

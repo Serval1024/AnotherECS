@@ -1,4 +1,5 @@
-﻿using AnotherECS.Core.Collection;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
 using System;
 
 namespace AnotherECS.Core

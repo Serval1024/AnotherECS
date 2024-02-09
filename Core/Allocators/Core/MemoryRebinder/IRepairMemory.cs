@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Core.Allocators
 {
     public interface IRepairMemory
     {

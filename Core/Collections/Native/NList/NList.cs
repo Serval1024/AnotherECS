@@ -1,8 +1,9 @@
-﻿using System;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using AnotherECS.Serializer;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
@@ -98,7 +99,7 @@ namespace AnotherECS.Core.Collection
         public T* ReadPtr()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _data.ReadPtr();
         }
@@ -198,7 +199,7 @@ namespace AnotherECS.Core.Collection
         public T* GetPtr()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return _data.GetPtr();
         }

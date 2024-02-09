@@ -1,6 +1,6 @@
-﻿using System.IO;
+﻿using AnotherECS.Generator;
+using System.IO;
 using System.Linq;
-using AnotherECS.Generator;
 using UnityEditor;
 
 namespace AnotherECS.Unity.Editor.Generator

@@ -1,40 +1,37 @@
-﻿using System;
-using Unity.Jobs;
+﻿using AnotherECS.Core;
+using AnotherECS.Essentials.Physics;
+using AnotherECS.Essentials.Physics.Components;
+using AnotherECS.Mathematics;
+using AnotherECS.Unity.Jobs;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Profiling;
-using AnotherECS.Core;
-using AnotherECS.Mathematics;
-using AnotherECS.Essentials.Physics;
-using AnotherECS.Essentials.Physics.Components;
-using AnotherECS.Unity.Jobs;
 using EntityId = System.Int32;
 
 namespace AnotherECS.Physics
-{    
+{
     using Bag = JobBagR<
         PhysicsCollider,
         PhysicsVelocity,
         PhysicsCustomTags,
         Position,
         Rotation>;
-
+    using BagApply = JobBag<
+        PhysicsVelocity,
+        Position,
+        Rotation>;
+    using BagJoints = JobBagR<
+        PhysicsJoint,
+        PhysicsConstrainedBodyPair>;
     using BagMotion = JobBagR<
         PhysicsMass,
         PhysicsGravityFactor,
         PhysicsDamping,
         PhysicsMassOverride>;
 
-    using BagJoints = JobBagR<
-        PhysicsJoint,
-        PhysicsConstrainedBodyPair>;
-
-    using BagApply = JobBag<
-        PhysicsVelocity,
-        Position,
-        Rotation>;
-    
     [SystemOrder(SystemOrder.First)]
     public sealed class PhysicsSystem : ISystem, ICreateSystem, ITickSystem, IMainThread, IDisposable
     {

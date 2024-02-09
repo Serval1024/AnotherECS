@@ -1,6 +1,6 @@
-﻿using AnotherECS.Core.Collection;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
 using System.Runtime.CompilerServices;
-using Unity.Collections;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller

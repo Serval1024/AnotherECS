@@ -1,12 +1,12 @@
-﻿using System;
+﻿using AnotherECS.Collections.Exceptions;
+using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core;
-using AnotherECS.Core.Collection;
-using AnotherECS.Exceptions;
-using AnotherECS.Serializer;
-using UnityEngine.UIElements;
 
 namespace AnotherECS.Collections
 {
@@ -107,21 +107,16 @@ namespace AnotherECS.Collections
         public ref readonly TValue Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(this.GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return ref _data.ReadRef(index);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue Get(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(this.GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             return ref _data.GetRef(index);
         }
@@ -136,10 +131,7 @@ namespace AnotherECS.Collections
         public void Set(uint index, ref TValue value)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             _data.Set(index, ref value);
         }
@@ -153,10 +145,7 @@ namespace AnotherECS.Collections
         public void CopyTo(TValue[] array)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             CopyTo(array, 0, Length);
         }
@@ -164,10 +153,7 @@ namespace AnotherECS.Collections
         public void CopyTo(TValue[] array, uint arrayIndex)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             CopyTo(array, arrayIndex, _data.Length);
         }
@@ -184,17 +170,19 @@ namespace AnotherECS.Collections
         public void Clear()
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             _data.Clear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<TValue> AsSpan()
-            => new(ReadPtr(), (int)Length);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return new(ReadPtr(), (int)Length);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
@@ -226,16 +214,18 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue[] ToArray()
-            => _data.ToArray();
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.ToArray();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void CopyTo(TValue[] array, uint startIndex, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             _data.CopyTo(array, startIndex, count);
         }
@@ -244,10 +234,7 @@ namespace AnotherECS.Collections
         internal unsafe int IndexOf(ref TValue item, uint count)
         {
 #if !ANOTHERECS_RELEASE
-            if (!IsValid)
-            {
-                throw new DArrayInvalidException(this.GetType());
-            }
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             var array = ReadPtr();
 

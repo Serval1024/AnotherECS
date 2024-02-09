@@ -1,8 +1,8 @@
+using AnotherECS.Unsafe;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using AnotherECS.Unsafe;
 
 namespace AnotherECS.Serializer
 {

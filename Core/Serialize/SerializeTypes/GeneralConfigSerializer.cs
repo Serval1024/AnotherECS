@@ -1,5 +1,5 @@
-using System;
 using AnotherECS.Core;
+using System;
 
 namespace AnotherECS.Serializer
 {

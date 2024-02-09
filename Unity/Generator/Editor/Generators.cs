@@ -1,8 +1,8 @@
-﻿using System;
+﻿using AnotherECS.Debug;
+using AnotherECS.Generator;
+using System;
 using System.Linq;
 using UnityEditor;
-using AnotherECS.Debug;
-using AnotherECS.Generator;
 
 namespace AnotherECS.Unity.Editor.Generator
 {

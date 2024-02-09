@@ -1,11 +1,12 @@
+using AnotherECS.Collections.Exceptions;
+using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Collection;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core;
-using AnotherECS.Core.Collection;
-using AnotherECS.Exceptions;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Collections
 {
@@ -87,17 +88,35 @@ namespace AnotherECS.Collections
         }
 
         public bool Contains(TValue item)
-            => _data.Contains(item);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.Contains(item);
+        }
 
         public void Add(TValue item)
-            => _data.Add(item);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            _data.Add(item);
+        }
 
         public bool Remove(TValue item)
-            => _data.Remove(item);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.Remove(item);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _data.Clear();
         }
 
@@ -134,7 +153,16 @@ namespace AnotherECS.Collections
             => _data.ExitCheckChanges();
 
         object ICollection.Get(uint index)
-            => _data.Get(index);
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+            if (index >= Count)
+            {
+                throw new IndexOutOfRangeException(nameof(index));
+            }
+#endif
+            return _data.Get(index);
+        }
         
         void ICollection.Set(uint index, object value)
         {

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using AnotherECS.Core;
+using System;
 using System.Collections.Generic;
-using AnotherECS.Core;
 using UnityEngine;
 using EntityId = System.UInt32;
 

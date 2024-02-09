@@ -1,8 +1,8 @@
 ﻿using AnotherECS.Debug;
 using System;
 
-namespace AnotherECS.Exceptions
-{
+namespace AnotherECS.Core.Exceptions    //TODO SER
+{   
     public class ReadAccessException : Exception
     {
         public ReadAccessException(string componentName)

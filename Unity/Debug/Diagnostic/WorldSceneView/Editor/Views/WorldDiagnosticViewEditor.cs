@@ -1,9 +1,7 @@
+using AnotherECS.Debug.Diagnostic.UIElements;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using AnotherECS.Debug.Diagnostic.UIElements;
-using static PlasticPipe.PlasticProtocol.Messages.Serialization.ItemHandlerMessagesSerialization;
-using System;
 
 namespace AnotherECS.Unity.Debug.Diagnostic.Editor
 {

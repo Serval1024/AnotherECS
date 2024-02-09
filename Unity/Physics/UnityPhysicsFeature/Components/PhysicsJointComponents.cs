@@ -1,9 +1,9 @@
-﻿using Unity.Properties;
-using Unity.Collections;
+﻿using AnotherECS.Core;
 using AnotherECS.Mathematics;
-using AnotherECS.Core;
-using FloatRange = AnotherECS.Essentials.Physics.Math.FloatRange;
+using Unity.Collections;
+using Unity.Properties;
 using EntityId = System.Int32;
+using FloatRange = AnotherECS.Essentials.Physics.Math.FloatRange;
 
 namespace AnotherECS.Essentials.Physics.Components
 {

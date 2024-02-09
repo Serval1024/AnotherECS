@@ -3,8 +3,8 @@
 // </auto-generated>
 
 using System.Runtime.CompilerServices;
-using AnotherECS.Converter;
 using AnotherECS.Core;
+using AnotherECS.Core.Converter;
 using AnotherECS.Gen.Common;
 using AnotherECS.Serializer;
 

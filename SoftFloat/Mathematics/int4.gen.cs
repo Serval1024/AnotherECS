@@ -7,8 +7,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 using System;
-using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable 0660, 0661
 

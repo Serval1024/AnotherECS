@@ -1,9 +1,9 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using AnotherECS.Core;
 using AnotherECS.Core.Collection;
 using AnotherECS.Core.Processing;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace AnotherECS.Debug.Diagnostic
 {

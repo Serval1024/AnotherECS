@@ -1,8 +1,10 @@
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
@@ -73,16 +75,16 @@ namespace AnotherECS.Core.Collection
         {
             get
             {
+#if !ANOTHERECS_RELEASE
+                ExceptionHelper.ThrowIfBroken(this);
+#endif
                 int i = FindEntry(key);
                 if (i >= 0)
                 {
                     return _entries.ReadRef(i).value;
                 }
-#if ANOTHERECS_RELEASE
-                return default;
-#else
+
                 throw new KeyNotFoundException();
-#endif
             }
             set
             {
@@ -92,11 +94,17 @@ namespace AnotherECS.Core.Collection
 
         public void Add(TKey key, TValue value)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             Insert(key, value, true);
         }
 
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             if (_count > 0)
             {
                 _buckets.Dirty();
@@ -114,10 +122,18 @@ namespace AnotherECS.Core.Collection
         }
 
         public bool ContainsKey(TKey key)
-            => FindEntry(key) >= 0;
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return FindEntry(key) >= 0;
+        }
 
         public bool ContainsValue(TValue value)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             var count = _count;
             for (int i = 0; i < count; i++)
             {
@@ -198,6 +214,9 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void EnterCheckChanges()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _buckets.EnterCheckChanges();
             _entries.EnterCheckChanges();
         }
@@ -205,49 +224,21 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ExitCheckChanges()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             var result = false;
             result |= _buckets.ExitCheckChanges();
             result |= _entries.ExitCheckChanges();
             return result;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Resize()
-        {
-            Resize(HashHelpers.ExpandPrime(_count));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Resize(uint size)
-        {
-            _entries.Resize(size);
-
-            var newBuckets = new NArray<TAllocator, int>(_buckets.GetAllocator(), size);
-            for (uint i = 0; i < newBuckets.Length; ++i)
-            {
-                newBuckets.ReadRef(i) = -1;
-            }
-
-            _buckets.Dispose();
-
-            var count = _count;
-
-            for (int i = 0; i < count; ++i)
-            {
-                ref var entry = ref _entries.ReadRef(i);
-                if (!entry.value.Equals(default))
-                {
-                    uint bucket = entry.hashCode % size;
-                    entry.next = newBuckets.Read(bucket);
-                    newBuckets.ReadRef(bucket) = i;
-                }
-            }
-
-            _buckets = newBuckets;
-        }
-
+      
         public bool Remove(TKey key)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             uint hashCode = _hashProvider.GetHash(ref key) & _MASK;
             uint bucket = hashCode % _buckets.Length;
             int last = -1;
@@ -282,6 +273,9 @@ namespace AnotherECS.Core.Collection
 
         public bool TryGetValue(TKey key, out TValue value)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             int i = FindEntry(key);
             if (i >= 0)
             {
@@ -295,6 +289,7 @@ namespace AnotherECS.Core.Collection
         public TValue Get(uint index)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -320,6 +315,7 @@ namespace AnotherECS.Core.Collection
         public void Set(uint index, TValue value)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -426,6 +422,41 @@ namespace AnotherECS.Core.Collection
         {
             _buckets.SetAllocator(allocator);
             _entries.SetAllocator(allocator);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Resize()
+        {
+            Resize(HashHelpers.ExpandPrime(_count));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Resize(uint size)
+        {
+            _entries.Resize(size);
+
+            var newBuckets = new NArray<TAllocator, int>(_buckets.GetAllocator(), size);
+            for (uint i = 0; i < newBuckets.Length; ++i)
+            {
+                newBuckets.ReadRef(i) = -1;
+            }
+
+            _buckets.Dispose();
+
+            var count = _count;
+
+            for (int i = 0; i < count; ++i)
+            {
+                ref var entry = ref _entries.ReadRef(i);
+                if (!entry.value.Equals(default))
+                {
+                    uint bucket = entry.hashCode % size;
+                    entry.next = newBuckets.Read(bucket);
+                    newBuckets.ReadRef(bucket) = i;
+                }
+            }
+
+            _buckets = newBuckets;
         }
 
 

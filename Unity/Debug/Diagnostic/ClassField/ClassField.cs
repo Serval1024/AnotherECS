@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using AnotherECS.Unity.Debug.Diagnostic;
 using AnotherECS.Unity.Debug.Diagnostic.Present;
+using System;
+using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace AnotherECS.Debug.Diagnostic.UIElements

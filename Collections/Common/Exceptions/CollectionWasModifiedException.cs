@@ -1,7 +1,7 @@
 using AnotherECS.Debug;
 using System;
 
-namespace AnotherECS.Exceptions
+namespace AnotherECS.Collections.Exceptions
 {
     public class CollectionWasModifiedException : Exception
     {

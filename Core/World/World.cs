@@ -1,7 +1,8 @@
-﻿using System;
+﻿using AnotherECS.Core.Exceptions;
+using AnotherECS.Core.Processing;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Core.Processing;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core

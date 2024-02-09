@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using AnotherECS.Core;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AnotherECS.Unity.Debug.Diagnostic

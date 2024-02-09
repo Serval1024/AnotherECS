@@ -1,9 +1,9 @@
+using AnotherECS.Converter;
+using AnotherECS.Core;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using AnotherECS.Converter;
-using AnotherECS.Core;
 
 namespace AnotherECS.Generator
 {

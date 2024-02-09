@@ -1,8 +1,10 @@
+using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AnotherECS.Serializer;
 
 namespace AnotherECS.Core.Collection
 {
@@ -176,7 +178,7 @@ namespace AnotherECS.Core.Collection
         T* INArray<T>.GetPtr()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNArrayBroken(this);
+            ExceptionHelper.ThrowIfBroken(this);
 #endif
             throw new NotSupportedException();
         }
