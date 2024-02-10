@@ -1,3 +1,4 @@
+using AnotherECS.Core.Caller;
 using AnotherECS.Serializer;
 
 namespace AnotherECS.Core
@@ -24,14 +25,14 @@ namespace AnotherECS.Core
     }
 
     [Serialize]
-    public interface IAttach
+    public interface IAttachExternal
     {
-        void OnAttach(State state);
+        void OnAttach(ref ADExternalContext context);
     }
 
     [Serialize]
-    public interface IDetach
+    public interface IDetachExternal
     {
-        void OnDetach(State state);
+        void OnDetach(ref ADExternalContext context);
     }
 }

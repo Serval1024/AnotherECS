@@ -241,7 +241,7 @@ namespace AnotherECS.Core.Caller
         void SetupDefault(ref TDense component);
     }
 
-    internal unsafe interface IAttach<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface IAttachExternal<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
@@ -259,7 +259,7 @@ namespace AnotherECS.Core.Caller
         void Attach(State state, ref TDense component);
     }
 
-    internal unsafe interface IDetach<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface IDetachExternal<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged

@@ -51,7 +51,7 @@ namespace AnotherECS.Views
             => _unityViewController.GetId<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Create(State state, EntityId id, uint viewId)
+        public void Create(EntityId id, uint viewId)
         {
             _commandBuffer.Enqueue(new Command { type = Command.Type.Create, id = id, viewId = viewId });
         }

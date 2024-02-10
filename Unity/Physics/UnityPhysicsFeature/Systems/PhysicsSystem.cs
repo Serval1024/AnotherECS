@@ -285,12 +285,12 @@ namespace AnotherECS.Physics
             [NativeDisableParallelForRestriction]
             public NativeArray<int> result;
             
-            public void Execute(ref Bag bag, int index) {
-                
-                bool didBatchChange =  bag.ReadVersionT3(index) != currentTick ||
-                                       bag.ReadVersionT3(index) != prevTick ||
-                                       bag.ReadVersionT4(index) != currentTick ||
-                                       bag.ReadVersionT4(index) != prevTick;
+            public void Execute(ref Bag bag, int index)
+            {    
+                bool didBatchChange = bag.ReadVersionT3(index) != currentTick ||
+                                      bag.ReadVersionT3(index) != prevTick ||
+                                      bag.ReadVersionT4(index) != currentTick ||
+                                      bag.ReadVersionT4(index) != prevTick;
 
                 if (didBatchChange)
                 {

@@ -4,70 +4,70 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DetachCF<TAllocator, TSparse, TDense, TDenseIndex> : IDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
+    internal unsafe struct AttachExternalCF<TAllocator, TSparse, TDense, TDenseIndex> : IAttachExternal<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
-        where TDense : unmanaged, IDetach
+        where TDense : unmanaged, IAttachExternal
         where TDenseIndex : unmanaged
     {
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
+        public void Attach<TSparseProvider>
+            (ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            sparseProvider.ForEach<DetachIterable, DetachData>(ref layout, new DetachData() { state = state }, startIndex, count);
+            sparseProvider.ForEach<AttachIterable, AttachData>(ref layout, new AttachData() { context = new() { _state = state } }, startIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach<TSparseProvider>
+        public void Attach<TSparseProvider>
             (ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
             where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
         {
-            sparseProvider.ForEach<VersionDetachIterable, VersionDetachData>(
+            sparseProvider.ForEach<VersionAttachIterable, VersionAttachData>(
                 ref layout,
-                new VersionDetachData() { state = state, generation = generation, newGeneration = newGeneration },
+                new VersionAttachData() { context = new() { _state = state }, generation = generation, newGeneration = newGeneration },
                 startIndex,
                 count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Detach(State state, ref TDense component)
+        public void Attach(State state, ref TDense component)
         {
-            component.OnDetach(state);
+            var context = new ADExternalContext() { _state = state, };
+            component.OnAttach(ref context);
         }
 
-
-        private struct VersionDetachData
+        private struct VersionAttachData
         {
-            public State state;
+            public ADExternalContext context;
             public NArray<BAllocator, byte> generation;
             public NArray<TAllocator, byte> newGeneration;
         }
 
-        private struct VersionDetachIterable : IDataIterable<TDense, VersionDetachData>
+        private struct VersionAttachIterable : IDataIterable<TDense, VersionAttachData>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Each(ref VersionDetachData data, uint index, ref TDense component)
+            public void Each(ref VersionAttachData data, uint index, ref TDense component)
             {
                 if (data.generation.Read(index) != data.newGeneration.Read(index))
                 {
-                    component.OnDetach(data.state);
+                    component.OnAttach(ref data.context);
                 }
             }
         }
-
-        private struct DetachData
+        private struct AttachData
         {
-            public State state;
+            public ADExternalContext context;
         }
 
-        private struct DetachIterable : IDataIterable<TDense, DetachData>
+        private struct AttachIterable : IDataIterable<TDense, AttachData>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Each(ref DetachData data, uint index, ref TDense component)
+            public void Each(ref AttachData data, uint index, ref TDense component)
             {
-                component.OnDetach(data.state);
+                component.OnAttach(ref data.context);
             }
         }
     }

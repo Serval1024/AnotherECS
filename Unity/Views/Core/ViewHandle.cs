@@ -1,4 +1,5 @@
 using AnotherECS.Core;
+using AnotherECS.Core.Caller;
 using AnotherECS.Serializer;
 using EntityId = System.UInt32;
 
@@ -9,19 +10,19 @@ namespace AnotherECS.Views.Core
         internal IViewSystem system;
     }
 
-    public struct ViewHandle : IComponent, IAttach, IDetach, ISerialize
+    public struct ViewHandle : IComponent, IAttachExternal, IDetachExternal, ISerialize
     {
         internal EntityId ownerId;
         internal uint viewId;
 
-        public void OnAttach(State state)
+        public void OnAttach(ref ADExternalContext context)
         {
-            state.GetConfig<ViewSystemReference>().system.Create(state, ownerId, viewId);
+            context.GetConfig<ViewSystemReference>().system.Create(ownerId, viewId);
         }
 
-        public void OnDetach(State state)
+        public void OnDetach(ref ADExternalContext context)
         {
-            state.GetConfig<ViewSystemReference>().system.Destroy(ownerId);
+            context.GetConfig<ViewSystemReference>().system.Destroy(ownerId);
         }
 
         public void Pack(ref WriterContextSerializer writer)

@@ -88,12 +88,12 @@ namespace AnotherECS.Generator
             if (option.isAttach)
             {
                 result.Append(", ");
-                result.Append(nameof(IAttach));
+                result.Append(nameof(IAttachExternal));
             }
             if (option.isDetach)
             {
                 result.Append(", ");
-                result.Append(nameof(IDetach));
+                result.Append(nameof(IDetachExternal));
             }
             if (option.isSingle)
             {
@@ -205,7 +205,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach || option.isDetach)
             {
-                result.Append($"{typeof(AttachDetachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(AttachDetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -217,7 +217,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach)
             {
-                result.Append($"{typeof(AttachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(AttachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -229,7 +229,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isDetach)
             {
-                result.Append($"{typeof(DetachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(DetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {

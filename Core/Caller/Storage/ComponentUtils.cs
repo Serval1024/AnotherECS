@@ -84,10 +84,10 @@ namespace AnotherECS.Core
         }
 
         public static bool IsAttach(Type type)
-            => typeof(IAttach).IsAssignableFrom(type);
+            => typeof(IAttachExternal).IsAssignableFrom(type);
 
         public static bool IsDetach(Type type)
-            => typeof(IDetach).IsAssignableFrom(type);
+            => typeof(IDetachExternal).IsAssignableFrom(type);
 
         public static bool IsDefault(Type type)
             => typeof(IDefault).IsAssignableFrom(type);

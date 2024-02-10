@@ -7,7 +7,7 @@ namespace AnotherECS.Views.Core
     {
         uint GetId<T>()
             where T : IView;
-        void Create(State state, EntityId id, uint viewId);
+        void Create(EntityId id, uint viewId);
         void Change(EntityId id);
         void Destroy(EntityId id);
     }

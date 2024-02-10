@@ -31,10 +31,10 @@ namespace AnotherECS.Unity.Jobs
             where TData : unmanaged
             => GetNativeArray<TData>(ref _byIds, id, array.GetPtr(), array.Length);
 
-        public NativeArray<TData> GetNativeArrayByComponent<T, TData>(byte subId, WArray<TData> array)
-            where T : unmanaged, IComponent
+        public NativeArray<TData> GetNativeArrayByComponent<TComponent, TData>(byte subId, WArray<TData> array)
+            where TComponent : unmanaged, IComponent
             where TData : unmanaged
-            => GetNativeArrayByComponent<T, TData>(subId, array.GetPtr(), array.Length);
+            => GetNativeArrayByComponent<TComponent, TData>(subId, array.GetPtr(), array.Length);
 
         public void Dispose()
         {
@@ -43,11 +43,13 @@ namespace AnotherECS.Unity.Jobs
             UintDummy.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private NativeArray<TData> GetNativeArrayByComponent<T, TData>(byte subId, void* ptr, uint length)
             where T : unmanaged, IComponent
             where TData : unmanaged
             => GetNativeArray<TData>(ref _byComponents, _state.GetIdByType<T>() * DATA_COUT_PER_COMPONENT + subId, ptr, length);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private NativeArray<TData> GetNativeArray<TData>(ref NArray<BAllocator, Handle<Dummy>> collection, uint id, void* ptr, uint length)
             where TData : unmanaged
             => (ptr != null)
