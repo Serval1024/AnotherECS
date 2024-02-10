@@ -1,6 +1,7 @@
 using AnotherECS.Core;
 using AnotherECS.Essentials.Physics;
 using AnotherECS.Mathematics;
+using AnotherECS.Physics.Exceptions;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Physics
@@ -13,6 +14,11 @@ namespace AnotherECS.Physics
             if(!state.IsHasConfig<PhysicsOneShotConfig>())
             {
                 throw new System.InvalidOperationException("Physics has not been added to ecs.");
+            }
+            var dataTick = state.GetConfig<PhysicsOneShotConfig>().dataTick;
+            if (state.Tick != dataTick)
+            {
+                throw new FreshPhysicsDataException(state.Tick, dataTick);
             }
 #endif
             return state.GetConfig<PhysicsOneShotConfig>();

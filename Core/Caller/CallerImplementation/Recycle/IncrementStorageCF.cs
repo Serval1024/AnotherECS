@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct SingleStorageFeature<TAllocator, TSparse, TDense, TDenseIndex> :
+    internal unsafe struct IncrementStorageCF<TAllocator, TSparse, TDense, TDenseIndex> :
         ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>,
         ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>,
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
@@ -37,7 +37,13 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TDenseIndex AllocateId<TNumberProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies)
             where TNumberProvider : struct, INumberProvier<TDenseIndex>
-            => default;
+        {
+            ref var denseIndex = ref layout.denseIndex;
+#if !ANOTHERECS_RELEASE
+            LayoutActions.CheckDenseLimit<TAllocator, TSparse, TDense, TDenseIndex, TSparse>(ref layout);
+#endif
+            return default(TNumberProvider).ToGeneric(denseIndex++);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DeallocateId(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, TDenseIndex id) { }

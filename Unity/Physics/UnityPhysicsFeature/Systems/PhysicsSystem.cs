@@ -335,7 +335,7 @@ namespace AnotherECS.Physics
             };
 
             ref var internalData = ref _state.Get<PhysicsInternal>();
-
+            var tick = _state.Tick;
 
             var bag = FilterExtensions.BagJobFactory.CreateR<PhysicsCollider, PhysicsVelocity, PhysicsCustomTags, Position, Rotation>(_state, dynamicBodiesEntities);
             var bagStatic = FilterExtensions.BagJobFactory.CreateR<PhysicsCollider, PhysicsVelocity, PhysicsCustomTags, Position, Rotation>(_state, staticBodiesEntities);
@@ -344,7 +344,6 @@ namespace AnotherECS.Physics
             var bagApply = FilterExtensions.BagJobFactory.Create<PhysicsVelocity, Position, Rotation>(_state, dynamicBodiesEntities);
 
             var buildStaticTree = new NativeArray<int>(1, Allocator.TempJob);
-
             {
                 marker = new ProfilerMarker("[Physics] Build World");
                 marker.Begin();
@@ -352,7 +351,6 @@ namespace AnotherECS.Physics
                 JobHandle staticBodiesCheckHandle = default;
                 buildStaticTree[0] = 0;
                 {
-                    var tick = _state.Tick;
 
                     // Check static has changed
                     if (internalData.prevStaticCount != bagStatic.Count)
@@ -473,6 +471,7 @@ namespace AnotherECS.Physics
 
                     _state.SetOrAddConfig(new PhysicsOneShotConfig()
                     {
+                        dataTick = tick,
                         collisionEvents = simulationContext.CollisionEvents,
                         triggerEvents = simulationContext.TriggerEvents,
                     });

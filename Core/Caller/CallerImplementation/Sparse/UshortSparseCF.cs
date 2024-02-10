@@ -5,7 +5,7 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct UshortSparseFeature<TAllocator, TDense> :
+    internal unsafe struct UshortSparseCF<TAllocator, TDense> :
         ILayoutAllocator<TAllocator, ushort, TDense, ushort>,
         ISparseResize<TAllocator, ushort, TDense, ushort>,
         IDenseResize<TAllocator, ushort, TDense, ushort>,

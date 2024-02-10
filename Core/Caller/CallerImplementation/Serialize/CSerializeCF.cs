@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct SSerialize<TAllocator, TSparse, TDense, TDenseIndex> : ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
+    internal unsafe struct CSerializeCF<TAllocator, TSparse, TDense, TDenseIndex> : ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged, ISerialize
@@ -15,12 +15,12 @@ namespace AnotherECS.Core.Caller
 
         public void Pack(ref WriterContextSerializer writer, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout)
         {
-            SerializeActions.PackStorageSerialize(ref writer, layout);
+            SerializeActions.PackStorage(ref writer, layout);
         }
 
         public void Unpack(ref ReaderContextSerializer reader, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout)
         {
-            SerializeActions.UnpackStorageSerialize(ref reader, layout);
+            SerializeActions.UnpackStorage(ref reader, layout);
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DetachFeature<TAllocator, TSparse, TDense, TDenseIndex> : IDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
+    internal unsafe struct DetachCF<TAllocator, TSparse, TDense, TDenseIndex> : IDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged, IDetach

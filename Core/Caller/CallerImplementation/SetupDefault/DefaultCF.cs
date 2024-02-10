@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DefaultFeature<TAllocator, TDense> : IData<TAllocator>, IDefaultSetter<TDense>
+    internal unsafe struct DefaultCF<TAllocator, TDense> : IData<TAllocator>, IDefaultSetter<TDense>
         where TAllocator : unmanaged, IAllocator
         where TDense : struct, IDefault
     {

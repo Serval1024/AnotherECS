@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct AttachDetachFeature<TAllocator, TSparse, TDense, TDenseIndex> :
+    internal unsafe struct AttachDetachCF<TAllocator, TSparse, TDense, TDenseIndex> :
         IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>,
         IData<TAllocator>,
         IBoolConst,

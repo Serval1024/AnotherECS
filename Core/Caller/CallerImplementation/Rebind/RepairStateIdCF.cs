@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct RepairStateIdFeature<TDense> : IRepairStateId<TDense>, IBoolConst
+    internal unsafe struct RepairStateIdCF<TDense> : IRepairStateId<TDense>, IBoolConst
        where TDense : unmanaged
     {
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
@@ -20,7 +20,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Each(ref ComponentFunctionData<TDense> data, uint index, ref TDense component)
         {
-            default(RepairStateIdFeature<TDense>)
+            default(RepairStateIdCF<TDense>)
                 .RepairStateId(ref data.componentFunction, data.dependencies->stateId, ref component);
         }
     }

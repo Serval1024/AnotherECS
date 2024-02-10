@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct InjectFeature<TAllocator, TSparse, TDense, TDenseIndex> : IInject<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
+    internal unsafe struct InjectCF<TAllocator, TSparse, TDense, TDenseIndex> : IInject<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged

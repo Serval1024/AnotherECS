@@ -4,17 +4,22 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct UintDenseFeature<TAllocator, TSparse, TDense> :
+    internal unsafe struct UintVersionCF<TAllocator, TSparse, TDense> :
         ILayoutAllocator<TAllocator, TSparse, TDense, uint>,
         ISparseResize<TAllocator, TSparse, TDense, uint>,
         IDenseResize<TAllocator, TSparse, TDense, uint>,
-        IStartIndexProvider,
-        IDenseProvider<TAllocator, TSparse, TDense, uint>
+        IChange<TAllocator, TSparse, TDense, uint>,
+        IVersion<TAllocator, TSparse, TDense, uint>,
+        IRevertFinished,
+        IBoolConst
 
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
     {
+        public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
+        public bool IsRevertFinished { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
             where TSparseBoolConst : struct, IBoolConst
@@ -23,53 +28,48 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void LayoutAllocate(ref ULayout<TAllocator, TSparse, TDense, uint> layout, TAllocator* allocator, ref Dependencies dependencies)
         {
-            layout.dense.Allocate(allocator, dependencies.config.general.componentCapacity);
-            layout.denseIndex = GetIndex();
+            layout.tickVersion.Allocate(allocator, layout.dense.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SparseResize<TSparseBoolConst>(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
             where TSparseBoolConst : struct, IBoolConst
         {
-            TSparseBoolConst sparseBoolConst = default;
-            if (sparseBoolConst.Is)
+            if (default(TSparseBoolConst).Is)
             {
-                layout.dense.Resize(capacity);
+                layout.tickVersion.Resize(capacity);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint capacity)
         {
-            layout.dense.Resize(capacity);
+            layout.tickVersion.Resize(capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetIndex()
-            => 1;
+        public void Change(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref Dependencies dependencies, uint index)
+        {
+            layout.tickVersion.GetRef(index) = dependencies.tickProvider.tick;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense GetDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint index)
-            => ref layout.dense.GetRef(index);
+        public uint GetVersion(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint id)
+            => layout.tickVersion.Get(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TDense ReadDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout, uint index)
-            => ref layout.dense.ReadRef(index);
+        public unsafe void DropChange(ref ULayout<TAllocator, TSparse, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+        {
+            var tick = dependencies.tickProvider.tick;
+            var versionPtr = layout.tickVersion.GetPtr();
+            for (uint i = startIndex; i < count; ++i)
+            {
+                versionPtr[i] = tick;
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetCapacity(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
-            => layout.dense.Length;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetAllocated(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
-            => layout.denseIndex;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<TDense> ReadDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
-            => new(layout.dense.ReadPtr(), layout.dense.Length);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<TDense> GetDense(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
-            => new(layout.dense.GetPtr(), layout.dense.Length);
+        public WArray<uint> ReadVersion(ref ULayout<TAllocator, TSparse, TDense, uint> layout)
+            => new(layout.tickVersion.ReadPtr(), layout.tickVersion.Length);
     }
 }

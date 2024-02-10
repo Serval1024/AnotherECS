@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct RepairMemoryFeature<TDense> : IRepairMemory<TDense>, IBoolConst
+    internal unsafe struct RepairMemoryCF<TDense> : IRepairMemory<TDense>, IBoolConst
         where TDense : unmanaged
     {
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
@@ -21,7 +21,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Each(ref RepairMemoryFunctionData<TDense> data, uint index, ref TDense component)
         {
-            default(RepairMemoryFeature<TDense>)
+            default(RepairMemoryCF<TDense>)
                 .RepairMemory(ref data.componentFunction, ref data.repairMemoryContext, ref component);
         }
     }

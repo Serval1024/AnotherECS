@@ -15,6 +15,7 @@ namespace AnotherECS.Physics
 
     public struct PhysicsOneShotConfig : IConfig
     {
+        public uint dataTick;
         public CollisionEvents collisionEvents;
         public TriggerEvents triggerEvents;
     }

@@ -116,7 +116,7 @@ namespace AnotherECS.Generator
             var extraSpace = new string('\t', 4);
 
             var nothingSCDTC = $"{typeof(Nothing<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
-            var singleFeature = $"{typeof(SingleFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
+            var singleFeature = $"{typeof(SingleCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
 
 
             var result = new StringBuilder();
@@ -130,7 +130,7 @@ namespace AnotherECS.Generator
             result.Append("#if ANOTHERECS_HISTORY_DISABLE");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            result.Append(nameof(NoHistoryAllocatorProvider));
+            result.Append(nameof(NoHistoryAllocatorCF));
             result.Append(",");
             result.Append(Environment.NewLine);
             result.Append("#else");
@@ -138,11 +138,11 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isHistory)
             {
-                result.Append(nameof(HistoryAllocatorProvider));
+                result.Append(nameof(HistoryAllocatorCF));
             }
             else
             {
-                result.Append(nameof(NoHistoryAllocatorProvider));
+                result.Append(nameof(NoHistoryAllocatorCF));
             }
             result.Append(",");
             result.Append(Environment.NewLine);
@@ -165,7 +165,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isInject)
             {
-                result.Append($"{typeof(InjectFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(InjectCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -177,15 +177,15 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isUseRecycle)
             {
-                result.Append($"{typeof(RecycleStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(RecycleStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else if (option.isSingle)
             {
-                result.Append($"{typeof(SingleStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(SingleStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
-                result.Append($"{typeof(IncrementStorageFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(IncrementStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             result.Append(",");
 
@@ -193,7 +193,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isDefault)
             {
-                result.Append($"{typeof(DefaultFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
+                result.Append($"{typeof(DefaultCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
             }
             else
             {
@@ -205,7 +205,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach || option.isDetach)
             {
-                result.Append($"{typeof(AttachDetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(AttachDetachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -217,7 +217,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isAttach)
             {
-                result.Append($"{typeof(AttachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(AttachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -229,7 +229,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isDetach)
             {
-                result.Append($"{typeof(DetachFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(DetachCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -242,7 +242,7 @@ namespace AnotherECS.Generator
 
             if (option.isSingle)
             {
-                result.Append($"{typeof(SingleSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
+                result.Append($"{typeof(SingleSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
             }
             else
             {
@@ -250,16 +250,16 @@ namespace AnotherECS.Generator
                 {
                     if (option.isMarker)
                     {
-                        result.Append($"{typeof(NonSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
+                        result.Append($"{typeof(NonSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
                     }
                     else
                     {
-                        result.Append($"{typeof(BoolSparseFeature<,>).GetNameWithoutGeneric()}<{layoutAC}>");
+                        result.Append($"{typeof(BoolSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
                     }
                 }
                 else if (option.sparseMode == TypeOptions.SparseMode.Ushort)
                 {   
-                    result.Append($"{typeof(UshortSparseFeature<,>).GetNameWithoutGeneric()} < {layoutAC}>");
+                    result.Append($"{typeof(UshortSparseCF<,>).GetNameWithoutGeneric()} < {layoutAC}>");
                 }
             }
             
@@ -269,7 +269,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isEmpty)
             {
-                result.Append($"{typeof(EmptyFeature<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+                result.Append($"{typeof(EmptyCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
             else
             {
@@ -279,7 +279,7 @@ namespace AnotherECS.Generator
                 }
                 else
                 {
-                    result.Append($"{typeof(UshortDenseFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
+                    result.Append($"{typeof(UshortDenseCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
             }
             result.Append(",");
@@ -290,11 +290,11 @@ namespace AnotherECS.Generator
             {
                 if (option.isMarker)
                 {
-                    result.Append(nameof(TempBinderToFilters));
+                    result.Append(nameof(TempBinderToFiltersCF));
                 }
                 else
                 {
-                    result.Append(nameof(BinderToFilters));
+                    result.Append(nameof(BinderToFiltersCF));
                 }
             }
             else
@@ -309,11 +309,11 @@ namespace AnotherECS.Generator
             {
                 if (option.isSingle)
                 {
-                    result.Append($"{typeof(UintVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
+                    result.Append($"{typeof(UintVersionCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
                 else
                 {
-                    result.Append($"{typeof(UshortVersionFeature<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
+                    result.Append($"{typeof(UshortVersionCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
                 }
             }
             else
@@ -324,14 +324,14 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            result.Append($"{typeof(BSerialize<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
+            result.Append($"{typeof(BSerializeCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             
             result.Append(",");
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
             if (option.isRepairMemory)
             {
-                result.Append($"{typeof(RepairMemoryFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
+                result.Append($"{typeof(RepairMemoryCF<>).GetNameWithoutGeneric()}<{layoutC}>");
             }
             else
             {
@@ -343,7 +343,7 @@ namespace AnotherECS.Generator
             result.Append(extraSpace);
             if (option.isRepairStateId)
             {
-                result.Append($"{typeof(RepairStateIdFeature<>).GetNameWithoutGeneric()}<{layoutC}>");
+                result.Append($"{typeof(RepairStateIdCF<>).GetNameWithoutGeneric()}<{layoutC}>");
             }
             else
             {

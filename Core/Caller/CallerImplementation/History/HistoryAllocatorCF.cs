@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct HistoryAllocatorProvider : IAllocatorProvider<HAllocator, HAllocator>
+    internal unsafe struct HistoryAllocatorCF : IAllocatorProvider<HAllocator, HAllocator>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public HAllocator* GetStage0(Dependencies* dependencies)

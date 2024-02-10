@@ -12,7 +12,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Each(ref InjectData<TDense> data, uint index, ref TDense component)
         {
-            default(InjectFeature<TAllocator, TSparse, TDense, TDenseIndex>)
+            default(InjectCF<TAllocator, TSparse, TDense, TDenseIndex>)
                 .Construct(ref data.componentFunction, ref *data.dependencies, ref component);
         }
     }

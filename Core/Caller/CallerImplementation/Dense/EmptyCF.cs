@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct EmptyFeature<TAllocator, TSparse, TDense, TDenseIndex> :
+    internal unsafe struct EmptyCF<TAllocator, TSparse, TDense, TDenseIndex> :
         ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>,
         ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>,
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,

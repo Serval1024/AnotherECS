@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct BinderToFilters : IBinderToFilters
+    internal unsafe struct BinderToFiltersCF : IBinderToFilters
     {
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
@@ -19,7 +19,7 @@ namespace AnotherECS.Core.Caller
         }
     }
 
-    internal unsafe struct TempBinderToFilters : IBinderToFilters
+    internal unsafe struct TempBinderToFiltersCF : IBinderToFilters
     {
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
