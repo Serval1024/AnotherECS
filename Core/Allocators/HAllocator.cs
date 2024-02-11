@@ -330,7 +330,7 @@ namespace AnotherECS.Core.Allocators
         public void Unpack(ref ReaderContextSerializer reader)
         {
             var allocatorId = reader.ReadUInt32();
-            _allocator = reader.GetDependency<WPtr<BAllocator>>(allocatorId).Value;
+            _allocator = reader.Dependency.Get<WPtr<BAllocator>>(allocatorId).Value;
 #if !ANOTHERECS_RELEASE
             _memoryChecker = new MemoryChecker<BAllocator>(_allocator);
 #endif

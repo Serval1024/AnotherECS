@@ -80,8 +80,8 @@ namespace AnotherECS.Core.Caller
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
+        public void ForEach<TIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout) { }

@@ -1,7 +1,7 @@
 ﻿using AnotherECS.Debug;
 using System;
 
-namespace AnotherECS.Core.Exceptions
+namespace AnotherECS.Generator.Exceptions
 {
     public class OptionsConflictException : Exception
     {

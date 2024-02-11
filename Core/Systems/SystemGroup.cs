@@ -203,7 +203,7 @@ namespace AnotherECS.Core
 
                 var order = SystemGlobalRegister.GetOrders();
                 _systems.Sort((p0, p1) =>
-                     (order.TryGetValue(p0.GetType(), out int v0) && order.TryGetValue(p1.GetType(), out int v1))
+                     (order.TryGetValue(p0.GetType(), out var v0) && order.TryGetValue(p1.GetType(), out var v1))
                      ? (v0 - v1)
                      : 0);
 

@@ -8,7 +8,7 @@ namespace AnotherECS.Core
 {
     internal static class ComponentUtils
     {
-        private const BindingFlags DATA_FREE_FLAGS =
+        private const BindingFlags DATA_EMPTY_FLAGS =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         private const BindingFlags DATA_ACTIVE_FLAGS =
@@ -99,7 +99,7 @@ namespace AnotherECS.Core
             => typeof(IMarker).IsAssignableFrom(type);
 
         public static bool IsEmpty(Type type)
-            => (IsOption(type, ComponentOptions.DataFree) || (type.GetFields(DATA_FREE_FLAGS).Length == 0 && type.GetProperties(DATA_FREE_FLAGS).Length == 0))
+            => (IsOption(type, ComponentOptions.DataFree) || (type.GetFields(DATA_EMPTY_FLAGS).Length == 0 && type.GetProperties(DATA_EMPTY_FLAGS).Length == 0))
             && !IsOption(type, ComponentOptions.NotDataFree);
 
         public static bool IsForceUseSparse(Type type)

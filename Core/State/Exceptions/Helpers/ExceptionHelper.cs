@@ -1,6 +1,7 @@
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using System;
+using System.Collections.Generic;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Core.Exceptions
@@ -206,6 +207,16 @@ namespace AnotherECS.Core.Exceptions
             if (configs[id] == null)
             {
                 throw new ConfigNotFoundException(typeof(T));
+            }
+        }
+
+        public static void ThrowIfDontExists(State state, Type type, IConfig[] configs, Dictionary<Type, uint> configByType)
+        {
+            ThrowIfDisposed(state);
+
+            if (!configByType.ContainsKey(type) || configs[configByType[type]] == null)
+            {
+                throw new ConfigNotFoundException(type);
             }
         }
     }

@@ -1,9 +1,12 @@
 using AnotherECS.Converter;
 using AnotherECS.Core;
+using AnotherECS.Core.Inject;
+using AnotherECS.Serializer;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using ReflectionUtils = AnotherECS.Core.ReflectionUtils;
 
 namespace AnotherECS.Generator
 {
@@ -147,10 +150,34 @@ namespace AnotherECS.Generator
                 { "SYSTEM:COUNT", () => systems.Count() },
                 { "SYSTEM:NAME", () => ReflectionUtils.GetDotFullName(systems.IdToType(variables.GetIndexAsId(0))) },
 
+                { "SYSTEM:INJECT_ATTRIBUTES", () => GetSystemAttributes(systems.IdToType(variables.GetIndexAsId(0))) },
+
                 { "SYSTEM:AUTO_ATTACH:COUNT", () => autoAttaches.Length },
                 { "SYSTEM:AUTO_ATTACH:NAME", () => autoAttaches[variables.GetIndex(0)] },
             };
             return variables;
+        }
+
+        private static string GetSystemAttributes(Type systemType)
+        {
+            var members = SystemReflectionUtils.GetMemberInjectAttributes(systemType);
+
+            if (members.Any())
+            {
+                var stringBuilder = new StringBuilder();
+                stringBuilder.Append("new[] { ");
+                foreach (var member in members)
+                {
+                    stringBuilder.Append("\"");
+                    stringBuilder.Append(member.Name);
+                    stringBuilder.Append("\"");
+                    stringBuilder.Append(", ");
+                }
+                stringBuilder.Append("}");
+                return stringBuilder.ToString();
+            }
+
+            return "null";
         }
 
         public static TemplateParser.Variables GetElements(GeneratorContext context)

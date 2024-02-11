@@ -56,12 +56,12 @@ namespace AnotherECS.Core.Caller
            => layout.sparse.Read(id) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, ushort, TDense, ushort>
+        public void ForEach<TIterable>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterable : struct, IIterable<TAllocator, ushort, TDense, ushort>
         {
             if (count != 0)
             {
-                AIterable iterable = default;
+                TIterable iterable = default;
                 
                 var sparse = layout.sparse.ReadPtr();
                 var sparseLength = layout.sparse.Length;
@@ -82,13 +82,13 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TDense, TEachData>
+        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
+            where TIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct
         {
             if (count != 0)
             {
-                AIterable iterable = default;
+                TIterable iterable = default;
 
                 var sparse = layout.sparse.ReadPtr();
                 var sparseLength = layout.sparse.Length;

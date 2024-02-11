@@ -12,7 +12,7 @@ namespace AnotherECS.Core.Processing
 
             foreach (var system in systems)
             {
-                foreach (var element in Threading.ReflectionUtils.GetEventMap(system))
+                foreach (var element in SystemReflectionUtils.GetEventMap(system))
                 {
                     receivers.Add(element.Key, element.Value);
                 }

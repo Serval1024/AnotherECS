@@ -5,7 +5,7 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views
 {
-    public static class ViewExtension
+    public static class ViewExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State state, EntityId id)

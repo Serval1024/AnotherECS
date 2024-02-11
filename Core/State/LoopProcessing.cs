@@ -1,5 +1,6 @@
 ﻿using AnotherECS.Core.Processing;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
@@ -15,7 +16,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Prepare(State state, IGroupSystem systemGroup)
+        public void Prepare(State state, IEnumerable<ISystem> systemGroup)
         {
             _systemProcessing.Prepare(systemGroup);
 

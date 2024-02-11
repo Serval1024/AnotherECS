@@ -2,11 +2,14 @@
 using AnotherECS.Core.Processing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
 {
+
+
     public class World : BDisposable, IWorld
     {
         public string Name { get; set; }
@@ -51,6 +54,27 @@ namespace AnotherECS.Core
             _loopProcessing = new LoopProcessing(systemProcessing);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHasConfig<T>()
+            where T : IConfig
+            => _state.IsHasConfig<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public World AddConfig<T>(T data)
+            where T : IConfig
+        {
+            _state.AddConfig(data);
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public World SetOrAddConfig<T>(T data)
+            where T : IConfig
+        {
+            _state.SetOrAddConfig(data);
+            return this;
+        }
+
         public void Init()
         {
 #if !ANOTHERECS_RELEASE
@@ -61,17 +85,24 @@ namespace AnotherECS.Core
             {
                 _systems.Prepend((ISystem)Activator.CreateInstance(system));
             }
-
+#if !ANOTHERECS_RELEASE
+            var container = new WorldDIContainer(_state, SystemGlobalRegister.GetInjects());
+#else
+            var container = new WorldDIContainer(_state);
+#endif
             _systems.Sort();
             var context = new InstallContext(this);
+            container.Inject(_systems.GetSystemsAll());
+
             _systems.Install(ref context);
             _systems.Append(context.GetSystemGroup());
             _systems.Sort();
+            container.Inject(_systems.GetSystemsAll());
 
             _state.FirstStartup();
 
             RequestTick = CurrentTick;
-            _loopProcessing.Prepare(_state, _systems);
+            _loopProcessing.Prepare(_state, _systems.GetSystemsAll());
             _loopProcessing.Init();
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
             _statistic.UpdateSystemGraph(_systems);

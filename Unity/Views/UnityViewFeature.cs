@@ -7,12 +7,12 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Views
 {
     [SystemOrder(SystemOrder.Last)]
-    public class UnityViewSystem : IViewSystem, IMainThread, ICreateModule, ITickFinishedModule
+    public class UnityViewFeature : IViewSystem, IMainThread, ICreateModule, ITickFinishedModule
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
 
-        public UnityViewSystem(UnityViewController unityViewController)
+        public UnityViewFeature(UnityViewController unityViewController)
         {
             _unityViewController = unityViewController;
             _commandBuffer = new ConcurrentQueue<Command>();

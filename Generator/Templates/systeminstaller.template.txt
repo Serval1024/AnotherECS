@@ -22,7 +22,7 @@ namespace AnotherECS.Gen.Project
         private static void InstallInternal()
         {
 <#ARRAY [0..SYSTEM:COUNT]#>
-            SystemGlobalRegister.Install<<#SYSTEM:NAME#>>(<#INDEX0#>);
+            SystemGlobalRegister.Install<<#SYSTEM:NAME#>>(<#INDEX0#>, <#SYSTEM:INJECT_ATTRIBUTES#>);
 <#END#>
 <#ARRAY [0..SYSTEM:AUTO_ATTACH:COUNT]#>
             SystemAutoAttachGlobalRegister.Install<<#SYSTEM:AUTO_ATTACH:NAME#>>();

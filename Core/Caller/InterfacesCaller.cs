@@ -283,8 +283,8 @@ namespace AnotherECS.Core.Caller
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        void ForEach<AIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex>;
+        void ForEach<TIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex>;
     }
 
     internal unsafe interface IIterable<TAllocator, TSparse, TDense, TDenseIndex>
@@ -303,8 +303,8 @@ namespace AnotherECS.Core.Caller
       where TDense : unmanaged
       where TDenseIndex : unmanaged
     {
-        void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TDense, TEachData>
+        void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
+            where TIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct;
     }
 

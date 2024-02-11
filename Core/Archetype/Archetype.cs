@@ -189,6 +189,23 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void EachItem<TIterable>(uint archetypeId, TIterable iterable)
+            where TIterable : struct, IIterable
+        {
+            if (archetypeId != 0)
+            {
+                do
+                {
+                    ref var node = ref _nodes.ReadRef(archetypeId);
+
+                    iterable.Invoke(node.itemId);
+                    archetypeId = node.parent;
+                }
+                while (archetypeId != 0);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetItemIds(uint archetypeId, uint* result, uint resultLength)
         {
             if (archetypeId == 0)
@@ -768,7 +785,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.GetDependency<WPtr<Dependencies>>().Value;
+            _dependencies = reader.Dependency.Get<WPtr<Dependencies>>().Value;
             _nodes.UnpackBlittable(ref reader);
             _collections.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);
@@ -777,6 +794,12 @@ namespace AnotherECS.Core
             _transitionRemoveCache.UnpackBlittable(ref reader);
             _changesBuffer.UnpackBlittable(ref reader);
             _isTemporaries.UnpackBlittable(ref reader);
+        }
+
+        public interface IIterable
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Invoke(ushort itemId);
         }
 
         private struct BufferEntry

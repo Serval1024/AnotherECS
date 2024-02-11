@@ -1,6 +1,6 @@
 ﻿using AnotherECS.Core;
 using AnotherECS.Core.Allocators;
-using AnotherECS.Core.Exceptions;
+using AnotherECS.Generator.Exceptions;
 using System;
 
 namespace AnotherECS.Generator

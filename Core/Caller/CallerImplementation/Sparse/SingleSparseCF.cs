@@ -54,21 +54,21 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
+        public void ForEach<TIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             if (layout.sparse.ReadPtr()[0])
             {
-                default(AIterable).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
+                default(TIterable).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
             }
         }
-        public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TDense, TEachData>
+        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
+            where TIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct
         {
             if (layout.sparse.ReadPtr()[0])
             {
-                default(AIterable).Each(ref data, 0, ref layout.dense.GetRef(0));
+                default(TIterable).Each(ref data, 0, ref layout.dense.GetRef(0));
             }
         }
 

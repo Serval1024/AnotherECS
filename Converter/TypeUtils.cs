@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace AnotherECS.Converter
 {
@@ -30,7 +31,7 @@ namespace AnotherECS.Converter
            => AppDomain.CurrentDomain.GetAssemblies()
                .SelectMany(domainAssembly => domainAssembly.GetTypes())
                .Where(
-                   p => p.GetCustomAttributes(typeof(T), false).Length != 0
+                   p => p.GetCustomAttribute(typeof(T), false) != null
                    )
                .ToArray();
 

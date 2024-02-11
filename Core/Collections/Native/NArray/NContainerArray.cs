@@ -489,7 +489,7 @@ namespace AnotherECS.Core.Collection
             _data.UnpackBlittable(ref reader);
             var elementAllocatorId = reader.ReadUInt32();
 
-            _elementAllocator = reader.GetDependency<WPtr<TElementAllocator>>(elementAllocatorId).Value;
+            _elementAllocator = reader.Dependency.Get<WPtr<TElementAllocator>>(elementAllocatorId).Value;
 
             for (uint i = 0; i < _data.Length; ++i)
             {

@@ -519,7 +519,7 @@ namespace AnotherECS.Core.Caller
         {
             var allocatorId = reader.ReadUInt32();
             _layoutMemoryHandle.Unpack(ref reader);
-            reader.GetDependency<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
+            reader.Dependency.Get<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
             default(TSerialize).Unpack(ref reader, _layout);

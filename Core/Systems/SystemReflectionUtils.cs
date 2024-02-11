@@ -1,11 +1,16 @@
+using AnotherECS.Core.Inject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
-namespace AnotherECS.Core.Threading
+namespace AnotherECS.Core
 {
-    internal static class ReflectionUtils
+    internal static class SystemReflectionUtils
     {
+        public const BindingFlags MEMBER_INJECT_FLAGS =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
         public static Dictionary<Type, IEventInvoke> GetEventMap(IReceiverSystem receiverSystem)
         {
             var result = new Dictionary<Type, IEventInvoke>();
@@ -31,5 +36,9 @@ namespace AnotherECS.Core.Threading
             return result;
         }
 
+        public static IEnumerable<MemberInfo> GetMemberInjectAttributes(Type type)
+            => type
+                .GetFieldsAndProperties(MEMBER_INJECT_FLAGS)
+                .Where(p => p.GetCustomAttribute<InjectAttribute>() != null);
     }
 }

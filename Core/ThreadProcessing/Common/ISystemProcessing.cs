@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AnotherECS.Core.Processing
 {
@@ -17,7 +18,7 @@ namespace AnotherECS.Core.Processing
 
     public interface ISystemProcessing : IThreadProcessing, IStatisticProcessing, IDisposable
     {
-        void Prepare(IGroupSystem systemGroup);
+        void Prepare(IEnumerable<ISystem> systemGroup);
 
         void StateTickStart();
         void StateTickFinished();

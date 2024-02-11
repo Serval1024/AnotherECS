@@ -1,7 +1,7 @@
 ﻿using AnotherECS.Debug;
 using System;
 
-namespace AnotherECS.Core.Exceptions
+namespace AnotherECS.Core.Allocators.Exceptions
 {
     public class ReachedLimitAmountOfSegmentException : Exception
     {

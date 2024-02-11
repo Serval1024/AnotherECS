@@ -5,27 +5,22 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Serializer
 {
+
     public struct WriterContextSerializer : IDisposable
     {
         private const uint INIT_CAPACITY = 1024;
 
         private readonly LightSerializer _serializer;
+        private readonly Dependencies _dependencies;
         private Stream _stream;
-        private Dictionary<Type, Dictionary<uint, object>> _dependencies;
+
+        public Dependencies Dependency => _dependencies;
 
         public WriterContextSerializer(LightSerializer serializer, IEnumerable<(uint, object)> dependencies)
         {
             _serializer = serializer;
+            _dependencies = new Dependencies(dependencies);
             _stream = new Stream(INIT_CAPACITY);
-
-            _dependencies = new Dictionary<Type, Dictionary<uint, object>>();
-            if (dependencies != null)
-            {
-                foreach (var dependency in dependencies)
-                {
-                    AddDependency(dependency.Item1, dependency.Item2);
-                }
-            }
         }
 
         public void Dispose()
@@ -35,37 +30,6 @@ namespace AnotherECS.Serializer
 
         public uint Position
             => _stream.Position;
-
-        public void AddDependency<T>(T dependency)
-        {
-            AddDependencyInternal(typeof(T), 0, dependency);
-        }
-
-        public void AddDependency<T>(uint dependencyId, T dependency)
-        {
-            AddDependencyInternal(typeof(T), dependencyId, dependency);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetDependency<T>(uint dependencyId)
-          => (T)_dependencies[typeof(T)][dependencyId];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T GetDependency<T>()
-            => (T)_dependencies[typeof(T)][0];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddDependencyInternal(Type type, uint dependencyId, object dependency)
-        {
-            if (_dependencies.TryGetValue(type, out var dict))
-            {
-                dict.Add(dependencyId, dependency);
-            }
-            else
-            {
-                _dependencies.Add(type, new Dictionary<uint, object>() { { dependencyId, dependency } });
-            }
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Type IdToType(uint id)

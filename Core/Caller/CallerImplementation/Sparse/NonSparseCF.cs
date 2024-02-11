@@ -59,12 +59,12 @@ namespace AnotherECS.Core.Caller
             => _dependencies->archetype.IsHasItem(_dependencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where AIterable : struct, IIterable<TAllocator, bool, TDense, uint>
+        public void ForEach<TIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterable : struct, IIterable<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
             {
-                AIterable iterable = default;
+                TIterable iterable = default;
 
                 var dense = layout.dense;
 
@@ -77,13 +77,13 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<AIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
-            where AIterable : struct, IDataIterable<TDense, TEachData>
+        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
+            where TIterable : struct, IDataIterable<TDense, TEachData>
             where TEachData : struct
         {
             if (count != 0)
             {
-                AIterable iterable = default;
+                TIterable iterable = default;
 
                 var dense = layout.dense;
 

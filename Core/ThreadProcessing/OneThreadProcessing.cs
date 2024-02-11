@@ -41,9 +41,9 @@ namespace AnotherECS.Core.Processing
 #endif
         }
 
-        public void Prepare(IGroupSystem systemGroup)
+        public void Prepare(IEnumerable<ISystem> systemGroup)
         {
-            var systems = systemGroup.GetSystemsAll().ToArray();
+            var systems = systemGroup.ToArray();
 
             
             _stateTickStart = CreateTask(new StateTickStartTaskHandler() { State = _state });

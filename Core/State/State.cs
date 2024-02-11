@@ -19,7 +19,6 @@ namespace AnotherECS.Core
     public abstract unsafe class State : BDisposable, IState, ISerializeConstructor
     {
         #region const
-        private const int COMPONENT_ENTITY_MAX = 32;
         private const uint FILTER_INIT_CAPACITY = 32;
 
         private const uint BASIC_ALLOCATOR_ID = 1;
@@ -37,7 +36,9 @@ namespace AnotherECS.Core
 
         private ICaller[] _callers;
         private Dictionary<Type, ICaller> _callerByType;
+
         private IConfig[] _configs;
+        private Dictionary<Type, uint> _configByType;
 
         private StateOption _option;
         private Events _events;
@@ -160,10 +161,10 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.AddDependency(new WPtr<Dependencies>(_dependencies));
-            writer.AddDependency(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
-            writer.AddDependency(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            writer.AddDependency(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+            writer.Dependency.Add(new WPtr<Dependencies>(_dependencies));
+            writer.Dependency.Add(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
+            writer.Dependency.Add(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            writer.Dependency.Add(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
             writer.Write(_dependencies->bAllocator.GetId());
             writer.Write(_dependencies->stage0HAllocator.GetId());
@@ -188,10 +189,10 @@ namespace AnotherECS.Core
             var stage0HAllocatorId = reader.ReadUInt32();
             var stage1HAllocatorId = reader.ReadUInt32();
 
-            reader.AddDependency(new WPtr<Dependencies>(_dependencies));
-            reader.AddDependency(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
-            reader.AddDependency(stage0HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            reader.AddDependency(stage1HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+            reader.Dependency.Add(new WPtr<Dependencies>(_dependencies));
+            reader.Dependency.Add(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
+            reader.Dependency.Add(stage0HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+            reader.Dependency.Add(stage1HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
             _dependencies->Unpack(ref reader);
             _dependencies->filters = new Filters(_dependencies, FILTER_INIT_CAPACITY);
@@ -242,6 +243,7 @@ namespace AnotherECS.Core
             _nextTickForEvent = _events.NextTickForEvent;
 
             _callerByType = _callers.Skip(1).ToDictionary(k => k.GetElementType(), v => v);
+            _configByType = new Dictionary<Type, uint>();
         }
         #endregion
 
@@ -293,20 +295,9 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDontExists(this, id);
-            if (_dependencies->archetype.GetCount(_dependencies->entities.ReadArchetypeId(id)) > COMPONENT_ENTITY_MAX)
-            {
-                throw new ReachedLimitComponentOnEntityException(COMPONENT_ENTITY_MAX);
-            }
 #endif
-
-            var componentIds = stackalloc uint[COMPONENT_ENTITY_MAX];
             var archetypeId = _dependencies->entities.ReadArchetypeId(id);
-            var count = _dependencies->archetype.GetItemIds(archetypeId, componentIds, COMPONENT_ENTITY_MAX);
-
-            for (int i = 0; i < count; ++i)
-            {
-                GetCaller(componentIds[i]).RemoveRaw(id);
-            }
+            _dependencies->archetype.EachItem(archetypeId, new RemoveRawIterable(this, id));
 
             _dependencies->archetype.Remove(archetypeId, id);
             _dependencies->entities.Deallocate(id);
@@ -619,7 +610,7 @@ namespace AnotherECS.Core
 #endif
             lock (_configs)
             {
-                _configs[GetConfigIndex<T>()] = data;
+                AddConfigInternal(data);
             }
         }
 
@@ -633,7 +624,7 @@ namespace AnotherECS.Core
 #endif
             lock (_configs)
             {
-                _configs[GetConfigIndex<T>()] = data;
+                AddConfigInternal(data);
             }
         }
 
@@ -676,6 +667,43 @@ namespace AnotherECS.Core
             lock (_configs)
             {
                 _configs[GetConfigIndex<T>()] = data;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHasConfig(Type type)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            lock (_configs)
+            {
+                return _configByType.TryGetValue(type, out var id) && _configs[id] != null;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IConfig GetConfig(Type type)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfDontExists(this, type, _configs, _configByType);
+#endif
+            lock (_configs)
+            {
+                return _configs[_configByType[type]];
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddConfigInternal<T>(T data)
+           where T : IConfig
+        {
+            var index = GetConfigIndex<T>();
+            _configs[index] = data;
+            if (!_configByType.ContainsKey(typeof(T)))
+            {
+                _configByType.Add(typeof(T), index);
             }
         }
         #endregion
@@ -730,6 +758,17 @@ namespace AnotherECS.Core
             }
 
             var filter = new T();
+            filter.Construct(this, CreateFilterData(ref mask));
+            return filter;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal BFilter CreateFilter(Type type, ref Mask mask)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            var filter = (BFilter)Activator.CreateInstance(type);
             filter.Construct(this, CreateFilterData(ref mask));
             return filter;
         }
@@ -826,6 +865,10 @@ namespace AnotherECS.Core
             => GetIndex<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ushort GetIdByType(Type type)
+            => _callerByType[type].ElementId;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Send(ITickEvent @event)
         {
 #if !ANOTHERECS_RELEASE
@@ -882,7 +925,7 @@ namespace AnotherECS.Core
             {
                 if ((Tick - tick) > _dependencies->config.history.recordTickLength)
                 {
-                    throw new HistoryTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
+                    throw new HistoryRevertTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
                 }
 
                 if (IsNeedCallRevertByStages())
@@ -1160,6 +1203,24 @@ namespace AnotherECS.Core
         {
             public uint callerIndex;
             public IResizableCaller caller;
+        }
+
+        private struct RemoveRawIterable : Archetype.IIterable
+        {
+            private EntityId id;
+            private State state;
+
+            public RemoveRawIterable(State state, EntityId id)
+            {
+                this.id = id;
+                this.state = state;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Invoke(ushort itemId)
+            {
+                state.GetCaller(itemId).RemoveRaw(id);
+            }
         }
         #endregion
     }
