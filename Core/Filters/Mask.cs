@@ -28,7 +28,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddInclude(ushort item)
+        public void AddInclude(uint item)
         {
 #if !ANOTHERECS_RELEASE
             if (Contains(item))
@@ -40,7 +40,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddExclude(ushort item)
+        public void AddExclude(uint item)
         {
 #if !ANOTHERECS_RELEASE
             if (Contains(item))
@@ -53,7 +53,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint GetHash()
-            => includes.GetHash() ^ excludes.GetHash();
+            => (includes.GetHash() ^ excludes.GetHash()) + 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         uint IHashProvider<Mask, uint>.GetHash(ref Mask key)
@@ -63,7 +63,7 @@ namespace AnotherECS.Core
         public bool Equals(Mask other)
             => includes.Equals(other.includes) && excludes.Equals(other.excludes);
 
-        public bool Contains(ushort item)
+        public bool Contains(uint item)
             => includes.Contains(item) || excludes.Contains(item);
 
 
@@ -72,10 +72,10 @@ namespace AnotherECS.Core
             public const int FILTER_COMPONENT_MAX = 8;
 
             public byte count;
-            public fixed ushort values[FILTER_COMPONENT_MAX];
+            public fixed uint values[FILTER_COMPONENT_MAX];
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Add(ushort item)
+            public void Add(uint item)
             {
 #if !ANOTHERECS_RELEASE
                 if (count == FILTER_COMPONENT_MAX)
@@ -87,11 +87,11 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Contains(ushort item)
+            public bool Contains(uint item)
                 => BinarySearch(item);
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private bool BinarySearch(ushort item)
+            private bool BinarySearch(uint item)
             {
                 if (count <= 4)
                 {
@@ -106,31 +106,37 @@ namespace AnotherECS.Core
                 }
                 else
                 {
-                    int left = 0;
-                    int right = count - 1;
-                    while (left <= right)
+                    int lo = 0;
+                    int hi = lo + count - 1;
+
+                    while (lo <= hi)
                     {
-                        int middle = (left + right) / 2;
-                        var value = values[middle];
-                        if (value == item)
+                        int i = GetMedian(lo, hi);
+
+                        uint c = values[i];
+                        if (c == item)
                         {
                             return true;
                         }
-                        else if (value > middle)
+                        else if (c < item)
                         {
-                            left = middle + 1;
+                            lo = i + 1;
                         }
                         else
                         {
-                            right = middle - 1;
+                            hi = i - 1;
                         }
                     }
                     return false;
                 }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static int GetMedian(int low, int hi)
+                => low + ((hi - low) >> 1);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Span<ushort> ValuesAsSpan()
+            public Span<uint> ValuesAsSpan()
                 => new(UnsafeUtils.AddressOf(ref values[0]), count);
 
             public uint GetHash()
@@ -163,7 +169,7 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private Span<ushort> CapacityValuesAsSpan()
+            private Span<uint> CapacityValuesAsSpan()
                 => new(UnsafeUtils.AddressOf(ref values[0]), FILTER_COMPONENT_MAX);
         }
     }

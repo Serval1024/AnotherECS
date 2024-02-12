@@ -12,7 +12,7 @@ namespace AnotherECS.Core.Caller
 
     internal interface ICaller : ICallerReference, ISerialize, IRepairMemoryHandle, IRepairStateId
     {
-        ushort ElementId { get; }
+        uint ElementId { get; }
         bool IsSingle { get; }
         bool IsTickFinished { get; }
         bool IsSerialize { get; }

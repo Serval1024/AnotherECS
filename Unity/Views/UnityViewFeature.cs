@@ -47,7 +47,7 @@ namespace AnotherECS.Views
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId<T>()
-            where T : IView
+            where T : IViewFactory
             => _unityViewController.GetId<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

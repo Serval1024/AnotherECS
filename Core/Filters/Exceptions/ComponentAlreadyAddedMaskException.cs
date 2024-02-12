@@ -5,7 +5,7 @@ namespace AnotherECS.Core.Exceptions
 {
     public class ComponentAlreadyAddedMaskException : Exception
     {
-        public ComponentAlreadyAddedMaskException(int componentId)
+        public ComponentAlreadyAddedMaskException(uint componentId)
             : base($"{DebugConst.TAG}Component already added to mask. Component id: '{componentId}'.")
         { }
     }

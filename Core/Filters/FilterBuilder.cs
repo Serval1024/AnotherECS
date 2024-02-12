@@ -29,6 +29,12 @@ namespace AnotherECS.Core
             _mask.AddExclude(_state.GetIdByType<T>());
             return new FilterBuilder(_state, _mask);
         }
+        
+        public IdFilter BuildAsId()
+          => _state.CreateFilter<IdFilter>(ref _mask);
+        
+        public EntityFilter BuildAsEntity()
+            => _state.CreateFilter<EntityFilter>(ref _mask);
     }
 
     public struct FilterBuilder<T0>

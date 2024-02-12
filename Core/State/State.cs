@@ -752,11 +752,6 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (!mask.IsValid)
-            {
-                throw new MaskIsEmptyException();
-            }
-
             var filter = new T();
             filter.Construct(this, CreateFilterData(ref mask));
             return filter;
@@ -831,6 +826,15 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ref readonly EntityData GetEntityData(EntityId id)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return ref _dependencies->entities.ReadRef(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SetModuleData<TModuleData>(uint id, TModuleData data)
             where TModuleData : IModuleData
         {
@@ -865,7 +869,7 @@ namespace AnotherECS.Core
             => GetIndex<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ushort GetIdByType(Type type)
+        internal uint GetIdByType(Type type)
             => _callerByType[type].ElementId;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1087,9 +1091,9 @@ namespace AnotherECS.Core
             _reference.TryDrop(Tick);
         }
 
-        private NArray<BAllocator, ushort> GetTemporaryIndexes()
+        private NArray<BAllocator, uint> GetTemporaryIndexes()
         {
-            using var list = new NList<BAllocator, ushort>(&_dependencies->bAllocator, FILTER_INIT_CAPACITY);
+            using var list = new NList<BAllocator, uint>(&_dependencies->bAllocator, FILTER_INIT_CAPACITY);
 
             for(int i = 1; i < _callers.Length; ++i)
             {
@@ -1205,7 +1209,7 @@ namespace AnotherECS.Core
             public IResizableCaller caller;
         }
 
-        private struct RemoveRawIterable : Archetype.IIterable
+        private struct RemoveRawIterable : Set<BAllocator, HAllocator>.IIterable
         {
             private EntityId id;
             private State state;
@@ -1217,7 +1221,7 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke(ushort itemId)
+            public void Invoke(uint itemId)
             {
                 state.GetCaller(itemId).RemoveRaw(id);
             }

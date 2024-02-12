@@ -9,7 +9,7 @@ namespace AnotherECS.Views
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State state, EntityId id)
-            where T : IView
+            where T : IViewFactory
         {
             state.Add(id, new ViewHandle() { ownerId = id, viewId = state.GetConfig<ViewSystemReference>().system.GetId<T>() });
         }
@@ -28,7 +28,7 @@ namespace AnotherECS.Views
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this Entity entity)
-            where T : IView
+            where T : IViewFactory
         {
             CreateView<T>(entity.State, entity.id);
         }

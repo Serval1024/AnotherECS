@@ -98,11 +98,6 @@ namespace AnotherECS.Core
         {
             var includeTypes = type.GetGenericArguments();
 
-            if (includeTypes.Length == 0)
-            {
-                throw new ArgumentException();
-            }
-
             var mask = new Mask();
             foreach (var includeType in includeTypes)
             {

@@ -21,7 +21,7 @@ namespace AnotherECS.Core.Caller
         where TAllocator : unmanaged, IAllocator
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+        void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>;
     }
 
@@ -35,10 +35,10 @@ namespace AnotherECS.Core.Caller
     {
         public bool IsTemporary { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(ref Dependencies dependencies, uint id, ushort elementId);
+        public void Add(ref Dependencies dependencies, uint id, uint elementId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(ref Dependencies dependencies, uint id, ushort elementId);
+        public void Remove(ref Dependencies dependencies, uint id, uint elementId);
     }
 
     internal interface IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex> : IStateProvider

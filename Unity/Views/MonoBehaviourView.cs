@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AnotherECS.Views
 {
-    public abstract class MonoBehaviourView : MonoBehaviour, IView
+    public abstract class MonoBehaviourView : MonoBehaviour, IView, IViewFactory
     {
         private State _state;
         private Entity _entity;
@@ -27,16 +27,16 @@ namespace AnotherECS.Views
             _entity = entity;
         }
 
-        string IView.GetGUID()
-            => GetType().Name;
-
         void IView.Destroyed()
         {
-            OnDestroying();
+            OnDestroyed();
             Destroy(gameObject);
         }
 
-        IView IView.Create()
+        string IViewFactory.GetGUID()
+            => GetType().Name;
+
+        IView IViewFactory.Create()
             => Instantiate(this);
 
         void IView.Created()
@@ -45,8 +45,8 @@ namespace AnotherECS.Views
         void IView.Apply()
             => OnApply(ref _entity);
 
-        public abstract void OnApply(ref Entity entity);
         public virtual void OnCreated(ref Entity entity) { }
-        public virtual void OnDestroying() { }
+        public virtual void OnApply(ref Entity entity) { }
+        public virtual void OnDestroyed() { }
     }
 }

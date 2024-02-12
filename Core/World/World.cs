@@ -86,9 +86,9 @@ namespace AnotherECS.Core
                 _systems.Prepend((ISystem)Activator.CreateInstance(system));
             }
 #if !ANOTHERECS_RELEASE
-            var container = new WorldDIContainer(_state, SystemGlobalRegister.GetInjects());
-#else
             var container = new WorldDIContainer(_state);
+#else
+            var container = new WorldDIContainer(_state, SystemGlobalRegister.GetInjects());
 #endif
             _systems.Sort();
             var context = new InstallContext(this);

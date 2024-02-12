@@ -18,7 +18,23 @@ namespace AnotherECS.Core.Collection
         public unsafe static Span<T> AsSpan<TNArray, T>(this ref TNArray narray)
             where TNArray : struct, INArray<T>
             where T : unmanaged
-            => new(narray.ReadPtr(), (int)narray.Length);
+            => AsSpan<TNArray, T>(ref narray, (int)narray.Length);
+
+        public unsafe static Span<T> AsSpan<TNArray, T>(this ref TNArray narray, int count)
+           where TNArray : struct, INArray<T>
+           where T : unmanaged
+           => AsSpan<TNArray, T>(ref narray, 0, count);
+
+        public unsafe static Span<T> AsSpan<TNArray, T>(this ref TNArray narray, int start, int count)
+            where TNArray : struct, INArray<T>
+            where T : unmanaged
+        { 
+            if (start + count > narray.Length)
+            {
+                throw new ArgumentException();
+            }
+            return new(narray.ReadPtr() + start, count);
+        }
 
         public static void AddSort<TAllocator, T>(ref this NArray<TAllocator, T> array, uint count, T element)
             where TAllocator : unmanaged, IAllocator
@@ -94,6 +110,10 @@ namespace AnotherECS.Core.Collection
                 }
             }
             return ~lo;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static int GetMedian(int low, int hi)
+                => low + ((hi - low) >> 1);
         }
 
         public static int BinarySearch<TNArray, T, TOrder>(ref this TNArray array, ref TOrder order, T value)
@@ -134,10 +154,11 @@ namespace AnotherECS.Core.Collection
                 }
             }
             return ~lo;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static int GetMedian(int low, int hi)
+                => low + ((hi - low) >> 1);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetMedian(int low, int hi)
-            => low + ((hi - low) >> 1);
     }
 }

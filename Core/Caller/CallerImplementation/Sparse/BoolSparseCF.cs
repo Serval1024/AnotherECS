@@ -24,7 +24,7 @@ namespace AnotherECS.Core.Caller
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, ushort callerId)
+        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

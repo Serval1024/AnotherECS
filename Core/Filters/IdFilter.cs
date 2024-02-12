@@ -13,6 +13,9 @@ namespace AnotherECS.Core
             => GetEnumerator();
     }
 
+    public sealed class IdFilter : BEntityIdFilter
+    { }
+
     public sealed class IdFilter<T0> : BEntityIdFilter
         where T0 : IComponent
     { }

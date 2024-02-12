@@ -2,13 +2,17 @@
 
 namespace AnotherECS.Views.Core
 {
+    public interface IViewFactory
+    {
+        string GetGUID();
+        IView Create();
+    }
+
     public interface IView
     {
         void Construct(State state, in Entity entity);
-        string GetGUID();
         void Created();
         void Apply();
         void Destroyed();
-        IView Create();
     }
 }

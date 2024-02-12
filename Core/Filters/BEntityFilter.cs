@@ -12,6 +12,9 @@ namespace AnotherECS.Core
             => GetEnumerator();
     }
 
+    public sealed class EntityFilter : BEntityFilter
+    { }
+
     public sealed class EntityFilter<T0> : BEntityFilter
         where T0 : IComponent
     { }

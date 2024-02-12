@@ -68,7 +68,7 @@ namespace AnotherECS.Core.Caller
         private Dependencies* _dependencies;
         private ComponentFunction<TDense> _componentFunction;
 
-        private ushort _elementId;
+        private uint _elementId;
 
         private TAttachDetachStorage _attachDetachStorage;
         private TSparseStorage _sparseStorage;
@@ -80,7 +80,7 @@ namespace AnotherECS.Core.Caller
                    TSparseStorage, TDenseStorage, TIdAllocator, TVersion
                    > layoutAllocator;
 
-        public ushort ElementId
+        public uint ElementId
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _elementId;

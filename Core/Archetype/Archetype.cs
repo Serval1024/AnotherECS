@@ -1,10 +1,7 @@
 using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
-using AnotherECS.Unsafe;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
@@ -15,22 +12,20 @@ namespace AnotherECS.Core
 #endif
     internal unsafe struct Archetype : IRepairMemoryHandle, ISerialize
     {
-        public const int FIND_DEEP = 1024;
         public const int ARCHETYPE_COUNT = 1024;
 
         private const uint TRANSITION_INIT_CAPACITY = 32;
         private const uint CHANGE_INIT_CAPACITY = 32;
 
         private Dependencies* _dependencies;
+        private Set<BAllocator, HAllocator> _set;
 
-        private NList<BAllocator, Node> _nodes;
-        private NContainerList<BAllocator, HAllocator, IdCollection<HAllocator>> _collections;
         private NList<BAllocator, MoveCollection> _temporaries;
 
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionAddCache;
         private NDictionary<BAllocator, ulong, uint, U8U4HashProvider> _transitionRemoveCache;
         private NBuffer<BAllocator, BufferEntry> _changesBuffer;
-        private NHashSetZero<BAllocator, ushort, U2U4HashProvider> _isTemporaries;
+        private NHashSetZero<BAllocator, uint, U4U4HashProvider> _isTemporaries;
 
         private int locked;
 
@@ -40,74 +35,38 @@ namespace AnotherECS.Core
             get => locked != 0;
         }
 
-        public Archetype(Dependencies* dependencies, INArray<ushort> isTemporaries)
+        public Archetype(Dependencies* dependencies, INArray<uint> isTemporaries)
         {
             _dependencies = dependencies;
-            
-            _nodes = new NList<BAllocator, Node>(&_dependencies->bAllocator, _dependencies->componentTypesCount + 1);
-            _collections = new NContainerList<BAllocator, HAllocator, IdCollection<HAllocator>>(&_dependencies->bAllocator, &_dependencies->stage1HAllocator, _nodes.Length);
-            
-            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(&_dependencies->bAllocator, TRANSITION_INIT_CAPACITY);
-            _changesBuffer = new NBuffer<BAllocator, BufferEntry>(&_dependencies->bAllocator, CHANGE_INIT_CAPACITY);
 
-            _isTemporaries = new NHashSetZero<BAllocator, ushort, U2U4HashProvider>(&_dependencies->bAllocator, isTemporaries);
-            _temporaries = new NList<BAllocator, MoveCollection>(&_dependencies->bAllocator, _isTemporaries.Count);
+            var commonAllocator = &dependencies->bAllocator;
+            var collectionAllocator = &dependencies->stage1HAllocator;
+            _transitionAddCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(commonAllocator, TRANSITION_INIT_CAPACITY);
+            _transitionRemoveCache = new NDictionary<BAllocator, ulong, uint, U8U4HashProvider>(commonAllocator, TRANSITION_INIT_CAPACITY);
+            _changesBuffer = new NBuffer<BAllocator, BufferEntry>(commonAllocator, CHANGE_INIT_CAPACITY);
 
-            locked = default;
-            
-            Init();
-        }
+            _isTemporaries = new NHashSetZero<BAllocator, uint, U4U4HashProvider>(commonAllocator, isTemporaries);
+            _temporaries = new NList<BAllocator, MoveCollection>(commonAllocator, _isTemporaries.Count);
 
-        private void Init()
-        {
-            _nodes.ExtendToCapacity();
+            locked = 0;
 
-            for (uint i = 0; i < _nodes.Count; ++i)
-            {
-                ref var archetype = ref _nodes.ReadRef(i);
-                archetype.archetypeId = i;
-                archetype.itemId = (ushort)i;
-                archetype.collectionId = i;
-                archetype.hash = GetHash(i);
-            }
-
-            _collections.ExtendToCapacity();
-
-            for (uint i = 0; i < _collections.Count; ++i)
-            {
-                _collections.Set(i, CreateIdCollection());
-            }
-
-            _temporaries.ExtendToCapacity();
-
-            foreach (var temporaryId in _isTemporaries)
-            {
-                _temporaries.Add(
-                    new MoveCollection()
-                    {
-                        fromCollectionId = _nodes.ReadRef(temporaryId).collectionId,
-                        toCollectionId = 0
-                    }
-                    );
-            }
+            _set = new Set<BAllocator, HAllocator>(commonAllocator, collectionAllocator, _dependencies->componentTypesCount + 1, _dependencies->config.general.archetypeCapacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(uint id)
         {
-            _collections.GetRef(0).Add(id);
+            Add(0, id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint Add<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint archetypeId, uint id, ushort itemId, bool isTemporary)
-            where TFilterUpdater : struct, IFilterUpdater
-            => (archetypeId == 0)
-               ? AddInternal(id, itemId)
-               : AddInternal(ref filterUpdater, archetypeId, id, itemId, isTemporary);
+        public void Add(uint archetypeId, uint id)
+        {
+            _set.Add(archetypeId, id);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId, bool isTemporary)
+        public void Add<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, uint itemId, bool isTemporary)
             where TFilterUpdater : struct, IFilterUpdater
         {
             if (IsLocked)
@@ -129,7 +88,13 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId)
+        public void Remove(uint archetypeId, uint id)
+        {
+            _set.Remove(archetypeId, id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Remove<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, uint itemId)
             where TFilterUpdater : struct, IFilterUpdater
         {
             if (IsLocked)
@@ -143,190 +108,61 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(uint archetypeId, uint id)
-        {
-            _collections.GetRef(_nodes.ReadRef(archetypeId).collectionId).Remove(id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Create<TFilterUpdater>(ref TFilterUpdater filterUpdater, Span<ushort> itemIds)
+        public void Create<TFilterUpdater>(ref TFilterUpdater filterUpdater, Span<uint> itemIds)
             where TFilterUpdater : struct, IFilterUpdater
         {
-            if (itemIds.Length > 1)
-            {
-                uint currentId = itemIds[0];
-                for (int i = 1; i < itemIds.Length; ++i)
-                {
-                    currentId = GetChildNode(
-                        ref filterUpdater,
-                        ref _nodes.ReadRef(currentId),
-                        itemIds[i],
-                        _isTemporaries.Contains(itemIds[i])
-                        ).archetypeId;
-                }
-            }
+            SetObserver<TFilterUpdater> observer;
+            observer.filterUpdater = filterUpdater;
+            observer.isTemporaries = _isTemporaries;
+            observer.temporaries = _temporaries;
+
+            _set.Create(ref observer, itemIds);
+
+            observer.Apply(ref _temporaries);
         }
 
-
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetCount(uint archetypeId)
+            => _set.GetCount(archetypeId);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void EachItem<TIterable>(uint startArchetypeId, TIterable iterable)
+            where TIterable : struct, Set<BAllocator, HAllocator>.IIterable
         {
-            if (archetypeId == 0)
-            {
-                return 0;
-            }
-
-            uint count = 0;
-            do
-            {
-                ++count;
-                archetypeId = _nodes.ReadRef(archetypeId).parent;
-            }
-            while (archetypeId != 0);
-
-            return count;
+            _set.EachItem(startArchetypeId, iterable);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void EachItem<TIterable>(uint archetypeId, TIterable iterable)
-            where TIterable : struct, IIterable
-        {
-            if (archetypeId != 0)
-            {
-                do
-                {
-                    ref var node = ref _nodes.ReadRef(archetypeId);
-
-                    iterable.Invoke(node.itemId);
-                    archetypeId = node.parent;
-                }
-                while (archetypeId != 0);
-            }
-        }
+        public bool IsHasItem(uint archetypeId, uint itemId)
+            => _set.IsHasItem(archetypeId, itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetItemIds(uint archetypeId, uint* result, uint resultLength)
-        {
-            if (archetypeId == 0)
-            {
-                return 0;
-            }
-
-            uint count = 0;
-            do
-            {
-                ref var node = ref _nodes.ReadRef(archetypeId);
-#if !ANOTHERECS_RELEASE
-                if (count == resultLength)
-                {
-                    throw new Exceptions.FindIdsException(resultLength);
-                }
-#endif
-                result[count++] = node.itemId;
-                archetypeId = node.parent;
-            }
-            while (archetypeId != 0);
-
-            return count;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsHasItem(uint archetypeId, ushort itemId)
-        {
-            if (archetypeId != 0)
-            {
-                do
-                {
-                    ref var node = ref _nodes.ReadRef(archetypeId);
-
-                    if (node.itemId == itemId)
-                    {
-                        return true;
-                    }
-                    archetypeId = node.parent;
-                }
-                while (archetypeId != 0);
-            }
-            return false;
-        }
+        public uint GetItemIds(uint startArchetypeId, uint* result, uint resultLength)
+            => _set.GetItemIds(startArchetypeId, result, resultLength);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetItemId(uint archetypeId, uint index)
-        {
-            if (archetypeId == 0)
-            {
-                return 0;
-            }
+            => _set.GetItemId(archetypeId, index);
 
-            uint count = 0;
-            do
-            {
-                ref var node = ref _nodes.ReadRef(archetypeId);
-                if (count == index)
-                {
-                    return node.itemId;
-                }
-                ++count;
-                archetypeId = node.parent;
-            }
-            while (archetypeId != 0);
-
-            return 0;
-        }
+        
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly IdCollection<HAllocator> ReadIdCollection(uint archetypeId)
-            => ref _collections.ReadRef(_nodes.ReadRef(archetypeId).collectionId);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NArray<BAllocator, uint> Filter(BAllocator* allocator, Span<ushort> includes, Span<ushort> excludes)
+        public NArray<BAllocator, uint> Filter(BAllocator* allocator, Span<uint> includes, Span<uint> excludes)
         {
             Span<uint> archetypeIds = stackalloc uint[ARCHETYPE_COUNT];
-            var count = Filter(includes, excludes, archetypeIds);
+            var count = _set.Filter(includes, excludes, archetypeIds);
             return archetypeIds[..count].ToNArray(allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Filter(Span<ushort> includes, Span<ushort> excludes, Span<uint> result)
-        {
-            int resultCount = 0;
-            var items0 = includes[0];
-            for (uint i = 1; i <= items0; ++i)
-            {
-                FindPattern(ref _nodes.ReadRef(i), 0, includes, excludes, result, ref resultCount);
-            }
-
-            PatternDownExtend(result, ref resultCount, excludes);
-
-            result.Sort(0, resultCount);
-            return resultCount;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetFilterZeroCount()
-            => _collections.ReadRef(0).Count;
+            => _set.GetFilterZeroCount();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int FilterZero(uint* result, int count)
-        {
-#if !ANOTHERECS_RELEASE
-            if (count == 0)
-            {
-                throw new ArgumentException(nameof(count));
-            }
-#endif
-            ref var idSet = ref _collections.ReadRef(0);
-
-            int i = 0;
-            foreach (var item in idSet)
-            {
-                result[i] = item;
-                if (++i == count)
-                    break;
-            }
-            return i;
-        }
+            => _set.FilterZero(result, count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveAllTemporary()
@@ -335,11 +171,11 @@ namespace AnotherECS.Core
             for (uint i = 1, iMax = _temporaries.Count; i < iMax; ++i)
             {
                 ref var element = ref _temporaries.GetRef(i);
-                ref var from = ref _collections.GetRef(element.fromCollectionId);
+                ref var from = ref _set.GetIdCollection(element.fromCollectionId);
 
                 if (from.Count != 0)
                 {
-                    ref var to = ref _collections.GetRef(element.toCollectionId);
+                    ref var to = ref _set.GetIdCollection(element.toCollectionId);
                     foreach (var id in from)
                     {
                         to.Add(id);
@@ -357,16 +193,43 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly IdCollection<HAllocator> ReadIdCollection(uint archetypeId)
+            => ref _set.ReadIdCollection(archetypeId);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            _nodes.Dispose();
-            _collections.Dispose();
+            _set.Dispose();
             _temporaries.Dispose();
 
             _transitionAddCache.Dispose();
             _transitionRemoveCache.Dispose();
             _changesBuffer.Dispose();
             _isTemporaries.Dispose();
+        }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            _set.Pack(ref writer);
+            _temporaries.PackBlittable(ref writer);
+
+            _transitionAddCache.PackBlittable(ref writer);
+            _transitionRemoveCache.PackBlittable(ref writer);
+            _changesBuffer.PackBlittable(ref writer);
+            _isTemporaries.PackBlittable(ref writer);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            _dependencies = reader.Dependency.Get<WPtr<Dependencies>>().Value;
+            
+            _set.Unpack(ref reader);
+            _temporaries.UnpackBlittable(ref reader);
+
+            _transitionAddCache.UnpackBlittable(ref reader);
+            _transitionRemoveCache.UnpackBlittable(ref reader);
+            _changesBuffer.UnpackBlittable(ref reader);
+            _isTemporaries.UnpackBlittable(ref reader);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -404,516 +267,137 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private IdCollection<HAllocator> CreateIdCollection()
-            => new(&_dependencies->stage1HAllocator, _dependencies->config.general.archetypeCapacity);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint AddInternal(uint id, ushort itemId)
-        {
-            _collections.GetRef(0).Remove(id);
-            _collections.GetRef(_nodes.ReadRef(itemId).collectionId).Add(id);
-            return itemId;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId, bool isTemporary)
+        private void AddInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, uint itemId, bool isTemporary)
             where TFilterUpdater : struct, IFilterUpdater
         {
             ref uint archetypeId = ref _dependencies->entities.GetRef(id).archetypeId;
             var transitionId = ((ulong)archetypeId) << 32 | itemId;
             if (_transitionAddCache.TryGetValue(transitionId, out uint newArchetypeId))
             {
-                Move(archetypeId, newArchetypeId, id);
+                _set.Move(archetypeId, newArchetypeId, id);
             }
             else
             {
-                newArchetypeId = Add(ref filterUpdater, archetypeId, id, itemId, isTemporary);
+                SetObserver<TFilterUpdater> observer;
+                observer.filterUpdater = filterUpdater;
+                observer.isTemporaries = _isTemporaries;
+                observer.temporaries = _temporaries;
+
+                newArchetypeId = _set.Add(ref observer, archetypeId, id, itemId);
+
+                observer.Apply(ref _temporaries);
+
                 _transitionAddCache.Add(transitionId, newArchetypeId);
             }
             archetypeId = newArchetypeId;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint AddInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint archetypeId, uint id, ushort itemId, bool isTemporary)
-            where TFilterUpdater : struct, IFilterUpdater
-        {
-#if !ANOTHERECS_RELEASE
-            if (itemId == _nodes.ReadRef(archetypeId).itemId)
-            {
-                throw new ArgumentException($"Item already added to {nameof(Archetype)} '{itemId}'.");
-            }
-#endif
-            ref var node = ref _nodes.GetRef(archetypeId);
-            _collections.GetRef(node.collectionId).Remove(id);
-
-            if (itemId > node.itemId)     //Add as node child
-            {
-                ref var childNode = ref GetChildNode(ref filterUpdater, ref node, itemId, isTemporary);
-                _collections.GetRef(childNode.collectionId).Add(id);
-                return childNode.archetypeId;
-            }
-            else     //Finding right node
-            {
-                int deep = 0;
-                ushort* itemDeep = stackalloc ushort[FIND_DEEP];
-
-                ref var rootNode = ref MoveUpToLocalRoot(ref node, itemId, itemDeep, ref deep);
-                ref var childNode = ref DeepAttachNewNode(ref filterUpdater, ref rootNode, itemDeep, deep, isTemporary);
-
-                _collections.GetRef(childNode.collectionId).Add(id);
-                return childNode.archetypeId;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint RemoveInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint archetypeId, uint id, ushort itemId)
-            where TFilterUpdater : struct, IFilterUpdater
-        {
-            ref var node = ref _nodes.ReadRef(archetypeId);
-            _collections.GetRef(node.collectionId).Remove(id);
-
-            if (node.itemId == itemId)
-            {
-                ref var parent = ref _nodes.ReadRef(node.parent);
-                _collections.GetRef(parent.collectionId).Add(id);
-                return parent.archetypeId;
-            }
-            else
-            {
-                int deep = 0;
-                ushort* itemDeep = stackalloc ushort[FIND_DEEP];
-
-                var itemNode = MoveUpToItemId(ref node, itemId, itemDeep, ref deep);
-                if (itemNode.parent == 0)
-                {
-                    ref var rootNode = ref _nodes.ReadRef(itemDeep[deep - 1]);
-                    ref var childNode = ref DeepAttachNewNode(ref filterUpdater, ref rootNode, itemDeep, deep - 1, false);
-                    _collections.GetRef(childNode.collectionId).Add(id);
-                    return childNode.archetypeId;
-                }
-                else
-                {
-                    ref var rootNode = ref _nodes.ReadRef(itemNode.parent);
-                    ref var childNode = ref DeepAttachNewNode(ref filterUpdater, ref rootNode, itemDeep, deep, false);
-                    _collections.GetRef(childNode.collectionId).Add(id);
-                    return childNode.archetypeId;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RemoveInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, ushort itemId)
+        private void RemoveInternal<TFilterUpdater>(ref TFilterUpdater filterUpdater, uint id, uint itemId)
             where TFilterUpdater : struct, IFilterUpdater
         {
             ref uint archetypeId = ref _dependencies->entities.GetRef(id).archetypeId;
             var transitionId = ((ulong)archetypeId) << 32 | itemId;
             if (_transitionRemoveCache.TryGetValue(transitionId, out uint newArchetypeId))
             {
-                Move(archetypeId, newArchetypeId, id);
+                _set.Move(archetypeId, newArchetypeId, id);
             }
             else
             {
-                newArchetypeId = RemoveInternal(ref filterUpdater, archetypeId, id, itemId);
+                SetObserver<TFilterUpdater> observer;
+                observer.filterUpdater = filterUpdater;
+                observer.isTemporaries = _isTemporaries;
+                observer.temporaries = _temporaries;
+
+                newArchetypeId = _set.Remove(ref observer, archetypeId, id, itemId);
+
+                observer.Apply(ref _temporaries);
+
                 _transitionRemoveCache.Add(transitionId, newArchetypeId);
             }
             archetypeId = newArchetypeId;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node GetChildNode<TFilterUpdater>(ref TFilterUpdater filterUpdater, ref Node node, ushort itemId, bool isTemporary)
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        {
+            RepairMemoryCaller.Repair(ref _set, ref repairMemoryContext);
+        }
+
+        private struct SetObserver<TFilterUpdater> : Set<BAllocator, HAllocator>.IObserver
             where TFilterUpdater : struct, IFilterUpdater
         {
-            ref var childNode = ref FindChildNode(ref node, itemId);
-            if (childNode.archetypeId != 0)
+            public TFilterUpdater filterUpdater;
+            public NHashSetZero<BAllocator, uint, U4U4HashProvider> isTemporaries;
+            public NList<BAllocator, MoveCollection> temporaries;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, uint itemId)
+                where TNArray : struct, INArray<Node>
             {
-                return ref childNode;
+                filterUpdater.AddToFilterData(ref archetypes, archetypeId, toAddArchetypeId, itemId);
             }
 
-            return ref AttachNewNode(ref filterUpdater, ref node, itemId, isTemporary);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node FindChildNode(ref Node node, ushort itemId)
-        {
-            for (uint i = 0; i < node.childrenCount; ++i)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddFinished(WArray<Node> nodes, ref Node node, uint itemId)
             {
-                ref var childNode = ref _nodes.ReadRef(node.children[i]);
-                if (childNode.itemId == itemId)
+                filterUpdater.EndToFilterData();
+
+                if (isTemporaries.Contains(itemId))
                 {
-                    return ref childNode;
-                }
-            }
-
-            return ref _nodes.ReadRef(0);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node AttachNewNode<TFilterUpdater>(ref TFilterUpdater filterUpdater, ref Node parent, ushort itemId, bool isTemporary)
-            where TFilterUpdater : struct, IFilterUpdater
-        {
-            _nodes.Dirty();
-
-            var archetypeNewId = _nodes.Count;
-            parent.AddChild(archetypeNewId);
-            var parentArchetypeId = parent.archetypeId;
-
-            _nodes.Add(default);
-            ref var newNode = ref _nodes.GetRef(archetypeNewId);
-            newNode.archetypeId = archetypeNewId;
-            newNode.itemId = itemId;
-            newNode.parent = parentArchetypeId;
-            newNode.collectionId = _collections.Count;
-            _collections.Add(default);
-            newNode.hash = GetHash(archetypeNewId);
-
-            _collections.GetRef(newNode.collectionId) = CreateIdCollection();
-
-            ref var upNode = ref newNode;
-            while (upNode.parent != 0)
-            {
-                upNode = ref _nodes.ReadRef(upNode.parent);
-                filterUpdater.AddToFilterData(ref _nodes, upNode.archetypeId, archetypeNewId, itemId);
-            }
-            filterUpdater.EndToFilterData();
-
-            if (isTemporary)
-            {
-                var collectionId = newNode.collectionId;
-                var toId = FindUpNonTemporary(ref newNode);
-                _temporaries.Add(
-                    new MoveCollection()
-                    {
-                        fromCollectionId = collectionId,
-                        toCollectionId = toId.collectionId,
-                        toArchetypeId = toId.archetypeId,
-                    }
-                    );
-
-            }
-
-            return ref newNode;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node FindUpNonTemporary(ref Node startNode)
-        {
-            var currentId = startNode.parent;
-            while (currentId != 0)
-            {
-                ref var node = ref _nodes.ReadRef(currentId);
-                if (_isTemporaries.Contains(node.itemId))
-                {
-                    currentId = _nodes.ReadRef(currentId).parent;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            return ref _nodes.ReadRef(currentId);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node MoveUpToItemId(ref Node startNode, ushort itemId, ushort* itemDeep, ref int deep)
-        {
-            ref var node = ref startNode;
-
-            do
-            {
-                if (deep == FIND_DEEP)
-                {
-                    throw new Exception();
-                }
-
-                itemDeep[deep++] = node.itemId;
-
-                node = ref _nodes.ReadRef(node.parent);
-            }
-            while (node.itemId != itemId);
-
-            return ref node;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node DeepAttachNewNode<TFilterUpdater>(ref TFilterUpdater filterUpdater, ref Node startNode, ushort* itemIds, int itemCount, bool isTemporary)
-            where TFilterUpdater : struct, IFilterUpdater
-        {
-            ref Node node = ref startNode;
-            for (int i = itemCount - 1; i >= 0; --i)
-            {
-                node = ref GetChildNode(ref filterUpdater, ref node, itemIds[i], isTemporary);
-            }
-            return ref node;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref Node MoveUpToLocalRoot(ref Node startNode, ushort itemId, ushort* itemDeep, ref int deep)
-        {
-            ref var node = ref startNode;
-
-            do
-            {
-                if (deep == FIND_DEEP)
-                {
-                    throw new Exception();
-                }
-
-                itemDeep[deep++] = node.itemId;
-
-                if (node.parent == 0)
-                {
-                    return ref _nodes.ReadRef(itemId);
-                }
-
-                node = ref _nodes.ReadRef(node.parent);
-            }
-            while (node.itemId > itemId);
-
-            itemDeep[deep++] = itemId;
-
-            return ref node;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void PatternDownExtend(Span<uint> result, ref int resultCount, Span<ushort> excludes)
-        {
-            var count = resultCount;
-            for (int i = 0; i < count; ++i)
-            {
-                PatternFindInChild(ref _nodes.ReadRef(result[i]), result, ref resultCount, excludes);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void PatternFindInChild(ref Node node, Span<uint> result, ref int resultCount, Span<ushort> excludes)
-        {
-            for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
-            {
-                ref var childNode = ref _nodes.ReadRef(node.children[i]);
-                if (!excludes.SortContains(childNode.itemId))
-                {
-                    PatternDownExtend(ref childNode, result, ref resultCount, excludes);
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void PatternDownExtend(ref Node node, Span<uint> result, ref int resultCount, Span<ushort> excludes)
-        {
-            if (resultCount == result.Length)
-            {
-                throw new Exceptions.ArchetypePatternException(result.Length);
-            }
-            result[resultCount++] = node.archetypeId;
-            PatternFindInChild(ref node, result, ref resultCount, excludes);
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void FindPattern(ref Node node, int itemIndex, Span<ushort> includes, Span<ushort> excludes, Span<uint> result, ref int resultCount)
-        {
-            var itemId = includes[itemIndex];
-            if (node.itemId <= itemId)
-            {
-                if (node.itemId == itemId)
-                {
-                    if (itemIndex == includes.Length - 1)
-                    {
-                        if (resultCount == result.Length)
+                    var collectionId = node.collectionId;
+                    var toId = FindUpNonTemporary(ref nodes, ref node);
+                    temporaries.Add(
+                        new MoveCollection()
                         {
-                            throw new Exceptions.ArchetypePatternException(result.Length);
+                            fromCollectionId = collectionId,
+                            toCollectionId = toId.collectionId,
+                            toArchetypeId = toId.archetypeId,
                         }
-                        result[resultCount++] = node.archetypeId;
+                        );
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Apply(ref NList<BAllocator, MoveCollection> temporaries)
+            {
+                temporaries = this.temporaries;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private ref Node FindUpNonTemporary(ref WArray<Node> nodes, ref Node startNode)
+            {
+                var currentId = startNode.parent;
+                while (currentId != 0)
+                {
+                    ref var node = ref nodes.GetRef(currentId);
+                    if (isTemporaries.Contains(node.itemId))
+                    {
+                        currentId = nodes.GetRef(currentId).parent;
                     }
                     else
                     {
-
-                        for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
-                        {
-                            FindPattern(ref _nodes.ReadRef(node.children[i]), itemIndex + 1, includes, excludes, result, ref resultCount);
-                        }
+                        break;
                     }
                 }
-                else if (!excludes.SortContains(node.itemId))
-                {
-                    for (int i = 0, iMax = node.childrenCount; i < iMax; ++i)
-                    {
-                        FindPattern(ref _nodes.ReadRef(node.children[i]), itemIndex, includes, excludes, result, ref resultCount);
-                    }
-                }
+                return ref nodes.GetRef(currentId);
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void MoveCollection(uint fromCollectionId, uint toCollectionId, uint id)
-        {
-            _collections.GetRef(fromCollectionId).Remove(id);
-            _collections.GetRef(toCollectionId).Add(id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Move(uint fromArchetypeId, uint toArchetypeId, uint id)
-        {
-            MoveCollection(_nodes.ReadRef(fromArchetypeId).collectionId, _nodes.ReadRef(toArchetypeId).collectionId, id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private uint GetHash(uint archetypeId)
-        {
-            ref var node = ref _nodes.ReadRef(archetypeId);
-            uint hash = (node.parent != 0) ? _nodes.ReadRef(node.parent).hash : 0;
-            return unchecked(hash * 314159 + node.itemId);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
-        {
-            RepairMemoryCaller.Repair(ref _collections, ref repairMemoryContext);
-        }
-
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            _nodes.PackBlittable(ref writer);
-            _collections.Pack(ref writer);
-            _temporaries.PackBlittable(ref writer);
-
-            _transitionAddCache.PackBlittable(ref writer);
-            _transitionRemoveCache.PackBlittable(ref writer);
-            _changesBuffer.PackBlittable(ref writer);
-            _isTemporaries.PackBlittable(ref writer);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            _dependencies = reader.Dependency.Get<WPtr<Dependencies>>().Value;
-            _nodes.UnpackBlittable(ref reader);
-            _collections.Unpack(ref reader);
-            _temporaries.UnpackBlittable(ref reader);
-
-            _transitionAddCache.UnpackBlittable(ref reader);
-            _transitionRemoveCache.UnpackBlittable(ref reader);
-            _changesBuffer.UnpackBlittable(ref reader);
-            _isTemporaries.UnpackBlittable(ref reader);
-        }
-
-        public interface IIterable
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke(ushort itemId);
-        }
 
         private struct BufferEntry
         {
             public bool isAdd;
             public bool isTemporary;
             public uint entityId;
-            public ushort itemId;
+            public uint itemId;
         }
-    }
 
-    internal unsafe struct Node
-    {
-        public const int ChildrenMax = 16;
-
-        public uint parent;
-        public uint archetypeId;
-        public ushort itemId;
-        public uint collectionId;
-        public uint hash;
-        public int childrenCount;
-        public fixed uint children[Node.ChildrenMax];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddChild(uint nodeId)
+        internal struct MoveCollection
         {
-#if !ANOTHERECS_RELEASE
-            if (childrenCount == ChildrenMax)
-            {
-                throw new InvalidOperationException();
-            }
-#endif
-            childrenCount = CapacityChildrenAsSpan().TryAddSort(childrenCount, nodeId);
+            public uint fromCollectionId;
+            public uint toCollectionId;
+            public uint toArchetypeId;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Span<uint> CapacityChildrenAsSpan()
-            => new(UnsafeUtils.AddressOf(ref children[0]), ChildrenMax);
-    }
-
-#if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    internal unsafe struct IdCollection<TAllocator> : ISerialize, IDisposable, IEnumerable<uint>
-        where TAllocator : unmanaged, IAllocator
-    {
-        private NHashSetZero<TAllocator, uint, U4U4HashProvider> _data;
-
-        public uint Count
-        { 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.Count;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IdCollection(TAllocator* allocator, uint capacity)
-        {
-            _data = new NHashSetZero<TAllocator, uint, U4U4HashProvider>(allocator, capacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(uint id)
-        {
-            _data.Add(id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(uint id)
-        {
-            _data.Remove(id);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
-        {
-            _data.Clear();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            _data.Dispose();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            _data.Pack(ref writer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            _data.Unpack(ref reader);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NHashSetZero<TAllocator, uint, U4U4HashProvider>.Enumerator GetEnumerator()
-            => _data.GetEnumerator();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IEnumerator<uint> IEnumerable<uint>.GetEnumerator()
-            => _data.GetEnumerator();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IEnumerator IEnumerable.GetEnumerator()
-            => _data.GetEnumerator();
-    }
-
-    internal struct MoveCollection
-    {
-        public uint fromCollectionId;
-        public uint toCollectionId;
-        public uint toArchetypeId;
     }
 }

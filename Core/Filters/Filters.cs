@@ -11,7 +11,7 @@ namespace AnotherECS.Core
     {
         private Dependencies* _dependencies;
         private FilterUpdater _filterUpdater;
-        private NDictionary<BAllocator, Mask, uint, Mask> _maskTofilters;
+        private NDictionary<BAllocator, Mask, uint, Mask> _maskToFilters;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -19,13 +19,13 @@ namespace AnotherECS.Core
         {
             _dependencies  = dependencies;
             _filterUpdater = FilterUpdater.Create(&dependencies->bAllocator, capacity);
-            _maskTofilters = new NDictionary<BAllocator, Mask, uint, Mask>(&dependencies->bAllocator, capacity);
+            _maskToFilters = new NDictionary<BAllocator, Mask, uint, Mask>(&dependencies->bAllocator, capacity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe FilterData* Create(ref Mask mask)
         {
-            if (!_maskTofilters.TryGetValue(mask, out uint filterId))
+            if (!_maskToFilters.TryGetValue(mask, out uint filterId))
             {
                 var includes = mask.includes.ValuesAsSpan();
                 var excludes = mask.excludes.ValuesAsSpan();
@@ -34,7 +34,7 @@ namespace AnotherECS.Core
 
                 var filterData = new FilterData(
                     _dependencies,
-                    _maskTofilters.Count,
+                    _maskToFilters.Count,
                     mask,
                     NList<BAllocator, uint>.CreateWrapper(_dependencies->archetype.Filter(&_dependencies->bAllocator, includes, excludes))
                     );
@@ -42,7 +42,7 @@ namespace AnotherECS.Core
                 filterId = _filterUpdater.filters.Count;
 
                 _filterUpdater.filters.Add(filterData);
-                _maskTofilters.Add(mask, filterId);
+                _maskToFilters.Add(mask, filterId);
 
                 foreach (var id in filterData.archetypeIds)
                 {
@@ -54,18 +54,18 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(uint id, ushort elementId, bool isTemporary)
+        public void Add(uint id, uint elementId, bool isTemporary)
             => _dependencies->archetype.Add(ref _filterUpdater, id, elementId, isTemporary);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(uint id, ushort elementId)
+        public void Remove(uint id, uint elementId)
             => _dependencies->archetype.Remove(ref _filterUpdater, id, elementId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             _filterUpdater.Dispose();
-            _maskTofilters.Dispose();
+            _maskToFilters.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,7 +103,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, ushort itemId)
+        public void Add<TNArray>(ref TNArray archetypes, uint archetypeId, uint itemId)
             where TNArray : struct, INArray<Node>
         {
             if (!_mask.excludes.Contains(itemId))
@@ -180,7 +180,7 @@ namespace AnotherECS.Core
     internal interface IFilterUpdater
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, ushort itemId)
+        void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, uint itemId)
            where TNArray : struct, INArray<Node>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +204,7 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, ushort itemId)
+        public void AddToFilterData<TNArray>(ref TNArray archetypes, uint archetypeId, uint toAddArchetypeId, uint itemId)
             where TNArray : struct, INArray<Node>
         {
             foreach (var filterId in archetypeIdToFilterId.GetValues(archetypeId))

@@ -1,13 +1,14 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Exceptions;
 using AnotherECS.Serializer;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NList<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRepairMemoryHandle
+    public unsafe struct NList<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRepairMemoryHandle, IDisposable
         where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {

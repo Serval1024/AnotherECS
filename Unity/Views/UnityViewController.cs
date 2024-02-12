@@ -23,20 +23,20 @@ namespace AnotherECS.Views
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreateView<T>(State state, EntityId id)
-            where T : IView
+            where T : IViewFactory
             => CreateView(state, id, _config.Get<T>());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreateView(State state, EntityId id, uint viewId)
             => CreateView(state, id, _config.Get(viewId));
 
-        public void CreateView(State state, EntityId id, IView prototype)
+        public void CreateView(State state, EntityId id, IViewFactory factory)
         {
             if (_byIdInstances.TryGetValue(id, out IView instance))
             {
                 DestroyView(id, instance);
             }
-            var inst = prototype.Create();
+            var inst = factory.Create();
             _byIdInstances.Add(id, inst);
             inst.Construct(state, EntityExtensions.ToEntity(state, id));
             inst.Created();
@@ -60,8 +60,9 @@ namespace AnotherECS.Views
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetId<T>()
-            where T : IView
+            where T : IViewFactory
             => _config.GetId<T>();
+
 
         private void Update()
         {
@@ -78,15 +79,14 @@ namespace AnotherECS.Views
         }
 
         
-
         public class Config
         {
-            private readonly IView[] _byIds;
+            private readonly IViewFactory[] _byIds;
             private readonly Dictionary<Type, uint> _byTypeToIds;
-            private readonly Dictionary<string, IView> _byGUIDs;
-            private readonly Dictionary<Type, IView> _byTypes;
+            private readonly Dictionary<string, IViewFactory> _byGUIDs;
+            private readonly Dictionary<Type, IViewFactory> _byTypes;
 
-            public Config(IEnumerable<IView> registredViews)
+            public Config(IEnumerable<IViewFactory> registredViews)
             {
                 if (registredViews.Any(p => p == null))
                 {
@@ -100,8 +100,8 @@ namespace AnotherECS.Views
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IView Get<T>()
-                where T : IView
+            public IViewFactory Get<T>()
+                where T : IViewFactory
             {
                 var id = typeof(T);
 #if !ANOTHERECS_RELEASE
@@ -114,7 +114,7 @@ namespace AnotherECS.Views
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IView Get(string id)
+            public IViewFactory Get(string id)
             {
 #if !ANOTHERECS_RELEASE
                 if (!_byGUIDs.ContainsKey(id))
@@ -126,7 +126,7 @@ namespace AnotherECS.Views
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IView Get(uint id)
+            public IViewFactory Get(uint id)
             {
 #if !ANOTHERECS_RELEASE
                 if (id >= _byIds.Length)
@@ -139,7 +139,7 @@ namespace AnotherECS.Views
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public uint GetId<T>()
-                where T : IView
+                where T : IViewFactory
             {
                 var id = typeof(T);
 #if !ANOTHERECS_RELEASE
