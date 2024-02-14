@@ -21,7 +21,7 @@ namespace AnotherECS.Core.Caller
         where TAllocator : unmanaged, IAllocator
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
+        void Config<TMemoryAllocatorProvider>(Dependencies* dependencies, State state, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>;
     }
 
@@ -118,7 +118,7 @@ namespace AnotherECS.Core.Caller
         ref TSparse ReadSparse(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, EntityId id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        WArray<T> ReadSparse<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout)
+        WArray<T> ReadSparse<T>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies)
             where T : unmanaged;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

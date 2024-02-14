@@ -3,7 +3,9 @@ using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using static Codice.CM.Common.CmCallContext;
 
 namespace AnotherECS.Core.Collection
 {
@@ -315,6 +317,21 @@ namespace AnotherECS.Core.Collection
                     }
                     ++counterIndex;
                 }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEach<TIterable>(TIterable iterable)
+            where TIterable : struct, IIterable<TValue>
+        {
+            int index = 0;
+            while (index < _lastIndex)
+            {
+                if (_slots.ReadRef(index).hashCode < _EMPTY)
+                {
+                    iterable.Each(ref _slots.ReadRef(index).item);
+                }
+                ++index;
             }
         }
 

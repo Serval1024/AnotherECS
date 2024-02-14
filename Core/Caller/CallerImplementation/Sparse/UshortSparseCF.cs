@@ -1,5 +1,6 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -13,7 +14,8 @@ namespace AnotherECS.Core.Caller
         IIterator<TAllocator, ushort, TDense, ushort>,
         IDataIterator<TAllocator, ushort, TDense, ushort>,
         IBoolConst,
-        ISingleDenseFlag
+        ISingleDenseFlag,
+        IDisposable
 
         where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
@@ -23,7 +25,7 @@ namespace AnotherECS.Core.Caller
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
+        public void Config<TMemoryAllocatorProvider>(Dependencies* dependencies, State state, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,7 +125,7 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, ushort, TDense, ushort> layout)
+        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref Dependencies dependencies)
             where T : unmanaged
         {
 #if !ANOTHERECS_RELEASE
@@ -133,8 +135,11 @@ namespace AnotherECS.Core.Caller
                 return new WArray<T>((T*)layout.sparse.ReadPtr(), layout.sparse.Length);
             }
 #if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(typeof(T).Name);
+            throw new ArgumentException(typeof(T).Name);
 #endif
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose() { }
     }
 }

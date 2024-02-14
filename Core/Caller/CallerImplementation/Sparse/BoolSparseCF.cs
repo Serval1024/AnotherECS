@@ -1,5 +1,6 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -13,19 +14,25 @@ namespace AnotherECS.Core.Caller
         IIterator<TAllocator, bool, TDense, ushort>,
         IDataIterator<TAllocator, bool, TDense, ushort>,
         IBoolConst,
-        ISingleDenseFlag
+        ISingleDenseFlag,
+        IDisposable
 
         where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
     {
+        private MockSparseProvider _mockSparseProvider;
+
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => false; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
-            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator> { }
+        public void Config<TMemoryAllocatorProvider>(Dependencies* dependencies, State state, uint callerId)
+            where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
+        {
+            _mockSparseProvider = new MockSparseProvider(&dependencies->bAllocator);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -109,18 +116,32 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, ushort> layout)
+        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies)
             where T : unmanaged
         {
-#if !ANOTHERECS_RELEASE
-            if (typeof(T) == typeof(bool))
-#endif
+            if (typeof(T) == typeof(ushort))
+            {
+                var array = _mockSparseProvider.Get<ushort>(layout.sparse.Length);
+                var sparse = layout.sparse;
+                const ushort zero = 0;
+                for (ushort i = 1, iMax = (ushort)sparse.Length; i < iMax; ++i)
+                {
+                    array.GetRef(i) = sparse.GetRef(i) ? i : zero;
+                }
+                return new((T*)array.GetPtr(), array.Length);
+            }
+            else if (typeof(T) == typeof(bool))
             {
                 return new WArray<T>((T*)layout.sparse.ReadPtr(), layout.sparse.Length);
             }
-#if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(typeof(T).Name);
-#endif
+
+            throw new ArgumentException(typeof(T).Name);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            _mockSparseProvider.Dispose();
         }
     }
 }

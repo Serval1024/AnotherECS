@@ -14,7 +14,9 @@ namespace AnotherECS.Core.Caller
         IIterator<TAllocator, bool, TDense, uint>,
         IDataIterator<TAllocator, bool, TDense, uint>,
         IBoolConst,
-        ISingleDenseFlag
+        ISingleDenseFlag,
+        IDisposable
+
 
         where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
@@ -28,7 +30,7 @@ namespace AnotherECS.Core.Caller
 
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
+        public void Config<TMemoryAllocatorProvider>(Dependencies* dependencies, State state, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
         { 
             _dependencies = dependencies;
@@ -104,11 +106,13 @@ namespace AnotherECS.Core.Caller
             => throw new NotSupportedException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, uint> layout)
+        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies)
             where T : unmanaged
             => throw new NotSupportedException();
 
         public void SetSparse(ref ULayout<TAllocator, bool, TDense, uint> layout, uint id, uint denseIndex)
             => throw new NotImplementedException();
+
+        public void Dispose() { }
     }
 }

@@ -54,7 +54,7 @@ namespace AnotherECS.Core.Caller
         where TAttachDetachStorage : struct, IData<TAllocator>, IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, ISerialize, IRepairMemoryHandle, IDisposable
         where TAttach : struct, IAttachExternal<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TDetach : struct, IDetachExternal<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
-        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterator<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IData<TAllocator>
+        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterator<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IData<TAllocator>, IDisposable
         where TDenseStorage : struct, IStartIndexProvider, IDenseProvider<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
         where TBinderToFilters : struct, IBinderToFilters
         where TVersion : struct, IChange<TAllocator, TSparse, TDense, TDenseIndex>, IVersion<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IRevertFinished, IBoolConst
@@ -185,9 +185,9 @@ namespace AnotherECS.Core.Caller
             _allocator = default(TMemoryAllocatorProvider).GetStage1(_dependencies);
             
             _elementId = id;
-            _attachDetachStorage.Config<TMemoryAllocatorProvider>(state, dependencies, id);
-            _defaultSetter.Config<TMemoryAllocatorProvider>(state, dependencies, id);
-            _sparseStorage.Config<TMemoryAllocatorProvider>(state, dependencies, id);
+            _attachDetachStorage.Config<TMemoryAllocatorProvider>(dependencies, state, id);
+            _defaultSetter.Config<TMemoryAllocatorProvider>(dependencies, state, id);
+            _sparseStorage.Config<TMemoryAllocatorProvider>(dependencies, state, id);
             _componentFunction = componentFunction;
         }
         
@@ -218,6 +218,7 @@ namespace AnotherECS.Core.Caller
         public void Dispose()
         {
             _attachDetachStorage.Dispose();
+            _sparseStorage.Dispose();
             Reset();
         }
 
@@ -490,7 +491,7 @@ namespace AnotherECS.Core.Caller
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WArray<T> ReadSparse<T>()
             where T : unmanaged
-            => _sparseStorage.ReadSparse<T>(ref *_layout);
+            => _sparseStorage.ReadSparse<T>(ref *_layout, ref *_dependencies);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WArray<TDense> ReadDense()

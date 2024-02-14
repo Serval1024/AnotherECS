@@ -15,7 +15,7 @@ namespace AnotherECS.Core
 
         private struct Dummy { }
 
-        public static InjectParameterData[] ExtractInjectParameterData(Type type)
+        public static ParameterData[] ExtractInjectParameterData(Type type)
         {
             var interfaces = type.GetInterfaces().Where(p => p.Name.StartsWith($"{typeof(IInject).Name}`")).ToArray();
 
@@ -32,14 +32,14 @@ namespace AnotherECS.Core
                 return construct
                     .GetParameters()
                     .Select(p => 
-                    new InjectParameterData()
+                    new ParameterData()
                     {
                         type = p.ParameterType,
                         maps = p.GetCustomAttributes<InjectMapAttribute>().ToArray()
                     })
                     .ToArray();
             }
-            return Array.Empty<InjectParameterData>();
+            return Array.Empty<ParameterData>();
         }
             
         public static Type[] ExtractGenericFromInterface<T>(Type type)

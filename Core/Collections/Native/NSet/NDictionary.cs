@@ -340,6 +340,21 @@ namespace AnotherECS.Core.Collection
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEachValue<TIterable>(TIterable iterable)
+            where TIterable : struct, IIterable<TValue>
+        {
+            int index = 0;
+            while (index < Count)
+            {
+                if (_entries.ReadRef(index).hashCode < _EMPTY)
+                {
+                    iterable.Each(ref _entries.ReadRef(index).value);
+                }
+                ++index;
+            }
+        }
+
         public void Dispose()
         {
             _buckets.Dispose();

@@ -11,33 +11,11 @@ using System.Runtime.CompilerServices;
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, IListCollection<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IValid, IRepairMemoryHandle
+    public struct DList<TValue> : IInject<WPtr<AllocatorSelector>>, IListCollection<TValue>, IList<TValue>, IEnumerable<TValue>, ISerialize, IValid, IRepairMemoryHandle, IRepairStateId
         where TValue : unmanaged
     {
         private DArray<TValue> _data;
         private uint _count;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(
-            [InjectMap(nameof(BAllocator), "allocatorType=1")]
-            [InjectMap(nameof(HAllocator), "allocatorType=2")]
-            WPtr<AllocatorSelector> allocator
-            )
-        { 
-            InjectUtils.Construct(ref _data, allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject.Deconstruct()
-        {
-            InjectUtils.Deconstruct(ref _data);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
-        {
-            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
-        }
 
         public bool IsValid
         { 
@@ -62,6 +40,12 @@ namespace AnotherECS.Collections
             => false;
 
         int System.Collections.Generic.ICollection<TValue>.Count => (int)Count;
+
+        internal bool IsDirty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.IsDirty;
+        }
 
         public TValue this[int index]
         {
@@ -377,7 +361,46 @@ namespace AnotherECS.Collections
             CopyTo(array, (uint)arrayIndex);
         }
 
+        #region inner interfaces
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator
+            )
+        {
+            InjectUtils.Construct(ref _data, allocator);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject.Deconstruct()
+        {
+            InjectUtils.Deconstruct(ref _data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        {
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+        }
+
+        bool IRepairStateId.IsRepairStateId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            if (IsValid)
+            {
+                _data.RepairIdElement(stateId, 0, Count);
+            }
+        }
+        #endregion
+
+        #region declarations
         public struct Enumerator : IEnumerator<TValue>
         {
             private readonly DList<TValue> _data;
@@ -424,5 +447,6 @@ namespace AnotherECS.Collections
                 }
             }
         }
+        #endregion
     }
 }

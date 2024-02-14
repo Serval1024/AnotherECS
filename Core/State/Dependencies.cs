@@ -1,4 +1,5 @@
 ﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Caller;
 using AnotherECS.Serializer;
 using System;
 
@@ -21,8 +22,10 @@ namespace AnotherECS.Core
 
         public ushort stateId;
 
+
         public void Dispose()
         {
+            bAllocator.Dispose();        //Free all memory.
             injectContainer.Dispose();
         }
 

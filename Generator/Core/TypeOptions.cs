@@ -2,6 +2,7 @@
 using AnotherECS.Core.Allocators;
 using AnotherECS.Generator.Exceptions;
 using System;
+using System.Linq;
 
 namespace AnotherECS.Generator
 {
@@ -40,8 +41,8 @@ namespace AnotherECS.Generator
         public ComponentUtils.FieldData[] repairStateIdMembers;
 
         public bool isUnmanaged;
-        //public bool isBlittable;
 
+        public bool isForceUseSparse;
         public bool isUseRecycle;
         public bool isBindToEntity;
         public bool isDispose;
@@ -80,11 +81,11 @@ namespace AnotherECS.Generator
             isRepairStateIdComponent = !isEmpty && ComponentUtils.IsRepairStateId(type);
             isRepairStateIdMembers = !isEmpty && ComponentUtils.IsRepairStateIdMembers(type);
             isRepairStateId = isRepairStateIdComponent | isRepairStateIdMembers;
-            repairStateIdMembers = isRepairStateIdMembers ? ComponentUtils.GetFieldToMembers<IRepairStateId>(type) : Array.Empty<ComponentUtils.FieldData>();
+            repairStateIdMembers = isRepairStateIdMembers ? GetRepairStateId(type) : Array.Empty<ComponentUtils.FieldData>();
 
             isUnmanaged = ComponentUtils.IsUnmanaged(type);
-            //isBlittable = ComponentUtils.IsBlittable(type);
 
+            isForceUseSparse = ComponentUtils.IsForceUseSparse(type);
             isUseRecycle = !isMarker && !isEmpty && !isSingle;
             isBindToEntity = !isSingle;
             isConfig = ComponentUtils.IsConfig(type);
@@ -92,6 +93,11 @@ namespace AnotherECS.Generator
 
             Validate();
         }
+
+        private static ComponentUtils.FieldData[] GetRepairStateId(Type type)
+            => ComponentUtils.GetFieldToMembers<IRepairStateId>(type)
+                .Where(p => ((IRepairStateId)Activator.CreateInstance(p.fieldType)).IsRepairStateId)
+                .ToArray();
 
         private static SparseMode GetSparseMode(Type type)
             => (ComponentUtils.IsWithoutSparseDirectDense(type) || ComponentUtils.IsSingle(type) || ComponentUtils.IsEmpty(type))
@@ -111,6 +117,10 @@ namespace AnotherECS.Generator
             if (isDefault && isEmpty)
             {
                 throw new OptionsConflictException(type, $"{nameof(IDefault)}, {nameof(ComponentOptions.DataFree)}.");
+            }
+            if (isForceUseSparse && (isEmpty || isSingle))
+            {
+                throw new OptionsConflictException(type, $"{ComponentOptions.ForceUseSparse}, {nameof(ComponentOptions.DataFree)} or {nameof(ISingle)}.");
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
+using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -13,19 +14,24 @@ namespace AnotherECS.Core.Caller
         IIterator<TAllocator, bool, TDense, uint>,
         IDataIterator<TAllocator, bool, TDense, uint>,
         IBoolConst,
-        ISingleDenseFlag
+        ISingleDenseFlag,
+        IDisposable
 
         where TAllocator : unmanaged, IAllocator
         where TDense : unmanaged
     {
+        private MockSparseProvider _mockSparseProvider;
+
         public bool IsSingleDense { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
         public bool IsUseSparse { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
         public bool Is { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => true; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Config<TMemoryAllocatorProvider>(State state, Dependencies* dependencies, uint callerId)
+        public void Config<TMemoryAllocatorProvider>(Dependencies* dependencies, State state, uint callerId)
             where TMemoryAllocatorProvider : IAllocatorProvider<TAllocator, TAllocator>
-        { }
+        {
+            _mockSparseProvider = new MockSparseProvider(&dependencies->bAllocator);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsSparseResize<TSparseBoolConst>()
@@ -86,18 +92,25 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, uint> layout)
+        public WArray<T> ReadSparse<T>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies)
             where T : unmanaged
         {
-#if !ANOTHERECS_RELEASE
-            if (typeof(T) == typeof(bool))
-#endif
+            if (typeof(T) == typeof(ushort))
+            {
+                return _mockSparseProvider.Get<T>(layout.sparse.Length);
+            }
+            else if (typeof(T) == typeof(bool))
             {
                 return new WArray<T>((T*)layout.sparse.ReadPtr(), layout.sparse.Length);
             }
-#if !ANOTHERECS_RELEASE
-            throw new System.ArgumentException(typeof(T).Name);
-#endif
+
+            throw new ArgumentException(typeof(T).Name);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            _mockSparseProvider.Dispose();
         }
     }
 }

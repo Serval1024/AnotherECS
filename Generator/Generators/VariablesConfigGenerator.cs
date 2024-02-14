@@ -84,7 +84,7 @@ namespace AnotherECS.Generator
                     { "INJECT:FIELD:ARGS", () =>
                         {
                             InjectContextUtils.PrepareContext(ref injectContext, components[variables.GetIndex(0)].allocatorType);
-                            return GetInjectArguments(ref injectContext, components[variables.GetIndex(0)].injectMembers[variables.GetIndex(1)].injectParameterDatas);
+                            return GetInjectArguments(ref injectContext, components[variables.GetIndex(0)].injectMembers[variables.GetIndex(1)].parameters);
                         }
                     },
 
@@ -238,7 +238,7 @@ namespace AnotherECS.Generator
                .ToArray()
                );
 
-        private static string GetInjectArguments(ref InjectContext context, InjectParameterData[] injectParameterDatas)
+        private static string GetInjectArguments(ref InjectContext context, ParameterData[] injectParameterDatas)
         {
             var result = new StringBuilder();
 

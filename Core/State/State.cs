@@ -151,8 +151,6 @@ namespace AnotherECS.Core
                 }
             }
 
-            _dependencies->bAllocator.Dispose();        //Free all memory.
-
             _dependencies->Dispose();                   //Free _dependencies.
             _allocator.Deallocate(_dependencies);
         }
@@ -297,7 +295,7 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             var archetypeId = _dependencies->entities.ReadArchetypeId(id);
-            _dependencies->archetype.EachItem(archetypeId, new RemoveRawIterable(this, id));
+            _dependencies->archetype.ForEachItem(archetypeId, new RemoveRawIterable(this, id));
 
             _dependencies->archetype.Remove(archetypeId, id);
             _dependencies->entities.Deallocate(id);
@@ -1209,7 +1207,7 @@ namespace AnotherECS.Core
             public IResizableCaller caller;
         }
 
-        private struct RemoveRawIterable : Set<BAllocator, HAllocator>.IIterable
+        private struct RemoveRawIterable : IIterable<uint>
         {
             private EntityId id;
             private State state;
@@ -1221,7 +1219,7 @@ namespace AnotherECS.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke(uint itemId)
+            public void Each(ref uint itemId)
             {
                 state.GetCaller(itemId).RemoveRaw(id);
             }

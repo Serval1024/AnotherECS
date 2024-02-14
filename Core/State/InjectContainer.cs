@@ -1,6 +1,7 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
@@ -24,6 +25,7 @@ namespace AnotherECS.Core
             HAllocator = new WPtr<AllocatorSelector>(hAllocatorPointer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             _rawAllocator.Deallocate(BAllocator.Value);

@@ -17,28 +17,6 @@ namespace AnotherECS.Collections
         private DList<char> _data;
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(
-            [InjectMap(nameof(BAllocator), "allocatorType=1")]
-            [InjectMap(nameof(HAllocator), "allocatorType=2")]
-            WPtr<AllocatorSelector> allocator
-            )
-        {
-            InjectUtils.Construct(ref _data, allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject.Deconstruct()
-        {
-            InjectUtils.Deconstruct(ref _data);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
-        {
-            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
-        }
-
         public uint Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -249,6 +227,31 @@ namespace AnotherECS.Collections
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
 
+        #region declarations
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator
+            )
+        {
+            InjectUtils.Construct(ref _data, allocator);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject.Deconstruct()
+        {
+            InjectUtils.Deconstruct(ref _data);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        {
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+        }
+        #endregion
+
+        #region declarations
         public struct Enumerator : IEnumerator<char>
         {
             private readonly DString _data;
@@ -293,5 +296,6 @@ namespace AnotherECS.Collections
                 }
             }
         }
+        #endregion
     }
 }

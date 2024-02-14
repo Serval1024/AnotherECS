@@ -132,7 +132,6 @@ namespace AnotherECS.Core
             => type.GetFieldsAndProperties(DATA_ACTIVE_FLAGS)
                 .Any(p => typeof(IRepairStateId).IsAssignableFrom(p.GetMemberType()));
 
-
         public static int GetTypeSize(Type type)            
             => System.Runtime.InteropServices.Marshal.SizeOf(type);
 
@@ -147,7 +146,8 @@ namespace AnotherECS.Core
                     result.Add(new FieldData
                     {
                         fieldName = member.GetMemberName(),
-                        injectParameterDatas = ReflectionUtils.ExtractInjectParameterData(member.GetMemberType()),
+                        fieldType = member.GetMemberType(),
+                        parameters = ReflectionUtils.ExtractInjectParameterData(member.GetMemberType()),
                     });
                 }
             }
@@ -159,7 +159,8 @@ namespace AnotherECS.Core
         public struct FieldData
         {
             public string fieldName;
-            public InjectParameterData[] injectParameterDatas;
+            public Type fieldType;
+            public ParameterData[] parameters;
         }
     }
 }

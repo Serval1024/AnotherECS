@@ -9,6 +9,7 @@ namespace AnotherECS.Core
     {
         public const EntityId Zero = 0;
         public static readonly Entity Null = new();
+
         internal EntityId id;
         internal ushort generation;
         internal ushort stateId;
@@ -178,11 +179,13 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
-            => (int)id ^ generation ^ State.GetHashCode();
+            => (int)id ^ generation;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other)
             => id.CompareTo(other.id);
+
+        bool IRepairStateId.IsRepairStateId => true;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IRepairStateId.RepairStateId(ushort stateId)

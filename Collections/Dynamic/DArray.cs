@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, ICollection, IValid, IRepairMemoryHandle
+    public unsafe struct DArray<TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<TValue>, ISerialize, ICollection, IValid, IRepairMemoryHandle, IRepairStateId
         where TValue : unmanaged
     {
         private NArray<AllocatorSelector, TValue> _data;
@@ -36,27 +36,17 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(
-            [InjectMap(nameof(BAllocator), "allocatorType=1")]
-            [InjectMap(nameof(HAllocator), "allocatorType=2")]
-            WPtr<AllocatorSelector> allocator)
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
         {
-            _data.SetAllocator(allocator.Value);
-#if !ANOTHERECS_RELEASE
-            Validate();
-#endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject.Deconstruct()
-        { 
-            Deallocate();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext rebinder)
-        {
-            RepairMemoryCaller.Repair(ref _data, ref rebinder);
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)_data.ReadRef(i);
+                    data.RepairStateId(stateId);
+                    _data.ReadRef(i) = (TValue)data;
+                }
+            }
         }
 
         public uint Length
@@ -265,6 +255,46 @@ namespace AnotherECS.Collections
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
 
+        #region inner interfaces
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+            [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator)
+        {
+            _data.SetAllocator(allocator.Value);
+#if !ANOTHERECS_RELEASE
+            Validate();
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject.Deconstruct()
+        {
+            Deallocate();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext rebinder)
+        {
+            RepairMemoryCaller.Repair(ref _data, ref rebinder);
+        }
+
+        bool IRepairStateId.IsRepairStateId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            if (IsValid)
+            {
+                RepairIdElement(stateId, 0, Length);
+            }
+        }
+        #endregion
 
 #if !ANOTHERECS_RELEASE
         private void Validate()
@@ -276,6 +306,7 @@ namespace AnotherECS.Collections
         }
 #endif
 
+        #region declarations
         public struct Enumerator : IEnumerator<TValue>
         {
             private readonly DArray<TValue> _data;
@@ -322,5 +353,6 @@ namespace AnotherECS.Collections
                 }
             }
         }
+        #endregion
     }
 }

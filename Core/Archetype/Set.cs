@@ -169,14 +169,14 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void EachItem<TIterable>(uint startArchetypeId, TIterable iterable)
-            where TIterable : struct, IIterable
+        public void ForEachItem<TIterable>(uint startArchetypeId, TIterable iterable)
+            where TIterable : struct, IIterable<uint>
         {
             while (startArchetypeId != 0)
             {
                 ref var node = ref _nodes.ReadRef(startArchetypeId);
 
-                iterable.Invoke(node.itemId);
+                iterable.Each(ref node.itemId);
                 startArchetypeId = node.parent;
             }
         }
@@ -659,12 +659,6 @@ namespace AnotherECS.Core
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void AddFinished(WArray<Node> nodes, ref Node collection, uint itemId);
-        }
-
-        public interface IIterable
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke(uint itemId);
         }
     }
 }

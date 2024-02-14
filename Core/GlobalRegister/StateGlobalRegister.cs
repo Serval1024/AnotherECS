@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
@@ -9,7 +10,7 @@ namespace AnotherECS.Core
     public static class StateGlobalRegister
     {
         private static readonly MRecycle _recycle = new(16);
-        private static State[] _data = Array.Empty<State>();
+        private static State[] _data = new State[16];
 
 #if UNITY_EDITOR
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -43,6 +44,7 @@ namespace AnotherECS.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static State Get(ushort id)
             => _data[id];
     }

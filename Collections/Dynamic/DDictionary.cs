@@ -15,7 +15,7 @@ namespace AnotherECS.Collections
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
     [ForceBlittable]
-    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ICollection, IValid, ISerialize, IRepairMemoryHandle
+    public unsafe struct DDictionary<TKey, TValue> : IInject<WPtr<AllocatorSelector>>, IEnumerable<Pair<TKey, TValue>>, ICollection, IValid, ISerialize, IRepairMemoryHandle, IRepairStateId
         where TKey : unmanaged, IEquatable<TKey>
         where TValue : unmanaged
     {
@@ -34,30 +34,6 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
             Validate();
 #endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject<WPtr<AllocatorSelector>>.Construct(
-            [InjectMap(nameof(BAllocator), "allocatorType=1")]
-            [InjectMap(nameof(HAllocator), "allocatorType=2")]
-            WPtr<AllocatorSelector> allocator)
-        {
-            _data.SetAllocator(allocator.Value);
-#if !ANOTHERECS_RELEASE
-            Validate();
-#endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IInject.Deconstruct()
-        {
-            Deallocate();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
-        {
-            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
         }
 
         public uint Count
@@ -181,6 +157,46 @@ namespace AnotherECS.Collections
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
 
+        #region inner interfaces
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject<WPtr<AllocatorSelector>>.Construct(
+           [InjectMap(nameof(BAllocator), "allocatorType=1")]
+            [InjectMap(nameof(HAllocator), "allocatorType=2")]
+            WPtr<AllocatorSelector> allocator)
+        {
+            _data.SetAllocator(allocator.Value);
+#if !ANOTHERECS_RELEASE
+            Validate();
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IInject.Deconstruct()
+        {
+            Deallocate();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairMemoryHandle.RepairMemoryHandle(ref RepairMemoryContext repairMemoryContext)
+        {
+            RepairMemoryCaller.Repair(ref _data, ref repairMemoryContext);
+        }
+
+        bool IRepairStateId.IsRepairStateId
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            if (IsValid)
+            {
+                RepairIdElement(stateId);
+            }
+        }
+        #endregion
 
 #if !ANOTHERECS_RELEASE
         private void Validate()
@@ -195,6 +211,29 @@ namespace AnotherECS.Collections
             }
         }
 #endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RepairIdElement(ushort stateId)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                _data.ForEachValue(new RepairIdElementIterable() { stateId = stateId });
+            }
+        }
+
+        #region declarations
+        private struct RepairIdElementIterable : IIterable<TValue>
+        {
+            public ushort stateId;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Each(ref TValue data)
+            {
+                var value = (IRepairStateId)data;
+                value.RepairStateId(stateId);
+                data = (TValue)value;
+            }
+        }
 
         private struct HashProvider : IHashProvider<TKey, uint>
         {
@@ -262,5 +301,6 @@ namespace AnotherECS.Collections
                 enumerator.Reset();
             }
         }
+        #endregion
     }
 }

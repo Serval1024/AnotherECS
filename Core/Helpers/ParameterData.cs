@@ -2,7 +2,7 @@
 
 namespace AnotherECS.Core
 {
-    internal struct InjectParameterData
+    internal struct ParameterData
     {
         private const char _RULE_SEPARATOR = '=';
 
