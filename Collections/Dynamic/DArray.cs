@@ -132,6 +132,19 @@ namespace AnotherECS.Collections
         public bool Contains(TValue item)
             => IndexOf(ref item, _data.Length) != -1;
 
+        public void CopyFrom(DArray<TValue> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            if (Length != source.Length)
+            {
+                Allocate(source.Length);
+            }
+
+            source._data.CopyFrom(source._data);
+        }
+
         public void CopyTo(TValue[] array)
         {
 #if !ANOTHERECS_RELEASE

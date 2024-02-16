@@ -1,11 +1,11 @@
 using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
 using AnotherECS.Serializer;
+using Mono.Cecil;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using static Codice.CM.Common.CmCallContext;
 
 namespace AnotherECS.Core.Collection
 {
@@ -85,8 +85,34 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyFrom(NHashSet<TAllocator, TValue, THashProvider> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            if (_buckets.Length != source._buckets.Length)
+            {
+                _buckets.Allocate(source._buckets.Length);
+            }
+            if (_slots.Length != source._slots.Length)
+            {
+                _slots.Allocate(source._slots.Length);
+            }
+
+            _buckets.CopyFrom(source._buckets);
+            _slots.CopyFrom(source._slots);
+
+            _count = source._count;
+            _lastIndex = source._lastIndex;
+            _freeList = source._freeList;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(TValue item)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             var hashCode = _hashProvider.GetHash(ref item) & _MASK;
             
             for (int i = _buckets.Read(hashCode % _buckets.Length) - 1; i >= 0; i = _slots.ReadRef(i).next)
@@ -103,6 +129,7 @@ namespace AnotherECS.Core.Collection
         public void Add(TValue item)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (Contains(item))
             {
                 throw new ArgumentException();
@@ -141,6 +168,9 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TValue item)
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             _slots.Dirty();
             _buckets.Dirty();
 
@@ -182,6 +212,9 @@ namespace AnotherECS.Core.Collection
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             if (_lastIndex > 0)
             {
                 _buckets.Clear();
@@ -274,6 +307,7 @@ namespace AnotherECS.Core.Collection
         public TValue Get(uint index)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -298,6 +332,7 @@ namespace AnotherECS.Core.Collection
         public void Set(uint index, TValue value)
         {
 #if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
             if (index >= Count)
             {
                 throw new IndexOutOfRangeException(nameof(index));
@@ -324,6 +359,9 @@ namespace AnotherECS.Core.Collection
         public void ForEach<TIterable>(TIterable iterable)
             where TIterable : struct, IIterable<TValue>
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             int index = 0;
             while (index < _lastIndex)
             {

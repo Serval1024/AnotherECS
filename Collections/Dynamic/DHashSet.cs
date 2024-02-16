@@ -58,9 +58,23 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate()
+        {
+            Allocate(DCollectionConst.DEFAULT_SIZE);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate()
         {
             _data.Dispose();
+        }
+
+        public void CopyFrom(DHashSet<TValue> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            _data.CopyFrom(source._data);
         }
 
         public bool Contains(TValue item)

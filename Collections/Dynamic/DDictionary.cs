@@ -59,6 +59,12 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate()
+        {
+            Allocate(DCollectionConst.DEFAULT_SIZE);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate()
         {
             _data.Dispose();
@@ -98,6 +104,14 @@ namespace AnotherECS.Collections
             }
 #endif
             return _data.Get(index);
+        }
+
+        public void CopyFrom(DDictionary<TKey, TValue> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            _data.CopyFrom(source._data);
         }
 
         public void Set(uint index, object value)

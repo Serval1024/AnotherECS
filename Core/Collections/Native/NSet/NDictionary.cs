@@ -121,6 +121,28 @@ namespace AnotherECS.Core.Collection
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CopyFrom(NDictionary<TAllocator, TKey, TValue, THashProvider> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            if (_buckets.Length != source._buckets.Length)
+            {
+                _buckets.Allocate(source._buckets.Length);
+            }
+            if (_entries.Length != source._entries.Length)
+            {
+                _entries.Allocate(source._entries.Length);
+            }
+            _buckets.CopyFrom(source._buckets);
+            _entries.CopyFrom(source._entries);
+
+            _count = source._count;
+            _freeCount = source._freeCount;
+            _freeList = source._freeList;
+        }
+
         public bool ContainsKey(TKey key)
         {
 #if !ANOTHERECS_RELEASE
@@ -344,6 +366,9 @@ namespace AnotherECS.Core.Collection
         public void ForEachValue<TIterable>(TIterable iterable)
             where TIterable : struct, IIterable<TValue>
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
             int index = 0;
             while (index < Count)
             {

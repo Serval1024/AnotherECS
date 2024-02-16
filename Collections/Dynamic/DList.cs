@@ -61,6 +61,12 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Allocate()
+        {
+            Allocate(DCollectionConst.DEFAULT_SIZE);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deallocate()
         {
             _data.Deallocate();
@@ -235,6 +241,15 @@ namespace AnotherECS.Collections
                 return true;
             }
             return false;
+        }
+
+        public void CopyFrom(DList<TValue> source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            _data.CopyFrom(source._data);
+            _count = source._count;
         }
 
         public void CopyTo(TValue[] array, uint arrayIndex)
