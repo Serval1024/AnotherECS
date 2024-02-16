@@ -14,26 +14,26 @@ using System.Runtime.InteropServices;
 
 namespace AnotherECS.Collections
 {
-    [Serializable] internal struct Data2<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data2<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1;
+        public TValue p0, p1;
 
 		public const uint LENGTH = 2;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray2<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray2<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data2<TData> _data;
+		private Data2<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data2<TData>.LENGTH;
+            get => Data2<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -47,19 +47,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -68,20 +68,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -93,7 +93,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -109,12 +109,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -131,7 +131,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data2<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data2<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -139,6 +147,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -146,6 +157,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -153,6 +165,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -160,10 +175,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -219,31 +235,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray2<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray2<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray2<TData> data)
+			public Enumerator(ref FArray2<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];
@@ -269,26 +310,26 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-	[Serializable] internal struct Data4<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data4<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1, p2, p3;
+        public TValue p0, p1, p2, p3;
 
 		public const uint LENGTH = 4;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray4<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray4<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data4<TData> _data;
+		private Data4<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data4<TData>.LENGTH;
+            get => Data4<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -302,19 +343,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -323,20 +364,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -348,7 +389,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -364,12 +405,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -386,7 +427,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data4<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data4<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -394,6 +443,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -403,6 +455,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -410,6 +463,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -419,10 +475,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -478,31 +535,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray4<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray4<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray4<TData> data)
+			public Enumerator(ref FArray4<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];
@@ -528,26 +610,26 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-	[Serializable] internal struct Data8<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data8<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1, p2, p3, p4, p5, p6, p7;
+        public TValue p0, p1, p2, p3, p4, p5, p6, p7;
 
 		public const uint LENGTH = 8;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray8<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray8<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data8<TData> _data;
+		private Data8<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data8<TData>.LENGTH;
+            get => Data8<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -561,19 +643,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -582,20 +664,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -607,7 +689,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -623,12 +705,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -645,7 +727,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data8<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data8<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -653,6 +743,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -666,6 +759,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -673,6 +767,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -686,10 +783,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -745,31 +843,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray8<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray8<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray8<TData> data)
+			public Enumerator(ref FArray8<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];
@@ -795,26 +918,26 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-	[Serializable] internal struct Data16<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data16<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15;
+        public TValue p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15;
 
 		public const uint LENGTH = 16;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray16<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray16<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data16<TData> _data;
+		private Data16<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data16<TData>.LENGTH;
+            get => Data16<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -828,19 +951,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -849,20 +972,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -874,7 +997,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -890,12 +1013,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -912,7 +1035,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data16<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data16<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -920,6 +1051,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -941,6 +1075,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -948,6 +1083,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -969,10 +1107,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -1028,31 +1167,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray16<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray16<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray16<TData> data)
+			public Enumerator(ref FArray16<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];
@@ -1078,26 +1242,26 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-	[Serializable] internal struct Data32<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data32<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31;
+        public TValue p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31;
 
 		public const uint LENGTH = 32;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray32<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray32<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data32<TData> _data;
+		private Data32<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data32<TData>.LENGTH;
+            get => Data32<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -1111,19 +1275,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -1132,20 +1296,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -1157,7 +1321,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -1173,12 +1337,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -1195,7 +1359,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data32<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data32<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -1203,6 +1375,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -1240,6 +1415,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -1247,6 +1423,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -1284,10 +1463,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -1343,31 +1523,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray32<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray32<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray32<TData> data)
+			public Enumerator(ref FArray32<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];
@@ -1393,26 +1598,26 @@ namespace AnotherECS.Collections
             public void Dispose() { }
         }
     }
-	[Serializable] internal struct Data64<TData> : ISerialize where TData : unmanaged 
+	[Serializable] internal struct Data64<TValue> : ISerialize where TValue : unmanaged 
     { 
-        public TData p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40, p41, p42, p43, p44, p45, p46, p47, p48, p49, p50, p51, p52, p53, p54, p55, p56, p57, p58, p59, p60, p61, p62, p63;
+        public TValue p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31, p32, p33, p34, p35, p36, p37, p38, p39, p40, p41, p42, p43, p44, p45, p46, p47, p48, p49, p50, p51, p52, p53, p54, p55, p56, p57, p58, p59, p60, p61, p62, p63;
 
 		public const uint LENGTH = 64;
-        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TData>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
-        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TData>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Pack(ref WriterContextSerializer writer) => FArrayHelper.Pack<TValue>(ref writer, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
+        public unsafe void Unpack(ref ReaderContextSerializer reader) => FArrayHelper.Unpack<TValue>(ref reader, GCHandle.Alloc(this, GCHandleType.Pinned), LENGTH);
     }
 
     [Serializable]
     [ForceBlittable]
-    public struct FArray64<TData> : ICollection<TData>, ISerialize, IEnumerable<TData>
-        where TData : unmanaged
+    public struct FArray64<TValue> : ICollection<TValue>, ISerialize, IEnumerable<TValue>, IRepairStateId
+        where TValue : unmanaged
     {
-		private Data64<TData> _data;
+		private Data64<TValue> _data;
 
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Data64<TData>.LENGTH;
+            get => Data64<TValue>.LENGTH;
         }
 
         uint ICollection.Count => Length;
@@ -1426,19 +1631,19 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(TData item)
+        public uint IndexOf(TValue item)
             => IndexOf(ref item, Length);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint IndexOf(ref TData item)
+        public uint IndexOf(ref TValue item)
             => IndexOf(ref item, Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal uint IndexOf(ref TData item, uint count)
+        internal uint IndexOf(ref TValue item, uint count)
         {
             for (uint i = 0; i < count; ++i)
             {
-                if (EqualityComparer<TData>.Default.Equals(this[i], item))
+                if (EqualityComparer<TValue>.Default.Equals(this[i], item))
                 {
                     return i;
                 }
@@ -1447,20 +1652,20 @@ namespace AnotherECS.Collections
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(TData item)
+        public bool Contains(TValue item)
             => Contains(ref item);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Contains(ref TData item)
+        public bool Contains(ref TValue item)
             => IndexOf(ref item) != uint.MaxValue;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(uint index, TData item)
+        public void Insert(uint index, TValue item)
         {
             Insert(index, ref item);
         }
 
-        public void Insert(uint index, ref TData item)
+        public void Insert(uint index, ref TValue item)
         {
 #if !ANOTHERECS_RELEASE
             FArrayHelper.ThrowIfOutOfRange(index, Length);
@@ -1472,7 +1677,7 @@ namespace AnotherECS.Collections
             this[index] = item;
         }
 
-        public bool Remove(TData item)
+        public bool Remove(TValue item)
         {
             var index = IndexOf(ref item);
             if (index != uint.MaxValue)
@@ -1488,12 +1693,12 @@ namespace AnotherECS.Collections
 			RemoveAtInternal(index, Length);
         }
 		
-        public void CopyTo(TData[] array, uint arrayIndex)
+        public void CopyTo(TValue[] array, uint arrayIndex)
         {
             CopyTo(array, arrayIndex, Length, Length);
         }
 		
-		public void CopyTo(TData[] array, uint arrayIndex, uint count)
+		public void CopyTo(TValue[] array, uint arrayIndex, uint count)
         {
             CopyTo(array, arrayIndex, count, Length);
         }
@@ -1510,7 +1715,15 @@ namespace AnotherECS.Collections
 			_data.Unpack(ref reader);
         }
 
-        public TData this[uint index]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TValue ReadUnsafe(uint index)
+            => FArrayHelper.ReadUnsafe<TValue, Data64<TValue>>(ref _data, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WriteUnsafe(uint index, TValue value)
+            => FArrayHelper.WriteUnsafe<TValue, Data64<TValue>>(ref _data, index, value);
+
+        public TValue this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -1518,6 +1731,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                return ReadUnsafe(index);
+#else
                 return index switch
                 {
                     0 => _data.p0,
@@ -1587,6 +1803,7 @@ namespace AnotherECS.Collections
 
                     _ => throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}."),
                 };    
+#endif
             }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
@@ -1594,6 +1811,9 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
                 FArrayHelper.ThrowIfOutOfRange(index, Length);
 #endif
+#if ANOTHERECS_UNSAFE_FCOLLECTION
+                WriteUnsafe(index, value);
+#else
                 switch(index)
                 {
                     case 0: _data.p0 = value; break;
@@ -1663,10 +1883,11 @@ namespace AnotherECS.Collections
 
                     default: throw new IndexOutOfRangeException($"Index {index} is out of range Length {Length}.");
                 };
+#endif
             }
 		}
 		
-		internal void CopyTo(TData[] array, uint arrayIndex, uint count, uint capacity)
+		internal void CopyTo(TValue[] array, uint arrayIndex, uint count, uint capacity)
         {
 #if !ANOTHERECS_RELEASE
             if (count > capacity)
@@ -1722,31 +1943,56 @@ namespace AnotherECS.Collections
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ICollection.Set(uint index, object @value)
         {
-            this[index] = (TData)@value;
+            this[index] = (TValue)@value;
         }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<TData> GetEnumerator()
+        public IEnumerator<TValue> GetEnumerator()
             => new Enumerator(ref this);
 			
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
             => GetEnumerator();
 
-
-        public struct Enumerator : IEnumerator<TData>
+        bool IRepairStateId.IsRepairStateId
         {
-            private readonly FArray64<TData> _data;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(IRepairStateId).IsAssignableFrom(typeof(TValue));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void IRepairStateId.RepairStateId(ushort stateId)
+        {
+            RepairIdElement(stateId, 0, Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)this[i];
+                    data.RepairStateId(stateId);
+                    this[i] = (TValue)data;
+                }
+            }
+        }
+
+        public struct Enumerator : IEnumerator<TValue>
+        {
+            private readonly FArray64<TValue> _data;
             private uint _current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Enumerator(ref FArray64<TData> data)
+			public Enumerator(ref FArray64<TValue> data)
             {
                 _data = data;
                 _current = uint.MaxValue;
             }
 
-            public TData Current
+            public TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _data[_current];

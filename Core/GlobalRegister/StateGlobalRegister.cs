@@ -27,7 +27,9 @@ namespace AnotherECS.Core
                 var id = _recycle.Allocate();
                 if (id >= _data.Length)
                 {
-                    Array.Resize(ref _data, id + 1);
+                    var newArray = new State[id + 1];
+                    Array.Copy(_data, newArray, _data.Length);
+                    _data = newArray;
                 }
 
                 _data[id] = state;

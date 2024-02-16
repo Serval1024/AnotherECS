@@ -15,7 +15,7 @@ namespace AnotherECS.Unsafe
                 var result = new StringBuilder();
                 for (int i = 0; i < count; ++i)
                 {
-                    result.Append(UnsafeMemory.GetElementArray<T>(ptr, i).ToString());
+                    result.Append(UnsafeMemory.ReadElementArray<T>(ptr, i).ToString());
                     result.Append(" ,");
                 }
                 return result.ToString();
@@ -26,10 +26,18 @@ namespace AnotherECS.Unsafe
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe static void* AddressOf<T>(ref T output)
             where T : struct
+#if UNITY_5_3_OR_NEWER
             => UnsafeUtility.AddressOf(ref output);
+#else
+            => System.Runtime.CompilerServices.Unsafe.AsPointer(ref output);
+#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T As<U, T>(ref U from)
+#if UNITY_5_3_OR_NEWER
             => ref UnsafeUtility.As<U, T>(ref from);
+#else
+            => System.Runtime.CompilerServices.Unsafe.As<U, T>(ref from);
+#endif
     }
 }

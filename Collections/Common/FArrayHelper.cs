@@ -1,4 +1,5 @@
 using AnotherECS.Serializer;
+using AnotherECS.Unsafe;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -10,6 +11,7 @@ namespace AnotherECS.Collections
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T ReadSafe<T, U>(ref U data, uint index)
+            where T : struct
             where U : struct
         {
             var gcHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -20,6 +22,7 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteSafe<T, U>(ref U data, uint index, T value)
+            where T : struct
             where U : struct
         {
             var gcHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -29,13 +32,21 @@ namespace AnotherECS.Collections
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T ReadUnsafe<T, U>(ref U data, uint index)
+            where T : struct
             where U : struct
-            => UnsafeUtility.ReadArrayElement<T>(UnsafeUtility.AddressOf(ref data), (int)index);
+            => UnsafeMemory.ReadElementArray<T>(UnsafeUtils.AddressOf(ref data), index);
             
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void WriteUnsafe<T, U>(ref U data, uint index, T value)
+            where T : struct
             where U : struct
             => UnsafeUtility.WriteArrayElement(UnsafeUtility.AddressOf(ref data), (int)index, value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe ref T GetUnsafe<T, U>(ref U data, uint index)
+            where T : unmanaged
+            where U : struct
+            => ref UnsafeMemory.GetElementArray<T>(UnsafeUtils.AddressOf(ref data), index);
 
         public static unsafe void Pack<T>(ref WriterContextSerializer writer, GCHandle gcHandle, uint count)
             where T : unmanaged

@@ -145,7 +145,43 @@ namespace AnotherECS.Unsafe
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T GetElementArray<T>(void* source, int index)
+        public static T ReadElementArray<T>(void* source, int index)
+            where T : struct
+#if UNITY_5_3_OR_NEWER
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.ReadArrayElement<T>(source, index);
+#else
+            => System.Runtime.CompilerServices.Unsafe.Read<T>((byte*)source + (long)index * (long)System.Runtime.CompilerServices.Unsafe.SizeOf<T>());
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteElementArray<T>(void* source, int index, T value)
+            where T : struct
+#if UNITY_5_3_OR_NEWER
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.WriteArrayElement(source, index, value);
+#else
+            => System.Runtime.CompilerServices.Unsafe.Write((byte*)destination + (long)index * (long)System.Runtime.CompilerServices.Unsafe.SizeOf<T>(), value);
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T ReadElementArray<T>(void* source, uint index)
+           where T : struct
+#if UNITY_5_3_OR_NEWER
+           => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.ReadArrayElement<T>(source, (int)index);
+#else
+            => System.Runtime.CompilerServices.Unsafe.Read<T>((byte*)source + (long)index * (long)System.Runtime.CompilerServices.Unsafe.SizeOf<T>());
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteElementArray<T>(void* source, uint index, T value)
+            where T : struct
+#if UNITY_5_3_OR_NEWER
+            => Unity.Collections.LowLevel.Unsafe.UnsafeUtility.WriteArrayElement(source, (int)index, value);
+#else
+            => System.Runtime.CompilerServices.Unsafe.Write((byte*)destination + (long)index * (long)System.Runtime.CompilerServices.Unsafe.SizeOf<T>(), value);
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T GetElementArray<T>(void* source, uint index)
             where T : unmanaged
             => ref *(((T*)source) + index);
     }
