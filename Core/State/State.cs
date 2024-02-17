@@ -216,7 +216,7 @@ namespace AnotherECS.Core
             {
                 _dependencies->stateId = _stateId;
                 _reference.Set(Tick);
-                TryRepairStateId();
+                TryRepairStateId(Tick);
             }
         }
 
@@ -945,7 +945,7 @@ namespace AnotherECS.Core
                     {
                         RepairMemoryHandles();
                         CallConstruct();
-                        TryRepairStateId();
+                        TryRepairStateId(Tick);
                     }
 
                     CallRevertStage2();
@@ -956,7 +956,7 @@ namespace AnotherECS.Core
                     {
                         RepairMemoryHandles();
                         CallConstruct();
-                        TryRepairStateId();
+                        TryRepairStateId(tick);
                     }
                 }
 
@@ -1072,10 +1072,11 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryRepairStateId()
+        private void TryRepairStateId(uint tick)
         {
-            if (_reference.IsActive)
+            if (_reference.Check(tick))
             {
+                _reference.Set(tick);
                 for (uint i = 0; i < _repairStateIdCallers.Length; ++i)
                 {
                     _repairStateIdCallers[i].RepairStateId(_stateId);

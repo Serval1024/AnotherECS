@@ -15,11 +15,9 @@ namespace AnotherECS.Core
             _recordLength = recordLength;
         }
 
-        public bool IsActive
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _isActive;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Check(uint tick)
+            => _isActive && tick < _activeTick;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(uint tick)

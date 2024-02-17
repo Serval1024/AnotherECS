@@ -104,7 +104,9 @@ namespace AnotherECS.Core
         public unsafe bool RevertTo(ref HAllocator destination, uint tick)
         {
             RevertToInternal(ref destination, tick);
-            return _reference.IsActive;
+            var result = _reference.Check(tick);
+            _reference.Set(tick);
+            return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace AnotherECS.Core
 {
@@ -27,8 +28,9 @@ namespace AnotherECS.Core
                 var id = _recycle.Allocate();
                 if (id >= _data.Length)
                 {
-                    var newArray = new State[id + 1];
+                    var newArray = new State[_data.Length << 1];
                     Array.Copy(_data, newArray, _data.Length);
+                    Thread.MemoryBarrier();
                     _data = newArray;
                 }
 
