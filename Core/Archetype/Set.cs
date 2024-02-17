@@ -169,14 +169,14 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEachItem<TIterable>(uint startArchetypeId, TIterable iterable)
-            where TIterable : struct, IIterable<uint>
+        public void ForEachItem<TIterator>(uint startArchetypeId, TIterator iterator)
+            where TIterator : struct, IIterator<uint>
         {
             while (startArchetypeId != 0)
             {
                 ref var node = ref _nodes.ReadRef(startArchetypeId);
 
-                iterable.Each(ref node.itemId);
+                iterator.Each(ref node.itemId);
                 startArchetypeId = node.parent;
             }
         }

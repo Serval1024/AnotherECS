@@ -54,7 +54,7 @@ namespace AnotherECS.Core.Caller
         where TAttachDetachStorage : struct, IData<TAllocator>, IAttachDetach<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, ISerialize, IRepairMemoryHandle, IDisposable
         where TAttach : struct, IAttachExternal<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
         where TDetach : struct, IDetachExternal<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst
-        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterator<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IData<TAllocator>, IDisposable
+        where TSparseStorage : struct, ISparseProvider<TAllocator, TSparse, TDense, TDenseIndex>, IIterable<TAllocator, TSparse, TDense, TDenseIndex>, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IBoolConst, ISingleDenseFlag, IData<TAllocator>, IDisposable
         where TDenseStorage : struct, IStartIndexProvider, IDenseProvider<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>
         where TBinderToFilters : struct, IBinderToFilters
         where TVersion : struct, IChange<TAllocator, TSparse, TDense, TDenseIndex>, IVersion<TAllocator, TSparse, TDense, TDenseIndex>, ILayoutAllocator<TAllocator, TSparse, TDense, TDenseIndex>, ISparseResize<TAllocator, TSparse, TDense, TDenseIndex>, IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>, IRevertFinished, IBoolConst
@@ -260,10 +260,13 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                var data = new InjectData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction };
+                var data = new ConstructInjectIterator<TAllocator, TSparse, TDense, TDenseIndex>()
+                {
+                    data = new InjectData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction }
+                };
                 _sparseStorage
-                    .ForEach<ConstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>, InjectData<TDense>>
-                    (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
+                    .ForEach
+                    (ref *_layout, ref data, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -272,10 +275,13 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TInject).Is)
             {
-                var data = new InjectData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction };
+                var data = new DeconstructInjectIterator<TAllocator, TSparse, TDense, TDenseIndex>()
+                {
+                    data = new InjectData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction }
+                };
                 _sparseStorage
-                    .ForEach<DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex>, InjectData<TDense>>
-                    (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
+                    .ForEach
+                    (ref *_layout, ref data, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -506,6 +512,13 @@ namespace AnotherECS.Core.Caller
             => default(TVersion).ReadVersion(ref *_layout);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Each<TIterator>(ref TIterator iterator)
+            where TIterator : struct, IDataIterator<TDense>
+        {
+            _sparseStorage.ForEach(ref *_layout, ref iterator, default(TDenseStorage).GetIndex(), GetCount());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer)
         {
             writer.Write(_allocator->GetId());
@@ -629,15 +642,18 @@ namespace AnotherECS.Core.Caller
             _attachDetachStorage.RepairMemoryHandle(ref repairMemoryContext);
 
             if (default(TRepairMemory).Is)
-            { 
-                var data = new RepairMemoryFunctionData<TDense>()
+            {
+                var data = new RepairMemoryIterator<TDense>()
                 {
-                    repairMemoryContext = repairMemoryContext,
-                    componentFunction = _componentFunction,
+                    data = new RepairMemoryFunctionData<TDense>()
+                    {
+                        repairMemoryContext = repairMemoryContext,
+                        componentFunction = _componentFunction,
+                    }
                 };
                 _sparseStorage
-                    .ForEach<RepairMemoryIterable<TDense>, RepairMemoryFunctionData<TDense>>
-                    (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
+                    .ForEach
+                    (ref *_layout, ref data, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
 
@@ -646,10 +662,12 @@ namespace AnotherECS.Core.Caller
         {
             if (default(TRepairStateId).Is)
             {
-                var data = new ComponentFunctionData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction };
+                var data = new RepairStateIdIterator<TDense>()
+                {
+                    data = new ComponentFunctionData<TDense>() { dependencies = _dependencies, componentFunction = _componentFunction }
+                };
                 _sparseStorage
-                    .ForEach<RepairStateIdIterable<TDense>, ComponentFunctionData<TDense>>
-                    (ref *_layout, data, default(TDenseStorage).GetIndex(), GetCount());
+                    .ForEach(ref *_layout, ref data, default(TDenseStorage).GetIndex(), GetCount());
             }
         }
     }

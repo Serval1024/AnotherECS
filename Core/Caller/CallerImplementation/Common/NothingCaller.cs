@@ -22,7 +22,7 @@ namespace AnotherECS.Core.Caller
         IVersion<TAllocator, TSparse, TDense, TDenseIndex>,
         ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>,
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
-        IIterator<TAllocator, TSparse, TDense, TDenseIndex>,
+        IIterable<TAllocator, TSparse, TDense, TDenseIndex>,
         IRevertFinished,
         IRepairMemory<TDense>,
         IRepairStateId<TDense>,
@@ -80,8 +80,8 @@ namespace AnotherECS.Core.Caller
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
+        public void ForEach<IIterator>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout) { }
@@ -109,22 +109,22 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Attach(State state, ref TDense component) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Detach(State state, ref TDense component) { }

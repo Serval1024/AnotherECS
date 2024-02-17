@@ -14,11 +14,13 @@ namespace AnotherECS.Core.Caller
         }
     }
 
-    internal unsafe struct RepairStateIdIterable<TDense> : IDataIterable<TDense, ComponentFunctionData<TDense>>
+    internal unsafe struct RepairStateIdIterator<TDense> : IDataIterator<TDense>
         where TDense : unmanaged
     {
+        public ComponentFunctionData<TDense> data;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref ComponentFunctionData<TDense> data, uint index, ref TDense component)
+        public void Each(uint index, ref TDense component)
         {
             default(RepairStateIdCF<TDense>)
                 .RepairStateId(ref data.componentFunction, data.dependencies->stateId, ref component);

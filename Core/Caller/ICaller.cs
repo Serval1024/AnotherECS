@@ -52,6 +52,9 @@ namespace AnotherECS.Core.Caller
         void Set(EntityId id, ref TComponent component);
         void SetOrAdd(EntityId id, ref TComponent component);
 
+        public void Each<TIterator>(ref TIterator iterator)
+            where TIterator : struct, IDataIterator<TComponent>;
+
         WArray<T> ReadSparse<T>()
            where T : unmanaged;
 

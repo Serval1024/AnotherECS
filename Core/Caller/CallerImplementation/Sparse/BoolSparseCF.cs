@@ -11,8 +11,8 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, bool, TDense, ushort>,
         IDenseResize<TAllocator, bool, TDense, ushort>,
         ISparseProvider<TAllocator, bool, TDense, ushort>,
-        IIterator<TAllocator, bool, TDense, ushort>,
-        IDataIterator<TAllocator, bool, TDense, ushort>,
+        IIterable<TAllocator, bool, TDense, ushort>,
+        IDataIterable<TAllocator, bool, TDense, ushort>,
         IBoolConst,
         ISingleDenseFlag,
         IDisposable
@@ -64,10 +64,10 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, bool, TDense, ushort>
+        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, bool, TDense, ushort>
         {
-            TIterable iterable = default;
+            IIterator iterator = default;
 
             var sparse = layout.sparse.ReadPtr();
             var dense = layout.dense.GetPtr();
@@ -77,18 +77,15 @@ namespace AnotherECS.Core.Caller
             {
                 if (sparse[i])
                 {
-                    iterable.Each(ref layout, ref dependencies, ref dense[i]);
+                    iterator.Each(ref layout, ref dependencies, ref dense[i]);
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
-            where TIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct
+        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref TIterator iterator, uint startIndex, uint count)
+            where TIterator : struct, IDataIterator<TDense>
         {
-            TIterable iterable = default;
-
             var sparse = layout.sparse.ReadPtr();
             var dense = layout.dense.GetPtr();
             var denseIndex = layout.denseIndex;
@@ -97,7 +94,7 @@ namespace AnotherECS.Core.Caller
             {
                 if (sparse[i])
                 {
-                    iterable.Each(ref data, i, ref dense[i]);
+                    iterator.Each(i, ref dense[i]);
                 }
             }
         }

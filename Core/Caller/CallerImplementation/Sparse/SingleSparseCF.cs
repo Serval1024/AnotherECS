@@ -11,8 +11,8 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, bool, TDense, uint>,
         IDenseResize<TAllocator, bool, TDense, uint>,
         ISparseProvider<TAllocator, bool, TDense, uint>,
-        IIterator<TAllocator, bool, TDense, uint>,
-        IDataIterator<TAllocator, bool, TDense, uint>,
+        IIterable<TAllocator, bool, TDense, uint>,
+        IDataIterable<TAllocator, bool, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag,
         IDisposable
@@ -60,21 +60,20 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, bool, TDense, uint>
+        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, bool, TDense, uint>
         {
             if (layout.sparse.ReadPtr()[0])
             {
-                default(TIterable).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
+                default(IIterator).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
             }
         }
-        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
-            where TIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct
+        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref IIterator iterator, uint startIndex, uint count)
+            where IIterator : struct, IDataIterator<TDense>
         {
             if (layout.sparse.ReadPtr()[0])
             {
-                default(TIterable).Each(ref data, 0, ref layout.dense.GetRef(0));
+                iterator.Each(0, ref layout.dense.GetRef(0));
             }
         }
 

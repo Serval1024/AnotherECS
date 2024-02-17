@@ -11,8 +11,8 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, bool, TDense, uint>,
         IDenseResize<TAllocator, bool, TDense, uint>,
         ISparseProvider<TAllocator, bool, TDense, uint>,
-        IIterator<TAllocator, bool, TDense, uint>,
-        IDataIterator<TAllocator, bool, TDense, uint>,
+        IIterable<TAllocator, bool, TDense, uint>,
+        IDataIterable<TAllocator, bool, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag,
         IDisposable
@@ -61,38 +61,35 @@ namespace AnotherECS.Core.Caller
             => _dependencies->archetype.IsHasItem(_dependencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, bool, TDense, uint>
+        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
             {
-                TIterable iterable = default;
+                IIterator iterator = default;
 
                 var dense = layout.dense;
 
                 dense.Dirty();
                 for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
                 {
-                    iterable.Each(ref layout, ref dependencies, ref dense.ReadRef(i));
+                    iterator.Each(ref layout, ref dependencies, ref dense.ReadRef(i));
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, bool, TDense, uint> layout, TEachData data, uint startIndex, uint count)
-            where TIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct
+        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref TIterator iterator, uint startIndex, uint count)
+            where TIterator : struct, IDataIterator<TDense>
         {
             if (count != 0)
             {
-                TIterable iterable = default;
-
                 var dense = layout.dense;
 
                 dense.Dirty();
                 for (uint i = startIndex, iMax = startIndex + count; i < iMax; ++i)
                 {
-                    iterable.Each(ref data, i, ref dense.ReadRef(i));
+                    iterator.Each(i, ref dense.ReadRef(i));
                 }
             }
         }

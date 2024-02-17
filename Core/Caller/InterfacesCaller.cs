@@ -249,11 +249,11 @@ namespace AnotherECS.Core.Caller
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Attach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Attach(State state, ref TDense component);
@@ -267,27 +267,27 @@ namespace AnotherECS.Core.Caller
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Detach<TSparseProvider>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TSparseProvider sparseProvider, State state, NArray<BAllocator, byte> generation, NArray<TAllocator, byte> newGeneration, uint startIndex, uint count)
-            where TSparseProvider : struct, IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>;
+            where TSparseProvider : struct, IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Detach(State state, ref TDense component);
     }
 
-    internal unsafe interface IIterator<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface IIterable<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
-        void ForEach<TIterable>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, TSparse, TDense, TDenseIndex>;
+        void ForEach<IIterator>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, TSparse, TDense, TDenseIndex>;
     }
 
-    internal unsafe interface IIterable<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface IIterator<TAllocator, TSparse, TDense, TDenseIndex>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
@@ -297,23 +297,21 @@ namespace AnotherECS.Core.Caller
         void Each(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, ref TDense component);
     }
 
-    internal unsafe interface IDataIterator<TAllocator, TSparse, TDense, TDenseIndex>
+    internal unsafe interface IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>
       where TAllocator : unmanaged, IAllocator
       where TSparse : unmanaged
       where TDense : unmanaged
       where TDenseIndex : unmanaged
     {
-        void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, TEachData data, uint startIndex, uint count)
-            where TIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct;
+        void ForEach<TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TEachData data, uint startIndex, uint count)
+            where TEachData : struct, IDataIterator<TDense>;
     }
 
-    internal unsafe interface IDataIterable<TDense, TEachData>
+    internal unsafe interface IDataIterator<TDense>
         where TDense : unmanaged
-        where TEachData : struct
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Each(ref TEachData data, uint index, ref TDense component);
+        void Each(uint index, ref TDense component);
     }
 
     internal unsafe interface ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>

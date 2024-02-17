@@ -128,10 +128,10 @@ namespace AnotherECS.Core
             => _set.GetCount(archetypeId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEachItem<TIterable>(uint startArchetypeId, TIterable iterable)
-            where TIterable : struct, IIterable<uint>
+        public void ForEachItem<TIterator>(uint startArchetypeId, TIterator iterator)
+            where TIterator : struct, IIterator<uint>
         {
-            _set.ForEachItem(startArchetypeId, iterable);
+            _set.ForEachItem(startArchetypeId, iterator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

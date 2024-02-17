@@ -299,7 +299,7 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             var archetypeId = _dependencies->entities.ReadArchetypeId(id);
-            _dependencies->archetype.ForEachItem(archetypeId, new RemoveRawIterable(this, id));
+            _dependencies->archetype.ForEachItem(archetypeId, new RemoveRawIterator(this, id));
 
             _dependencies->archetype.Remove(archetypeId, id);
             _dependencies->entities.Deallocate(id);
@@ -746,6 +746,15 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FilterBuilder CreateFilter()
             => new(this);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void QFilter<TComponent, TIterator>(TIterator iterator = default)
+            where TComponent : unmanaged, IComponent
+            where TIterator : struct, IQFilter<TComponent>
+        {
+            var wrapper = new QFilterIteratorWrapper<TComponent, TIterator>() { data = iterator };
+            GetCaller<TComponent>().Each(ref wrapper);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal T CreateFilter<T>(ref Mask mask)
@@ -1212,12 +1221,12 @@ namespace AnotherECS.Core
             public IResizableCaller caller;
         }
 
-        private struct RemoveRawIterable : IIterable<uint>
+        private struct RemoveRawIterator : IIterator<uint>
         {
             private EntityId id;
             private State state;
 
-            public RemoveRawIterable(State state, EntityId id)
+            public RemoveRawIterator(State state, EntityId id)
             {
                 this.id = id;
                 this.state = state;

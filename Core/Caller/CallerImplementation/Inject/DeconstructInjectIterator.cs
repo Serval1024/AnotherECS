@@ -3,14 +3,16 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Caller
 {
-    internal unsafe struct DeconstructInjectIterable<TAllocator, TSparse, TDense, TDenseIndex> : IDataIterable<TDense, InjectData<TDense>>
+    internal unsafe struct DeconstructInjectIterator<TAllocator, TSparse, TDense, TDenseIndex> : IDataIterator<TDense>
         where TAllocator : unmanaged, IAllocator
         where TSparse : unmanaged
         where TDense : unmanaged
         where TDenseIndex : unmanaged
     {
+        public InjectData<TDense> data;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref InjectData<TDense> data, uint index, ref TDense component)
+        public void Each(uint index, ref TDense component)
         {
             InjectCF<TAllocator, TSparse, TDense, TDenseIndex> injectFeature = default;
             injectFeature.Deconstruct(ref data.componentFunction, ref *data.dependencies, ref component);

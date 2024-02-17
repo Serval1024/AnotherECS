@@ -377,8 +377,8 @@ namespace AnotherECS.Core.Collection
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEachValue<TIterable>(TIterable iterable)
-            where TIterable : struct, IIterable<TValue>
+        public void ForEachValue<TIterator>(TIterator iterator)
+            where TIterator : struct, IIterator<TValue>
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfBroken(this);
@@ -388,7 +388,7 @@ namespace AnotherECS.Core.Collection
             {
                 if (_entries.ReadRef(index).hashCode < _EMPTY)
                 {
-                    iterable.Each(ref _entries.ReadRef(index).value);
+                    iterator.Each(ref _entries.ReadRef(index).value);
                 }
                 ++index;
             }

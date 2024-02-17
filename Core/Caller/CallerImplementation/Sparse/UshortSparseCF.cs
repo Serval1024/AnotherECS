@@ -11,8 +11,8 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, ushort, TDense, ushort>,
         IDenseResize<TAllocator, ushort, TDense, ushort>,
         ISparseProvider<TAllocator, ushort, TDense, ushort>,
-        IIterator<TAllocator, ushort, TDense, ushort>,
-        IDataIterator<TAllocator, ushort, TDense, ushort>,
+        IIterable<TAllocator, ushort, TDense, ushort>,
+        IDataIterable<TAllocator, ushort, TDense, ushort>,
         IBoolConst,
         ISingleDenseFlag,
         IDisposable
@@ -58,12 +58,12 @@ namespace AnotherECS.Core.Caller
            => layout.sparse.Read(id) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterable : struct, IIterable<TAllocator, ushort, TDense, ushort>
+        public void ForEach<IIterator>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where IIterator : struct, IIterator<TAllocator, ushort, TDense, ushort>
         {
             if (count != 0)
             {
-                TIterable iterable = default;
+                IIterator iterator = default;
                 
                 var sparse = layout.sparse.ReadPtr();
                 var sparseLength = layout.sparse.Length;
@@ -73,7 +73,7 @@ namespace AnotherECS.Core.Caller
                 {
                     if (sparse[i] != 0)
                     {
-                        iterable.Each(ref layout, ref dependencies, ref dense[sparse[i]]);
+                        iterator.Each(ref layout, ref dependencies, ref dense[sparse[i]]);
                         if (--count == 0)
                         {
                             break;
@@ -84,14 +84,11 @@ namespace AnotherECS.Core.Caller
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterable, TEachData>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, TEachData data, uint startIndex, uint count)
-            where TIterable : struct, IDataIterable<TDense, TEachData>
-            where TEachData : struct
+        public void ForEach<TIterator>(ref ULayout<TAllocator, ushort, TDense, ushort> layout, ref TIterator iterator, uint startIndex, uint count)
+            where TIterator : struct, IDataIterator<TDense>
         {
             if (count != 0)
             {
-                TIterable iterable = default;
-
                 var sparse = layout.sparse.ReadPtr();
                 var sparseLength = layout.sparse.Length;
                 var dense = layout.dense.GetPtr();
@@ -101,7 +98,7 @@ namespace AnotherECS.Core.Caller
                     var denseIndex = sparse[i];
                     if (denseIndex != 0)
                     {
-                        iterable.Each(ref data, denseIndex, ref dense[denseIndex]);
+                        iterator.Each(denseIndex, ref dense[denseIndex]);
                         if (--count == 0)
                         {
                             break;

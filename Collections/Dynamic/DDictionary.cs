@@ -231,12 +231,12 @@ namespace AnotherECS.Collections
         {
             if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
             {
-                _data.ForEachValue(new RepairIdElementIterable() { stateId = stateId });
+                _data.ForEachValue(new RepairIdElementIterator() { stateId = stateId });
             }
         }
 
         #region declarations
-        private struct RepairIdElementIterable : IIterable<TValue>
+        private struct RepairIdElementIterator : IIterator<TValue>
         {
             public ushort stateId;
 

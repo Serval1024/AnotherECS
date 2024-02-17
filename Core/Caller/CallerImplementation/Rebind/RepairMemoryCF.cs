@@ -15,11 +15,13 @@ namespace AnotherECS.Core.Caller
         }
     }
 
-    internal unsafe struct RepairMemoryIterable<TDense> : IDataIterable<TDense, RepairMemoryFunctionData<TDense>>
+    internal unsafe struct RepairMemoryIterator<TDense> : IDataIterator<TDense>
         where TDense : unmanaged
     {
+        public RepairMemoryFunctionData<TDense> data;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Each(ref RepairMemoryFunctionData<TDense> data, uint index, ref TDense component)
+        public void Each(uint index, ref TDense component)
         {
             default(RepairMemoryCF<TDense>)
                 .RepairMemory(ref data.componentFunction, ref data.repairMemoryContext, ref component);
