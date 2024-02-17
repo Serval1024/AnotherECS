@@ -19,9 +19,7 @@ namespace AnotherECS.Unity.Jobs
         private NArray<BAllocator, NativeArrayStorage<Dummy>> _byComponents;
         private NDictionary<BAllocator, uint, NativeArrayStorage<Dummy>, U4U4HashProvider> _byIds;
 
-        private int _dropStage = 0;
-        private int _dropIndex = 0;
-
+        
         public NativeArrayProvider(State state)
         {
             _state = state;
