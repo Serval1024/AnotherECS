@@ -83,10 +83,10 @@ namespace AnotherECS.Core
                 .All(p => IsBlittable(p.FieldType));
         }
 
-        public static bool IsAttach(Type type)
+        public static bool IsAttachExternal(Type type)
             => typeof(IAttachExternal).IsAssignableFrom(type);
 
-        public static bool IsDetach(Type type)
+        public static bool IsDetachExternal(Type type)
             => typeof(IDetachExternal).IsAssignableFrom(type);
 
         public static bool IsDefault(Type type)

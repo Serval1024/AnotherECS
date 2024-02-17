@@ -10,7 +10,7 @@ namespace AnotherECS.Unsafe
         public static string AsArrayToString<T>(T* ptr, int count)
             where T : unmanaged
         {
-            if ((IntPtr)ptr != IntPtr.Zero)
+            if (ptr != null)
             {
                 var result = new StringBuilder();
                 for (int i = 0; i < count; ++i)
@@ -38,6 +38,14 @@ namespace AnotherECS.Unsafe
             => ref UnsafeUtility.As<U, T>(ref from);
 #else
             => System.Runtime.CompilerServices.Unsafe.As<U, T>(ref from);
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int SizeOf(Type type)
+#if UNITY_5_3_OR_NEWER
+            => UnsafeUtility.SizeOf(type);
+#else
+            => System.Runtime.InteropServices.Marshal.SizeOf(type);
 #endif
     }
 }

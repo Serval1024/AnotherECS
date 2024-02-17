@@ -22,7 +22,6 @@ namespace AnotherECS.Core.Caller
         bool IsInject { get; }
         bool IsTemporary { get; }
         bool IsCallRevertStages { get; }
-        bool IsRepairStateId { get; }
 
         uint GetDenseMemoryAllocated { get; }
 

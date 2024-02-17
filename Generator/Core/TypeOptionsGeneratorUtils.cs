@@ -30,11 +30,11 @@ namespace AnotherECS.Generator
             {
                 result.Append("V");
             }
-            if (option.isAttach)
+            if (option.isAttachExternal)
             {
                 result.Append("A");
             }
-            if (option.isDetach)
+            if (option.isDetachExternal)
             {
                 result.Append("D");
             }
@@ -78,19 +78,19 @@ namespace AnotherECS.Generator
             {
                 result.Append("R");
             }
-
+            
             return result;
         }
 
         public static string GetCallerInterfaces(in TypeOptions option)
         {
             var result = new StringBuilder();
-            if (option.isAttach)
+            if (option.isAttachExternal)
             {
                 result.Append(", ");
                 result.Append(nameof(IAttachExternal));
             }
-            if (option.isDetach)
+            if (option.isDetachExternal)
             {
                 result.Append(", ");
                 result.Append(nameof(IDetachExternal));
@@ -203,7 +203,7 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isAttach || option.isDetach)
+            if (option.isAttachExternal || option.isDetachExternal)
             {
                 result.Append($"{typeof(AttachDetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
@@ -215,7 +215,7 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isAttach)
+            if (option.isAttachExternal)
             {
                 result.Append($"{typeof(AttachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }
@@ -227,7 +227,7 @@ namespace AnotherECS.Generator
 
             result.Append(Environment.NewLine);
             result.Append(extraSpace);
-            if (option.isDetach)
+            if (option.isDetachExternal)
             {
                 result.Append($"{typeof(DetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
             }

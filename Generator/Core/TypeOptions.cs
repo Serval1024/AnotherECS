@@ -17,8 +17,8 @@ namespace AnotherECS.Generator
         public bool isDefault;
         public bool isSingle;
         public bool isVersion;
-        public bool isAttach;
-        public bool isDetach;
+        public bool isAttachExternal;
+        public bool isDetachExternal;
         public bool isMarker;
         public SparseMode sparseMode;
         public AllocatorType allocatorType;
@@ -61,8 +61,8 @@ namespace AnotherECS.Generator
             isDefault = ComponentUtils.IsDefault(type);
             isSingle = ComponentUtils.IsSingle(type);
             isVersion = ComponentUtils.IsVersion(type);
-            isAttach = ComponentUtils.IsAttach(type);
-            isDetach = ComponentUtils.IsDetach(type);
+            isAttachExternal = ComponentUtils.IsAttachExternal(type);
+            isDetachExternal = ComponentUtils.IsDetachExternal(type);
             sparseMode = GetSparseMode(type);
             allocatorType = ComponentUtils.GetAllocator(type);
 
