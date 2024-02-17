@@ -1,17 +1,13 @@
+﻿using AnotherECS.Core;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace AnotherECS.Core
+namespace AnotherECS.Unity.Jobs
 {
-#if ENABLE_IL2CPP
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
-    [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
-#endif
-    public static class StateGlobalRegister
+    public static class JobsGlobalRegister
     {
-        private static readonly MRecycle _recycle = new(16);
-        private static State[] _data = new State[16];
+        private static NativeArrayProvider[] _data = new NativeArrayProvider[16];
 
 #if UNITY_EDITOR
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -21,35 +17,39 @@ namespace AnotherECS.Core
         }
 #endif
 
-        public static ushort Register(State state)
+        public static void Register(State state)
         {
+            var id = state.GetStateId();
             lock (_data)
             {
-                var id = _recycle.Allocate();
                 if (id >= _data.Length)
                 {
-                    var newArray = new State[Math.Max(id + 1, _data.Length << 1)];
+                    var newArray = new NativeArrayProvider[Math.Max(id + 1, _data.Length << 1)];
                     Array.Copy(_data, newArray, _data.Length);
                     Thread.MemoryBarrier();
                     _data = newArray;
                 }
 
-                _data[id] = state;
-                return (ushort)id;
+                _data[id] = new NativeArrayProvider(state);
             }
         }
 
-        public static void Unregister(ushort id)
+        public static void Unregister(State state)
         {
+            var id = state.GetStateId();
+            NativeArrayProvider data;
             lock (_data)
             {
-                _recycle.Deallocate(id);
+                data = _data[id];
                 _data[id] = default;
             }
+            data.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static State Get(ushort id)
-            => _data[id];
+        public static NativeArrayProvider Get(State state)
+            => _data[state.GetStateId()];
     }
 }
+
+

@@ -3,6 +3,7 @@ using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
@@ -11,17 +12,18 @@ namespace AnotherECS.Core
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.NullChecks, false)]
     [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Option.ArrayBoundsChecks, false)]
 #endif
-    internal unsafe struct URecycle<TNumber, TNumberProvider>: IRepairMemoryHandle, ISerialize
+    internal unsafe struct URecycle<TAllocator, TNumber, TNumberProvider>: IRepairMemoryHandle, ISerialize, IDisposable
+        where TAllocator : unmanaged, IAllocator
         where TNumber : unmanaged
         where TNumberProvider : struct, INumberProvier<TNumber>
     {
-        public NArray<HAllocator, TNumber> _data;
+        public NArray<TAllocator, TNumber> _data;
         public uint _currentIndex;
         public uint _counter;
 
-        public URecycle(HAllocator* allocator, uint capacity)
+        public URecycle(TAllocator* allocator, uint capacity)
         {
-            _data = new NArray<HAllocator, TNumber>(allocator, capacity);
+            _data = new NArray<TAllocator, TNumber>(allocator, capacity);
             _currentIndex = default;
             _counter = default;
             _counter = GetStartIndex();
@@ -64,6 +66,12 @@ namespace AnotherECS.Core
             }
 
             _data.GetRef(_currentIndex++) = id;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            _data.Dispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -19,6 +19,7 @@ namespace AnotherECS.Core.Processing
         private Task _stateRevertTo;
 
         private Task[] _createModuleSystems;
+        private Task[] _destroyModuleSystems;
         private Task[] _tickStartedSystems;
         private Task[] _tickFinishedSystems;
 
@@ -52,7 +53,9 @@ namespace AnotherECS.Core.Processing
             _stateRevertToTaskHandler = new StateRevertToTaskHandler() { State = _state };
             _stateRevertTo = CreateTask(_stateRevertToTaskHandler);
 
-            _createModuleSystems = CreateTasks<ConstructTaskHandler, ICreateModule>(systems);
+            _createModuleSystems = CreateTasks<CreateModuleTaskHandler, ICreateModule>(systems);
+            _destroyModuleSystems = CreateTasks<DestroyModuleTaskHandler, IDestroyModule>(systems);
+            
             _tickStartedSystems = CreateTasks<SystemTickStartTaskHandler, ITickStartedModule>(systems);
             _tickFinishedSystems = CreateTasks<SystemTickFinishedTaskHandler, ITickFinishedModule>(systems);
 
@@ -82,6 +85,11 @@ namespace AnotherECS.Core.Processing
         public void CreateModule()
         {
             _threadScheduler.Run(_createModuleSystems);
+        }
+
+        public void DestroyModule()
+        {
+            _threadScheduler.Run(_destroyModuleSystems);
         }
 
         public void TickStart()

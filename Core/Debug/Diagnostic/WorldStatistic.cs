@@ -80,6 +80,8 @@ namespace AnotherECS.Debug.Diagnostic
                 destroySystems = CreateSystemsStatisticData<IDestroySystem>(_systemByDeepGroup, _timers),
 
                 createModule = CreateSystemsStatisticData<ICreateModule>(_systemByDeepGroup, _timers),
+                destroyModule = CreateSystemsStatisticData<IDestroyModule>(_systemByDeepGroup, _timers),
+                
                 tickStartedModule = CreateSystemsStatisticData<ITickStartedModule>(_systemByDeepGroup, _timers),
                 tickFinishedModule = CreateSystemsStatisticData<ITickFinishedModule>(_systemByDeepGroup, _timers),
 

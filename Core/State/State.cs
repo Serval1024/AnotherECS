@@ -58,7 +58,6 @@ namespace AnotherECS.Core
         private ResizableData[] _resizableCallers;  //TODO SER MTHREAD
         private List<ITickEvent> _eventsTemp;
         private EntityId[] _entityIdsTemp;
-
         #endregion
 
         #region construct & destruct
@@ -127,7 +126,12 @@ namespace AnotherECS.Core
             _dependencies->entities = new Entities(_dependencies);
             _dependencies->filters = new Filters(_dependencies, 32);
 
-            _dependencies->injectContainer = new InjectContainer(_allocator, &_dependencies->bAllocator, &_dependencies->stage1HAllocator);
+            _dependencies->injectContainer = new InjectContainer(
+                _allocator,
+                &_dependencies->bAllocator,
+                &_dependencies->stage1HAllocator
+                );
+
             _dependencies->stateId = _stateId;
         }
 

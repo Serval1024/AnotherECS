@@ -21,17 +21,17 @@ namespace AnotherECS.Unity.Jobs
 				where T<#INDEX2#> : unmanaged, IComponent
 ------<#END#>
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<#R:TAG#><<#ARRAY [0..GENERIC_COUNT]#>T<#INDEX2#><#SEPARATOR1:,#><#END#>> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
 ------<#ARRAY [0..GENERIC_COUNT]#>
-				bag.sparse<#INDEX2#> = handles.GetNativeArrayByComponent<T<#INDEX2#>, ushort>(0, state.ReadSparse<T<#INDEX2#>, ushort>());
-				bag.component<#INDEX2#> = handles.GetNativeArrayByComponent<T<#INDEX2#>, T<#INDEX2#>>(1, state.<#IF R#>Read<#ELSE#>Get<#END#>Dense<T<#INDEX2#>>());
-				bag.version<#INDEX2#> = handles.GetNativeArrayByComponent<T<#INDEX2#>, uint>(2, state.ReadVersion<T<#INDEX2#>>());
-                if (!bag.version<#INDEX2#>.IsCreated){ bag.version<#INDEX2#> = handles.UintDummy; }
+				bag.sparse<#INDEX2#> = arrayProvider.GetNativeArrayByComponent<T<#INDEX2#>, ushort>(0, state.ReadSparse<T<#INDEX2#>, ushort>());
+				bag.component<#INDEX2#> = arrayProvider.GetNativeArrayByComponent<T<#INDEX2#>, T<#INDEX2#>>(1, state.<#IF R#>Read<#ELSE#>Get<#END#>Dense<T<#INDEX2#>>());
+				bag.version<#INDEX2#> = arrayProvider.GetNativeArrayByComponent<T<#INDEX2#>, uint>(2, state.ReadVersion<T<#INDEX2#>>());
+                if (!bag.version<#INDEX2#>.IsCreated){ bag.version<#INDEX2#> = arrayProvider.UintDummy; }
 ------<#END#>
                 return bag;
             }
