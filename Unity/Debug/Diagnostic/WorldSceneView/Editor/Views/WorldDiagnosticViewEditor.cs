@@ -1,3 +1,4 @@
+using AnotherECS.Core;
 using AnotherECS.Debug.Diagnostic.UIElements;
 using UnityEditor;
 using UnityEngine;
@@ -54,7 +55,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             tagField.SetTabsAsString(
                 new[] {
                     "Create", "Tick", "Destroy",
-                    "Create Module", "Tick Started", "Tick Finished",
+                    "Create Module", "Destroy Module", "Tick Started", "Tick Finished",
                     "State Tick Start", "State Tick Finished", "Revert Time",
                     }
                 );
@@ -157,12 +158,14 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             contentsTabMenu[2].Q<ClassField>("world-systems__tab").value = visualData.data.destroySystems;
 
             contentsTabMenu[3].Q<ClassField>("world-systems__tab").value = visualData.data.createModule;
-            contentsTabMenu[4].Q<ClassField>("world-systems__tab").value = visualData.data.tickStartedModule;
-            contentsTabMenu[5].Q<ClassField>("world-systems__tab").value = visualData.data.tickFinishedModule;
+            contentsTabMenu[4].Q<ClassField>("world-systems__tab").value = visualData.data.destroyModule;
+            
+            contentsTabMenu[5].Q<ClassField>("world-systems__tab").value = visualData.data.tickStartedModule;
+            contentsTabMenu[6].Q<ClassField>("world-systems__tab").value = visualData.data.tickFinishedModule;
 
-            contentsTabMenu[6].Q<ClassField>("world-systems__tab").value = visualData.data.stateTickStart;
-            contentsTabMenu[7].Q<ClassField>("world-systems__tab").value = visualData.data.stateTickFinished;
-            contentsTabMenu[8].Q<ClassField>("world-systems__tab").value = visualData.data.stateRevertTo;
+            contentsTabMenu[7].Q<ClassField>("world-systems__tab").value = visualData.data.stateTickStart;
+            contentsTabMenu[8].Q<ClassField>("world-systems__tab").value = visualData.data.stateTickFinished;
+            contentsTabMenu[9].Q<ClassField>("world-systems__tab").value = visualData.data.stateRevertTo;
         }
     }
 }

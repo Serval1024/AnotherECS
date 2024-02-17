@@ -7,6 +7,11 @@ namespace AnotherECS.Core
         void OnCreateModule(State state);
     }
 
+    public interface IDestroyModule : IModule
+    {
+        void OnDestroyModule(State state);
+    }
+
     public interface ITickStartedModule : IModule
     {
         void OnTickStarted(State state);

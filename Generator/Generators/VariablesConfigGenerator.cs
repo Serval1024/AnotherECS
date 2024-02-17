@@ -250,7 +250,7 @@ namespace AnotherECS.Generator
                 result.Append($"injectContainer.{findName}");
                 if (i < injectParameterDatas.Length - 1)
                 {
-                    result.Append(",");
+                    result.Append(", ");
                 }
             }
             return result.ToString();

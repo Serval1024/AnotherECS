@@ -18,14 +18,14 @@ namespace AnotherECS.Core
 
         private Dependencies* _dependencies;
         private NContainer<HAllocator, NArray<HAllocator, EntityData>> _data;
-        private NContainer<HAllocator, URecycle<uint, UintNumber>> _recycle;
+        private NContainer<HAllocator, URecycle<HAllocator, uint, UintNumber>> _recycle;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Entities(Dependencies* dependencies)
         {
             _dependencies = dependencies;
             _data = new(&_dependencies->stage1HAllocator, new NArray<HAllocator, EntityData>(&_dependencies->stage1HAllocator, _dependencies->config.general.entityCapacity));
-            _recycle = new(&_dependencies->stage1HAllocator, new URecycle<EntityId, UintNumber>(&_dependencies->stage1HAllocator, _dependencies->config.general.recycleCapacity));
+            _recycle = new(&_dependencies->stage1HAllocator, new URecycle<HAllocator, uint, UintNumber>(&_dependencies->stage1HAllocator, _dependencies->config.general.recycleCapacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

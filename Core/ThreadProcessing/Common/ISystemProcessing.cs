@@ -24,6 +24,7 @@ namespace AnotherECS.Core.Processing
         void StateTickFinished();
 
         void CreateModule();
+        void DestroyModule();
         void TickStart();
         void TickFinished();
         

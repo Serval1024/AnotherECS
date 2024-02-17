@@ -18,16 +18,16 @@ namespace AnotherECS.Unity.Jobs
 				where T0 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -41,20 +41,20 @@ namespace AnotherECS.Unity.Jobs
 				where T1 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -70,24 +70,24 @@ namespace AnotherECS.Unity.Jobs
 				where T2 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -105,28 +105,28 @@ namespace AnotherECS.Unity.Jobs
 				where T3 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2, T3> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -146,32 +146,32 @@ namespace AnotherECS.Unity.Jobs
 				where T4 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2, T3, T4> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -193,36 +193,36 @@ namespace AnotherECS.Unity.Jobs
 				where T5 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2, T3, T4, T5> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -246,40 +246,40 @@ namespace AnotherECS.Unity.Jobs
 				where T6 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2, T3, T4, T5, T6> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
-				bag.sparse6 = handles.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
-				bag.component6 = handles.GetNativeArrayByComponent<T6, T6>(1, state.ReadDense<T6>());
-				bag.version6 = handles.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
-                if (!bag.version6.IsCreated){ bag.version6 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
+				bag.sparse6 = arrayProvider.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
+				bag.component6 = arrayProvider.GetNativeArrayByComponent<T6, T6>(1, state.ReadDense<T6>());
+				bag.version6 = arrayProvider.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
+                if (!bag.version6.IsCreated){ bag.version6 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -305,44 +305,44 @@ namespace AnotherECS.Unity.Jobs
 				where T7 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBagR<T0, T1, T2, T3, T4, T5, T6, T7> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
-				bag.sparse6 = handles.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
-				bag.component6 = handles.GetNativeArrayByComponent<T6, T6>(1, state.ReadDense<T6>());
-				bag.version6 = handles.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
-                if (!bag.version6.IsCreated){ bag.version6 = handles.UintDummy; }
-				bag.sparse7 = handles.GetNativeArrayByComponent<T7, ushort>(0, state.ReadSparse<T7, ushort>());
-				bag.component7 = handles.GetNativeArrayByComponent<T7, T7>(1, state.ReadDense<T7>());
-				bag.version7 = handles.GetNativeArrayByComponent<T7, uint>(2, state.ReadVersion<T7>());
-                if (!bag.version7.IsCreated){ bag.version7 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.ReadDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.ReadDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.ReadDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.ReadDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.ReadDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.ReadDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
+				bag.sparse6 = arrayProvider.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
+				bag.component6 = arrayProvider.GetNativeArrayByComponent<T6, T6>(1, state.ReadDense<T6>());
+				bag.version6 = arrayProvider.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
+                if (!bag.version6.IsCreated){ bag.version6 = arrayProvider.UintDummy; }
+				bag.sparse7 = arrayProvider.GetNativeArrayByComponent<T7, ushort>(0, state.ReadSparse<T7, ushort>());
+				bag.component7 = arrayProvider.GetNativeArrayByComponent<T7, T7>(1, state.ReadDense<T7>());
+				bag.version7 = arrayProvider.GetNativeArrayByComponent<T7, uint>(2, state.ReadVersion<T7>());
+                if (!bag.version7.IsCreated){ bag.version7 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -363,16 +363,16 @@ namespace AnotherECS.Unity.Jobs
 				where T0 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -386,20 +386,20 @@ namespace AnotherECS.Unity.Jobs
 				where T1 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -415,24 +415,24 @@ namespace AnotherECS.Unity.Jobs
 				where T2 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -450,28 +450,28 @@ namespace AnotherECS.Unity.Jobs
 				where T3 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2, T3> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -491,32 +491,32 @@ namespace AnotherECS.Unity.Jobs
 				where T4 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2, T3, T4> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -538,36 +538,36 @@ namespace AnotherECS.Unity.Jobs
 				where T5 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2, T3, T4, T5> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -591,40 +591,40 @@ namespace AnotherECS.Unity.Jobs
 				where T6 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2, T3, T4, T5, T6> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
-				bag.sparse6 = handles.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
-				bag.component6 = handles.GetNativeArrayByComponent<T6, T6>(1, state.GetDense<T6>());
-				bag.version6 = handles.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
-                if (!bag.version6.IsCreated){ bag.version6 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
+				bag.sparse6 = arrayProvider.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
+				bag.component6 = arrayProvider.GetNativeArrayByComponent<T6, T6>(1, state.GetDense<T6>());
+				bag.version6 = arrayProvider.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
+                if (!bag.version6.IsCreated){ bag.version6 = arrayProvider.UintDummy; }
 
                 return bag;
             }
@@ -650,44 +650,44 @@ namespace AnotherECS.Unity.Jobs
 				where T7 : unmanaged, IComponent
 
             {
-                var handles = state.GetModuleData<NativeArrayHandles>(NativeArrayHandles.MODULE_DATA_ID);
+                var arrayProvider = JobsGlobalRegister.Get(state);
 
                 JobBag<T0, T1, T2, T3, T4, T5, T6, T7> bag;
-                bag.indexes = handles.GetNativeArrayById<EntityId>(entities.id, entities.entities);
+                bag.indexes = arrayProvider.GetNativeArrayByDenseId<EntityId>(entities.id, entities.entities);
                 bag.count = (int)entities.entities.Length;
 
-				bag.sparse0 = handles.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
-				bag.component0 = handles.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
-				bag.version0 = handles.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
-                if (!bag.version0.IsCreated){ bag.version0 = handles.UintDummy; }
-				bag.sparse1 = handles.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
-				bag.component1 = handles.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
-				bag.version1 = handles.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
-                if (!bag.version1.IsCreated){ bag.version1 = handles.UintDummy; }
-				bag.sparse2 = handles.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
-				bag.component2 = handles.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
-				bag.version2 = handles.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
-                if (!bag.version2.IsCreated){ bag.version2 = handles.UintDummy; }
-				bag.sparse3 = handles.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
-				bag.component3 = handles.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
-				bag.version3 = handles.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
-                if (!bag.version3.IsCreated){ bag.version3 = handles.UintDummy; }
-				bag.sparse4 = handles.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
-				bag.component4 = handles.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
-				bag.version4 = handles.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
-                if (!bag.version4.IsCreated){ bag.version4 = handles.UintDummy; }
-				bag.sparse5 = handles.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
-				bag.component5 = handles.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
-				bag.version5 = handles.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
-                if (!bag.version5.IsCreated){ bag.version5 = handles.UintDummy; }
-				bag.sparse6 = handles.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
-				bag.component6 = handles.GetNativeArrayByComponent<T6, T6>(1, state.GetDense<T6>());
-				bag.version6 = handles.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
-                if (!bag.version6.IsCreated){ bag.version6 = handles.UintDummy; }
-				bag.sparse7 = handles.GetNativeArrayByComponent<T7, ushort>(0, state.ReadSparse<T7, ushort>());
-				bag.component7 = handles.GetNativeArrayByComponent<T7, T7>(1, state.GetDense<T7>());
-				bag.version7 = handles.GetNativeArrayByComponent<T7, uint>(2, state.ReadVersion<T7>());
-                if (!bag.version7.IsCreated){ bag.version7 = handles.UintDummy; }
+				bag.sparse0 = arrayProvider.GetNativeArrayByComponent<T0, ushort>(0, state.ReadSparse<T0, ushort>());
+				bag.component0 = arrayProvider.GetNativeArrayByComponent<T0, T0>(1, state.GetDense<T0>());
+				bag.version0 = arrayProvider.GetNativeArrayByComponent<T0, uint>(2, state.ReadVersion<T0>());
+                if (!bag.version0.IsCreated){ bag.version0 = arrayProvider.UintDummy; }
+				bag.sparse1 = arrayProvider.GetNativeArrayByComponent<T1, ushort>(0, state.ReadSparse<T1, ushort>());
+				bag.component1 = arrayProvider.GetNativeArrayByComponent<T1, T1>(1, state.GetDense<T1>());
+				bag.version1 = arrayProvider.GetNativeArrayByComponent<T1, uint>(2, state.ReadVersion<T1>());
+                if (!bag.version1.IsCreated){ bag.version1 = arrayProvider.UintDummy; }
+				bag.sparse2 = arrayProvider.GetNativeArrayByComponent<T2, ushort>(0, state.ReadSparse<T2, ushort>());
+				bag.component2 = arrayProvider.GetNativeArrayByComponent<T2, T2>(1, state.GetDense<T2>());
+				bag.version2 = arrayProvider.GetNativeArrayByComponent<T2, uint>(2, state.ReadVersion<T2>());
+                if (!bag.version2.IsCreated){ bag.version2 = arrayProvider.UintDummy; }
+				bag.sparse3 = arrayProvider.GetNativeArrayByComponent<T3, ushort>(0, state.ReadSparse<T3, ushort>());
+				bag.component3 = arrayProvider.GetNativeArrayByComponent<T3, T3>(1, state.GetDense<T3>());
+				bag.version3 = arrayProvider.GetNativeArrayByComponent<T3, uint>(2, state.ReadVersion<T3>());
+                if (!bag.version3.IsCreated){ bag.version3 = arrayProvider.UintDummy; }
+				bag.sparse4 = arrayProvider.GetNativeArrayByComponent<T4, ushort>(0, state.ReadSparse<T4, ushort>());
+				bag.component4 = arrayProvider.GetNativeArrayByComponent<T4, T4>(1, state.GetDense<T4>());
+				bag.version4 = arrayProvider.GetNativeArrayByComponent<T4, uint>(2, state.ReadVersion<T4>());
+                if (!bag.version4.IsCreated){ bag.version4 = arrayProvider.UintDummy; }
+				bag.sparse5 = arrayProvider.GetNativeArrayByComponent<T5, ushort>(0, state.ReadSparse<T5, ushort>());
+				bag.component5 = arrayProvider.GetNativeArrayByComponent<T5, T5>(1, state.GetDense<T5>());
+				bag.version5 = arrayProvider.GetNativeArrayByComponent<T5, uint>(2, state.ReadVersion<T5>());
+                if (!bag.version5.IsCreated){ bag.version5 = arrayProvider.UintDummy; }
+				bag.sparse6 = arrayProvider.GetNativeArrayByComponent<T6, ushort>(0, state.ReadSparse<T6, ushort>());
+				bag.component6 = arrayProvider.GetNativeArrayByComponent<T6, T6>(1, state.GetDense<T6>());
+				bag.version6 = arrayProvider.GetNativeArrayByComponent<T6, uint>(2, state.ReadVersion<T6>());
+                if (!bag.version6.IsCreated){ bag.version6 = arrayProvider.UintDummy; }
+				bag.sparse7 = arrayProvider.GetNativeArrayByComponent<T7, ushort>(0, state.ReadSparse<T7, ushort>());
+				bag.component7 = arrayProvider.GetNativeArrayByComponent<T7, T7>(1, state.GetDense<T7>());
+				bag.version7 = arrayProvider.GetNativeArrayByComponent<T7, uint>(2, state.ReadVersion<T7>());
+                if (!bag.version7.IsCreated){ bag.version7 = arrayProvider.UintDummy; }
 
                 return bag;
             }

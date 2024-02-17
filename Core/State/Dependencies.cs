@@ -1,5 +1,4 @@
 ﻿using AnotherECS.Core.Allocators;
-using AnotherECS.Core.Caller;
 using AnotherECS.Serializer;
 using System;
 
@@ -37,6 +36,7 @@ namespace AnotherECS.Core
 
             entities.Pack(ref writer);
             archetype.Pack(ref writer);
+
             writer.WriteStruct(config);
             writer.WriteStruct(tickProvider);
             writer.Write(componentTypesCount);
@@ -51,6 +51,7 @@ namespace AnotherECS.Core
 
             entities.Unpack(ref reader);
             archetype.Unpack(ref reader);
+
             config = reader.ReadStruct<StateConfig>();
             tickProvider = reader.ReadStruct<TickProvider>();
             componentTypesCount = reader.ReadUInt32();

@@ -38,7 +38,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct ConstructTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateModule>
+    internal struct CreateModuleTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateModule>
     {
         public State State { get; set; }
         public ICreateModule System { get; set; }
@@ -47,6 +47,18 @@ namespace AnotherECS.Core.Processing
         public void Invoke()
         {
             System.OnCreateModule(State);
+        }
+    }
+
+    internal struct DestroyModuleTaskHandler : ITaskHandler, ISystemTaskHandler<IDestroyModule>
+    {
+        public State State { get; set; }
+        public IDestroyModule System { get; set; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            System.OnDestroyModule(State);
         }
     }
 

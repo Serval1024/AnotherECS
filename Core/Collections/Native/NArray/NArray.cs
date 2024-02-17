@@ -516,6 +516,22 @@ namespace AnotherECS.Core.Collection
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> ToWArray()
+            => ToWArray(0, _length);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public WArray<T> ToWArray(uint start, uint count)
+        {
+#if !ANOTHERECS_RELEASE
+            if (start + count > _length)
+            {
+                throw new ArgumentOutOfRangeException($"'{nameof(start)}' or '{nameof(count)}' out of range.");
+            }
+#endif
+            return new(ReadPtr() + start, count);
+        }
+
         public T[] ToArray()
         {
             var result = new T[Length];

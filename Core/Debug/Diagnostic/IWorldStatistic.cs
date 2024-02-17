@@ -37,6 +37,8 @@
         public SystemsStatisticData destroySystems;
 
         public SystemsStatisticData createModule;
+        public SystemsStatisticData destroyModule;
+        
         public SystemsStatisticData tickStartedModule;
         public SystemsStatisticData tickFinishedModule;
 

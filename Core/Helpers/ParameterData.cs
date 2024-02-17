@@ -23,6 +23,11 @@ namespace AnotherECS.Core
 
         private bool IsMap(ref InjectContext context, InjectMapAttribute map)
         {
+            if (string.IsNullOrEmpty(map.Rule))
+            {
+                return true;
+            }
+
             var split = map.Rule.Split(_RULE_SEPARATOR);
             if (context.variables.TryGetValue(split[0].Trim(), out object value))
             {

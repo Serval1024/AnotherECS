@@ -41,6 +41,12 @@ namespace AnotherECS.Collections
 
         int System.Collections.Generic.ICollection<TValue>.Count => (int)Count;
 
+        internal uint Id
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.Id;
+        }
+
         internal bool IsDirty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -333,6 +339,15 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<TValue> ToWArray()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.ToWArray(0, Count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe TValue* ReadPtr()
             => _data.ReadPtr();
 
@@ -381,8 +396,7 @@ namespace AnotherECS.Collections
         void IInject<WPtr<AllocatorSelector>>.Construct(
             [InjectMap(nameof(BAllocator), "allocatorType=1")]
             [InjectMap(nameof(HAllocator), "allocatorType=2")]
-            WPtr<AllocatorSelector> allocator
-            )
+            WPtr<AllocatorSelector> allocator)
         {
             InjectUtils.Construct(ref _data, allocator);
         }

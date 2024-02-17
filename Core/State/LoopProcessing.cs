@@ -44,6 +44,7 @@ namespace AnotherECS.Core
         public void Destroy()
         {
             _systemProcessing.Destroy();
+            _systemProcessing.DestroyModule();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

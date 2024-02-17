@@ -308,6 +308,20 @@ namespace AnotherECS.Core.Collection
             return false;
         }
 
+        public TValue* TryGetPtrValue(TKey key)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            int i = FindEntry(key);
+            if (i >= 0)
+            {
+                return &_entries.ReadPtr(i)->value;
+                
+            }
+            return null;
+        }
+
         public TValue Get(uint index)
         {
 #if !ANOTHERECS_RELEASE

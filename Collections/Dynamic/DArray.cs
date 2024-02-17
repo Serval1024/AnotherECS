@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
 namespace AnotherECS.Collections
 {
 #if ENABLE_IL2CPP
@@ -20,12 +21,6 @@ namespace AnotherECS.Collections
     {
         private NArray<AllocatorSelector, TValue> _data;
 
-        internal bool IsDirty
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.IsDirty;
-        }
-
         internal DArray(AllocatorSelector* allocator)
         {
             _data = default;
@@ -33,20 +28,6 @@ namespace AnotherECS.Collections
 #if !ANOTHERECS_RELEASE
             Validate();
 #endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
-        {
-            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
-            {
-                for (uint i = start; i < elementCount; ++i)
-                {
-                    var data = (IRepairStateId)_data.ReadRef(i);
-                    data.RepairStateId(stateId);
-                    _data.ReadRef(i) = (TValue)data;
-                }
-            }
         }
 
         public uint Length
@@ -63,6 +44,18 @@ namespace AnotherECS.Collections
 
         uint ICollection.Count => Length;
 
+        internal uint Id
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.GetMemoryHandle().id;
+        }
+
+        internal bool IsDirty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _data.IsDirty;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Allocate(uint length)
         {
@@ -70,7 +63,6 @@ namespace AnotherECS.Collections
             {
                 throw new MissInjectException(typeof(DArray<TValue>));
             }
-
             _data.Allocate(length);
         }
 
@@ -253,6 +245,19 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<TValue> ToWArray()
+            => _data.ToWArray(0, Length);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal WArray<TValue> ToWArray(uint start, uint count)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(this);
+#endif
+            return _data.ToWArray(start, count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal unsafe TValue* ReadPtr()
             => _data.ReadPtr();
 
@@ -267,6 +272,7 @@ namespace AnotherECS.Collections
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool ExitCheckChanges()
             => _data.ExitCheckChanges();
+
 
         #region inner interfaces
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -308,6 +314,20 @@ namespace AnotherECS.Collections
             }
         }
         #endregion
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void RepairIdElement(ushort stateId, uint start, uint elementCount)
+        {
+            if (typeof(IRepairStateId).IsAssignableFrom(typeof(TValue)))
+            {
+                for (uint i = start; i < elementCount; ++i)
+                {
+                    var data = (IRepairStateId)_data.ReadRef(i);
+                    data.RepairStateId(stateId);
+                    _data.ReadRef(i) = (TValue)data;
+                }
+            }
+        }
 
 #if !ANOTHERECS_RELEASE
         private void Validate()
