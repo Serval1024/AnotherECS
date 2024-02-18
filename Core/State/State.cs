@@ -19,6 +19,7 @@ namespace AnotherECS.Core
     public abstract unsafe class State : BDisposable, IState, ISerializeConstructor
     {
         #region const
+        private const int CALLER_START_INDEX = 1;
         private const uint FILTER_INIT_CAPACITY = 32;
 
         private const uint BASIC_ALLOCATOR_ID = 1;
@@ -52,10 +53,10 @@ namespace AnotherECS.Core
         #endregion
 
         #region data cache
-        private ITickFinishedCaller[] _tickFinishedCallers;  //TODO SER MTHREAD
-        private IRevertStages[] _revertStagesCallers;  //TODO SER MTHREAD
-        private IRepairStateId[] _repairStateIdCallers;  //TODO SER MTHREAD
-        private ResizableData[] _resizableCallers;  //TODO SER MTHREAD
+        private ITickFinishedCaller[] _tickFinishedCallers;
+        private IRevertStages[] _revertStagesCallers;
+        private IRepairStateId[] _repairStateIdCallers;
+        private ResizableData[] _resizableCallers;
         private List<ITickEvent> _eventsTemp;
         private EntityId[] _entityIdsTemp;
         #endregion
@@ -175,7 +176,7 @@ namespace AnotherECS.Core
             _dependencies->Pack(ref writer);
             _events.Pack(ref writer);
 
-            for (uint i = 1; i < _callers.Length; ++i)
+            for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
             {
                 _callers[i].Pack(ref writer);
             }
@@ -206,7 +207,7 @@ namespace AnotherECS.Core
             _callers = new ICaller[GetComponentArrayCount()];
             CommonInit();
 
-            for (uint i = 1; i < _callers.Length; ++i)
+            for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
             {
                 _callers[i].Unpack(ref reader);
             }
@@ -229,22 +230,23 @@ namespace AnotherECS.Core
             _moduleDatas = Array.Empty<IModuleData>();
 
             BindingCodeGenerationStage(_dependencies->config);
-            
-            _tickFinishedCallers = _callers.Skip(1).Where(p => p.IsTickFinished && p is ITickFinishedCaller).Cast<ITickFinishedCaller>().ToArray();
-            _resizableCallers = _callers
-                .Skip(1)
-                .Where(p => p.IsResizable && p is IResizableCaller)
-                .Cast<IResizableCaller>()
-                .Select((p, i) => new ResizableData() { caller = p, callerIndex = (uint)i + 1u })
-                .ToArray();
 
-            _revertStagesCallers = _callers.Skip(1).Where(p => p.IsCallRevertStages && p is IRevertStages).Cast<IRevertStages>().ToArray();
-            _repairStateIdCallers = _callers.Skip(1).Where(p => p.IsRepairStateId && p is IRepairStateId).Cast<IRepairStateId>().ToArray();
+            StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _tickFinishedCallers, p => p.IsTickFinished);
+            StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _revertStagesCallers, p => p.IsCallRevertStages);
+            StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _repairStateIdCallers, p => p.IsRepairStateId);
+
+            StateHelpers.CacheInit<ResizableData, IResizableCaller>(
+                _callers,
+                CALLER_START_INDEX, 
+                ref _resizableCallers, 
+                p => p.IsRepairStateId, 
+                (p, i) => new ResizableData() { caller = p, callerIndex = (uint)i + 1u });
+
             _eventsTemp = new List<ITickEvent>();
             _entityIdsTemp = Array.Empty<EntityId>();
             _nextTickForEvent = _events.NextTickForEvent;
 
-            _callerByType = _callers.Skip(1).ToDictionary(k => k.GetElementType(), v => v);
+            StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _callerByType);
             _configByType = new Dictionary<Type, uint>();
         }
         #endregion
@@ -1018,7 +1020,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CallAttach()
         {
-            for (int i = 1; i < _callers.Length; ++i)
+            for (int i = CALLER_START_INDEX; i < _callers.Length; ++i)
             {
                 if (_callers[i].IsAttach && _callers[i] is IAttachCaller callerAttach)
                 {
@@ -1030,7 +1032,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CallConstruct()
         {
-            for (uint i = 1; i < _callers.Length; ++i)
+            for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
             {
                 if (_callers[i].IsInject && _callers[i] is IInjectCaller injectCaller)
                 {
@@ -1075,7 +1077,7 @@ namespace AnotherECS.Core
         {
             var repairMemory = RepairMemoryUtils.Create(&_dependencies->bAllocator, &_dependencies->stage0HAllocator, &_dependencies->stage1HAllocator);
 
-            for (uint i = 1; i < _layoutCount; ++i)
+            for (uint i = CALLER_START_INDEX; i < _layoutCount; ++i)
             {
                 _callers[i].RepairMemoryHandle(ref repairMemory);
             }
@@ -1107,7 +1109,7 @@ namespace AnotherECS.Core
         {
             using var list = new NList<BAllocator, uint>(&_dependencies->bAllocator, FILTER_INIT_CAPACITY);
 
-            for(int i = 1; i < _callers.Length; ++i)
+            for(int i = CALLER_START_INDEX; i < _callers.Length; ++i)
             {
                 if (_callers[i].IsTemporary)
                 {
@@ -1196,7 +1198,7 @@ namespace AnotherECS.Core
 
         private void AllocateLayouts()
         {
-            for (int i = 1; i < _layoutCount; ++i)
+            for (int i = CALLER_START_INDEX; i < _layoutCount; ++i)
             {
                 _callers[i].AllocateLayout();
             }

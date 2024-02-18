@@ -65,7 +65,7 @@ namespace AnotherECS.Generator
             => GetStateTypes()
                 .Union(GetComponents())
                 .Union(GetSystems().GetAssociationTable().Values)
-                .ExceptDublicates()
+                .ExceptDuplicates()
                 .ToArray();
 
         public Type[] GetStateTypes()

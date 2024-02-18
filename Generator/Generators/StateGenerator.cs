@@ -26,7 +26,7 @@ namespace AnotherECS.Generator
             => context
                 .GetStateTypes()
                 .Select(p => GetPathByState(context.GetStatePath(p.Name), p.Name))
-                .ExceptDublicates()
+                .ExceptDuplicates()
                 .ToArray();
 
         public ContentGenerator Compile(GeneratorContext context, string stateName)

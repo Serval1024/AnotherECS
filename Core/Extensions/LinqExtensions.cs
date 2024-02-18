@@ -5,7 +5,7 @@ namespace AnotherECS.Core
 {
     internal static class LinqExtensions
     {
-        public static IEnumerable<TSource> ExceptDublicates<TSource>(this IEnumerable<TSource> source)
+        public static IEnumerable<TSource> ExceptDuplicates<TSource>(this IEnumerable<TSource> source)
             => source
                 .GroupBy(p => p)
                 .Select(p => p.Key);

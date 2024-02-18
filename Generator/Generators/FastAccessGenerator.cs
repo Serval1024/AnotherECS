@@ -21,7 +21,7 @@ namespace AnotherECS.Generator
             => context
                 .GetComponents()
                 .Select(p => GetPathByOptions(context, new TypeOptions(p)))
-                .ExceptDublicates()
+                .ExceptDuplicates()
                 .ToArray();
 
         private ContentGenerator[] CompileInternal(
