@@ -68,8 +68,8 @@ namespace AnotherECS.Core.Caller
                 default(IIterator).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
             }
         }
-        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref IIterator iterator, uint startIndex, uint count)
-            where IIterator : struct, IDataIterator<TDense>
+        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref TIterator iterator, uint startIndex, uint count)
+            where TIterator : struct, IDataIterator<TDense>
         {
             if (layout.sparse.ReadPtr()[0])
             {

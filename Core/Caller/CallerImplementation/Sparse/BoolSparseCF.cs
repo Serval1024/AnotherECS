@@ -64,10 +64,10 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where IIterator : struct, IIterator<TAllocator, bool, TDense, ushort>
+        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterator : struct, IIterator<TAllocator, bool, TDense, ushort>
         {
-            IIterator iterator = default;
+            TIterator iterator = default;
 
             var sparse = layout.sparse.ReadPtr();
             var dense = layout.dense.GetPtr();

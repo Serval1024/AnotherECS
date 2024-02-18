@@ -61,12 +61,12 @@ namespace AnotherECS.Core.Caller
             => _dependencies->archetype.IsHasItem(_dependencies->entities.ReadArchetypeId(id), _itemId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where IIterator : struct, IIterator<TAllocator, bool, TDense, uint>
+        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
+            where TIterator : struct, IIterator<TAllocator, bool, TDense, uint>
         {
             if (count != 0)
             {
-                IIterator iterator = default;
+                TIterator iterator = default;
 
                 var dense = layout.dense;
 
