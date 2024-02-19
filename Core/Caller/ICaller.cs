@@ -2,7 +2,9 @@
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Gen.Common")]
@@ -52,8 +54,9 @@ namespace AnotherECS.Core.Caller
         void Set(EntityId id, ref TComponent component);
         void SetOrAdd(EntityId id, ref TComponent component);
 
-        public void Each<TIterator>(ref TIterator iterator)
+        void Each<TIterator>(ref TIterator iterator)
             where TIterator : struct, IDataIterator<TComponent>;
+        IEnumerable<TComponent> GetEnumerable();
 
         WArray<T> ReadSparse<T>()
            where T : unmanaged;

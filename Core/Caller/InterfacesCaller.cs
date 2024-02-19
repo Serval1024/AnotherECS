@@ -1,6 +1,7 @@
 using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -277,34 +278,15 @@ namespace AnotherECS.Core.Caller
         void Detach(State state, ref TDense component);
     }
 
-    internal unsafe interface IIterable<TAllocator, TSparse, TDense, TDenseIndex>
-        where TAllocator : unmanaged, IAllocator
-        where TSparse : unmanaged
-        where TDense : unmanaged
-        where TDenseIndex : unmanaged
-    {
-        void ForEach<IIterator>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where IIterator : struct, IIterator<TAllocator, TSparse, TDense, TDenseIndex>;
-    }
-
-    internal unsafe interface IIterator<TAllocator, TSparse, TDense, TDenseIndex>
-        where TAllocator : unmanaged, IAllocator
-        where TSparse : unmanaged
-        where TDense : unmanaged
-        where TDenseIndex : unmanaged
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Each(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, ref TDense component);
-    }
-
     internal unsafe interface IDataIterable<TAllocator, TSparse, TDense, TDenseIndex>
       where TAllocator : unmanaged, IAllocator
       where TSparse : unmanaged
       where TDense : unmanaged
       where TDenseIndex : unmanaged
     {
-        void ForEach<TEachData>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref TEachData data, uint startIndex, uint count)
-            where TEachData : struct, IDataIterator<TDense>;
+        void ForEach<IIterator>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref IIterator data, uint startIndex, uint count)
+            where IIterator : struct, IDataIterator<TDense>;
+        public IEnumerable<TDense> GetEnumerable(ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint startIndex, uint count);
     }
 
     internal unsafe interface IDataIterator<TDense>

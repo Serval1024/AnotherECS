@@ -56,20 +56,20 @@ namespace AnotherECS.Physics
 
             physicsWorldInternal = new PhysicsWorld(0, 0, 0);
 
-            staticBodies = state.CreateFilter()
+            staticBodies = state.Filter()
                 .With<Position>()
                 .With<Rotation>()
                 .With<IsPhysicsStatic>()
                 .BuildAsId();
 
-            dynamicBodies = state.CreateFilter()
+            dynamicBodies = state.Filter()
                 .With<Position>()
                 .With<Rotation>()
                 .With<PhysicsVelocity>()
                 .Without<IsPhysicsStatic>()
                 .BuildAsId();
 
-            joints = state.CreateFilter()
+            joints = state.Filter()
                 .With<PhysicsJoint>()
                 .With<PhysicsConstrainedBodyPair>()
                 .BuildAsId();

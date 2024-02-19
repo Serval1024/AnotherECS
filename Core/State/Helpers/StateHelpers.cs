@@ -22,11 +22,13 @@ namespace AnotherECS.Core
         public static void CacheInit<T, U>(ICaller[] callers, int startIndex, ref T[] array, Func<ICaller, bool> rule, Func<U, int, T> assign)
         {
             array = new T[GetCount(callers, startIndex, rule)];
+
+            int count = 0;
             for (int i = startIndex; i < callers.Length; ++i)
             {
                 if (rule(callers[i]) && callers[i] is U @interface)
                 {
-                    array[i - startIndex] = assign(@interface, i);
+                    array[count++] = assign(@interface, i);
                 }
             }
         }
@@ -36,11 +38,12 @@ namespace AnotherECS.Core
         {
             array = new T[GetCount(callers, startIndex, rule)];
 
+            int count = 0;
             for (int i = startIndex; i < callers.Length; ++i)
             {
                 if (rule(callers[i]) && callers[i] is T @interface)
                 {
-                    array[i - startIndex] = @interface;
+                    array[count++] = @interface;
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -11,7 +12,6 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, bool, TDense, uint>,
         IDenseResize<TAllocator, bool, TDense, uint>,
         ISparseProvider<TAllocator, bool, TDense, uint>,
-        IIterable<TAllocator, bool, TDense, uint>,
         IDataIterable<TAllocator, bool, TDense, uint>,
         IBoolConst,
         ISingleDenseFlag,
@@ -60,20 +60,21 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(0);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<IIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where IIterator : struct, IIterator<TAllocator, bool, TDense, uint>
-        {
-            if (layout.sparse.ReadPtr()[0])
-            {
-                default(IIterator).Each(ref layout, ref dependencies, ref layout.dense.GetRef(0));
-            }
-        }
         public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, uint> layout, ref TIterator iterator, uint startIndex, uint count)
             where TIterator : struct, IDataIterator<TDense>
         {
-            if (layout.sparse.ReadPtr()[0])
+            if (layout.sparse.Read(0))
             {
                 iterator.Each(0, ref layout.dense.GetRef(0));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerable<TDense> GetEnumerable(ULayout<TAllocator, bool, TDense, uint> layout, uint startIndex, uint count)
+        {
+            if (layout.sparse.Read(0))
+            {
+                yield return layout.dense.GetRef(0);
             }
         }
 

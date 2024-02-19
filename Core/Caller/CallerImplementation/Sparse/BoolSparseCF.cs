@@ -1,6 +1,7 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Collection;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
@@ -11,7 +12,6 @@ namespace AnotherECS.Core.Caller
         ISparseResize<TAllocator, bool, TDense, ushort>,
         IDenseResize<TAllocator, bool, TDense, ushort>,
         ISparseProvider<TAllocator, bool, TDense, ushort>,
-        IIterable<TAllocator, bool, TDense, ushort>,
         IDataIterable<TAllocator, bool, TDense, ushort>,
         IBoolConst,
         ISingleDenseFlag,
@@ -64,25 +64,6 @@ namespace AnotherECS.Core.Caller
             => layout.sparse.Read(id);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where TIterator : struct, IIterator<TAllocator, bool, TDense, ushort>
-        {
-            TIterator iterator = default;
-
-            var sparse = layout.sparse.ReadPtr();
-            var dense = layout.dense.GetPtr();
-            var denseIndex = layout.denseIndex;
-
-            for (uint i = startIndex; i < denseIndex; ++i)
-            {
-                if (sparse[i])
-                {
-                    iterator.Each(ref layout, ref dependencies, ref dense[i]);
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEach<TIterator>(ref ULayout<TAllocator, bool, TDense, ushort> layout, ref TIterator iterator, uint startIndex, uint count)
             where TIterator : struct, IDataIterator<TDense>
         {
@@ -95,6 +76,30 @@ namespace AnotherECS.Core.Caller
                 if (sparse[i])
                 {
                     iterator.Each(i, ref dense[i]);
+                    if (--count == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerable<TDense> GetEnumerable(ULayout<TAllocator, bool, TDense, ushort> layout, uint startIndex, uint count)
+        {
+            var sparse = layout.sparse;
+            var dense = layout.dense;
+            var denseIndex = layout.denseIndex;
+
+            for (uint i = startIndex; i < denseIndex; ++i)
+            {
+                if (sparse.ReadRef(i))
+                {
+                    yield return dense.ReadRef(i);
+                    if (--count == 0)
+                    {
+                        break;
+                    }
                 }
             }
         }

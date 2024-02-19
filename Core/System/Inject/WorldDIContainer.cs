@@ -86,6 +86,10 @@ namespace AnotherECS.Core
             {
                 return ResolveFilter(type);
             }
+            if (typeof(IQFilter).IsAssignableFrom(type))
+            {
+                return ResolveQFilter(type);
+            }
             else if (typeof(IConfig).IsAssignableFrom(type))
             {
                 return ResolveConfig(type);
@@ -105,6 +109,12 @@ namespace AnotherECS.Core
             }
 
             return _state.CreateFilter(type, ref mask);
+        }
+
+        private IQFilter ResolveQFilter(Type type)
+        {
+            var includeTypes = type.GetGenericArguments();
+            return _state.CreateQFilter(type, includeTypes[0]);
         }
 
         private IConfig ResolveConfig(Type type)

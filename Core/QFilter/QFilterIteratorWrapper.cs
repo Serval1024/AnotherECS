@@ -4,8 +4,6 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
-    public interface IQFilter<TData> : IIterator<TData> { };
-
     internal struct QFilterIteratorWrapper<TComponent, TIterator> : IDataIterator<TComponent>
            where TIterator : struct, IIterator<TComponent>
            where TComponent : unmanaged

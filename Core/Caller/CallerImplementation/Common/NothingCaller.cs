@@ -22,7 +22,6 @@ namespace AnotherECS.Core.Caller
         IVersion<TAllocator, TSparse, TDense, TDenseIndex>,
         ICallerSerialize<TAllocator, TSparse, TDense, TDenseIndex>,
         IDenseResize<TAllocator, TSparse, TDense, TDenseIndex>,
-        IIterable<TAllocator, TSparse, TDense, TDenseIndex>,
         IRevertFinished,
         IRepairMemory<TDense>,
         IRepairStateId<TDense>,
@@ -78,10 +77,6 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DenseResize(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, uint capacity) { }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<IIterator>(ref ULayout<TAllocator, TSparse, TDense, TDenseIndex> layout, ref Dependencies dependencies, uint startIndex, uint count)
-            where IIterator : struct, IIterator<TAllocator, TSparse, TDense, TDenseIndex> { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Pack(ref WriterContextSerializer writer, ULayout<TAllocator, TSparse, TDense, TDenseIndex>* layout) { }

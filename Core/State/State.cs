@@ -5,6 +5,7 @@ using AnotherECS.Core.Exceptions;
 using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
@@ -746,17 +747,13 @@ namespace AnotherECS.Core
 
         #region filters
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FilterBuilder CreateFilter()
+        public FilterBuilder Filter()
             => new(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void QFilter<TComponent, TIterator>(TIterator iterator = default)
+        public QFilter<TComponent> QFilter<TComponent>()
             where TComponent : unmanaged, IComponent
-            where TIterator : struct, IQFilter<TComponent>
-        {
-            var wrapper = new QFilterIteratorWrapper<TComponent, TIterator>() { data = iterator };
-            GetCaller<TComponent>().Each(ref wrapper);
-        }
+            => new(this, GetCaller<TComponent>());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal T CreateFilter<T>(ref Mask mask)
@@ -799,6 +796,14 @@ namespace AnotherECS.Core
         internal void UnlockFilter()
         {
             _dependencies->filters.Unlock();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal IQFilter CreateQFilter(Type type, Type mask)
+        {
+            var filter = (IQFilter)Activator.CreateInstance(type);
+            filter.Construct(this, GetCaller(mask));
+            return filter;
         }
         #endregion
 
