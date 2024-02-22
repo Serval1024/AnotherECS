@@ -55,7 +55,10 @@ namespace AnotherECS.Converter
             {
                 FillUint(data, types);
             }
-            throw new NotSupportedException();
+            else
+            {
+                throw new NotSupportedException(typeof(UId).Name);
+            }
         }
 
         private void FillUshort(Dictionary<UId, Type> data, Type[] types)
