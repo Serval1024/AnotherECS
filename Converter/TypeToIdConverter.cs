@@ -39,14 +39,42 @@ namespace AnotherECS.Converter
         {
             var types = GetSortTypes().ToArray();
             var result = new Dictionary<UId, Type>();
-            dynamic idCounter = 0;
+
+            Fill(result, types);
+            
+            return result;
+        }
+
+        private void Fill(Dictionary<UId, Type> data, Type[] types)
+        {
+            if (typeof(UId) == typeof(ushort))
+            {
+                FillUshort(data, types);
+            }
+            else if (typeof(UId) == typeof(uint))
+            {
+                FillUint(data, types);
+            }
+        }
+
+        private void FillUshort(Dictionary<UId, Type> data, Type[] types)
+        {
+            ushort idCounter = 0;
             for (int i = 0; i < types.Length; ++i)
             {
                 ++idCounter;
-                result.Add((UId)idCounter, types[i]);
+                data.Add((UId)(object)idCounter, types[i]);
             }
+        }
 
-            return result;
+        private void FillUint(Dictionary<UId, Type> data, Type[] types)
+        {
+            uint idCounter = 0;
+            for (int i = 0; i < types.Length; ++i)
+            {
+                ++idCounter;
+                data.Add((UId)(object)idCounter, types[i]);
+            }
         }
     }
 }
