@@ -2,7 +2,6 @@
 
 namespace AnotherECS.Core.Exceptions
 {
-    [Serializable]
     internal class InjectException : Exception
     {
         public InjectException(Type type, string filedName)

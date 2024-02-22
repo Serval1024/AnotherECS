@@ -41,6 +41,9 @@ namespace AnotherECS.Core.Processing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear() { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

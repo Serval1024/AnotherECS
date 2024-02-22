@@ -9,6 +9,9 @@ namespace AnotherECS.Core
     {
         private readonly ISystemProcessing _systemProcessing;
 
+        public ISystemProcessing SystemProcessing
+            => _systemProcessing;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public LoopProcessing(ISystemProcessing systemProcessing)
         {
@@ -50,7 +53,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryRevertTo(uint currentTick, uint getNextTickForEvent)
         {
-            if (getNextTickForEvent <= currentTick)
+            if (currentTick >= getNextTickForEvent)
             {
                 _systemProcessing.RevertTo(getNextTickForEvent - 1);
             }
@@ -75,6 +78,12 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
             => _systemProcessing.Wait();
+
+        public void BreakAndWait()
+        {
+            _systemProcessing.Clear();
+            _systemProcessing.Wait();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsDeterministicSequence()

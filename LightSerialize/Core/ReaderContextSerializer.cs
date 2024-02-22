@@ -13,6 +13,9 @@ namespace AnotherECS.Serializer
         
         public Dependencies Dependency => _dependencies;
 
+        public ReaderContextSerializer(LightSerializer serializer, byte[] data)
+            : this(serializer, data, null) { }
+
         public ReaderContextSerializer(LightSerializer serializer, byte[] data, IEnumerable<(uint, object)> dependencies)
         {
             _serializer = serializer;

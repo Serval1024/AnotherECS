@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEditorInternal;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]
@@ -61,6 +62,11 @@ namespace AnotherECS.Core
         private List<ITickEvent> _eventsTemp;
         private EntityId[] _entityIdsTemp;
         #endregion
+
+        #region Error
+        private Exception _lastError;
+        #endregion
+
 
         #region construct & destruct
         public State()
@@ -738,10 +744,17 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            lock (_eventLock)
-            {
-                Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
-            }
+            Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
+        }
+        #endregion
+
+        #region Error
+        public Exception GetLastError()
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return _lastError;
         }
         #endregion
 
@@ -896,8 +909,20 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            _events.Send(@event);
-            _nextTickForEvent = _events.NextTickForEvent;
+            lock (_eventLock)
+            {
+                _events.Send(@event);
+                _nextTickForEvent = _events.NextTickForEvent;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal EventContainer ToITickEvent(IEvent @event)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return new EventContainer(_dependencies->tickProvider.tick + 1, @event);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -947,7 +972,8 @@ namespace AnotherECS.Core
             {
                 if ((Tick - tick) > _dependencies->config.history.recordTickLength)
                 {
-                    throw new HistoryRevertTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
+                    _lastError = new HistoryRevertTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
+                    return;
                 }
 
                 if (IsNeedCallRevertByStages())

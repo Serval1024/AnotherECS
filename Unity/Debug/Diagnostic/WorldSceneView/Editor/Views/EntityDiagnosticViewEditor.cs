@@ -59,7 +59,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
         {
             if (Target.visualData.id != 0)
             {
-                Target.World.Send(new CheatEvent()
+                Target.World.SendEvent(new CheatEvent()
                 {
                     command = CheatEvent.Command.ChangeComponent,
                     id = Target.visualData.id,

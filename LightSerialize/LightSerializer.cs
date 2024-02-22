@@ -41,7 +41,7 @@ namespace AnotherECS.Serializer
 
         public byte[] Pack(object data)
         {
-            var context = new WriterContextSerializer(this, null);
+            var context = new WriterContextSerializer(this);
 
             Pack(ref context, data);
             var result = context.ToArray();
@@ -57,7 +57,8 @@ namespace AnotherECS.Serializer
 
         public object Unpack(byte[] data, params object[] constructArgs)
         {
-            var context = new ReaderContextSerializer(this, data, null);
+            var context = new ReaderContextSerializer(this, data);
+
             var result = Unpack(ref context, constructArgs);
             context.Dispose();
             return result;
@@ -99,6 +100,8 @@ namespace AnotherECS.Serializer
                 }
             }
         }
+        public object Unpack(ref ReaderContextSerializer reader)
+            => Unpack(ref reader, null);
 
         public object Unpack(ref ReaderContextSerializer reader, params object[] constructArgs)
         {

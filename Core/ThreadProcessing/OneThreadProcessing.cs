@@ -9,7 +9,7 @@ namespace AnotherECS.Core.Processing
     internal sealed class OneThreadProcessing<TThreadScheduler> : ISystemProcessing
         where TThreadScheduler : struct, IThreadScheduler<Task>
     {
-        private readonly State _state;
+        private State _state;
         private TThreadScheduler _threadScheduler;
 
         private Task _stateTickStart;
@@ -29,10 +29,15 @@ namespace AnotherECS.Core.Processing
 
         private Task _receivers;
 
-        public OneThreadProcessing(State state, TThreadScheduler threadScheduler)
+        public OneThreadProcessing(TThreadScheduler threadScheduler)
+        {
+            _threadScheduler = threadScheduler;
+        }
+
+
+        public void Bind(State state)
         {
             _state = state;
-            _threadScheduler = threadScheduler;
         }
 
         public void SetStatistic(ITimerStatistic timerStatistic)
@@ -75,7 +80,6 @@ namespace AnotherECS.Core.Processing
         {
             _threadScheduler.Run(_stateTickStart);
         }
-
 
         public void StateTickFinished()
         {
@@ -144,6 +148,11 @@ namespace AnotherECS.Core.Processing
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetWorkingThreadCount()
             => 1;
+
+        public void Clear()
+        {
+            _threadScheduler.Clear();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()

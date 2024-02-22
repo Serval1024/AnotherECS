@@ -18,6 +18,7 @@ namespace AnotherECS.Core.Threading
 
         bool IsBusy();
         int GetInWork();
+        void Clear();
         void Wait();
         void Complete();
     }

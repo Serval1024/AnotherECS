@@ -9,6 +9,7 @@ namespace AnotherECS.Core.Processing
         int GetInWork();
         int GetThreadMax();
         int GetWorkingThreadCount();
+        void Clear();
         void Wait();
         bool IsDeterministicSequence();
         uint GetParallelMax();
@@ -41,6 +42,7 @@ namespace AnotherECS.Core.Processing
 
     public interface IStatisticProcessing
     {
+        void Bind(State state);
         void SetStatistic(ITimerStatistic timerStatistic);
     }
 }

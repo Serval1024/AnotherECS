@@ -59,7 +59,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             {
                 if (!World.IsDisposed)
                 {
-                    World.Send(new CheatEvent()
+                    World.SendEvent(new CheatEvent()
                     {
                         command = CheatEvent.Command.RemoveEntity,
                         id = visualData.id,

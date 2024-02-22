@@ -2,12 +2,11 @@ namespace AnotherECS.Serializer
 {
     public class DefaultSerializer : ISerializer
     {
-        private readonly ISerializer _impl;
+        private readonly LightSerializer _impl;
 
         public DefaultSerializer()
         {
             _impl = new LightSerializer(new SerializeToUIntConverter(LightSerializer.START_CUSTOM_RANGE_CODES));
-            
         }
 
         public byte[] Pack(object data)

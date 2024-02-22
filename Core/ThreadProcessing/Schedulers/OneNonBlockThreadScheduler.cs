@@ -69,6 +69,12 @@ namespace AnotherECS.Core.Processing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear()
+        {
+            _tasks.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
         {
             _worker.Wait();
