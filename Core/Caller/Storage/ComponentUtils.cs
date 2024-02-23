@@ -16,7 +16,7 @@ namespace AnotherECS.Core
 
         public static bool IsOption(Type type, ComponentOptions option)
         {
-            var attribute = type.GetCustomAttribute<CompileComponentOptionAttribute>();
+            var attribute = type.GetCustomAttribute<ComponentOptionAttribute>();
             return (attribute != null) && attribute.Options.HasFlag(option);
         }
 

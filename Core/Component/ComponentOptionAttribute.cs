@@ -3,12 +3,12 @@
 namespace AnotherECS.Core
 {
     [AttributeUsage(AttributeTargets.Struct)]
-    public class CompileComponentOptionAttribute : Attribute
+    public class ComponentOptionAttribute : Attribute
     {
         public ComponentOptions Options { get; private set; }
         public int Capacity { get; private set; }
 
-        public CompileComponentOptionAttribute(ComponentOptions options)
+        public ComponentOptionAttribute(ComponentOptions options)
         {
             Options = options;
         }

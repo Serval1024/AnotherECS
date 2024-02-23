@@ -5,11 +5,6 @@ using EntityId = System.UInt32;
 
 namespace AnotherECS.Views.Core
 {
-    public struct ViewSystemReference : IConfig
-    {
-        internal IViewSystem system;
-    }
-
     public struct ViewHandle : IComponent, IAttachExternal, IDetachExternal, ISerialize
     {
         internal EntityId ownerId;

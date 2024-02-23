@@ -20,13 +20,13 @@ namespace AnotherECS.Physics
         public TriggerEvents triggerEvents;
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct Position : IComponent, IVersion
     {
         public float3 value;
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct Rotation : IComponent, IVersion
     {
         public quaternion value;
@@ -34,13 +34,13 @@ namespace AnotherECS.Physics
 
     public struct IsPhysicsStatic : IComponent { }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsCustomTags : IComponent
     {
         public byte value;
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public unsafe struct PhysicsCollider : IComponent, IInject<WPtr<AllocatorSelector>>, IRepairMemoryHandle
     {
         private static readonly BlobAssetReference<Collider> _empty = BlobAssetReference<Collider>.Create(default(BlobAssetReferenceData));
@@ -98,27 +98,27 @@ namespace AnotherECS.Physics
         }
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsVelocity : IComponent
     {
         public float3 linear;
         public float3 angular;
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsDamping : IComponent
     {
         public sfloat linear;
         public sfloat angular;
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsMassOverride : IComponent
     {    
         public byte isKinematic;   
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsMass : IComponent
     {
         public RigidTransform transform;
@@ -155,7 +155,7 @@ namespace AnotherECS.Physics
 
     }
 
-    [CompileComponentOption(ComponentOptions.ForceUseSparse)]
+    [ComponentOption(ComponentOptions.ForceUseSparse)]
     public struct PhysicsGravityFactor : IComponent
     {
         public sfloat value;

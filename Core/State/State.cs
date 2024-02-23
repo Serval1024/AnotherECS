@@ -462,6 +462,16 @@ namespace AnotherECS.Core
             return ref GetCaller<T>().Get(id);
         }
 
+        public uint GetVersion<T>(EntityId id)
+          where T : unmanaged, IVersion
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+#endif
+            return GetCaller<T>().GetVersion(id);
+        }
+
         public void Set(EntityId id, uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE

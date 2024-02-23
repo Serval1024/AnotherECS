@@ -162,6 +162,16 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint GetVersion<T>()
+         where T : unmanaged, IVersion
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfInvalid();
+#endif
+            return State.GetVersion<T>(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Entity p0, Entity p1)
             => p0.id == p1.id && p0.generation == p1.generation && p0.State == p1.State;
 
