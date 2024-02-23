@@ -8,12 +8,12 @@ namespace AnotherECS.Core.Remote
         public ClientRole Role { get; private set; }
         public bool IsMaster => Role == ClientRole.Master;
 
-        public void Disconnect()
+        public void SendState()
         {
 
         }
 
-        public void SendState()
+        public void Disconnect()
         {
 
         }

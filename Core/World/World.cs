@@ -72,6 +72,11 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
+            if (_isInit)
+            {
+                throw new InvalidOperationException($"The world has already been initialized.");
+            }
+
             _isInit = true;
             if (_state == null)
             {
