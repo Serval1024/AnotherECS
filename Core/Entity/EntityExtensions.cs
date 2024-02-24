@@ -10,17 +10,30 @@ namespace AnotherECS.Core
     public static class EntityExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity ToEntity(this State state, EntityId id)
-            => new()
+        public static bool TryToEntity(this State state, EntityId id, out Entity entity)
+        {
+            if (state.IsHas(id))
             {
-                id = id,
-                generation = state.GetGeneration(id),
-                stateId = state.GetStateId(),
-            };
+                entity = new()
+                {
+                    id = id,
+                    generation = state.GetGeneration(id),
+                    stateId = state.GetStateId(),
+                };
+                return true;
+            }
+
+            entity = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity ToEntity(this State state, EntityId id)
+            => state.TryToEntity(id, out var entity) ? entity : throw new Exceptions.EntityCastException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint ToEntityId(this in Entity entity, out EntityId id)
-            => entity.TryToEntityId(out var _, out id) ? id : throw new Exceptions.CanNotCastException();
+            => entity.TryToEntityId(out var _, out id) ? id : throw new Exceptions.EntityCastException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryToEntityId(this in Entity entity, out EntityId id)
@@ -29,7 +42,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryToEntityId(this in Entity entity, out State state, out EntityId id)
         {
-            if (!entity.State.IsHas(entity.id, entity.generation))
+            if (!entity.IsValid || !entity.State.IsHas(entity.id, entity.generation))
             {
                 state = null;
                 id = 0;

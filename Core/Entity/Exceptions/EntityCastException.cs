@@ -3,9 +3,9 @@ using System;
 
 namespace AnotherECS.Core.Exceptions
 {
-    public class CanNotCastException : Exception
+    public class EntityCastException : Exception
     {
-        public CanNotCastException()
+        public EntityCastException()
             : base($"{DebugConst.TAG}The entity or state is invalid.")
         { }
     }

@@ -22,7 +22,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
                 if (stateId == 0)
                 {
-                    throw new Exceptions.NullEntityException();
+                    throw new Exceptions.InvalidEntityException();
                 }
 #endif
                 return StateGlobalRegister.Get(stateId);
@@ -163,7 +163,7 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetVersion<T>()
-         where T : unmanaged, IVersion
+            where T : unmanaged, IVersion
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfInvalid();
