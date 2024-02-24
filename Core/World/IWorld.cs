@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AnotherECS.Core.Exceptions;
+using System;
 
 namespace AnotherECS.Core
 {
@@ -9,6 +10,7 @@ namespace AnotherECS.Core
         void Tick(uint tickCount);
         void Destroy();
         void SendEvent(IEvent @event);
+        void UpdateFromMainThread();
     }
 
     public interface IWorldExtend : IWorld

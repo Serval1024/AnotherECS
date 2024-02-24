@@ -5,10 +5,7 @@ using AnotherECS.Core.Exceptions;
 using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using UnityEditorInternal;
 using EntityId = System.UInt32;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Jobs")]

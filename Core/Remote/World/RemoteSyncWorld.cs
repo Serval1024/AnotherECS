@@ -45,6 +45,11 @@ namespace AnotherECS.Core.Remote
             _world.Destroy();
         }
 
+        public void UpdateFromMainThread()
+        {
+            _world.UpdateFromMainThread();
+        }
+
         public void SendEvent(IEvent @event)
         {
             SendEvent(_world.ToITickEvent(@event));
