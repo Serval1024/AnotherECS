@@ -3,6 +3,7 @@
 // </auto-generated>
 
 using AnotherECS.Core;
+using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Caller;
 using System;
 using System.Runtime.CompilerServices;

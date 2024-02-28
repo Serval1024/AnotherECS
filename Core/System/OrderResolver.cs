@@ -49,7 +49,7 @@ namespace AnotherECS.Core
                 var nodeWithCrossRequirements = node.Value.after.FirstOrDefault(p => node.Value.before.Any(p0 => p0.id == p.id));
                 if (nodeWithCrossRequirements != null)
                 {
-                    throw new Exceptions.InvalidNodeTopologyException(nodeWithCrossRequirements.id, "Node requires to be 'after' and 'before' at the same time.");
+                    throw new Exceptions.InvalidNodeTopologyException(nodeWithCrossRequirements.id, "Node requires to be 'after' and 'before' at the same time");
                 }
             }
         }

@@ -42,6 +42,10 @@ namespace AnotherECS.Generator
             {
                 result.Append("S");
             }
+            if (option.isDefault)
+            {
+                result.Append("Def");
+            }
             if (option.isMarker)
             {
                 result.Append("M");
@@ -100,7 +104,17 @@ namespace AnotherECS.Generator
                 result.Append(", ");
                 result.Append(nameof(ISingle));
             }
-            
+            if (option.isDefault)
+            {
+                result.Append(", ");
+                result.Append(nameof(IDefault));
+            }
+            if (option.isVersion)
+            {
+                result.Append(", ");
+                result.Append(nameof(IVersion));
+            }
+
             return result.ToString();
         }
 
