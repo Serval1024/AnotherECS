@@ -32,6 +32,11 @@ namespace AnotherECS.Core
             _state.AddConfig(config);
         }
 
+        public void AddConfig(IConfig config)
+        {
+            _state.AddConfig(config);
+        }
+
         public void AddSingle<T>(T single)
             where T : unmanaged, ISingle
         {

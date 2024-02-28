@@ -712,16 +712,35 @@ namespace AnotherECS.Core
                 return _configs[_configByType[type]];
             }
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddConfig(IConfig data)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+            ExceptionHelper.ThrowIfExists(this, data.GetType(), _configs, _configByType);
+#endif
+            lock (_configs)
+            {
+                var type = data.GetType();
+                AddConfigInternal(data, GetConfigIndex(type));
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddConfigInternal<T>(T data)
-           where T : IConfig
+            where T : IConfig
         {
-            var index = GetConfigIndex<T>();
+            AddConfigInternal(data, GetConfigIndex<T>());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddConfigInternal(IConfig data, ushort index)
+        {
+            var type = data.GetType();
             _configs[index] = data;
-            if (!_configByType.ContainsKey(typeof(T)))
+            if (!_configByType.ContainsKey(type))
             {
-                _configByType.Add(typeof(T), index);
+                _configByType.Add(type, index);
             }
         }
         #endregion
@@ -1252,6 +1271,7 @@ namespace AnotherECS.Core
         protected abstract uint GetConfigCount();
         protected abstract ushort GetConfigIndex<T>()
             where T : IConfig;
+        protected abstract ushort GetConfigIndex(Type type);
         #endregion
 
         #region declarations

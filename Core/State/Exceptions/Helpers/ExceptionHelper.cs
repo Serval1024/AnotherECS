@@ -219,5 +219,15 @@ namespace AnotherECS.Core.Exceptions
                 throw new ConfigNotFoundException(type);
             }
         }
+
+        public static void ThrowIfExists(State state, Type type, IConfig[] configs, Dictionary<Type, uint> configByType)
+        {
+            ThrowIfDisposed(state);
+
+            if (configByType.ContainsKey(type) && configs[configByType[type]] != null)
+            {
+                throw new ConfigExistsException(type);
+            }
+        }
     }
 }

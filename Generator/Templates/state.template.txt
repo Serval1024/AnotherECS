@@ -49,6 +49,8 @@ namespace AnotherECS.Gen.Project
         protected override ushort GetConfigIndex<T>()
             => CompileConfigIdProvider<<#STATE:GEN_NAME#>, T>.ID;
 
+        protected override ushort GetConfigIndex(Type type)
+            => CompileConfigIdStaticProvider<<#STATE:GEN_NAME#>>.converter.TypeToId(type);
 
         public struct FastAccess
         {
