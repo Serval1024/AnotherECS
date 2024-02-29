@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using EntityId = System.UInt32;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Unity.Views
 {
     public class UnityViewController : MonoBehaviour
     {

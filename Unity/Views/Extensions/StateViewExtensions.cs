@@ -3,14 +3,20 @@ using AnotherECS.Views.Core;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Unity.Views
 {
-    public static class ViewExtensions
+    public static class StateViewExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateView<T>(this State state, EntityId id)
             where T : IViewFactory
         {
+#if !ANOTHERECS_RELEASE
+            if (!state.IsHasConfig<ViewSystemReference>())
+            {
+                throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewFeature));
+            }
+#endif
             state.Add(id, new ViewHandle() { ownerId = id, viewId = state.GetConfig<ViewSystemReference>().system.GetId<T>() });
         }
 

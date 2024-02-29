@@ -140,10 +140,18 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             var memoryState = visualData.data.memoryTotal - visualData.data.historyMemoryTotal;
 
             var factor0 = memoryState * 100.0 / visualData.data.memoryTotal;
+            if (!double.IsNormal(factor0))
+            {
+                factor0 = 0f;
+            }
             container.Q<Label>("world-memory").text =
                 $"State: {DisplayUtils.ToStringMemory(memoryState)}. ({factor0:0}%)";
 
             var factor1 = visualData.data.historyMemoryTotal * 100.0 / visualData.data.memoryTotal;
+            if (!double.IsNormal(factor1))
+            {
+                factor1 = 0f;
+            }
             container.Q<Label>("world-memory-history").text =
                 $"History: {DisplayUtils.ToStringMemory(visualData.data.historyMemoryTotal)}. ({factor1:0}%)";
 

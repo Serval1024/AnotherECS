@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
-[assembly: InternalsVisibleTo("AnotherECS.Views")]
+[assembly: InternalsVisibleTo("AnotherECS.Unity.Views")]
 namespace AnotherECS.Core
 {
     public struct Entity : IEquatable<Entity>, IRepairStateId

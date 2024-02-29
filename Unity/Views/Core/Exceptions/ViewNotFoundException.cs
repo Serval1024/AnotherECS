@@ -1,7 +1,7 @@
 ﻿using AnotherECS.Debug;
 using System;
 
-namespace AnotherECS.Exceptions
+namespace AnotherECS.Unity.Exceptions
 {
     public class ViewNotFoundException : Exception
     {

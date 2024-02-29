@@ -3,7 +3,7 @@ using AnotherECS.Views.Core;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Unity.Views
 {
     public abstract class MonoBehaviourView : MonoBehaviour, IView, IViewFactory
     {

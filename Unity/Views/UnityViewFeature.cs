@@ -4,10 +4,10 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using EntityId = System.UInt32;
 
-namespace AnotherECS.Views
+namespace AnotherECS.Unity.Views
 {
     [SystemOrder(SystemOrder.Last)]
-    public class UnityViewFeature : IViewSystem, IMainThread, ICreateModule, ITickFinishedModule
+    public class UnityViewFeature : IFeature, IViewSystem, IMainThread, ITickFinishedModule
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
@@ -18,9 +18,9 @@ namespace AnotherECS.Views
             _commandBuffer = new ConcurrentQueue<Command>();
         }
 
-        public void OnCreateModule(State state)
+        public void Install(ref InstallContext context)
         {
-            state.SetOrAddConfig(new ViewSystemReference() { system = this });
+            context.AddConfig(new ViewSystemReference() { system = this });
         }
 
         public void OnTickFinished(State state)
@@ -79,6 +79,7 @@ namespace AnotherECS.Views
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DestroyInternal(EntityId id)
             => _unityViewController.DestroyView(id);
+
 
         private struct Command
         {
