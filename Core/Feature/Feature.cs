@@ -16,6 +16,16 @@ namespace AnotherECS.Core
             return this;
         }
 
+        public Feature AddConfig(params IConfig[] configs)
+        {
+            _configs ??= new List<IConfig>();
+            foreach (var config in configs)
+            {
+                _configs.Add(config);
+            }
+            return this;
+        }
+
         public void Install(ref Core.InstallContext context)
         {
             var childContext = new InstallContext(context);

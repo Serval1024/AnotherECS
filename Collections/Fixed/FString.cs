@@ -175,7 +175,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
@@ -425,7 +425,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
@@ -675,7 +675,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
@@ -925,7 +925,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
@@ -1175,7 +1175,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)
@@ -1425,7 +1425,7 @@ namespace AnotherECS.Collections
             return false;
         }
 
-         public bool Equals<TCString>(ref TCString other)
+        public bool Equals<TCString>(ref TCString other)
             where TCString : struct, ICString<char>
         {
             if (Length == other.Length)

@@ -181,6 +181,12 @@ namespace AnotherECS.Collections
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ExtendToCapacity(uint count)
+        {
+            _count = Capacity;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe void MoveRight(uint index, uint count)
         {
             if (count == 0)

@@ -77,5 +77,5 @@ namespace AnotherECS.Core
     }
 
     public interface ISyncThread : ISystem { }
-    public interface IMainThread : ISystem { }
+    public interface IMainThread : ISyncThread { }
 }

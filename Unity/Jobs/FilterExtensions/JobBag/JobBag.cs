@@ -2181,6 +2181,10 @@ namespace AnotherECS.Unity.Jobs
            => indexes[(int)index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EntityId GetEntityId(int index)
+          => indexes[(int)index];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasT0(int index)
             => sparse0[GetEntity(index)] != 0;
 

@@ -8,11 +8,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+using static AnotherECS.Core.OrderResolver.Element;
 
 namespace AnotherECS.Collections
 {
     [ForceBlittable]
-    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, ICString<char>, ICollection<char>, IEnumerable<char>, ISerialize, IValid, IRepairMemoryHandle
+    public struct DString : IInject<WPtr<AllocatorSelector>>, IEquatable<DString>, IEquatable<ICString<char>>, ICString<char>, ICollection<char>, IEnumerable<char>, ISerialize, IValid, IRepairMemoryHandle
     {
         private DList<char> _data;
 
@@ -38,13 +39,19 @@ namespace AnotherECS.Collections
         }
 
 
-        public static implicit operator string(DString fstring) => fstring.ToString();
+        public static implicit operator string(DString dstring) => dstring.ToString();
 
         public static bool operator ==(DString a, DString b)
             => a.Equals(ref b);
 
         public static bool operator !=(DString a, DString b)
             => !a.Equals(ref b);
+
+        public static bool operator ==(DString a, ICString<char> b)
+            => a.Equals(b);
+
+        public static bool operator !=(DString a, ICString<char> b)
+            => !a.Equals(b);
 
         public char this[uint index]
         {
@@ -62,6 +69,43 @@ namespace AnotherECS.Collections
             this[index] = (char)value;
         }
 
+        public void CopyFrom(DString source)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfBroken(source);
+#endif
+            _data.CopyFrom(source._data);
+        }
+
+        public unsafe void CopyFrom(string source)
+        {
+            if (source.Length > Capacity)
+            {
+                _data.Resize((uint)source.Length);
+            }
+            var dataPtr = _data.GetPtr();
+            for (int i = 0; i < source.Length; ++i)
+            {
+                dataPtr[i] = source[i];
+            }
+            _data.Count = (uint)source.Length;
+        }
+
+        public void CopyFrom(ICString<char> source)
+        {
+            if (_data.Capacity < source.Length)
+            {
+                _data.Allocate(source.Length);
+            }
+
+            _data.ExtendToCapacity(source.Length);
+
+            for (uint i = 0, iMax = source.Length; i < iMax; ++i)
+            {
+                _data.Get(i) = source[i];
+            }
+        }
+
         public void Clear()
         {
             _data.Clear();
@@ -69,16 +113,7 @@ namespace AnotherECS.Collections
 
         public unsafe void Set(string str)
         {
-            if (str.Length > Capacity)
-            {
-                _data.Resize((uint)str.Length);
-            }
-            var dataPtr = _data.GetPtr();
-            for (int i = 0; i < str.Length; ++i)
-            {
-                dataPtr[i] = str[i];
-            }
-            _data.Count = (uint)str.Length;
+            CopyFrom(str);
         }
 
         public unsafe void Concat(string str)
@@ -168,6 +203,39 @@ namespace AnotherECS.Collections
                 for (uint i = 0; i < Length; ++i)
                 {
                     if (dataPtr[i] != otherDataPtr[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals<TCString>(ref TCString other)
+            where TCString : struct, ICString<char>
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool Equals(ICString<char> other)
+        {
+            if (Length == other.Length)
+            {
+                for (uint i = 0; i < Length; ++i)
+                {
+                    if (!_data[i].Equals(other[i]))
                     {
                         return false;
                     }
