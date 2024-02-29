@@ -14,10 +14,10 @@ namespace AnotherECS.Unity.Views
 #if !ANOTHERECS_RELEASE
             if (!state.IsHasConfig<ViewSystemReference>())
             {
-                throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewFeature));
+                throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewModule));
             }
 #endif
-            state.Add(id, new ViewHandle() { ownerId = id, viewId = state.GetConfig<ViewSystemReference>().system.GetId<T>() });
+            state.Add(id, new ViewHandle() { ownerId = id, viewId = state.GetConfig<ViewSystemReference>().module.GetId<T>() });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

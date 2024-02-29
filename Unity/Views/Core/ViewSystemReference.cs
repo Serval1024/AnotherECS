@@ -4,6 +4,6 @@ namespace AnotherECS.Views.Core
 {
     public struct ViewSystemReference : IConfig
     {
-        internal IViewSystem system;
+        internal IViewSystem module;
     }
 }

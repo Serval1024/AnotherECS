@@ -12,12 +12,12 @@ namespace AnotherECS.Views.Core
 
         public void OnAttach(ref ADExternalContext context)
         {
-            context.GetConfig<ViewSystemReference>().system.Create(ownerId, viewId);
+            context.GetConfig<ViewSystemReference>().module.Create(ownerId, viewId);
         }
 
         public void OnDetach(ref ADExternalContext context)
         {
-            context.GetConfig<ViewSystemReference>().system.Destroy(ownerId);
+            context.GetConfig<ViewSystemReference>().module.Destroy(ownerId);
         }
 
         public void Pack(ref WriterContextSerializer writer)

@@ -7,12 +7,12 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Unity.Views
 {
     [SystemOrder(SystemOrder.Last)]
-    public class UnityViewFeature : IFeature, IViewSystem, IMainThread, ITickFinishedModule
+    public class UnityViewModule : IFeature, IViewSystem, IMainThread, ITickFinishedModule
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
 
-        public UnityViewFeature(UnityViewController unityViewController)
+        public UnityViewModule(UnityViewController unityViewController)
         {
             _unityViewController = unityViewController;
             _commandBuffer = new ConcurrentQueue<Command>();
@@ -20,7 +20,7 @@ namespace AnotherECS.Unity.Views
 
         public void Install(ref InstallContext context)
         {
-            context.AddConfig(new ViewSystemReference() { system = this });
+            context.AddConfig(new ViewSystemReference() { module = this });
         }
 
         public void OnTickFinished(State state)
