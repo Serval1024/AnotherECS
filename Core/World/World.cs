@@ -2,6 +2,7 @@
 using AnotherECS.Core.Processing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
@@ -99,12 +100,13 @@ namespace AnotherECS.Core
             _systems.Install(ref context);
             _systems.Append(context.GetSystemGroup());
             _systems.Sort();
-            container.Inject(_systems.GetSystemsAll());
+            var systems = _systems.GetSystemsAll().ToArray();
+            container.Inject(systems);
 
             _state.FirstStartup();
 
             RequestTick = CurrentTick;
-            _loopProcessing.Prepare(_state, _systems.GetSystemsAll());
+            _loopProcessing.Prepare(_state, systems);
             _loopProcessing.Init();
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
             _statistic.UpdateSystemGraph(_systems);

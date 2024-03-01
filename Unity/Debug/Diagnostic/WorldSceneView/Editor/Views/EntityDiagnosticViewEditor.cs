@@ -1,5 +1,6 @@
 using AnotherECS.Debug.Diagnostic.UIElements;
 using AnotherECS.Unity.Debug.Diagnostic.Present;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -33,7 +34,8 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             var container = new VisualElement();
             container.styleSheets.Add(uss);
 
-            var classField = new ClassField("Components", ClassField.Option.SkipFirstLabel);
+            var userData = new HashSet<object>() { new ComponentPresent.ComponentComponentPresentData() { entityId = Target.visualData.id } };
+            var classField = new ClassField("Components", ClassField.Option.SkipFirstLabel, userData);
             classField.SetValueWithoutNotify(Target.visualData.components);
             classField.name = "components-field";
 
@@ -42,6 +44,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             container.Add(classField);
 
             container.RegisterCallback<EntityPresent.EntityLocatedButtonEvent>(p => OnLocateEntity(p.id));
+            container.RegisterCallback<ComponentPresent.RemoveComponentButtonEvent>(p => OnRemoveComponent(p.entityId, p.componentIndex)); 
 
             return container;
         }
@@ -75,6 +78,18 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Editor
             if (Target.visualData.id == id)
             {
                 LocateEntity();
+            }
+        }
+        internal void OnRemoveComponent(EntityId entityId, uint componentId)
+        {
+            if (Target.visualData.id == entityId)
+            {
+                Target.World.SendEvent(new CheatEvent()
+                {
+                    command = CheatEvent.Command.RemoveComponent,
+                    id = entityId,
+                    componentIndex = componentId,
+                });
             }
         }
 

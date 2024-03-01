@@ -15,6 +15,7 @@ namespace AnotherECS.Debug.Diagnostic.UIElements
 
         private object _value;
         private Option _option;
+        private readonly HashSet<object> _userData;
         private readonly UnknowPresent _unknowPresent;
 
         private event Action<ObjectProperty, object, object> _changed;
@@ -71,10 +72,10 @@ namespace AnotherECS.Debug.Diagnostic.UIElements
             }
         }
 
-        public ClassField(Option option = Option.None)
-           : this(string.Empty, option) { }
+        public ClassField(Option option = Option.None, HashSet<object> userData = null)
+           : this(string.Empty, option, userData) { }
 
-        public ClassField(string label, Option option = Option.None)
+        public ClassField(string label, Option option = Option.None, HashSet<object> userData = null)
         {
             base.focusable = true;
             base.tabIndex = 0;
@@ -96,6 +97,7 @@ namespace AnotherECS.Debug.Diagnostic.UIElements
             }
 
             _option = option;
+            _userData = userData;
         }
 
         public void SetValueWithoutNotify(object value)
@@ -106,7 +108,7 @@ namespace AnotherECS.Debug.Diagnostic.UIElements
                 {
                     inputElement?.RemoveFromHierarchy();
 
-                    var objectProperty = new ObjectProperty(value);
+                    var objectProperty = new ObjectProperty(value, _userData);
 
                     if (_option.HasFlag(Option.SkipFirstLabel))
                     {
@@ -123,7 +125,7 @@ namespace AnotherECS.Debug.Diagnostic.UIElements
                 }
                 else
                 {
-                    var objectProperty = new ObjectProperty(value);
+                    var objectProperty = new ObjectProperty(value, _userData);
                     _unknowPresent.Set(objectProperty, inputElement);
                 }
             }

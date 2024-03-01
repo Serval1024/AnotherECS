@@ -8,6 +8,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Present
     internal struct EntityPresent : IPresent
     {
         Type IPresent.Type => typeof(Entity);
+
         VisualElement IPresent.Create(ObjectProperty property)
         {
             var container = PresentUtils.CreateHorizontal(null);
@@ -31,7 +32,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Present
                 name = "entity__button"
             };
 
-            button.clicked += ()=> OnClickButton(container, property.GetValue<Entity>());
+            button.clicked += ()=> OnClickButton(button, property.GetValue<Entity>());
             button.schedule.Execute(() => button.SetEnabled(property.GetValue<Entity>().IsValid)).Every(100);
 
             content.Add(button);

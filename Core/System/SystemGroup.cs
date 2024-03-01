@@ -1,7 +1,9 @@
+using AnotherECS.Core.Allocators;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core
 {
@@ -128,9 +130,9 @@ namespace AnotherECS.Core
             Init();
             foreach (var system in _systems)
             {
-                if (system is IEnumerable<ISystem> enumerable)
+                if (system is IGroupSystem iGroupSystem)
                 {
-                    foreach (var childSystem in enumerable)
+                    foreach (var childSystem in iGroupSystem.GetSystemsAll())
                     {
                         yield return childSystem;
                     }
@@ -167,8 +169,11 @@ namespace AnotherECS.Core
                 {
                     var childContext = new InstallContext(context.World);
                     iInstallSystem.Install(ref childContext);
-                    childContext.AddSystem(_systems[i]);
+
                     var systemGroup = childContext.GetSystemGroup();
+                    GroupSystemInternalCaller.Install(ref systemGroup, ref childContext);
+                    
+                    childContext.AddSystem(_systems[i]);
                     _systems[i] = systemGroup.SystemCount == 1 ? systemGroup.First() : systemGroup;
                 }
             }
@@ -235,6 +240,15 @@ namespace AnotherECS.Core
         }
 #endif
 
+        private static class GroupSystemInternalCaller
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static void Install<T>(ref T data, ref InstallContext installContext)
+                where T : struct, IGroupSystemInternal
+            {
+                data.Install(ref installContext);
+            }
+        }
     }
 
     public enum SortOrder

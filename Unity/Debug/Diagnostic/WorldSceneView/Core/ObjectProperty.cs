@@ -15,15 +15,17 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         private readonly Type _targetType;
         private readonly string _path;
         private readonly string _name;
+        private readonly Dictionary<Type, object> _userData;
 
         public object Root => _root;
         public string Path => _path;
 
-        public ObjectProperty(object target)
-            : this(target, target.GetType()) { }
+        public ObjectProperty(object target, HashSet<object> userData = null)
+            : this(target, target.GetType(), userData) { }
 
-        public ObjectProperty(object target, Type type)
+        public ObjectProperty(object target, Type type, HashSet<object> userData = null)
         {
+            _userData = userData?.ToDictionary(k => k.GetType(), v => v);
             _root = target ?? throw new ArgumentNullException(nameof(target));
             _target = target ?? throw new ArgumentNullException(nameof(target));
             _targetType = type ?? throw new ArgumentNullException(nameof(type));
@@ -31,12 +33,13 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             _name = type.Name;
         }
 
-        public ObjectProperty(object root, string path)
+        public ObjectProperty(object root, string path, HashSet<object> userData = null)
         {
             _root = root ?? throw new ArgumentNullException(nameof(root));
             _path = path ?? throw new ArgumentNullException(nameof(path));
             _target = default;
             _name = default;
+            _userData = userData?.ToDictionary(k => k.GetType(), v => v);
 
             var iterator = new PathIterator(path);
             var target = (_root, _root.GetType());
@@ -55,20 +58,21 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             _targetType = target.Item2;
         }
 
-        private ObjectProperty(object root, object target, Type type, string path, string name)
+        private ObjectProperty(object root, object target, Type type, string path, string name, Dictionary<Type, object> userData = null)
         {
             _root = root ?? throw new ArgumentNullException(nameof(root));
             _target = target;
             _path = path ?? throw new ArgumentNullException(nameof(path));
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _targetType = type ?? throw new ArgumentNullException(nameof(type));
+            _userData = userData;
         }
 
         public ObjectProperty GetPrivateChild(string name)
             => GetChildInternal(name, ReflectionUtils.instanceFlags);
                 
         public ObjectProperty GetRoot()
-            => new(_root, _root, _root.GetType(), string.Empty, _root.GetType().Name);
+            => new(_root, _root, _root.GetType(), string.Empty, _root.GetType().Name, _userData);
 
         public ObjectProperty GetChild(string name)
             => GetChildInternal(name, ReflectionUtils.publicFlags);
@@ -81,7 +85,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                 _target != null ? field.GetValue(_target) : null,
                 field.GetMemberType(),
                 PathCombine(_path, name),
-                name);
+                name,
+                _userData
+                );
         }
 
         public int ChildCount()
@@ -110,6 +116,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         {
             var root = _root;
             var path = _path;
+            var userData = _userData;
             if (typeof(IEnumerable).IsAssignableFrom(_targetType))
             {
                 if (_target == null)
@@ -125,8 +132,10 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                         p,
                         TryGetType(p, iEnumerable),
                         PathCombine(path, i.ToString()),
-                        $"[{i}] {p.GetType().Name}"
-                        ));
+                        $"[{i}] {p.GetType().Name}",
+                        userData
+                        )
+                    );
             }
             else
             {
@@ -138,7 +147,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                         target != null ? p.GetValue(target) : null,
                         p.GetMemberType(),
                         PathCombine(path, p.GetMemberName()),
-                        p.GetMemberName())
+                        p.GetMemberName(),
+                        userData
+                        )
                     );
             }
         }
@@ -172,10 +183,15 @@ namespace AnotherECS.Unity.Debug.Diagnostic
             => _name;
 
         public ObjectProperty ToFieldDisplayName(string value)
-            => new(_root, _target, _targetType, _path, value);
+            => new(_root, _target, _targetType, _path, value, _userData);
 
         public PathIterator GetPathIterator()
             => new(_path);
+
+        public T GetUserData<T>()
+            => _userData != null && _userData.TryGetValue(typeof(T), out var value) 
+            ? (T)value 
+            : default;
 
         private static (object, Type) Get(ref PathIterator iterator, object target)
         {
@@ -271,7 +287,6 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                 }
             }
         }
-
 
 
         public struct PathIterator

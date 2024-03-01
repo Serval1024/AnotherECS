@@ -47,11 +47,10 @@ namespace AnotherECS.Core.Processing
 #endif
         }
 
-        public void Prepare(IEnumerable<ISystem> systemGroup)
+        public void Prepare(IEnumerable<ISystem> flatSystems)
         {
-            var systems = systemGroup.ToArray();
+            var systems = flatSystems.ToArray();
 
-            
             _stateTickStart = CreateTask(new StateTickStartTaskHandler() { State = _state });
             _stateTickFinished = CreateTask(new StateTickFinishedTaskHandler() { State = _state });
 
@@ -233,7 +232,9 @@ namespace AnotherECS.Core.Processing
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IEnumerable<TType> Filter<TType>(ISystem[] systems)
-            => systems.OfType<TType>();
+            => systems
+                .Where(p => typeof(TType).IsAssignableFrom(p.GetType()))
+                .Cast<TType>();
     }
 }
 

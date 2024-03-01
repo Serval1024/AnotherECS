@@ -11,15 +11,17 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Present
             {
                 return GetPresent(property).Create(property);
             }
+            else
+            {
+                var container = new VisualElement();
 
-            var nullContainer = new VisualElement();
-
-            nullContainer.Add(
-                property.IsValueNull()
-                   ? default(NullPresent).Create(property)
-                   : GetPresent(property).Create(property)
-               );
-            return nullContainer;
+                container.Add(
+                    property.IsValueNull()
+                       ? default(NullPresent).Create(property)
+                       : GetPresent(property).Create(property)
+                   );
+                return container;
+            }
         }
 
         public void Set(ObjectProperty property, VisualElement container)
@@ -40,13 +42,13 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Present
                 }
                 else if (!property.IsValueNull() && isNull)
                 {
-                    nullContainer.Clear();
-                    nullContainer.Add(GetPresent(property).Create(property));
+                    container.Clear();
+                    container.Add(GetPresent(property).Create(property));
                 }
                 else if (property.IsValueNull() && !isNull)
                 {
-                    nullContainer.Clear();
-                    nullContainer.Add(default(NullPresent).Create(property));
+                    container.Clear();
+                    container.Add(default(NullPresent).Create(property));
                 }
                 else if (!property.IsValueNull() && !isNull)
                 {

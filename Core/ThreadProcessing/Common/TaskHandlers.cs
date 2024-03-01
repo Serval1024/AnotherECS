@@ -142,7 +142,6 @@ namespace AnotherECS.Core.Processing
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            State.FlushEvents();
             receivers.Receive(State, events);
         }
     }

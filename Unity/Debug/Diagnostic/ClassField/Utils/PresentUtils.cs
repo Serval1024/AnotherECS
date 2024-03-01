@@ -30,9 +30,12 @@ namespace AnotherECS.Unity.Debug.Diagnostic.Present
         public static VisualElement CreateHorizontal(string label)
         {
             var container = CreateGroup(label);
-            container.Q("group-content").style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
+            container.Q("group-content").AddToClassList("group-content-horizontal");
             return container;
         }
+
+        public static VisualElement CreateVertical(string label)
+            => CreateGroup(label);
 
         public static TTextValueField CreateField<TTextValueField, TValue>(ref ObjectProperty property)
             where TTextValueField : TextInputBaseField<TValue>, new()

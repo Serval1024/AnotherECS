@@ -8,9 +8,23 @@
 	width: 5px;
 	height: 5px;
 }
+.horizontal-space-small
+{
+	width: 5px;
+	height: 5px;
+}
 .group-content
 {
 	padding-left: 15px;
+}
+.group-content-horizontal
+{
+	flex-direction: row;
+	padding-left: 15px;
+}
+.flex-space
+{
+
 }
 .label-head
 {
@@ -20,6 +34,11 @@
 {
 	flex-direction: row;
 	flex-wrap: wrap;
+}
+#component__remove-button
+{
+	height: 20px;
+	width: 20px;
 }
 #system-statistic-container
 {

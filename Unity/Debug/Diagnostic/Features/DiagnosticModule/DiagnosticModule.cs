@@ -3,7 +3,7 @@ using AnotherECS.Core;
 namespace AnotherECS.Unity.Debug.Diagnostic
 {
     [SystemOrder(SystemOrder.Last)]
-    public struct DiagnosticFeature : IFeature, ITickFinishedModule, IDestroySystem, IMainThread
+    public struct DiagnosticModule : IFeature, ITickFinishedModule, IDestroySystem, IMainThread
     {
         private UnityDiagnostic _unityDiagnostic;
         private World _world;
