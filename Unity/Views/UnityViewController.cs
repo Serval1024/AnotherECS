@@ -38,7 +38,7 @@ namespace AnotherECS.Unity.Views
             }
             var inst = factory.Create();
             _byIdInstances.Add(id, inst);
-            inst.Construct(state, EntityExtensions.ToEntity(state, id));
+            inst.Construct(state, EntityExtensions.ToEntity(state, id).ToReadOnly());
             inst.Created();
         }
 

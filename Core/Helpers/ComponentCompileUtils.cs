@@ -30,7 +30,7 @@ namespace AnotherECS.Core
         public static void RepairMemoryHandle<T>(ref T structure, ref RepairMemoryContext repairMemoryContext)
             where T : struct, IRepairMemoryHandle
         {
-            structure.RepairMemoryHandle(ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref structure, ref repairMemoryContext);
         }
     }
 }

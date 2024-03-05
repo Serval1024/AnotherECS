@@ -54,6 +54,26 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsHas<TComponent>()
+            where TComponent : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfInvalid();
+#endif
+            return State.IsHas<TComponent>(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryRead<T>(out T component)
+            where T : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfInvalid();
+#endif
+            return State.TryRead(id, out component);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IComponent Read(uint index)
         {
 #if !ANOTHERECS_RELEASE
@@ -73,12 +93,22 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly T Read<T>()
-          where T : unmanaged, IComponent
+            where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfInvalid();
 #endif
             return ref State.Read<T>(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGet<T>(out T component)
+            where T : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfInvalid();
+#endif
+            return State.TryGet(id, out component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -194,6 +224,9 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other)
             => id.CompareTo(other.id);
+
+        public EntityReadOnly ToReadOnly()
+            => new(this);
 
         bool IRepairStateId.IsRepairStateId => true;
 

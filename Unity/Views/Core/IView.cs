@@ -10,7 +10,7 @@ namespace AnotherECS.Views.Core
 
     public interface IView
     {
-        void Construct(State state, in Entity entity);
+        void Construct(State state, in EntityReadOnly entity);
         void Created();
         void Apply();
         void Destroyed();

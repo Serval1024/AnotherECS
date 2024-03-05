@@ -303,13 +303,36 @@ namespace AnotherECS.Core.Caller
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly TDense Read(EntityId id)
-            => ref default(TDenseStorage).ReadDense(ref *_layout, _sparseStorage.ConvertToDenseIndex(ref *_layout, id));
+            => ref ReadInternal(id);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryRead(uint id, out TDense component)
+        {
+            if (IsHas(id))
+            {
+                component = ReadInternal(id);
+                return true;
+            }
+            component = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGet(uint id, out TDense component)
+        {
+            if (IsHas(id))
+            {
+                component = Get(id);
+                return true;
+            }
+            component = default;
+            return false;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TDense Get(EntityId id)
         {
             var denseIndex = _sparseStorage.ConvertToDenseIndex(ref *_layout, id);
-
             ref var component = ref default(TDenseStorage).GetDense(ref *_layout, denseIndex);
 
             UpdateVersion(denseIndex);
@@ -544,6 +567,10 @@ namespace AnotherECS.Core.Caller
             default(TSerialize).Unpack(ref reader, _layout);
             _attachDetachStorage.Unpack(ref reader);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref TDense ReadInternal(EntityId id)
+           => ref default(TDenseStorage).ReadDense(ref *_layout, _sparseStorage.ConvertToDenseIndex(ref *_layout, id));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ULayout<TAllocator, TSparse, TDense, TDenseIndex>* GetLayoutPtr()

@@ -55,6 +55,9 @@ namespace AnotherECS.Core.Caller
         void SetOrAdd(EntityId id, ref TComponent component);
         uint GetVersion(EntityId id);
 
+        bool TryRead(uint id, out TComponent component);
+        bool TryGet(uint id, out TComponent component);
+
         void Each<TIterator>(ref TIterator iterator)
             where TIterator : struct, IDataIterator<TComponent>;
         IEnumerable<TComponent> GetEnumerable();

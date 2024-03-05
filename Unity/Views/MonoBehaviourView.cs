@@ -5,10 +5,15 @@ using UnityEngine;
 
 namespace AnotherECS.Unity.Views
 {
-    public abstract class MonoBehaviourView : MonoBehaviour, IView, IViewFactory
+    public interface IMonoBehaviourView : IView, IViewFactory { }
+
+    public abstract class MonoBehaviourView : MonoBehaviour, IMonoBehaviourView
     {
         private State _state;
-        private Entity _entity;
+        private EntityReadOnly _entity;
+
+        private bool _isSingle;
+        private MonoBehaviourView[] _all;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -21,32 +26,93 @@ namespace AnotherECS.Unity.Views
             where T : IConfig
             => _state.GetConfig<T>();
 
-        void IView.Construct(State state, in Entity entity)
+        void IView.Construct(State state, in EntityReadOnly entity)
+        {
+            if (_all == null)
+            {
+                _all ??= GetComponents<MonoBehaviourView>();
+                _isSingle = _all.Length == 1;
+            }
+
+            if (_isSingle)
+            {
+                ConstructInternal(state, in entity);
+            }
+            else
+            {
+                for (int i = 0; i < _all.Length; ++i)
+                {
+                    _all[i].ConstructInternal(state, in entity);
+                }
+            }
+        }
+
+        private void ConstructInternal(State state, in EntityReadOnly entity)
         {
             _state = state;
             _entity = entity;
-        }
-
-        void IView.Destroyed()
-        {
-            OnDestroyed();
-            Destroy(gameObject);
         }
 
         string IViewFactory.GetGUID()
             => GetType().Name;
 
         IView IViewFactory.Create()
-            => Instantiate(this);
+        {
+            var inst =  Instantiate(this);
+            var view = inst.GetComponent<MonoBehaviourView>();
+            view._all = _all;
+            view._isSingle = _isSingle;
+
+            return inst;
+        }
 
         void IView.Created()
-            => OnCreated(ref _entity);
+        {
+            if (_isSingle)
+            {
+                OnCreatedInternal(ref _entity);
+            }
+            else
+            {
+                for(int i = 0; i < _all.Length; ++i)
+                {
+                    _all[i].OnCreatedInternal(ref _entity);
+                }
+            }
+        }
 
         void IView.Apply()
-            => OnApply(ref _entity);
+        {
+            if (_isSingle)
+            {
+                OnApplyInternal(ref _entity);
+            }
+            else
+            {
+                for (int i = 0; i < _all.Length; ++i)
+                {
+                    _all[i].OnApplyInternal(ref _entity);
+                }
+            }
+        }
 
-        public virtual void OnCreated(ref Entity entity) { }
-        public virtual void OnApply(ref Entity entity) { }
-        public virtual void OnDestroyed() { }
+        void IView.Destroyed()
+        {
+            if (_isSingle)
+            {
+                OnDestroyedInternal();
+            }
+            else
+            {
+                for (int i = 0; i < _all.Length; ++i)
+                {
+                    _all[i].OnDestroyedInternal();
+                }
+            }
+        }
+
+        protected abstract void OnCreatedInternal(ref EntityReadOnly entity);
+        protected abstract void OnApplyInternal(ref EntityReadOnly entity);
+        protected abstract void OnDestroyedInternal();
     }
 }

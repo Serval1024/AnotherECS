@@ -17,6 +17,9 @@ namespace AnotherECS.Core
         private SortOrder _order;
         private readonly List<ISystem> _systems;
 
+        public bool IsValid
+            => _systems != null;
+
         public SortOrder SortOrder
         {
             get => _order;
@@ -170,11 +173,14 @@ namespace AnotherECS.Core
                     var childContext = new InstallContext(context.World);
                     iInstallSystem.Install(ref childContext);
 
-                    var systemGroup = childContext.GetSystemGroup();
-                    GroupSystemInternalCaller.Install(ref systemGroup, ref childContext);
-                    
-                    childContext.AddSystem(_systems[i]);
-                    _systems[i] = systemGroup.SystemCount == 1 ? systemGroup.First() : systemGroup;
+                    if (childContext.IsAny())
+                    {
+                        var systemGroup = childContext.GetSystemGroup();
+                        GroupSystemInternalCaller.Install(ref systemGroup, ref childContext);
+                        childContext.AddSystem(_systems[i]);
+                        systemGroup = childContext.GetSystemGroup();
+                        _systems[i] = systemGroup.SystemCount == 1 ? systemGroup.First() : systemGroup;
+                    }
                 }
             }
         }

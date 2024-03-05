@@ -1,7 +1,11 @@
 using AnotherECS.Core;
 using AnotherECS.Views.Core;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using EntityId = System.UInt32;
 
 namespace AnotherECS.Unity.Views
@@ -11,6 +15,9 @@ namespace AnotherECS.Unity.Views
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
+
+        public UnityViewModule(IEnumerable<MonoBehaviourView> prefabViews)
+            : this(CreateUnityViewController(prefabViews)) { }
 
         public UnityViewModule(UnityViewController unityViewController)
         {
@@ -25,22 +32,19 @@ namespace AnotherECS.Unity.Views
 
         public void OnTickFinished(State state)
         {
-            while (!_commandBuffer.IsEmpty)
+            while (_commandBuffer.TryDequeue(out Command command))
             {
-                if (_commandBuffer.TryDequeue(out Command command))
+                switch (command.type)
                 {
-                    switch (command.type)
-                    {
-                        case Command.Type.Create:
-                            CreateInternal(state, command.id, command.viewId);
-                            break;
-                        case Command.Type.Change:
-                            ChangeInternal(command.id);
-                            break;
-                        case Command.Type.Destroy:
-                            DestroyInternal(command.id);
-                            break;
-                    }
+                    case Command.Type.Create:
+                        CreateInternal(state, command.id, command.viewId);
+                        break;
+                    case Command.Type.Change:
+                        ChangeInternal(command.id);
+                        break;
+                    case Command.Type.Destroy:
+                        DestroyInternal(command.id);
+                        break;
                 }
             }
         }
@@ -80,6 +84,17 @@ namespace AnotherECS.Unity.Views
         private void DestroyInternal(EntityId id)
             => _unityViewController.DestroyView(id);
 
+        private static UnityViewController CreateUnityViewController(IEnumerable<MonoBehaviourView> views)
+        {
+            if (views == null)
+            {
+                throw new NullReferenceException(nameof(views));
+            }
+            var go = new GameObject(nameof(UnityViewModule));
+            var unityViewController = go.AddComponent<UnityViewController>();
+            unityViewController.views = views.ToList();
+            return unityViewController;
+        }
 
         private struct Command
         {

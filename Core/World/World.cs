@@ -98,8 +98,11 @@ namespace AnotherECS.Core
             container.Inject(_systems.GetSystemsAll());
 
             _systems.Install(ref context);
-            _systems.Append(context.GetSystemGroup());
-            _systems.Sort();
+            if (context.IsAny())
+            {
+                _systems.Append(context.GetSystemGroup());
+                _systems.Sort();
+            }
             var systems = _systems.GetSystemsAll().ToArray();
             container.Inject(systems);
 

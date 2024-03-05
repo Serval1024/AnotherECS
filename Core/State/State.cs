@@ -52,7 +52,6 @@ namespace AnotherECS.Core
         #endregion
 
         #region data cache
-        private ITickFinishedCaller[] _tickFinishedCallers;
         private IRevertStages[] _revertStagesCallers;
         private IRepairStateId[] _repairStateIdCallers;
         private ResizableData[] _resizableCallers;
@@ -235,7 +234,6 @@ namespace AnotherECS.Core
 
             BindingCodeGenerationStage(_dependencies->config);
 
-            StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _tickFinishedCallers, p => p.IsTickFinished);
             StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _revertStagesCallers, p => p.IsCallRevertStages);
             StateHelpers.CacheInit(_callers, CALLER_START_INDEX, ref _repairStateIdCallers, p => p.IsRepairStateId);
 
@@ -431,6 +429,16 @@ namespace AnotherECS.Core
             GetCaller<T>().Remove(id);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryRead<T>(EntityId id, out T component)
+            where T : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDontExists(this, id);
+#endif
+            return GetCaller<T>().TryRead(id, out component);
+        }
+
         public IComponent Read(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
@@ -447,6 +455,16 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGet<T>(EntityId id, out T component)
+            where T : unmanaged, IComponent
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDontExists(this, id);
+#endif
+            return GetCaller<T>().TryGet(id, out component);
         }
 
         public ref T Get<T>(EntityId id)
@@ -860,11 +878,6 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TickFinished()
         {
-            foreach (var tickFinished in _tickFinishedCallers)
-            {
-                tickFinished.TickFinished();
-            }
-
             _dependencies->stage0HAllocator.TickFinished();
             _dependencies->stage1HAllocator.TickFinished();
 

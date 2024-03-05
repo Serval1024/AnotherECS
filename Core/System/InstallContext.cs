@@ -43,6 +43,9 @@ namespace AnotherECS.Core
             _state.Add(single);
         }
 
+        internal bool IsAny()
+            => _systemGroup.IsValid && _systemGroup.SystemCount != 0;
+
         internal SystemGroup GetSystemGroup()
             => _systemGroup;
     }
