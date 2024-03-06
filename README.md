@@ -1125,7 +1125,7 @@ public class HealthView : ComponentView<Health, HealthMax>	// MonoBehaviour.
 {
     private HealthBar _healthBar;
 	
-    public override void OnApply(in Health component0, in HealthMax component1)		// Called only if both components exist.
+    public override void OnApply(in Health component0, in HealthMax component1)	// Called only if both components exist.
     {
         _healthBar.Value = (float)component0.value;
         _healthBar.ValueMax = (float)component1.value;
