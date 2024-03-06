@@ -53,8 +53,8 @@ namespace AnotherECS.Unity.Views
             _entity = entity;
         }
 
-        string IViewFactory.GetGUID()
-            => GetType().Name;
+        public virtual ViewGuid GetGUID()
+            => default;
 
         IView IViewFactory.Create()
         {

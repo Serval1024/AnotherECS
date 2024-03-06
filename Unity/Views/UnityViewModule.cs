@@ -50,12 +50,15 @@ namespace AnotherECS.Unity.Views
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetId<T>()
+        public ViewId GetId<T>()
             where T : IViewFactory
             => _unityViewController.GetId<T>();
 
+        public ViewId GetId(ViewGuid guid)
+            => _unityViewController.GetId(guid);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Create(EntityId id, uint viewId)
+        public void Create(EntityId id, ViewId viewId)
         {
             _commandBuffer.Enqueue(new Command { type = Command.Type.Create, id = id, viewId = viewId });
         }
@@ -73,7 +76,7 @@ namespace AnotherECS.Unity.Views
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CreateInternal(State state, EntityId id, uint viewId)
+        private void CreateInternal(State state, EntityId id, ViewId viewId)
             => _unityViewController.CreateView(state, id, viewId);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,11 +99,12 @@ namespace AnotherECS.Unity.Views
             return unityViewController;
         }
 
+
         private struct Command
         {
             public Type type;
             public EntityId id;
-            public uint viewId;
+            public ViewId viewId;
 
             public enum Type
             {

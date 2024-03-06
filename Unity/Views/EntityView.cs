@@ -1,10 +1,16 @@
 ﻿using AnotherECS.Core;
+using AnotherECS.Views.Core;
 using System;
 
 namespace AnotherECS.Unity.Views
 {
     public abstract class EntityView : MonoBehaviourView
     {
+        public string guid;
+
+        public override ViewGuid GetGUID()
+            => new(guid);
+
         public virtual void OnCreated(ref EntityReadOnly entity) { }
         public virtual void OnApply(ref EntityReadOnly entity) { }
         public virtual void OnDestroyed() { }

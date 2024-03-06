@@ -13,22 +13,22 @@ namespace AnotherECS.Unity.Views
     {
         public List<MonoBehaviourView> views;
 
-        private Config _config;
+        private Data _data;
         private readonly Dictionary<EntityId, IView> _byIdInstances = new();
 
         private void Awake()
         {
-            _config = new(views);
+            _data = new(views);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreateView<T>(State state, EntityId id)
             where T : IViewFactory
-            => CreateView(state, id, _config.Get<T>());
+            => CreateView(state, id, _data.Get<T>());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CreateView(State state, EntityId id, uint viewId)
-            => CreateView(state, id, _config.Get(viewId));
+        public void CreateView(State state, EntityId id, ViewId viewId)
+            => CreateView(state, id, _data.Get(viewId));
 
         public void CreateView(State state, EntityId id, IViewFactory factory)
         {
@@ -59,10 +59,12 @@ namespace AnotherECS.Unity.Views
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetId<T>()
+        public ViewId GetId<T>()
             where T : IViewFactory
-            => _config.GetId<T>();
+            => _data.GetId<T>();
 
+        public ViewId GetId(ViewGuid guid)
+            => _data.GetId(guid);
 
         private void Update()
         {
@@ -79,24 +81,47 @@ namespace AnotherECS.Unity.Views
         }
 
         
-        public class Config
+        private class Data
         {
             private readonly IViewFactory[] _byIds;
-            private readonly Dictionary<Type, uint> _byTypeToIds;
-            private readonly Dictionary<string, IViewFactory> _byGUIDs;
+            private readonly Dictionary<Type, ViewId> _byTypeToIds;
+            private readonly Dictionary<ViewGuid, ViewId> _byGUIDToIds;
             private readonly Dictionary<Type, IViewFactory> _byTypes;
 
-            public Config(IEnumerable<IViewFactory> registredViews)
+            public Data(IEnumerable<IViewFactory> registeredViews)
             {
-                if (registredViews.Any(p => p == null))
+                if (registeredViews == null || registeredViews.Any(p => p == null))
                 {
                     throw new NullReferenceException();
                 }
 
-                _byIds = registredViews.OrderBy(p => p.GetGUID()).ToArray();
-                _byGUIDs = registredViews.ToDictionary(k => k.GetGUID(), v => v);
-                _byTypes = registredViews.ToDictionary(k => k.GetType(), v => v);
-                _byTypeToIds = _byIds.Select((p, i) => (p, i)).ToDictionary(k => k.p.GetType(), v => (uint)v.i);
+                _byIds = registeredViews.OrderBy(p =>
+                {
+                    var guid = p.GetGUID();
+                    return guid.IsValid ? guid.ToString() : p.GetType().Name;
+                }
+                    ).ToArray();
+
+                _byGUIDToIds = new Dictionary<ViewGuid, ViewId>();
+                _byTypes = new Dictionary<Type, IViewFactory>();
+                _byTypeToIds = new Dictionary<Type, ViewId>();
+
+                for(uint i = 0; i < _byIds.Length; ++i)
+                {
+                    var viewId = new ViewId(i);
+                    var guid = _byIds[i].GetGUID();
+                    if (guid.IsValid)
+                    {
+                        _byGUIDToIds.Add(guid, viewId);
+                    }
+                    var view = _byIds[i];
+                    var type = view.GetType();
+                    if (!_byTypes.ContainsKey(type))
+                    {
+                        _byTypes.Add(type, view);
+                        _byTypeToIds.Add(type, viewId);
+                    }
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,31 +139,19 @@ namespace AnotherECS.Unity.Views
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IViewFactory Get(string id)
+            public IViewFactory Get(ViewId id)
             {
 #if !ANOTHERECS_RELEASE
-                if (!_byGUIDs.ContainsKey(id))
-                {
-                    throw new Exceptions.ViewNotFoundException(id);
-                }
-#endif
-                return _byGUIDs[id];
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IViewFactory Get(uint id)
-            {
-#if !ANOTHERECS_RELEASE
-                if (id >= _byIds.Length)
+                if (id.ToNumber() >= _byIds.Length)
                 {
                     throw new Exceptions.ViewNotFoundException(id.ToString());
                 }
 #endif
-                return _byIds[id];
+                return _byIds[id.ToNumber()];
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public uint GetId<T>()
+            public ViewId GetId<T>()
                 where T : IViewFactory
             {
                 var id = typeof(T);
@@ -149,6 +162,12 @@ namespace AnotherECS.Unity.Views
                 }
 #endif
                 return _byTypeToIds[id];
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ViewId GetId(ViewGuid guid)
+            {
+                return _byGUIDToIds[guid];
             }
         }
     }

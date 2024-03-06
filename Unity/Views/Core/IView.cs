@@ -4,7 +4,7 @@ namespace AnotherECS.Views.Core
 {
     public interface IViewFactory
     {
-        string GetGUID();
+        ViewGuid GetGUID();
         IView Create();
     }
 

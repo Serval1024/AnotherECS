@@ -11,19 +11,60 @@ namespace AnotherECS.Unity.Views
         public static void CreateView<T>(this State state, EntityId id)
             where T : IViewFactory
         {
-#if !ANOTHERECS_RELEASE
-            if (!state.IsHasConfig<ViewSystemReference>())
-            {
-                throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewModule));
-            }
-#endif
-            state.Add(id, new ViewHandle() { ownerId = id, viewId = state.GetConfig<ViewSystemReference>().module.GetId<T>() });
+            state.CreateView(id, state.GetViewId<T>());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateView(this State state, EntityId id, uint viewId)
+        public static void CreateView(this State state, EntityId id, string viewGuid)
         {
-            state.Add(id, new ViewHandle() { ownerId = id, viewId = viewId });
+            state.CreateView(id, state.GetViewId(viewGuid));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CreateView(this State state, EntityId id, ViewGuid viewGuid)
+        {
+            state.CreateView(id, state.GetViewId(viewGuid));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CreateView(this State state, EntityId id, ViewId viewId)
+        {
+            state.Add(id, new ViewHandle(id, viewId));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ChangeView<T>(this State state, EntityId id)
+            where T : IViewFactory
+        {
+            if (state.IsHas<ViewHandle>(id))
+            {
+                DestroyView(state, id);
+            }
+
+            state.CreateView<T>(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ChangeView(this State state, EntityId id, string viewGuid)
+        {
+            state.ChangeView(id, state.GetViewId(viewGuid));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ChangeView(this State state, EntityId id, ViewGuid viewGuid)
+        {
+            state.ChangeView(id, state.GetViewId(viewGuid));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ChangeView(this State state, EntityId id, ViewId viewId)
+        {
+            if (state.IsHas<ViewHandle>(id))
+            {
+                DestroyView(state, id);
+            }
+
+            state.CreateView(id, viewId);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -31,24 +72,52 @@ namespace AnotherECS.Unity.Views
         {
             state.Remove<ViewHandle>(id);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateView<T>(this Entity entity)
+        public static ViewId GetViewId<T>(this State state)
+            where T : IViewFactory
+            => GetId<T>(state);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ViewId GetViewId(this State state, string viewGuid)
+            => GetId(state, viewGuid);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ViewId GetViewId(this State state, ViewGuid viewGuid)
+            => GetId(state, viewGuid);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ViewId GetId<T>(State state)
             where T : IViewFactory
         {
-            CreateView<T>(entity.State, entity.id);
+#if !ANOTHERECS_RELEASE
+            Validate(state);
+#endif
+            return state.GetConfig<ViewSystemReference>().module.GetId<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateView(this Entity entity, uint viewId)
+        private static ViewId GetId(State state, string viewGuid)
+            => GetId(state, new ViewGuid(viewGuid));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ViewId GetId(State state, ViewGuid viewGuid)
         {
-            CreateView(entity.State, entity.id, viewId);
+#if !ANOTHERECS_RELEASE
+            Validate(state);
+#endif
+            return state.GetConfig<ViewSystemReference>().module.GetId(viewGuid);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void DestroyView(this Entity entity)
+        private static void Validate(State state)
         {
-            DestroyView(entity.State, entity.id);
+#if !ANOTHERECS_RELEASE
+            if (!state.IsHasConfig<ViewSystemReference>())
+            {
+                throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewModule));
+            }
+#endif
         }
     }
 }

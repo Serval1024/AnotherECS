@@ -5,9 +5,10 @@ namespace AnotherECS.Views.Core
 {
     public interface IViewSystem : ISystem
     {
-        uint GetId<T>()
+        ViewId GetId<T>()
             where T : IViewFactory;
-        void Create(EntityId id, uint viewId);
+        ViewId GetId(ViewGuid guid);
+        void Create(EntityId id, ViewId viewId);
         void Change(EntityId id);
         void Destroy(EntityId id);
     }
