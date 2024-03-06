@@ -126,7 +126,6 @@ var systems = new SystemGroup(SortOrder.Attributes)   // Сall PhysicsSystem fir
 ```
 
 ### Systems
-#### Basic syntax
 Systems contain executable code and can receive various events.
 > [!IMPORTANT]
 > Systems cannot store any non-constant data otherwise it will cause desync.
