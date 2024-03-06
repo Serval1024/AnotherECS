@@ -1298,9 +1298,9 @@ public struct JobParallel : IJobParallelForBag<JobCollectionBag<uint>>
 > Collection jobs also have a  AsJob**R** and AsJobParallel**R**.
 
 ## Deterministic Mathematics
-Deterministic Mathematics located at namespace AnotherECS.Mathematics.
-For guaranteed determinism, use sfloat instead of float.
-[Unity] Use AnotherECS.Mathematics.float#SIZE# instead of UnityEngine.Vector#SIZE#. AnotherECS.Mathematics.quaternion instead of UnityEngine.Quaternion.
+Deterministic mathematics located at **namespace AnotherECS.Mathematics**.
+For guaranteed determinism, use **sfloat** instead of **float**.
+[Unity] Use **AnotherECS.Mathematics.float#SIZE#** instead of **UnityEngine.Vector#SIZE#**. **AnotherECS.Mathematics.quaternion** instead of **UnityEngine.Quaternion**.
 
 ## Random
 For random you can use a custom component:
