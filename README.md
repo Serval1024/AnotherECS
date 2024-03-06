@@ -1318,14 +1318,15 @@ Or RandomFeature:
 ```csharp
 namespace AnotherECS.Random;
 
-systems.Add(new RandomFeature());							// Add RandomFeature to SystemGroup.
+systems.Add(new RandomFeature());    // Add RandomFeature to SystemGroup.
 _world = new World(systems, state);
 
 public class MySystem0 : ITickSystem,
 {
     public void OnTick(State state)
-    { 
-        sfloat rand01 = state.GetRandom().NextFloat(1, 5);	// Get random sfloat [1, 5). Throw FeatureNotExists if RandomFeature is not attached.
+    {
+        // Get random sfloat [1, 5). Throw FeatureNotExists if RandomFeature is not attached.
+        sfloat rand01 = state.GetRandom().NextFloat(1, 5);
     }
 }
 ```
