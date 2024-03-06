@@ -1024,7 +1024,8 @@ refStr.CopyFrom(dString2);       // Copy from DString.
 ECS thread-safe for each worlds.
 
 ```csharp
-var world = new World(systems, state, WorldThreadingLevel.OneThread);     // // Create a world that runs in single thread mode. This world is runned in a new thread.
+// Create a world that runs in single thread mode. This world is runned in a new thread.
+var world = new World(systems, state, WorldThreadingLevel.OneThread);
 
 // The simulation is called in a new thread.
 world.Tick(tickCount);
