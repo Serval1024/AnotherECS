@@ -688,7 +688,7 @@ public class MySystem0 : ITickSystem<StateCompile>
 		
         // 2.0
         // or
-	      // Create and add to entity.
+	// Create and add to entity.
         ref MyComponent component1 = ref state.Add<MyComponent>(entityId);
 		
         // 2.5
