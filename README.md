@@ -945,15 +945,15 @@ public struct MyComponent : IComponent
 
 ref var refСollection = ref component0.list;
 
-refСollection.IsValid;        // False if the collection has not allocated memory.
-refСollection.Allocate(5);    // Allocate 5 elements.
-refСollection.Allocate(10);   // Deallocate old data then Allocate 10 elements.
-refСollection.Deallocate();		// Deallocate data.
+refСollection.IsValid;		// False if the collection has not allocated memory.
+refСollection.Allocate(5);	// Allocate 5 elements.
+refСollection.Allocate(10);	// Deallocate old data then Allocate 10 elements.
+refСollection.Deallocate();	// Deallocate data.
 
-refСollection.Add(24);        // Add 24 and automatically resize if necessary.
-refСollection.Remove(24);     // Remove 24.
+refСollection.Add(24);		// Add 24 and automatically resize if necessary.
+refСollection.Remove(24);	// Remove 24.
 
-refСollection.list[0] = 42;   // Set 0 element is 42.
+refСollection.list[0] = 42;	// Set 0 element is 42.
 
 ref readonly var first = ref refСollection.Read(0);  // Read-only.
 ref var first = ref refСollection.Get(0);            // Read/write.	
