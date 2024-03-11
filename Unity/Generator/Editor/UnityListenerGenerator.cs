@@ -33,7 +33,7 @@ namespace AnotherECS.Unity.Editor.Generator
 
         public static void Compile(bool isForce)
         {
-            if (_generators.Compile(GetIngoreTypes(), isForce))
+            if (_generators.Compile(GetIgnoreTypes(), isForce))
             {
                 DropDelay();
                 Logger.CompileFinished();
@@ -84,18 +84,18 @@ namespace AnotherECS.Unity.Editor.Generator
                 .GetHashCode()
                 .ToString();
 
-        private static void SaveIngoreTypes(Type[] deletedTypes)
+        private static void SaveIgnoreTypes(Type[] deletedTypes)
         {
             var elements = (deletedTypes.Length == 0) ? string.Empty : deletedTypes.Select(p => p.FullName + ", " + p.Assembly.FullName)
                 .OrderBy(p => p)
                 .Aggregate((s, p) => s + ":" + p);
 
-            SessionState.SetString($"{nameof(UnityListenerGenerator)}.{nameof(SaveIngoreTypes)}", elements);
+            SessionState.SetString($"{nameof(UnityListenerGenerator)}.{nameof(SaveIgnoreTypes)}", elements);
         }
 
-        private static Type[] GetIngoreTypes()
+        private static Type[] GetIgnoreTypes()
         {
-            var elements = SessionState.GetString($"{nameof(UnityListenerGenerator)}.{nameof(SaveIngoreTypes)}", "");
+            var elements = SessionState.GetString($"{nameof(UnityListenerGenerator)}.{nameof(SaveIgnoreTypes)}", "");
             var typeNames = elements.Split(':');
 
             return typeNames
@@ -163,7 +163,7 @@ namespace AnotherECS.Unity.Editor.Generator
             var generatorContext = new UnityGeneratorContext();
             var deletes = UnityGeneratorUtils.GetDeletedObjectsHack(messages, generatorContext.GetAllTypes(), _generators.GetSaveFileNames(generatorContext));
 
-            SaveIngoreTypes(deletes);
+            SaveIgnoreTypes(deletes);
             if (IsAutoCompile())
             {
                 if (deletes.Length != 0)
@@ -177,7 +177,7 @@ namespace AnotherECS.Unity.Editor.Generator
         {
             if (IsAutoCompile() && IsDelayFinished() && IsNewElements())
             {
-                if (_generators.Compile(GetIngoreTypes()))
+                if (_generators.Compile(GetIgnoreTypes()))
                 {
                     DropDelay();
                     SaveNewElements();

@@ -75,9 +75,12 @@ namespace AnotherECS.Unity.Editor.Generator
             var filenames = fileNames.Select(Path.GetFileName).ToArray();
 
             var regex = new Regex("'(.*?)'");
+            var errorCodes = new string[] { "CS0246", "CS0234" };
 
             var errorTypeNames = messages
-                .Where(p => p.type == CompilerMessageType.Error && p.message.Contains("CS0234") && filenames.Any(p.file.Contains))
+                .Where(p => p.type == CompilerMessageType.Error)
+                .Where(p => errorCodes.Any(p1 => p.message.Contains(p1)))
+                .Where(p => filenames.Any(p.file.Contains))
                 .Select(p => regex.Match(p.message))
                 .Where(p => p.Success && p.Value.Length > 2)
                 .Select(p => p.Value[1..^1])
@@ -101,10 +104,10 @@ namespace AnotherECS.Unity.Editor.Generator
             {
                 foreach (var file in fileToDelete)
                 {
-                    var realatiePath = GetAssetsRelativePath(file);
-                    if (AssetDatabase.DeleteAsset(realatiePath))
+                    var relativePath = GetAssetsRelativePath(file);
+                    if (AssetDatabase.DeleteAsset(relativePath))
                     {
-                        Debug.Logger.FileDeleted(realatiePath);
+                        Debug.Logger.FileDeleted(relativePath);
                     }
                 }
             }
