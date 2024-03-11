@@ -13,14 +13,14 @@ namespace AnotherECS.Serializer
         
         public Dependencies Dependency => _dependencies;
 
-        public ReaderContextSerializer(LightSerializer serializer, byte[] data)
-            : this(serializer, data, null) { }
+        public ReaderContextSerializer(LightSerializer serializer, byte[] data, uint position)
+            : this(serializer, data, position, null) { }
 
-        public ReaderContextSerializer(LightSerializer serializer, byte[] data, IEnumerable<(uint, object)> dependencies)
+        public ReaderContextSerializer(LightSerializer serializer, byte[] data, uint position, IEnumerable<(uint, object)> dependencies)
         {
             _serializer = serializer;
             _dependencies = new Dependencies(dependencies);
-            _stream = new Stream(data);
+            _stream = new Stream(data, position);
         }
 
         public void Dispose()

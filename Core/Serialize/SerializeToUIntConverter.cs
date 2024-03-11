@@ -1,50 +1,21 @@
 ﻿using AnotherECS.Converter;
-using AnotherECS.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace AnotherECS.Serializer
 {
-    public class SerializeToUIntConverter : SerializeToUInt
+    public class SerializeToUIntConverter : ITypeToUInt
     {
-        private readonly (uint id, Type type)[] _iSerializeres;
-
         private readonly Dictionary<uint, Type> _direct;
         private readonly Dictionary<Type, uint> _reverse;
 
-        public SerializeToUIntConverter(uint startId)
+        public SerializeToUIntConverter(uint startId, IEnumerable<Type> types)
         {
-            var iElementSerializers = new IgnoresTypeToIdConverter<uint, IElementSerializer>().GetAssociationTable();
-            var iSerializes = new IgnoresTypeToIdConverter<uint, ISerialize>().GetAssociationTable();
-            var iComponents = new IgnoresTypeToIdConverter<uint, IComponent>().GetAssociationTable();
-            var iConfigs = new IgnoresTypeToIdConverter<uint, IConfig>().GetAssociationTable();
-            var iEvents = new IgnoresTypeToIdConverter<uint, IEvent>().GetAssociationTable();
-            
-            var serializeAttributes = TypeUtils.GetAllowHasAttributeFromTypesAcrossAll<SerializeAttribute>();
-
             uint id = startId;
             _reverse = new();
-            _iSerializeres = new (uint id, Type type)[iElementSerializers.Count];
 
-            foreach (var item in iElementSerializers.Values
-                .OrderBy(p => p.Name))
-            {
-                var type = ExtractElementTypeFromISerializerType(item);
-
-                if (!_reverse.ContainsKey(type))
-                {
-                    _reverse.Add(type, id);
-                    _iSerializeres[id - startId] = (id, item);
-                    ++id;
-                }
-            }
-
-            foreach (var item in iSerializes.Values
-                .Union(iComponents.Values)
-                .Union(iConfigs.Values)
-                .Union(iEvents.Values)
-                .Union(serializeAttributes)
+            foreach (var item in types
                 .OrderBy(p => p.Name)
                 )
             {
@@ -53,15 +24,9 @@ namespace AnotherECS.Serializer
                     _reverse.Add(item, id++);
                 }
             }
-
+            
             _direct = _reverse.ToDictionary(p => p.Value, p => p.Key);
         }
-
-        private Type ExtractElementTypeFromISerializerType(Type type)
-            => (Activator.CreateInstance(type) as IElementSerializer).Type;
-
-        public (uint id, Type iSerializereTypes)[] GetISerializeres()
-            => _iSerializeres;
 
         public Type IdToType(uint id)
             => _direct[id];

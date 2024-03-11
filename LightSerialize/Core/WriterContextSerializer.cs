@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Serializer
 {
-
     public struct WriterContextSerializer : IDisposable
     {
         private const uint INIT_CAPACITY = 1024;
@@ -16,14 +15,14 @@ namespace AnotherECS.Serializer
 
         public Dependencies Dependency => _dependencies;
 
-        public WriterContextSerializer(LightSerializer serializer)
-            : this(serializer, null) { }
+        public WriterContextSerializer(LightSerializer serializer, uint position)
+            : this(serializer, position, null) { }
 
-        public WriterContextSerializer(LightSerializer serializer, IEnumerable<(uint, object)> dependencies)
+        public WriterContextSerializer(LightSerializer serializer, uint position, IEnumerable<(uint, object)> dependencies)
         {
             _serializer = serializer;
             _dependencies = new Dependencies(dependencies);
-            _stream = new Stream(INIT_CAPACITY);
+            _stream = new Stream(INIT_CAPACITY, position);
         }
 
         public void Dispose()

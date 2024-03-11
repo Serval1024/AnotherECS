@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace AnotherECS.Serializer
@@ -22,17 +21,14 @@ namespace AnotherECS.Serializer
         private readonly CompoundMeta _compound;
         private readonly ArrayPool<object> _typeArrayPool;
 
-        public LightSerializer(SerializeToUInt typeToUIntProvider)
+
+        public LightSerializer(ITypeToUInt typeToUIntProvider, IEnumerable<IElementSerializer> serializers)
         {
             _converter = typeToUIntProvider;
             _typeArrayPool = new ArrayPool<object>(4);
 
-            Init(Create(typeToUIntProvider.GetISerializeres()));
+            Init(serializers);
         }
-
-        public static IEnumerable<IElementSerializer> Create((uint id, Type type)[] types)
-            => types
-            .Select(p => Activator.CreateInstance(p.type) as IElementSerializer);
 
         public void Add(IElementSerializer serializer)
         {
@@ -41,7 +37,7 @@ namespace AnotherECS.Serializer
 
         public byte[] Pack(object data)
         {
-            var context = new WriterContextSerializer(this);
+            var context = new WriterContextSerializer(this, 0);
 
             Pack(ref context, data);
             var result = context.ToArray();
@@ -57,7 +53,7 @@ namespace AnotherECS.Serializer
 
         public object Unpack(byte[] data, params object[] constructArgs)
         {
-            var context = new ReaderContextSerializer(this, data);
+            var context = new ReaderContextSerializer(this, data, 0);
 
             var result = Unpack(ref context, constructArgs);
             context.Dispose();

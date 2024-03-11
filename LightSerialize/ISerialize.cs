@@ -3,6 +3,7 @@
     public interface ISerializeConstructor : ISerialize
     { }
 
+    [Serialize]
     public interface ISerialize
     {
         void Pack(ref WriterContextSerializer writer);

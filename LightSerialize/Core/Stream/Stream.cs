@@ -24,22 +24,22 @@ namespace AnotherECS.Serializer
             get => _position;
         }
 
-        public Stream(uint length)
+        public Stream(uint length, uint position)
         {
             _data = UnsafeMemory.Allocate<byte>(length);
             _length = length;
-            _position = 0;
+            _position = position;
         }
 
-        public Stream(void* source, uint length)
+        public Stream(void* source, uint length, uint position)
         {
-            this = new Stream(length);
+            this = new Stream(length, position);
             UnsafeMemory.MemCopy(_data, source, length);
         }
 
-        public Stream(byte[] source)
+        public Stream(byte[] source, uint position)
         {
-            this = new Stream((uint)source.Length);
+            this = new Stream((uint)source.Length, position);
             Marshal.Copy(source, 0, (IntPtr)_data, source.Length);
         }
 

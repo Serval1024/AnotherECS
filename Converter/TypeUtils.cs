@@ -31,7 +31,7 @@ namespace AnotherECS.Converter
            => AppDomain.CurrentDomain.GetAssemblies()
                .SelectMany(domainAssembly => domainAssembly.GetTypes())
                .Where(
-                   p => p.GetCustomAttribute(typeof(T), false) != null
+                   p => p.GetCustomAttribute(typeof(T), true) != null || p.GetInterfaces().Any(p0 => p0.GetCustomAttribute(typeof(T)) != null)
                    )
                .ToArray();
 
