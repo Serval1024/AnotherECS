@@ -271,7 +271,7 @@ namespace AnotherECS.Core.Collection
             for (int i = _buckets.Read(bucket); i >= 0; last = i, i = _entries.ReadRef(i).next)
             {
                 ref var entry = ref _entries.ReadRef(i);
-                if (hashCode == _entries.ReadRef(i).hashCode && entry.key.Equals(key))
+                if (hashCode == entry.hashCode && entry.key.Equals(key))
                 {
                     if (last < 0)
                     {
@@ -332,8 +332,7 @@ namespace AnotherECS.Core.Collection
             }
 #endif
             int cIndex = 0;
-            var count = Count;
-            while (cIndex < count)
+            while (cIndex < _count)
             {
                 if (_entries.ReadRef(cIndex).hashCode < _EMPTY)
                 {
@@ -359,8 +358,7 @@ namespace AnotherECS.Core.Collection
 #endif
 
             int cIndex = 0;
-            var count = Count;
-            while (cIndex < count)
+            while (cIndex < _count)
             {
                 if (_entries.ReadRef(cIndex).hashCode < _EMPTY)
                 {
@@ -384,7 +382,7 @@ namespace AnotherECS.Core.Collection
             ExceptionHelper.ThrowIfBroken(this);
 #endif
             int index = 0;
-            while (index < Count)
+            while (index < _count)
             {
                 if (_entries.ReadRef(index).hashCode < _EMPTY)
                 {
@@ -541,7 +539,7 @@ namespace AnotherECS.Core.Collection
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (_index < _data.Count)
+                while (_index < _data._count)
                 {
                     if (_data._entries.ReadRef(_index).hashCode < _EMPTY)
                     {
@@ -553,7 +551,7 @@ namespace AnotherECS.Core.Collection
                     }
                     ++_index;
                 }
-                _index = _data.Count + 1;
+                _index = _data._count + 1;
                 _current = default;
                 return false;
             }
@@ -568,7 +566,7 @@ namespace AnotherECS.Core.Collection
             {
                 get
                 {
-                    if (_index == 0 || (_index == _data.Count + 1))
+                    if (_index == 0 || (_index == _data._count + 1))
                     {
                         throw new InvalidOperationException();
                     }
