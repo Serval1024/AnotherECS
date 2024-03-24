@@ -500,7 +500,7 @@ namespace AnotherECS.Core.Collection
             for (int i = 0; i < count; ++i)
             {
                 ref var entry = ref _entries.ReadRef(i);
-                if (!entry.value.Equals(default))
+                if (entry.hashCode < _EMPTY)
                 {
                     uint bucket = entry.hashCode % size;
                     entry.next = newBuckets.Read(bucket);

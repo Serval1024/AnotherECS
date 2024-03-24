@@ -102,7 +102,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT<#INDEX2#>(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version<#INDEX2#>.IsCreated)
+            if (version<#INDEX2#>.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T<#INDEX2#>));
             }
