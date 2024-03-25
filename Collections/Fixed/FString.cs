@@ -123,7 +123,7 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             if (obj is FString2 fString)
             {
@@ -373,9 +373,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString4 fString)
             {
                 return Equals(ref fString);
             }
@@ -623,9 +623,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString8 fString)
             {
                 return Equals(ref fString);
             }
@@ -873,9 +873,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString16 fString)
             {
                 return Equals(ref fString);
             }
@@ -1123,9 +1123,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString32 fString)
             {
                 return Equals(ref fString);
             }
@@ -1373,9 +1373,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString64 fString)
             {
                 return Equals(ref fString);
             }

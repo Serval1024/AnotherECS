@@ -124,9 +124,9 @@ namespace AnotherECS.Collections
             }
         }
 
-         public override bool Equals(object obj)
+        public override bool Equals(object obj)
         {
-            if (obj is FString2 fString)
+            if (obj is FString<#ELEMENT_COUNT#> fString)
             {
                 return Equals(ref fString);
             }
