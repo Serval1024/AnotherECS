@@ -40,7 +40,7 @@ namespace AnotherECS.Physics
         private IdFilter<Position, Rotation, PhysicsVelocity> dynamicBodies;
         private IdFilter<PhysicsJoint, PhysicsConstrainedBodyPair> joints;
 
-        private DispatchPairSequencer scheduler = new();
+        private readonly DispatchPairSequencer scheduler = new();
 
         private PhysicsWorld physicsWorldInternal;
         private ref PhysicsWorld PhysicsWorld => ref physicsWorldInternal;
@@ -303,7 +303,7 @@ namespace AnotherECS.Physics
             }
         }
 
-        public void OnTick(State context)
+        public void OnTick(State state)
         {
             var marker = new ProfilerMarker("[Physics] Reset World");
             marker.Begin();

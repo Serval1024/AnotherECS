@@ -1,27 +1,81 @@
+using AnotherECS.Converter;
+using System.Linq;
 
 namespace AnotherECS.Debug
 {
     public static class Logger
     {
-        public static void RevertStateFail(string error)
-            => UnityEngine.Debug.Log($"{DebugConst.TAG}Failed to revert state: '{error}'.");
+        private static bool _isCallGate = true;
+        private static ILogger _impl;
+        private static readonly object _locker = new();
 
-        public static void ReceiveCorruptedData(string error)
-            => UnityEngine.Debug.Log($"{DebugConst.TAG}Received corrupted data from the network: '{error}'.");
+        private static ILogger Impl
+        {
+            get
+            {
+                lock (_locker)
+                {
+                    if (_isCallGate)
+                    {
+                        _isCallGate = false;
+                        var type = TypeUtils.GetRuntimeTypes<ILogger>().FirstOrDefault();
+                        if (type != null)
+                        {
+                            _impl = (ILogger)System.Activator.CreateInstance(type);
+                        }
+                    }
+                    return _impl;
+                }
+            }
+        }
 
         public static void Send(string message)
-            => UnityEngine.Debug.Log(message);
+        {
+            Impl.Send($"{DebugConst.TAG}{message}");
+        }
+
+        public static void Error(string message)
+        {
+            Impl.Error($"{DebugConst.TAG}{message}");
+        }
+
+        public static void RevertStateFail(string error)
+        {
+            Error($"Failed to revert state: '{error}'.");
+        }
+
+        public static void ReceiveCorruptedData(string error)
+        {
+            Error($"Received corrupted data from the network: '{error}'.");
+        }
 
         public static void FileDeleted(string path)
-            => Send($"{DebugConst.TAG}File deleted: '{path}'.");
+        {
+            Send($"File deleted: '{path}'.");
+        }
 
         public static void CompileFinished()
-            => Send($"{DebugConst.TAG}Compile finished.");
+        {
+            Send($"Compile finished.");
+        }
 
         public static void CompileFailed()
-            => Send($"{DebugConst.TAG}Compile failed.");
+        {
+            Error($"Compile failed.");
+        }
 
-        public static void HistoryBufferResized(string name, uint newSize)
-            => Send($"{DebugConst.TAG}History {name} buffer size has been resized to {newSize}.");
+        public static void HistoryBufferDataResized(uint newSize)
+        {
+#if UNITY_EDITOR || !UNITY_5_3_OR_NEWER
+            Send($"{DebugConst.TAG}{$"History 'Data' buffer size has been resized to '{newSize}'"}.");
+#endif
+        }
+
+        public static void HistoryBufferMetaResized(uint newSize)
+        {
+#if UNITY_EDITOR || !UNITY_5_3_OR_NEWER
+            Send($"{DebugConst.TAG}{$"History 'Meta' buffer size has been resized to '{newSize}'"}.");
+#endif
+        }
     }
 }

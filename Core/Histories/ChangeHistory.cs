@@ -78,7 +78,7 @@ namespace AnotherECS.Core
             {
                 _buffer.Resize((endIndex > _buffer.Length << 1) ? endIndex : (_buffer.Length << 1));
 #if !ANOTHERECS_RELEASE
-                Logger.HistoryBufferResized("Data buffer", _buffer.Length);
+                Logger.HistoryBufferDataResized(_buffer.Length);
 #endif
             }
 
@@ -87,7 +87,7 @@ namespace AnotherECS.Core
             {
                 _meta.Resize(_meta.Length << 1);
 #if !ANOTHERECS_RELEASE
-                Logger.HistoryBufferResized("Meta buffer", _meta.Length);
+                Logger.HistoryBufferMetaResized(_meta.Length);
 #endif
             }
 

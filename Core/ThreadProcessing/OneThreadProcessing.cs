@@ -18,8 +18,8 @@ namespace AnotherECS.Core.Processing
         private StateRevertToTaskHandler _stateRevertToTaskHandler;
         private Task _stateRevertTo;
 
-        private Task[] _createModuleSystems;
-        private Task[] _destroyModuleSystems;
+        private Task[] _attachToStateModuleSystems;
+        private Task[] _detachToStateModuleSystems;
         private Task[] _tickStartedSystems;
         private Task[] _tickFinishedSystems;
 
@@ -34,12 +34,6 @@ namespace AnotherECS.Core.Processing
             _threadScheduler = threadScheduler;
         }
 
-
-        public void Bind(State state)
-        {
-            _state = state;
-        }
-
         public void SetStatistic(ITimerStatistic timerStatistic)
         {
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
@@ -47,9 +41,10 @@ namespace AnotherECS.Core.Processing
 #endif
         }
 
-        public void Prepare(IEnumerable<ISystem> flatSystems)
+        public void Prepare(State state, IEnumerable<ISystem> flatSystems)
         {
             var systems = flatSystems.ToArray();
+            _state = state;
 
             _stateTickStart = CreateTask(new StateTickStartTaskHandler() { State = _state });
             _stateTickFinished = CreateTask(new StateTickFinishedTaskHandler() { State = _state });
@@ -57,8 +52,8 @@ namespace AnotherECS.Core.Processing
             _stateRevertToTaskHandler = new StateRevertToTaskHandler() { State = _state };
             _stateRevertTo = CreateTask(_stateRevertToTaskHandler);
 
-            _createModuleSystems = CreateTasks<CreateModuleTaskHandler, ICreateModule>(systems);
-            _destroyModuleSystems = CreateTasks<DestroyModuleTaskHandler, IDestroyModule>(systems);
+            _attachToStateModuleSystems = CreateTasks<AttachToStateModuleTaskHandler, IAttachToStateModule>(systems);
+            _detachToStateModuleSystems = CreateTasks<DetachToStateModuleTaskHandler, IDetachToStateModule>(systems);
             
             _tickStartedSystems = CreateTasks<SystemTickStartTaskHandler, ITickStartedModule>(systems);
             _tickFinishedSystems = CreateTasks<SystemTickFinishedTaskHandler, ITickFinishedModule>(systems);
@@ -71,7 +66,7 @@ namespace AnotherECS.Core.Processing
             {
                 State = _state,
                 receivers = ProcessingUtils.ToReceivers(Filter<IReceiverSystem>(systems)),
-                events = _state.GetEventCache(),
+                events = _state?.GetEventCache(),
             });
         }
 
@@ -85,14 +80,14 @@ namespace AnotherECS.Core.Processing
             _threadScheduler.Run(_stateTickFinished);
         }
 
-        public void CreateModule()
+        public void AttachToStateModule()
         {
-            _threadScheduler.Run(_createModuleSystems);
+            _threadScheduler.Run(_attachToStateModuleSystems);
         }
 
-        public void DestroyModule()
+        public void DetachToStateModule()
         {
-            _threadScheduler.Run(_destroyModuleSystems);
+            _threadScheduler.Run(_detachToStateModuleSystems);
         }
 
         public void TickStart()
@@ -201,7 +196,7 @@ namespace AnotherECS.Core.Processing
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Task CreateTask<THandler>(THandler handler)
             where THandler : struct, ITaskHandler
-            => new Task(
+            => new(
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
                 typeof(THandler).Name,
 #endif

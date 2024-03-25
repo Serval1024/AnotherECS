@@ -89,12 +89,7 @@ namespace AnotherECS.Unity.Views
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ViewId GetId<T>(State state)
             where T : IViewFactory
-        {
-#if !ANOTHERECS_RELEASE
-            Validate(state);
-#endif
-            return state.GetConfig<ViewSystemReference>().module.GetId<T>();
-        }
+            => GetIViewSystem(state).GetId<T>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ViewId GetId(State state, string viewGuid)
@@ -102,18 +97,22 @@ namespace AnotherECS.Unity.Views
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ViewId GetId(State state, ViewGuid viewGuid)
+            => GetIViewSystem(state).GetId(viewGuid);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IViewSystem GetIViewSystem(State state)
         {
 #if !ANOTHERECS_RELEASE
             Validate(state);
 #endif
-            return state.GetConfig<ViewSystemReference>().module.GetId(viewGuid);
+            return state.GetModuleData<ViewSystemReference>(ViewSystemReference.MODULE_DATA_ID).module;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Validate(State state)
         {
 #if !ANOTHERECS_RELEASE
-            if (!state.IsHasConfig<ViewSystemReference>())
+            if (!state.IsHasModuleData(ViewSystemReference.MODULE_DATA_ID))
             {
                 throw new Core.Exceptions.FeatureNotExists(nameof(UnityViewModule));
             }

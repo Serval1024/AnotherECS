@@ -9,7 +9,7 @@ namespace AnotherECS.Core
         internal InstallContext(World world)
         {
             _world = world;
-            _state = world.GetState();
+            _state = world.State;
             _systemGroup = new SystemGroup();
         }
 

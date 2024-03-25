@@ -20,18 +20,12 @@ namespace AnotherECS.Views.Core
 
         public void OnAttach(ref ADExternalContext context)
         {
-#if !ANOTHERECS_RELEASE
-            Validate(context._state);
-#endif
-            context.GetConfig<ViewSystemReference>().module.Create(ownerId, viewId);
+            GetIViewSystem(ref context).Create(ownerId, viewId);
         }
 
         public void OnDetach(ref ADExternalContext context)
         {
-#if !ANOTHERECS_RELEASE
-            Validate(context._state);
-#endif
-            context.GetConfig<ViewSystemReference>().module.Destroy(ownerId);
+            GetIViewSystem(ref context).Destroy(ownerId);   
         }
 
         public void Pack(ref WriterContextSerializer writer)
@@ -47,10 +41,19 @@ namespace AnotherECS.Views.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private IViewSystem GetIViewSystem(ref ADExternalContext context)
+        {
+#if !ANOTHERECS_RELEASE
+            Validate(context._state);
+#endif
+            return context.GetModuleData<ViewSystemReference>(ViewSystemReference.MODULE_DATA_ID).module;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Validate(State state)
         {
 #if !ANOTHERECS_RELEASE
-            if (!state.IsHasConfig<ViewSystemReference>())
+            if (!state.IsHasModuleData(ViewSystemReference.MODULE_DATA_ID))
             {
                 throw new AnotherECS.Core.Exceptions.FeatureNotExists(nameof(UnityViewModule));
             }

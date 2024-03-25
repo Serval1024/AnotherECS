@@ -70,5 +70,12 @@ namespace AnotherECS.Core.Collection
                 nlist.GetRef(index) = element;
             }
         }
+
+        public static void DeepDispose<TAllocator, T>(this ref NList<TAllocator, T> nlist)
+            where TAllocator : unmanaged, IAllocator
+            where T : unmanaged, IDisposable
+        {
+            NArrayExtensions.DeepDispose<NList<TAllocator, T>, T>(ref nlist);
+        }
     }
 }

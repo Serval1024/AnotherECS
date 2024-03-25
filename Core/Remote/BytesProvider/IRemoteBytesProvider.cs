@@ -2,12 +2,12 @@
 
 namespace AnotherECS.Core.Remote
 {
-    public interface IRemoteBytesProvider : IDisposable
+    public interface IRemoteBytesProvider
     {
         void SendOther(byte[] bytes);
-        event ReceiveBytesHandler ReceiveOtherBytes;
+        void Send(Player target, byte[] bytes);
+        event ReceiveBytesHandler ReceiveBytes;
     }
 
-    public delegate void ReceiveBytesHandler(byte[] bytes);
-
+    public delegate void ReceiveBytesHandler(Player sender, byte[] bytes);
 }

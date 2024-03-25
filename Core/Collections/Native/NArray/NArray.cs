@@ -490,7 +490,6 @@ namespace AnotherECS.Core.Collection
             }
 #endif
             Dirty();
-            DisposeElement(start, elementCount);
             UnsafeMemory.Clear(GetPtr() + start, elementCount * (uint)sizeof(T));
         }
 
@@ -499,7 +498,6 @@ namespace AnotherECS.Core.Collection
         {
             if (_data.IsValid)
             {
-                DisposeElement(0, Length);
                 _allocator->Deallocate(ref _data);
                 _length = 0;
             }
@@ -651,20 +649,6 @@ namespace AnotherECS.Core.Collection
                     _data = _allocator->Allocate(byteLength);
                 }
                 _length = byteLength / (uint)sizeof(T);
-            }
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void DisposeElement(uint start, uint elementCount)
-        {
-            if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
-            {
-                Dirty();
-                for (uint i = start; i < elementCount; ++i)
-                {
-                    ((IDisposable)ReadRef(i)).Dispose();
-                }
             }
         }
 

@@ -3,14 +3,14 @@ using AnotherECS.Core;
 namespace AnotherECS.Unity.Jobs
 {
     [ModuleAutoAttach]
-    public class JobsModule : IModule, ICreateModule, IDestroyModule
+    public class JobsModule : IModule, IAttachToStateModule, IDetachToStateModule
     {
-        public void OnCreateModule(State state)
+        public void OnAttachToStateModule(State state)
         {
             JobsGlobalRegister.Register(state);
         }
 
-        public void OnDestroyModule(State state)
+        public void OnDetachToStateModule(State state)
         {
             JobsGlobalRegister.Unregister(state);
         }

@@ -9,12 +9,12 @@ namespace AnotherECS.Random
         public static ref Mathematics.Random GetRandom(this State state)
         {
 #if !ANOTHERECS_RELEASE
-            if (!state.IsHas<DataRandom>())
+            if (!state.IsHas<RandomSingle>())
             {
                 throw new Core.Exceptions.FeatureNotExists(nameof(RandomFeature));
             }
 #endif
-            return ref state.Get<DataRandom>().value;
+            return ref state.Get<RandomSingle>().value;
         }
     }
 }

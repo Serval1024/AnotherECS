@@ -9,7 +9,7 @@ namespace AnotherECS.Random
         {
             var rand = new Mathematics.Random();
             rand.InitState();
-            context.AddSingle(new DataRandom() { value = rand });
+            context.AddSingle(new RandomSingle() { value = rand });
         }
     }
 }

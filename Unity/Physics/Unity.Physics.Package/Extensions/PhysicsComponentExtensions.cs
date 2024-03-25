@@ -1,5 +1,4 @@
 using AnotherECS.Essentials.Physics;
-using AnotherECS.Essentials.Physics.Components;
 using AnotherECS.Essentials.Physics.Extensions;
 using AnotherECS.Mathematics;
 

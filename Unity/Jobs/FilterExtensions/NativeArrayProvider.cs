@@ -53,9 +53,9 @@ namespace AnotherECS.Unity.Jobs
 
         public void Dispose()
         {
-            _byDenseIds.Dispose();
-            _byComponents.Dispose();
-            _byIds.Dispose();
+            _byDenseIds.DeepDispose();
+            _byComponents.DeepDispose();
+            _byIds.DeepDispose();
             UintDummy.Dispose();
         }
 
@@ -109,16 +109,20 @@ namespace AnotherECS.Unity.Jobs
         private void FillStorage<TData>(ref NativeArrayStorage<TData> storage, void* ptr, uint length)
             where TData : unmanaged
         {
-            storage.safety = AtomicSafetyHandle.Create();
             storage.nativeArray = NativeArrayUtils.ToNativeArray<TData>(ptr, length);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            storage.safety = AtomicSafetyHandle.Create();
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref storage.nativeArray, storage.safety);
+#endif
         }
 
         private unsafe struct NativeArrayStorage<T> : IDisposable
             where T : struct
         {
             public uint tick;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             public AtomicSafetyHandle safety;
+#endif
             public NativeArray<T> nativeArray;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -126,8 +130,10 @@ namespace AnotherECS.Unity.Jobs
             {
                 if (nativeArray.IsCreated)
                 {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
                     AtomicSafetyHandle.CheckDeallocateAndThrow(safety);
                     AtomicSafetyHandle.Release(safety);
+#endif
                     this = default;
                 }
             }

@@ -1,14 +1,13 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Exceptions;
 using AnotherECS.Serializer;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Collection
 {
-    public unsafe struct NList<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRepairMemoryHandle, IDisposable
+    public unsafe struct NList<TAllocator, T> : INArray<T>, ISerialize, IEnumerable<T>, IRepairMemoryHandle
         where TAllocator : unmanaged, IAllocator
         where T : unmanaged
     {
@@ -24,7 +23,7 @@ namespace AnotherECS.Core.Collection
         public uint Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => Length;
+            get => _data.Length;
         }
 
         public uint ByteLength
@@ -36,7 +35,7 @@ namespace AnotherECS.Core.Collection
         public uint Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _data.Length;
+            get => _count;
         }
 
         public uint ElementSize

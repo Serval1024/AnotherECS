@@ -10,5 +10,10 @@ namespace AnotherECS.Core.Caller
         public T GetConfig<T>()
             where T : IConfig
             => _state.GetConfig<T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T GetModuleData<T>(uint id)
+            where T : IModuleData
+            => _state.GetModuleData<T>(id);
     }
 }

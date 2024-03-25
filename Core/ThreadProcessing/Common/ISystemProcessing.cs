@@ -19,13 +19,13 @@ namespace AnotherECS.Core.Processing
 
     public interface ISystemProcessing : IThreadProcessing, IStatisticProcessing, IDisposable
     {
-        void Prepare(IEnumerable<ISystem> systemGroup);
+        void Prepare(State state, IEnumerable<ISystem> systemGroup);
 
         void StateTickStart();
         void StateTickFinished();
 
-        void CreateModule();
-        void DestroyModule();
+        void AttachToStateModule();
+        void DetachToStateModule();
         void TickStart();
         void TickFinished();
         
@@ -42,7 +42,6 @@ namespace AnotherECS.Core.Processing
 
     public interface IStatisticProcessing
     {
-        void Bind(State state);
         void SetStatistic(ITimerStatistic timerStatistic);
     }
 }

@@ -189,7 +189,7 @@ namespace AnotherECS.Core
 
     internal struct FilterUpdater : IDisposable, IFilterUpdater
     {
-        public NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider> archetypeIdToFilterId;
+        public NMultiDictionaryZero<BAllocator, uint, uint, U4U4HashProvider> archetypeIdToFilterId;
         public NList<BAllocator, FilterData> filters;
 
         private NHashSetZero<BAllocator, uint, U4U4HashProvider> _temp;
@@ -197,7 +197,7 @@ namespace AnotherECS.Core
         public static unsafe FilterUpdater Create(BAllocator* allocator, uint capacity)
         {
             FilterUpdater inst = default;
-            inst.archetypeIdToFilterId = new NMultiDictionary<BAllocator, uint, uint, U4U4HashProvider>(allocator, capacity);
+            inst.archetypeIdToFilterId = new NMultiDictionaryZero<BAllocator, uint, uint, U4U4HashProvider>(allocator, capacity);
             inst.filters = new NList<BAllocator, FilterData>(allocator, capacity);
             inst._temp = new NHashSetZero<BAllocator, uint, U4U4HashProvider>(allocator, capacity);
             return inst;
@@ -227,7 +227,7 @@ namespace AnotherECS.Core
         public void Dispose()
         {
             archetypeIdToFilterId.Dispose();
-            filters.Dispose();
+            filters.DeepDispose();
         }
     }
 

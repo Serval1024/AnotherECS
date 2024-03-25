@@ -2,26 +2,36 @@
 {
     public class LogAndThrowBehaviorStrategy : IRemoteBehaviorStrategy
     {
-        public void OnPlayerConnected(ref BehaviorContext context)
+        public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            Debug.Logger.Send("Player connected.");
+            Debug.Logger.Send($"Player connected: '{player.Id}'.");
         }
 
-        public void OnPlayerDisconnected(ref BehaviorContext context)
+        public void OnPlayerDisconnected(IBehaviorContext context, Player player)
         {
-            Debug.Logger.Send("Player disconnected.");
+            Debug.Logger.Send($"Player disconnected: '{player.Id}'.");
         }
 
-        public void OnReceiveCorruptedData(ref BehaviorContext context)
+        public void OnReceiveCorruptedData(IBehaviorContext context, ErrorReport error)
         {
-            Debug.Logger.ReceiveCorruptedData(context.Error.Message + " => " + context.Error.StackTrace);
-            throw context.Error;
+            Debug.Logger.ReceiveCorruptedData(error.Exception.Message + " => " + error.Exception.StackTrace);
+            throw error.Exception;
         }
 
-        public void OnRevertFailed(ref BehaviorContext context)
+        public void OnReceiveState(IBehaviorContext context, Player sender, State state)
         {
-            Debug.Logger.RevertStateFail(context.Error.Message);
-            throw context.Error;
+            Debug.Logger.Send($"Receive state: '{sender.Id}'.");
+        }
+
+        public void OnRequestState(IBehaviorContext context, Player sender, StateSerializationLevel level)
+        {
+            Debug.Logger.Send($"Request state: '{sender.Id}', level '{level}'.");
+        }
+
+        public void OnRevertFailed(IBehaviorContext context, ErrorReport error)
+        {
+            Debug.Logger.RevertStateFail(error.Exception.Message);
+            throw error.Exception;
         }
     }
 }

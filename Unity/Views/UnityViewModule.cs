@@ -11,7 +11,7 @@ using EntityId = System.UInt32;
 namespace AnotherECS.Unity.Views
 {
     [SystemOrder(SystemOrder.Last)]
-    public class UnityViewModule : IFeature, IViewSystem, IMainThread, ITickFinishedModule
+    public class UnityViewModule : IModule, IViewSystem, IMainThread, ITickFinishedModule, IAttachToStateModule, IDetachToStateModule
     {
         private readonly ConcurrentQueue<Command> _commandBuffer;
         private readonly UnityViewController _unityViewController;
@@ -25,9 +25,15 @@ namespace AnotherECS.Unity.Views
             _commandBuffer = new ConcurrentQueue<Command>();
         }
 
-        public void Install(ref InstallContext context)
+
+        public void OnAttachToStateModule(State state)
         {
-            context.AddConfig(new ViewSystemReference() { module = this });
+            state.SetModuleData(ViewSystemReference.MODULE_DATA_ID, new ViewSystemReference() { module = this });
+        }
+
+        public void OnDetachToStateModule(State state)
+        {
+            state.SetModuleData(ViewSystemReference.MODULE_DATA_ID, (ViewSystemReference)null);
         }
 
         public void OnTickFinished(State state)
@@ -98,7 +104,6 @@ namespace AnotherECS.Unity.Views
             unityViewController.views = views.ToList();
             return unityViewController;
         }
-
 
         private struct Command
         {

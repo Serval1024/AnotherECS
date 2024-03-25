@@ -78,6 +78,7 @@ namespace AnotherECS.Core.Caller
         {
             _layout->generation.Dispose();
             _allocator->Deallocate(ref _layoutMemoryHandle);
+            _temp.DeepDispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -18,7 +18,7 @@ namespace AnotherECS.Serializer
         public WriterContextSerializer(LightSerializer serializer, uint position)
             : this(serializer, position, null) { }
 
-        public WriterContextSerializer(LightSerializer serializer, uint position, IEnumerable<(uint, object)> dependencies)
+        public WriterContextSerializer(LightSerializer serializer, uint position, IEnumerable<DependencySerializer> dependencies)
         {
             _serializer = serializer;
             _dependencies = new Dependencies(dependencies);

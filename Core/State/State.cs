@@ -2,6 +2,7 @@
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Core.Exceptions;
+using AnotherECS.Core.Remote;
 using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
@@ -39,7 +40,7 @@ namespace AnotherECS.Core
 
         private IConfig[] _configs;
         private Dictionary<Type, uint> _configByType;
-
+        
         private StateOption _option;
         private Events _events;
 
@@ -62,6 +63,8 @@ namespace AnotherECS.Core
         #region Error
         private Exception _lastError;
         #endregion
+
+        private bool _isFirstStartup;
 
 
         #region construct & destruct
@@ -159,7 +162,7 @@ namespace AnotherECS.Core
                 }
             }
 
-            _dependencies->Dispose();                   //Free _dependencies.
+            _dependencies->Dispose();                   //Free all memory.
             _allocator.Deallocate(_dependencies);
         }
         #endregion
@@ -167,11 +170,14 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
+            var stateSerializationLevel = writer.Dependency.Get<StateSerializationLevel>(0);
+
             writer.Dependency.Add(new WPtr<Dependencies>(_dependencies));
             writer.Dependency.Add(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
             writer.Dependency.Add(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
             writer.Dependency.Add(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
+            writer.Write(stateSerializationLevel);
             writer.Write(_dependencies->bAllocator.GetId());
             writer.Write(_dependencies->stage0HAllocator.GetId());
             writer.Write(_dependencies->stage1HAllocator.GetId());
@@ -184,13 +190,17 @@ namespace AnotherECS.Core
                 _callers[i].Pack(ref writer);
             }
 
-            writer.Pack(_configs);
+            if (stateSerializationLevel == StateSerializationLevel.DataAndConfig)
+            {
+                writer.Pack(_configs);
+            }
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
             _dependencies = CreateDependencies();
 
+            var stateSerializationLevel = reader.ReadEnum<StateSerializationLevel>();
             var bAllocatorId = reader.ReadUInt32();
             var stage0HAllocatorId = reader.ReadUInt32();
             var stage1HAllocatorId = reader.ReadUInt32();
@@ -215,7 +225,10 @@ namespace AnotherECS.Core
                 _callers[i].Unpack(ref reader);
             }
 
-            _configs = reader.Unpack<IConfig[]>();
+            if (stateSerializationLevel == StateSerializationLevel.DataAndConfig)
+            {
+                _configs = reader.Unpack<IConfig[]>();
+            }
 
             RepairMemoryHandles();
             CallConstruct();
@@ -257,8 +270,13 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void FirstStartup()
         {
-            CallConstruct();
-            CallAttach();
+            if (!_isFirstStartup)
+            {
+                _isFirstStartup = true;
+
+                CallConstruct();
+                CallAttach();
+            }
         }
         #endregion
 
@@ -905,18 +923,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetModuleData<TModuleData>(uint id, TModuleData data)
-            where TModuleData : IModuleData
+        internal bool IsHasModuleData(uint id)
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (id >= _moduleDatas.Length)
-            {
-                Array.Resize(ref _moduleDatas, (int)id + 1);
-            }
-
-            _moduleDatas[id] = data;
+            return (id < _moduleDatas.Length) && _moduleDatas[id] != null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -931,6 +943,21 @@ namespace AnotherECS.Core
             }
 #endif
             return (TModuleData)_moduleDatas[id];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetModuleData<TModuleData>(uint id, TModuleData data)
+            where TModuleData : IModuleData
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            if (id >= _moduleDatas.Length)
+            {
+                Array.Resize(ref _moduleDatas, (int)id + 1);
+            }
+
+            _moduleDatas[id] = data;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -953,15 +980,6 @@ namespace AnotherECS.Core
                 _events.Send(@event);
                 _nextTickForEvent = _events.NextTickForEvent;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal EventContainer ToITickEvent(IEvent @event)
-        {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-#endif
-            return new EventContainer(_dependencies->tickProvider.tick + 1, @event);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1186,6 +1204,7 @@ namespace AnotherECS.Core
                     list.Add(_callers[i].ElementId);
                 }
             }
+            
             return list.ToNArray();
         }
         

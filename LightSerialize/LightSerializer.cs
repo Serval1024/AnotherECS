@@ -36,8 +36,11 @@ namespace AnotherECS.Serializer
         }
 
         public byte[] Pack(object data)
+            => Pack(data, null);
+
+        public byte[] Pack(object data, IEnumerable<DependencySerializer> dependencies)
         {
-            var context = new WriterContextSerializer(this, 0);
+            var context = new WriterContextSerializer(this, 0, dependencies);
 
             Pack(ref context, data);
             var result = context.ToArray();
@@ -45,15 +48,21 @@ namespace AnotherECS.Serializer
             return result;
         }
 
+        public T Unpack<T>(byte[] data)
+            => (T)Unpack(data, null, null);
+
         public T Unpack<T>(byte[] data, params object[] constructArgs)
-            => (T)Unpack(data, constructArgs);
+            => (T)Unpack(data, null, constructArgs);
 
         public object Unpack(byte[] data)
-            => Unpack(data, null);
+            => Unpack(data, null, null);
 
-        public object Unpack(byte[] data, params object[] constructArgs)
+        public object Unpack(byte[] data, IEnumerable<DependencySerializer> dependencies)
+            => Unpack(data, dependencies, null);
+
+        public object Unpack(byte[] data, IEnumerable<DependencySerializer> dependencies, params object[] constructArgs)
         {
-            var context = new ReaderContextSerializer(this, data, 0);
+            var context = new ReaderContextSerializer(this, data, 0, dependencies);
 
             var result = Unpack(ref context, constructArgs);
             context.Dispose();

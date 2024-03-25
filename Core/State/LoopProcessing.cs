@@ -21,8 +21,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Prepare(State state, IEnumerable<ISystem> systemGroup)
         {
-            _systemProcessing.Prepare(systemGroup);
-
+            _systemProcessing.Prepare(state, systemGroup);
             state.SetOption(new StateOption()
             {
                 isMultiThreadMode = !IsDeterministicSequence(),
@@ -31,9 +30,8 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Init()
+        public void Create()
         {
-            _systemProcessing.CreateModule();
             _systemProcessing.Create();
         }
 
@@ -47,8 +45,20 @@ namespace AnotherECS.Core
         public void Destroy()
         {
             _systemProcessing.Destroy();
-            _systemProcessing.DestroyModule();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AttachToStateModule()
+        {
+            _systemProcessing.AttachToStateModule();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DetachToStateModule()
+        {
+            _systemProcessing.DetachToStateModule();
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryRevertTo(uint currentTick, uint getNextTickForEvent)
@@ -96,6 +106,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
+            BreakAndWait();
+            DetachToStateModule();
             _systemProcessing.Dispose();
         }
     }

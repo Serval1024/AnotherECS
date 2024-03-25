@@ -48,18 +48,5 @@ namespace AnotherECS.Core
         {
             _state.UnlockFilter();
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetUserData<TUserData>(uint id, TUserData data)
-            where TUserData : struct, IModuleData
-        {
-            _state.SetModuleData(id, data);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal TUserData GetUserData<TUserData>(uint id)
-            where TUserData : struct, IModuleData
-            => _state.GetModuleData<TUserData>(id);
     }
-
 }

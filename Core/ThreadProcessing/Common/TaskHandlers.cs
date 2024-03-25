@@ -3,9 +3,13 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Processing
 {
-    internal interface ISystemTaskHandler
+    internal interface IStateTaskHandler : ITaskHandler
     {
         State State { get; set; }
+    }
+
+    internal interface ISystemTaskHandler : IStateTaskHandler
+    {
         ISystem AsSystem { get; }
     }
 
@@ -16,7 +20,8 @@ namespace AnotherECS.Core.Processing
         ISystem ISystemTaskHandler.AsSystem { get => System; }
     }
 
-    internal struct StateTickStartTaskHandler : ITaskHandler
+
+    internal struct StateTickStartTaskHandler : IStateTaskHandler
     {
         public State State { get; set; }
 
@@ -27,7 +32,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct StateTickFinishedTaskHandler : ITaskHandler
+    internal struct StateTickFinishedTaskHandler : IStateTaskHandler
     {
         public State State { get; set; }
 
@@ -38,31 +43,31 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct CreateModuleTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateModule>
+    internal struct AttachToStateModuleTaskHandler : ISystemTaskHandler<IAttachToStateModule>
     {
         public State State { get; set; }
-        public ICreateModule System { get; set; }
+        public IAttachToStateModule System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.OnCreateModule(State);
+            System.OnAttachToStateModule(State);
         }
     }
 
-    internal struct DestroyModuleTaskHandler : ITaskHandler, ISystemTaskHandler<IDestroyModule>
+    internal struct DetachToStateModuleTaskHandler : ISystemTaskHandler<IDetachToStateModule>
     {
         public State State { get; set; }
-        public IDestroyModule System { get; set; }
+        public IDetachToStateModule System { get; set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            System.OnDestroyModule(State);
+            System.OnDetachToStateModule(State);
         }
     }
 
-    internal struct SystemTickStartTaskHandler : ITaskHandler, ISystemTaskHandler<ITickStartedModule>
+    internal struct SystemTickStartTaskHandler : ISystemTaskHandler<ITickStartedModule>
     {
         public State State { get; set; }
         public ITickStartedModule System { get; set; }
@@ -74,7 +79,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct SystemTickFinishedTaskHandler : ITaskHandler, ISystemTaskHandler<ITickFinishedModule>
+    internal struct SystemTickFinishedTaskHandler : ISystemTaskHandler<ITickFinishedModule>
     {
         public State State { get; set; }
         public ITickFinishedModule System { get; set; }
@@ -86,7 +91,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct SystemCreateTaskHandler : ITaskHandler, ISystemTaskHandler<ICreateSystem>
+    internal struct SystemCreateTaskHandler : ISystemTaskHandler<ICreateSystem>
     {
         public State State { get; set; }
         public ICreateSystem System { get; set; }
@@ -98,7 +103,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct SystemTickTaskHandler : ITaskHandler, ISystemTaskHandler<ITickSystem>
+    internal struct SystemTickTaskHandler : ISystemTaskHandler<ITickSystem>
     {
         public State State { get; set; }
         public ITickSystem System { get; set; }
@@ -109,7 +114,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct SystemDestroyTaskHandler : ITaskHandler, ISystemTaskHandler<IDestroySystem>
+    internal struct SystemDestroyTaskHandler : ISystemTaskHandler<IDestroySystem>
     {
         public State State { get; set; }
         public IDestroySystem System { get; set; }
@@ -121,7 +126,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct StateRevertToTaskHandler : ITaskHandler
+    internal struct StateRevertToTaskHandler : IStateTaskHandler
     {
         public State State { get; set; }
         public uint tick;
@@ -133,7 +138,7 @@ namespace AnotherECS.Core.Processing
         }
     }
 
-    internal struct ReceiversTaskHandler : ITaskHandler
+    internal struct ReceiversTaskHandler : IStateTaskHandler
     {
         public State State { get; set; }
         public Receivers receivers;
@@ -145,5 +150,4 @@ namespace AnotherECS.Core.Processing
             receivers.Receive(State, events);
         }
     }
-
 }

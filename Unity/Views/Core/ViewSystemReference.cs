@@ -2,8 +2,10 @@
 
 namespace AnotherECS.Views.Core
 {
-    public struct ViewSystemReference : IConfig
+    public class ViewSystemReference : IModuleData
     {
+        public const uint MODULE_DATA_ID = 1;
+
         internal IViewSystem module;
     }
 }

@@ -133,8 +133,8 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            _data.Dispose();
-            _recycle.Dispose();
+            _data.DeepDispose();
+            _recycle.DeepDispose();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

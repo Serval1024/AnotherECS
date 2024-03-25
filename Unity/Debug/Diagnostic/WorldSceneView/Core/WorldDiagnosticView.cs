@@ -27,7 +27,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
         {
             if (!World.IsDisposed)
             {
-                var idMax = World.GetState().GetEntityIdMax();
+                var idMax = World.State.GetEntityIdMax();
                 if (_views.Length < idMax)
                 {
                     Array.Resize(ref _views, (int)idMax);
@@ -47,7 +47,7 @@ namespace AnotherECS.Unity.Debug.Diagnostic
                     else
                     {
                         var id = (EntityId)i;
-                        if (World.GetState().IsHas(id))
+                        if (World.State.IsHas(id))
                         {
                             CreateView(id);
                         }

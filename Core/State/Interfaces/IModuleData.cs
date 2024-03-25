@@ -1,4 +1,4 @@
 ﻿namespace AnotherECS.Core
 {
-    internal interface IModuleData { }
+    public interface IModuleData { }
 }

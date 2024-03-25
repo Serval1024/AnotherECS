@@ -207,7 +207,6 @@ namespace AnotherECS.Core.Allocators
                 id = ToId(location.chunk, location.segment),
             };
 
-            Dirty(ref memoryHandle);
             _allocator->Reuse(ref memoryHandle, segmentCount << SEGMENT_POWER_2);
 
             return memoryHandle;
@@ -218,6 +217,7 @@ namespace AnotherECS.Core.Allocators
         {
             if (memoryHandle.IsValid)
             {
+                Dirty(ref memoryHandle);
                 var (chunkId, segmentId) = ToChunkSegment(memoryHandle.id);
                 UnlockLocation(new Location() { chunk = chunkId, segment = segmentId });
                 memoryHandle = default;

@@ -78,18 +78,7 @@ namespace AnotherECS.Core.Collection
         {
             if (_data.IsValid)
             {
-                DisposeElement();
                 Deallocate();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void DisposeElement()
-        {
-            if (typeof(IDisposable).IsAssignableFrom(typeof(T)))
-            {
-                Dirty();
-                ((IDisposable)GetRef()).Dispose();
             }
         }
 

@@ -88,7 +88,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -206,7 +206,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -229,7 +229,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -374,7 +374,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -397,7 +397,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -420,7 +420,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -592,7 +592,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -615,7 +615,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -638,7 +638,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -661,7 +661,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -860,7 +860,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -883,7 +883,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -906,7 +906,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -929,7 +929,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -952,7 +952,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -1178,7 +1178,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -1201,7 +1201,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -1224,7 +1224,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -1247,7 +1247,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -1270,7 +1270,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -1293,7 +1293,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -1546,7 +1546,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -1569,7 +1569,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -1592,7 +1592,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -1615,7 +1615,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -1638,7 +1638,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -1661,7 +1661,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -1684,7 +1684,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT6(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version6.IsCreated)
+            if (version6.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T6));
             }
@@ -1964,7 +1964,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -1987,7 +1987,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -2010,7 +2010,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -2033,7 +2033,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -2056,7 +2056,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -2079,7 +2079,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -2102,7 +2102,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT6(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version6.IsCreated)
+            if (version6.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T6));
             }
@@ -2125,7 +2125,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT7(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version7.IsCreated)
+            if (version7.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T7));
             }
@@ -2181,10 +2181,6 @@ namespace AnotherECS.Unity.Jobs
            => indexes[(int)index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntityId GetEntityId(int index)
-          => indexes[(int)index];
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasT0(int index)
             => sparse0[GetEntity(index)] != 0;
 
@@ -2229,7 +2225,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -2359,7 +2355,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -2386,7 +2382,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -2547,7 +2543,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -2574,7 +2570,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -2601,7 +2597,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -2793,7 +2789,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -2820,7 +2816,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -2847,7 +2843,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -2874,7 +2870,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -3097,7 +3093,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -3124,7 +3120,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -3151,7 +3147,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -3178,7 +3174,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -3205,7 +3201,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -3459,7 +3455,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -3486,7 +3482,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -3513,7 +3509,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -3540,7 +3536,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -3567,7 +3563,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -3594,7 +3590,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -3879,7 +3875,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -3906,7 +3902,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -3933,7 +3929,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -3960,7 +3956,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -3987,7 +3983,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -4014,7 +4010,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -4041,7 +4037,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT6(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version6.IsCreated)
+            if (version6.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T6));
             }
@@ -4357,7 +4353,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT0(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version0.IsCreated)
+            if (version0.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T0));
             }
@@ -4384,7 +4380,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT1(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version1.IsCreated)
+            if (version1.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T1));
             }
@@ -4411,7 +4407,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT2(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version2.IsCreated)
+            if (version2.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T2));
             }
@@ -4438,7 +4434,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT3(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version3.IsCreated)
+            if (version3.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T3));
             }
@@ -4465,7 +4461,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT4(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version4.IsCreated)
+            if (version4.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T4));
             }
@@ -4492,7 +4488,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT5(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version5.IsCreated)
+            if (version5.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T5));
             }
@@ -4519,7 +4515,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT6(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version6.IsCreated)
+            if (version6.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T6));
             }
@@ -4546,7 +4542,7 @@ namespace AnotherECS.Unity.Jobs
         public uint ReadVersionT7(uint index)
         {
 #if !ANOTHERECS_RELEASE
-            if (!version7.IsCreated)
+            if (version7.Length == 0)
             {
                 throw new AnotherECS.Unity.Jobs.Exceptions.ComponentNotSupportVersionException(typeof(T7));
             }

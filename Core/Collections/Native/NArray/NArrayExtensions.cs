@@ -28,7 +28,7 @@ namespace AnotherECS.Core.Collection
         public unsafe static Span<T> AsSpan<TNArray, T>(this ref TNArray narray, int start, int count)
             where TNArray : struct, INArray<T>
             where T : unmanaged
-        { 
+        {
             if (start + count > narray.Length)
             {
                 throw new ArgumentException();
@@ -160,5 +160,32 @@ namespace AnotherECS.Core.Collection
                 => low + ((hi - low) >> 1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DeepDispose<TAllocator, T>(this ref NArray<TAllocator, T> narray)
+            where TAllocator : unmanaged, IAllocator
+            where T : unmanaged, IDisposable
+        {
+            DeepDispose<NArray<TAllocator, T>, T>(ref narray, 0, narray.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DeepDispose<TNArray, T>(this ref TNArray narray)
+           where TNArray : struct, INArray<T>
+           where T : unmanaged, IDisposable
+        {
+            DeepDispose<TNArray, T>(ref narray, 0, narray.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void DeepDispose<TNArray, T>(this ref TNArray narray, uint start, uint elementCount)
+            where TNArray : struct, INArray<T>
+            where T : unmanaged, IDisposable
+        {
+            for (uint i = start; i < elementCount; ++i)
+            {
+                narray.ReadRef(i).Dispose();
+            }
+            narray.Dispose();
+        }
     }
 }

@@ -6,16 +6,16 @@ namespace AnotherECS.Serializer
 {
     public class Dependencies
     {
-        private Dictionary<Type, Dictionary<uint, object>> _dependencies;
+        private readonly Dictionary<Type, Dictionary<uint, object>> _dependencies;
 
-        public Dependencies(IEnumerable<(uint, object)> dependencies)
+        public Dependencies(IEnumerable<DependencySerializer> dependencies)
         {
             _dependencies = new Dictionary<Type, Dictionary<uint, object>>();
             if (dependencies != null)
             {
                 foreach (var dependency in dependencies)
                 {
-                    Add(dependency.Item1, dependency.Item2);
+                    Add(dependency.id, dependency.value);
                 }
             }
         }

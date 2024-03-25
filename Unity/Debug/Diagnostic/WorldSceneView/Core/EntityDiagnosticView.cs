@@ -78,9 +78,9 @@ namespace AnotherECS.Unity.Debug.Diagnostic
 
             public void Update(World world)
             {
-                if (world.GetState().IsHas(id))
+                if (world.State.IsHas(id))
                 {
-                    var state = world.GetState();
+                    var state = world.State;
                     var componentCount = (int)state.GetCount(id);
                     if (components == null || components.Length != componentCount)
                     {

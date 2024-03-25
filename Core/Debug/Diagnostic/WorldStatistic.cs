@@ -70,17 +70,17 @@ namespace AnotherECS.Debug.Diagnostic
             => new()
             {
                 worldName = _world.Name,
-                entityCount = _world.GetState().EntityCount,
+                entityCount = _world.State.EntityCount,
                 componentTotal = GetTotalComponents(_world),
-                memoryTotal = _world.GetState().GetMemoryTotal(),
-                historyMemoryTotal = _world.GetState().GetHistoryMemoryTotal(),
+                memoryTotal = _world.State.GetMemoryTotal(),
+                historyMemoryTotal = _world.State.GetHistoryMemoryTotal(),
 
                 createSystems = CreateSystemsStatisticData<ICreateSystem>(_systemByDeepGroup, _timers),
                 tickSystems = CreateSystemsStatisticData<ITickSystem>(_systemByDeepGroup, _timers),
                 destroySystems = CreateSystemsStatisticData<IDestroySystem>(_systemByDeepGroup, _timers),
 
-                createModule = CreateSystemsStatisticData<ICreateModule>(_systemByDeepGroup, _timers),
-                destroyModule = CreateSystemsStatisticData<IDestroyModule>(_systemByDeepGroup, _timers),
+                createModule = CreateSystemsStatisticData<IAttachToStateModule>(_systemByDeepGroup, _timers),
+                destroyModule = CreateSystemsStatisticData<IDetachToStateModule>(_systemByDeepGroup, _timers),
                 
                 tickStartedModule = CreateSystemsStatisticData<ITickStartedModule>(_systemByDeepGroup, _timers),
                 tickFinishedModule = CreateSystemsStatisticData<ITickFinishedModule>(_systemByDeepGroup, _timers),
@@ -121,9 +121,9 @@ namespace AnotherECS.Debug.Diagnostic
         private static uint GetTotalComponents(World world)
         {
             uint totalComponent = 0;
-            foreach (var id in world.GetState().CollectAllEntityIds())
+            foreach (var id in world.State.CollectAllEntityIds())
             {
-                totalComponent += world.GetState().GetCount(id);
+                totalComponent += world.State.GetCount(id);
             }
 
             return totalComponent;

@@ -1,5 +1,6 @@
 using AnotherECS.Converter;
 using AnotherECS.Core;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -24,7 +25,7 @@ namespace AnotherECS.Serializer
                 );
         }
 
-        public byte[] Pack(object data)
+        public byte[] Pack(object data, IEnumerable<DependencySerializer> dependencies = null)
         {
             var context = new WriterContextSerializer(_impl, 0);
             var isCompress = WriteCompressFlag(ref context, data);
@@ -36,7 +37,7 @@ namespace AnotherECS.Serializer
             return isCompress ? CompressUtils.Compress(result, COMPRESS_FLAG_SIZE) : result;
         }
 
-        public object Unpack(byte[] data)
+        public object Unpack(byte[] data, IEnumerable<DependencySerializer> dependencies = null)
         {
             ReaderContextSerializer context;
 
@@ -53,6 +54,11 @@ namespace AnotherECS.Serializer
 
             return result;
         }
+
+        public T Unpack<T>(byte[] data, IEnumerable<DependencySerializer> dependencies = null)
+            => (T)Unpack(data, dependencies);
+
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsCompress(object data)
@@ -72,9 +78,6 @@ namespace AnotherECS.Serializer
 
             return data[0] != 0;
         }
-
-        public T Unpack<T>(byte[] data)
-            => (T)Unpack(data);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool WriteCompressFlag(ref WriterContextSerializer writer, object data)

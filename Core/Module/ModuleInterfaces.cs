@@ -2,14 +2,14 @@ namespace AnotherECS.Core
 {
     public interface IModule : ISystem { }
     
-    public interface ICreateModule : IModule
+    public interface IAttachToStateModule : IModule
     {
-        void OnCreateModule(State state);
+        void OnAttachToStateModule(State state);
     }
 
-    public interface IDestroyModule : IModule
+    public interface IDetachToStateModule : IModule
     {
-        void OnDestroyModule(State state);
+        void OnDetachToStateModule(State state);
     }
 
     public interface ITickStartedModule : IModule
