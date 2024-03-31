@@ -50,6 +50,7 @@ namespace AnotherECS.Core.Remote
                     }
                     else
                     {
+                        UnityEngine.Debug.Log("'lkdfnsdlfknsd;fkln");
                         context.ApplyState(p.Result.state);
                     }
                 }
