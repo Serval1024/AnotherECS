@@ -7,11 +7,13 @@ namespace AnotherECS.Core.Remote
     {
         public long Id { get; }
         public ClientRole Role { get; }
+        public long PerformanceTiming { get; }
 
-        public Player(long id, ClientRole role)
+        public Player(long id, ClientRole role, long performanceTiming)
         {
             Id = id;
             Role = role;
+            PerformanceTiming = performanceTiming;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

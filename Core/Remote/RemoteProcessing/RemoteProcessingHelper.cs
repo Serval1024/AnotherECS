@@ -10,7 +10,7 @@ namespace AnotherECS.Core.Remote
                 : _dependencyStateSerializationLevel1Cache;
 
         public static readonly DependencySerializer[] _dependencyStateSerializationLevel0Cache
-                = new[] { new DependencySerializer() { id = 0, value = StateSerializationLevel.Data } };
+            = new[] { new DependencySerializer() { id = 0, value = StateSerializationLevel.Data } };
 
         public static readonly DependencySerializer[] _dependencyStateSerializationLevel1Cache
             = new[] { new DependencySerializer() { id = 0, value = StateSerializationLevel.DataAndConfig } };

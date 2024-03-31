@@ -2,6 +2,7 @@
 using AnotherECS.Core.Remote.Exceptions;
 using AnotherECS.Serializer;
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -15,6 +16,10 @@ namespace AnotherECS.Core.Remote
 
         private IWorldExtend _world;
         private BehaviorContext _context;
+
+        private uint _idCounter;
+        private ConcurrentDictionary<uint, object> _taskDataResult = new();
+
 
         public RemoteProcessing(IRemoteProvider remoteProvider)
             : this(remoteProvider, new LogAndThrowBehaviorStrategy()) { }
@@ -51,14 +56,23 @@ namespace AnotherECS.Core.Remote
             SendOther(data);
         }
 
-        public void SendState(Player target, StateSerializationLevel stateSerializationLevel)
+        public void SendState(StateRequest stateRequest)
         {
-            SendState(target, _world.State, stateSerializationLevel);
+            var player = _remoteProvider.GetPlayer(stateRequest.playerId);
+            if (player != default)
+            {
+                SendState(player, _world.State, stateRequest.id, stateRequest.level);
+            }
         }
 
-        public void SendState(Player target, State data, StateSerializationLevel stateSerializationLevel)
+        public void SendState(Player target, StateSerializationLevel stateSerializationLevel)
         {
-            var bytes = _serializer.Pack(data, RemoteProcessingHelper.GetDependencySerializer(stateSerializationLevel));
+            SendState(target, _world.State, 0, stateSerializationLevel);
+        }
+
+        private void SendState(Player target, State state, uint id, StateSerializationLevel stateSerializationLevel)
+        {
+            var bytes = _serializer.Pack(new StateRespond(id, state), RemoteProcessingHelper.GetDependencySerializer(stateSerializationLevel));
             _remoteProvider.Send(target, bytes);
         }
 
@@ -74,9 +88,30 @@ namespace AnotherECS.Core.Remote
             _remoteProvider.SendOther(bytes);
         }
 
-        public void RequestState(Player target, StateSerializationLevel stateSerializationLevel)
+        public Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel)
         {
-            Send(target, new RequestStateEvent() { level = stateSerializationLevel });
+            var id = ++_idCounter;
+            Send(target, new StateRequest() { id = id, level = stateSerializationLevel });
+
+            return TaskExtensions.Run(RequestStateResultTask, id);
+        }
+
+        private async Task<RequestStateResult> RequestStateResultTask(object id)
+        {
+            int i = 10;
+            while (i-- > 0)
+            {
+                await Task.Delay(1);
+                
+                if (_taskDataResult.TryGetValue((uint)id, out var result))
+                {
+                    if (result is RequestStateResult requestStaterResult)
+                    {
+                        return requestStaterResult;
+                    }
+                }
+            }
+            return new RequestStateResult();
         }
 
         public void ApplyState(State state)
@@ -135,14 +170,14 @@ namespace AnotherECS.Core.Remote
                         ReceiveEvent((ITickEvent)data);
                         break;
                     }
-                case State:
+                case StateRespond:
                     {
-                        ReceiveState(sender, (State)data);
+                        ReceiveState(sender, (StateRespond)data);
                         break;
                     }
-                case RequestStateEvent:
+                case StateRequest:
                     {
-                        RequestState(sender, (RequestStateEvent)data);
+                        RequestState(sender, (StateRequest)data);
                         break;
                     }
             }
@@ -155,15 +190,17 @@ namespace AnotherECS.Core.Remote
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ReceiveState(Player sender, State data)
+        private void ReceiveState(Player sender, StateRespond data)
         {
-            _remoteBehaviorStrategy.OnReceiveState(_context, sender, data);
+            var result = new RequestStateResult(data.state);
+            _taskDataResult.AddOrUpdate(data.id, result, (k, v) => result);
+            _remoteBehaviorStrategy.OnReceiveState(_context, sender, data.state);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RequestState(Player sender, RequestStateEvent data)
+        private void RequestState(Player sender, StateRequest data)
         {
-            _remoteBehaviorStrategy.OnRequestState(_context, sender, data.level);
+            _remoteBehaviorStrategy.OnRequestState(_context, sender, data);
         }
 
         private void OnConnectPlayer(Player player)
@@ -182,19 +219,47 @@ namespace AnotherECS.Core.Remote
         }
 
 
-        private struct RequestStateEvent : ISerialize
+        private struct StateRespond : ISerialize
         {
-            public StateSerializationLevel level;
+            public uint id;
+            public State state;
+
+            public StateRespond(uint id, State state)
+            {
+                this.id = id;
+                this.state = state;
+            }
 
             public void Pack(ref WriterContextSerializer writer)
             {
-                writer.Write(level);
+                writer.Write(id);
+                writer.Pack(state);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
-                level = reader.ReadEnum<StateSerializationLevel>();
+                id = reader.ReadUInt32();
+                state = reader.Unpack<State>();
             }
+        }
+    }
+
+    public struct StateRequest : ISerialize
+    {
+        public uint id;
+        public long playerId;
+        public StateSerializationLevel level;
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            writer.Write(id);
+            writer.Write(level);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            id = reader.ReadUInt32();
+            level = reader.ReadEnum<StateSerializationLevel>();
         }
     }
 }

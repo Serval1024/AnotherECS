@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AnotherECS.Core.Remote
+﻿namespace AnotherECS.Core.Remote
 {
     public interface IRemoteBytesProvider
     {

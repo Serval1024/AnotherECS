@@ -12,11 +12,22 @@ namespace AnotherECS.Core.Remote
         Task<ConnectResult> Connect();
         Task Disconnect();
 
+        void SendState(StateRequest stateRequest);
         void SendState(Player target, StateSerializationLevel stateSerializationLevel);
-        void RequestState(Player target, StateSerializationLevel stateSerializationLevel);
+        Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel);
         void ApplyState(State state);
 
         Player GetLocalPlayer();
         double GetGlobalTime();
+    }
+
+    public readonly struct RequestStateResult
+    {
+        public readonly State state;
+
+        public RequestStateResult(State state)
+        {
+            this.state = state;
+        }
     }
 }

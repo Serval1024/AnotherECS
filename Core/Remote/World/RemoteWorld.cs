@@ -39,7 +39,7 @@ namespace AnotherECS.Core.Remote
         private readonly IWorldExtend _world;
         private readonly IRemoteProcessing _removeProvider;
 
-        private RemoveWorldModuleData _threadDoubleBuffer;
+        private RemoveWorldModuleData _moduleDataThreadDoubleBuffer;
 
         public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider)
             : this(world, new RemoteProcessing(remoteProvider)) { }
@@ -49,7 +49,7 @@ namespace AnotherECS.Core.Remote
             _world = world ?? throw new ArgumentNullException(nameof(world));
             _removeProvider = removeProvider ?? throw new ArgumentNullException(nameof(removeProvider));
 
-            _threadDoubleBuffer = new RemoveWorldModuleData();
+            _moduleDataThreadDoubleBuffer = new RemoveWorldModuleData();
 
             _removeProvider.Construct(_world);
 
@@ -157,13 +157,13 @@ namespace AnotherECS.Core.Remote
         {
             var data = _world.GetModuleData<RemoveWorldModuleData>(RemoveWorldModuleData.MODULE_DATA_ID);
 
-            _threadDoubleBuffer.localPlayer = _removeProvider.GetLocalPlayer();
-            _threadDoubleBuffer.time = Time;
-            _threadDoubleBuffer.deltaTime = DeltaTime;
+            _moduleDataThreadDoubleBuffer.localPlayer = _removeProvider.GetLocalPlayer();
+            _moduleDataThreadDoubleBuffer.time = Time;
+            _moduleDataThreadDoubleBuffer.deltaTime = DeltaTime;
 
-            _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, _threadDoubleBuffer);
+            _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, _moduleDataThreadDoubleBuffer);
 
-            _threadDoubleBuffer = data;
+            _moduleDataThreadDoubleBuffer = data;
         }
     }
 }

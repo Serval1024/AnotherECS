@@ -287,7 +287,7 @@ namespace AnotherECS.Core
             get
             {
 #if !ANOTHERECS_RELEASE
-                ExceptionHelper.ThrowIfDisposed(this);
+                Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 return _dependencies->entities.GetCount();
             }
@@ -296,7 +296,7 @@ namespace AnotherECS.Core
         public bool IsHas(uint id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _dependencies->entities.IsHas(id);
         }
@@ -304,7 +304,7 @@ namespace AnotherECS.Core
         public EntityId New()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             if (_dependencies->entities.TryResizeDense())
             {
@@ -318,7 +318,7 @@ namespace AnotherECS.Core
         public void Delete(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             var archetypeId = _dependencies->entities.ReadArchetypeId(id);
             _dependencies->archetype.ForEachItem(archetypeId, new RemoveRawIterator(this, id));
@@ -330,7 +330,7 @@ namespace AnotherECS.Core
         public uint GetCount(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return _dependencies->archetype.GetCount(_dependencies->entities.ReadArchetypeId(id));
         }
@@ -338,7 +338,7 @@ namespace AnotherECS.Core
         internal bool IsHas(EntityId id, ushort generation)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _dependencies->entities.IsHas(id, generation);
         }
@@ -347,7 +347,7 @@ namespace AnotherECS.Core
         internal ushort GetGeneration(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return _dependencies->entities.ReadGeneration(id);
         }
@@ -358,7 +358,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return GetCaller<T>().Create();
         }
@@ -367,7 +367,7 @@ namespace AnotherECS.Core
         public bool IsHas(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return index < GetCount(id);
         }
@@ -376,7 +376,7 @@ namespace AnotherECS.Core
         public bool IsHas(EntityId id, Type type)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(type));
+            Exceptions.ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(type));
 #endif
             return GetCaller(type).IsHas(id);
         }
@@ -386,7 +386,7 @@ namespace AnotherECS.Core
           where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller<T>());
 #endif
             return GetCaller<T>().IsHas(id);
         }
@@ -394,7 +394,7 @@ namespace AnotherECS.Core
         public void Add(EntityId id, IComponent data)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(data.GetType()));
+            Exceptions.ExceptionHelper.ThrowIfNotMultiAccess(this, id, GetCaller(data.GetType()));
 #endif
             GetCaller(data.GetType()).Add(id, data);
         }
@@ -407,7 +407,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T>().Add(id, ref data);
         }
@@ -416,7 +416,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Add(id);
         }
@@ -425,7 +425,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfExists(this, id, GetCaller<T>());
 #endif
             Add<T>(id);
         }
@@ -433,7 +433,7 @@ namespace AnotherECS.Core
         public void Remove(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
 #endif
             GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).Remove(id);
         }
@@ -442,7 +442,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
 #endif
             GetCaller<T>().Remove(id);
         }
@@ -452,7 +452,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return GetCaller<T>().TryRead(id, out component);
         }
@@ -460,7 +460,7 @@ namespace AnotherECS.Core
         public IComponent Read(EntityId id, uint index)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
 #endif
             return GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).GetCopy(id);
         }
@@ -469,8 +469,8 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(id);
         }
@@ -480,7 +480,7 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id);
 #endif
             return GetCaller<T>().TryGet(id, out component);
         }
@@ -489,8 +489,8 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(id);
         }
@@ -499,8 +499,8 @@ namespace AnotherECS.Core
           where T : unmanaged, IVersion
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return GetCaller<T>().GetVersion(id);
         }
@@ -508,7 +508,7 @@ namespace AnotherECS.Core
         public void Set(EntityId id, uint index, IComponent component)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, index, GetCount(id), GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)));
 #endif
             GetCaller(_dependencies->archetype.GetItemId(_dependencies->entities.ReadArchetypeId(id), index)).Set(id, component);
         }
@@ -517,8 +517,8 @@ namespace AnotherECS.Core
             where T : unmanaged, IComponent
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, id, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller<T>().Set(id, ref data);
         }
@@ -526,7 +526,7 @@ namespace AnotherECS.Core
         public EntityId[] CollectAllEntityIds()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             if (_entityIdsTemp.Length != EntityCount)
             {
@@ -561,7 +561,7 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
             return GetCaller<T>().IsHas(0);
         }
@@ -574,7 +574,7 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfNotSingleAccess(this, GetCaller<T>());
 #endif
             GetCaller<T>().SetOrAdd(0, ref data);
         }
@@ -587,7 +587,7 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
             GetCaller<T>().Add(0, ref data);
         }
@@ -596,7 +596,7 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfExists(this, GetCaller<T>());
 #endif
             return ref GetCaller<T>().Add(0);
         }
@@ -605,7 +605,7 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
 #endif
             GetCaller<T>().Remove(0);
         }
@@ -614,8 +614,8 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Read(0);
         }
@@ -624,8 +624,8 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             return ref GetCaller<T>().Get(0);
         }
@@ -634,8 +634,8 @@ namespace AnotherECS.Core
             where T : unmanaged, ISingle
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
-            ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, GetCaller<T>());
+            Exceptions.ExceptionHelper.ThrowIfEmpty(GetCaller<T>());
 #endif
             GetCaller<T>().Set(0, ref data);
         }
@@ -647,7 +647,7 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             lock (_configs)
             {
@@ -660,7 +660,7 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             lock (_configs)
             {
@@ -673,8 +673,8 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfExists<T>(this, GetConfigIndex<T>(), _configs);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfExists<T>(this, GetConfigIndex<T>(), _configs);
 #endif
             lock (_configs)
             {
@@ -687,8 +687,8 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
 #endif
             lock (_configs)
             {
@@ -701,8 +701,8 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
 #endif
             lock (_configs)
             {
@@ -715,8 +715,8 @@ namespace AnotherECS.Core
             where T : IConfig
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDontExists<T>(this, GetConfigIndex<T>(), _configs);
 #endif
             lock (_configs)
             {
@@ -728,7 +728,7 @@ namespace AnotherECS.Core
         public bool IsHasConfig(Type type)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             lock (_configs)
             {
@@ -740,8 +740,8 @@ namespace AnotherECS.Core
         public IConfig GetConfig(Type type)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfDontExists(this, type, _configs, _configByType);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDontExists(this, type, _configs, _configByType);
 #endif
             lock (_configs)
             {
@@ -752,8 +752,8 @@ namespace AnotherECS.Core
         public void AddConfig(IConfig data)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
-            ExceptionHelper.ThrowIfExists(this, data.GetType(), _configs, _configByType);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfExists(this, data.GetType(), _configs, _configByType);
 #endif
             lock (_configs)
             {
@@ -788,14 +788,14 @@ namespace AnotherECS.Core
             get
             {
 #if !ANOTHERECS_RELEASE
-                ExceptionHelper.ThrowIfDisposed(this);
+                Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 return _dependencies->tickProvider.tick;
             }
             private set
             {
 #if !ANOTHERECS_RELEASE
-                ExceptionHelper.ThrowIfDisposed(this);
+                Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 _dependencies->tickProvider.tick = value;
             }
@@ -804,7 +804,7 @@ namespace AnotherECS.Core
         public void Send(IEvent @event)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
         }
@@ -814,7 +814,7 @@ namespace AnotherECS.Core
         public Exception GetLastError()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _lastError;
         }
@@ -835,7 +835,7 @@ namespace AnotherECS.Core
             where T : BFilter, new()
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             var filter = new T();
             filter.Construct(this, CreateFilterData(ref mask));
@@ -846,7 +846,7 @@ namespace AnotherECS.Core
         internal BFilter CreateFilter(Type type, ref Mask mask)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             var filter = (BFilter)Activator.CreateInstance(type);
             filter.Construct(this, CreateFilterData(ref mask));
@@ -856,7 +856,7 @@ namespace AnotherECS.Core
         internal FilterData* CreateFilterData(ref Mask mask)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return _dependencies->filters.Create(ref mask);
         }
@@ -908,7 +908,7 @@ namespace AnotherECS.Core
         internal ref readonly IdCollection<HAllocator> GetEntitiesByArchetype(uint archetypeId)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return ref _dependencies->archetype.ReadIdCollection(archetypeId);
         }
@@ -917,7 +917,7 @@ namespace AnotherECS.Core
         internal ref readonly EntityData GetEntityData(EntityId id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return ref _dependencies->entities.ReadRef(id);
         }
@@ -926,7 +926,7 @@ namespace AnotherECS.Core
         internal bool IsHasModuleData(uint id)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             return (id < _moduleDatas.Length) && _moduleDatas[id] != null;
         }
@@ -936,7 +936,7 @@ namespace AnotherECS.Core
             where TModuleData : IModuleData
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
             if (id >= _moduleDatas.Length || _moduleDatas[id] is not TModuleData)
             {
                 throw new ArgumentException(nameof(id));
@@ -950,7 +950,7 @@ namespace AnotherECS.Core
             where TModuleData : IModuleData
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             if (id >= _moduleDatas.Length)
             {
@@ -973,7 +973,7 @@ namespace AnotherECS.Core
         internal void Send(ITickEvent @event)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             lock (_eventLock)
             {
@@ -1023,7 +1023,7 @@ namespace AnotherECS.Core
         internal void RevertTo(uint tick)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
             if (tick < Tick)
             {
@@ -1096,9 +1096,9 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint GetEntityIdMax()
-        {    
+        {
 #if !ANOTHERECS_RELEASE
-                ExceptionHelper.ThrowIfDisposed(this);
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 return _dependencies->entities.GetAllocated();
         }

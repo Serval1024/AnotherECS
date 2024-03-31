@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
@@ -6,7 +7,7 @@ namespace AnotherECS.Core.Remote
     {
         public Player LocalPlayer => _remote.GetLocalPlayer();
         public Player[] Players => _remote.GetPlayers();
-
+        
         public LiveState WorldLiveState { get; internal set; }
 
 
@@ -26,6 +27,11 @@ namespace AnotherECS.Core.Remote
             _processing.Disconnect();
         }
 
+        public void SendState(StateRequest stateRequest)
+        {
+            _processing.SendState(stateRequest);
+        }
+
         public void SendState(Player player, StateSerializationLevel stateSerializationLevel)
         {
             if (LocalPlayer == player)
@@ -35,13 +41,13 @@ namespace AnotherECS.Core.Remote
             _processing.SendState(player, stateSerializationLevel);
         }
 
-        public void RequestState(Player player, StateSerializationLevel stateSerializationLevel)
+        public Task<RequestStateResult> RequestState(Player player, StateSerializationLevel stateSerializationLevel)
         {
             if (LocalPlayer == player)
             {
                 throw new ArgumentException("Should be 'local player id != player id argument'.");
             }
-            _processing.RequestState(player, stateSerializationLevel);
+            return _processing.RequestState(player, stateSerializationLevel);
         }
 
         public void ApplyState(State state)

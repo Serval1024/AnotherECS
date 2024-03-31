@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
@@ -13,11 +12,25 @@ namespace AnotherECS.Core.Remote
 
         Player GetLocalPlayer();
         Player[] GetPlayers();
-
         double GetGlobalTime();
+        Player GetPlayer(long id)
+        {
+            var players = GetPlayers();
+            if (players != null)
+            {
+                for (int i = 0; i < players.Length; ++i)
+                {
+                    if (players[i].Id == id)
+                    {
+                        return players[i];
+                    }
+                }
+            }
+            return default;
+        }
     }
 
-    public class ConnectResult
+    public struct ConnectResult
     {
         public object Result { get; private set; }
 

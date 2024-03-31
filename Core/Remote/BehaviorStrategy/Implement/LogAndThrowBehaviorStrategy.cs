@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core.Remote
+﻿using log4net.Core;
+
+namespace AnotherECS.Core.Remote
 {
     public class LogAndThrowBehaviorStrategy : IRemoteBehaviorStrategy
     {
@@ -23,9 +25,9 @@
             Debug.Logger.Send($"Receive state: '{sender.Id}'.");
         }
 
-        public void OnRequestState(IBehaviorContext context, Player sender, StateSerializationLevel level)
+        public void OnRequestState(IBehaviorContext context, Player sender, StateRequest stateRequest)
         {
-            Debug.Logger.Send($"Request state: '{sender.Id}', level '{level}'.");
+            Debug.Logger.Send($"Request state: '{sender.Id}', level '{stateRequest.level}'.");
         }
 
         public void OnRevertFailed(IBehaviorContext context, ErrorReport error)

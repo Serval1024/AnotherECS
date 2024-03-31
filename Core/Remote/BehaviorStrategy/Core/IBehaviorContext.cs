@@ -1,4 +1,6 @@
-﻿namespace AnotherECS.Core.Remote
+﻿using System.Threading.Tasks;
+
+namespace AnotherECS.Core.Remote
 {
     public interface IBehaviorContext
     {
@@ -6,13 +8,14 @@
         Player[] Players { get; }
         LiveState WorldLiveState { get; }
 
+        void SendState(StateRequest stateRequest);
         void SendState(Player player, StateSerializationLevel stateSerializationLevel);
-        void RequestState(Player target, StateSerializationLevel stateSerializationLevel);
+        Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel);
         public void ApplyState(State state);
         void Disconnect();
     }
 
-    public enum ClientRole
+    public enum ClientRole : byte
     {
         Unknow,
         Master,
