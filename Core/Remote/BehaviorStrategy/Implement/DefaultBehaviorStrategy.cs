@@ -6,7 +6,7 @@ namespace AnotherECS.Core.Remote
     {
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            if (player.Role == ClientRole.Master)
+            if (player.Role != ClientRole.Master)
             {
                 RequestState(context, player);
             }
@@ -50,6 +50,7 @@ namespace AnotherECS.Core.Remote
                     }
                     else
                     {
+                        UnityEngine.Debug.Log("'lkdfnsdlfknsd;fkln");
                         context.ApplyState(p.Result.state);
                     }
                 }
