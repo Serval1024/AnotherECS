@@ -6,7 +6,7 @@ namespace AnotherECS.Core.Remote
     {
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            if (player.Role != ClientRole.Master)
+            if (player != context.LocalPlayer && player.Role != ClientRole.Master)
             {
                 RequestState(context, player);
             }

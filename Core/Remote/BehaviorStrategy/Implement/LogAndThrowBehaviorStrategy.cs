@@ -1,6 +1,4 @@
-﻿using log4net.Core;
-
-namespace AnotherECS.Core.Remote
+﻿namespace AnotherECS.Core.Remote
 {
     public class LogAndThrowBehaviorStrategy : IRemoteBehaviorStrategy
     {

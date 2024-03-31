@@ -20,14 +20,4 @@ namespace AnotherECS.Core.Remote
         Player GetLocalPlayer();
         double GetGlobalTime();
     }
-
-    public readonly struct RequestStateResult
-    {
-        public readonly State state;
-
-        public RequestStateResult(State state)
-        {
-            this.state = state;
-        }
-    }
 }
