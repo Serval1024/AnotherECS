@@ -41,8 +41,11 @@ namespace AnotherECS.Core.Remote
 
         private RemoveWorldModuleData _moduleDataThreadDoubleBuffer;
 
+        public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider, IRemoteBehaviorStrategy remoteBehaviorStrategy)
+            : this(world, new RemoteProcessing(remoteProvider, remoteBehaviorStrategy)) { }
+
         public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider)
-            : this(world, new RemoteProcessing(remoteProvider)) { }
+            : this(world, remoteProvider, new LogAndThrowBehaviorStrategy()) { }
 
         public RemoteWorld(IWorldExtend world, IRemoteProcessing removeProvider)
         {            
@@ -82,7 +85,6 @@ namespace AnotherECS.Core.Remote
                             var target = (uint)(Time / DeltaTime);
                             var delta = target - _world.RequestTick;
 
-                            UnityEngine.Debug.Log(Time + " : " + delta);
                             if (delta > 0)
                             {
                                 _world.Tick(delta);

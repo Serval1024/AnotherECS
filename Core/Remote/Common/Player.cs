@@ -6,12 +6,14 @@ namespace AnotherECS.Core.Remote
     public readonly struct Player : IEquatable<Player>
     {
         public long Id { get; }
+        public bool IsLocal { get; }
         public ClientRole Role { get; }
         public long PerformanceTiming { get; }
 
-        public Player(long id, ClientRole role, long performanceTiming)
+        public Player(long id, bool isLocal, ClientRole role, long performanceTiming)
         {
             Id = id;
+            IsLocal = isLocal;
             Role = role;
             PerformanceTiming = performanceTiming;
         }

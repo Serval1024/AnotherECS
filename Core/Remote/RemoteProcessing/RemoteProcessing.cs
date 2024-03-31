@@ -20,10 +20,6 @@ namespace AnotherECS.Core.Remote
         private uint _idCounter;
         private ConcurrentDictionary<uint, object> _taskDataResult = new();
 
-
-        public RemoteProcessing(IRemoteProvider remoteProvider)
-            : this(remoteProvider, new LogAndThrowBehaviorStrategy()) { }
-
         public RemoteProcessing(IRemoteProvider remoteProvider, IRemoteBehaviorStrategy remoteBehaviorStrategy)
             : this(remoteProvider, remoteBehaviorStrategy, new DefaultSerializer()) { }
 
@@ -61,7 +57,7 @@ namespace AnotherECS.Core.Remote
             var player = _remoteProvider.GetPlayer(stateRequest.playerId);
             if (player != default)
             {
-                SendState(player, _world.State, stateRequest.id, stateRequest.level);
+                SendState(player, _world.State, stateRequest.messageId, stateRequest.level);
             }
         }
 
@@ -90,18 +86,17 @@ namespace AnotherECS.Core.Remote
 
         public Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel)
         {
-            var id = ++_idCounter;
-            Send(target, new StateRequest() { id = id, level = stateSerializationLevel });
+            var id = unchecked(++_idCounter);
+            Send(target, new StateRequest() { messageId = id, level = stateSerializationLevel });
 
             return TaskExtensions.Run(RequestStateResultTask, id);
         }
 
         private async Task<RequestStateResult> RequestStateResultTask(object id)
         {
-            int i = 10;
-            while (i-- > 0)
+            while (true)
             {
-                await Task.Delay(1);
+                await Task.Delay(15);
                 
                 if (_taskDataResult.TryGetValue((uint)id, out var result))
                 {
@@ -109,9 +104,11 @@ namespace AnotherECS.Core.Remote
                     {
                         return requestStaterResult;
                     }
+                    
+                    throw new InvalidOperationException();
                 }
             }
-            return new RequestStateResult();
+            throw new InvalidOperationException();
         }
 
         public void ApplyState(State state)
@@ -193,7 +190,7 @@ namespace AnotherECS.Core.Remote
         private void ReceiveState(Player sender, StateRespond data)
         {
             var result = new RequestStateResult(data.state);
-            _taskDataResult.AddOrUpdate(data.id, result, (k, v) => result);
+            _taskDataResult.AddOrUpdate(data.messageId, result, (k, v) => result);
             _remoteBehaviorStrategy.OnReceiveState(_context, sender, data.state);
         }
 
@@ -221,24 +218,24 @@ namespace AnotherECS.Core.Remote
 
         private struct StateRespond : ISerialize
         {
-            public uint id;
+            public uint messageId;
             public State state;
 
-            public StateRespond(uint id, State state)
+            public StateRespond(uint messageId, State state)
             {
-                this.id = id;
+                this.messageId = messageId;
                 this.state = state;
             }
 
             public void Pack(ref WriterContextSerializer writer)
             {
-                writer.Write(id);
+                writer.Write(messageId);
                 writer.Pack(state);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
-                id = reader.ReadUInt32();
+                messageId = reader.ReadUInt32();
                 state = reader.Unpack<State>();
             }
         }
@@ -246,19 +243,19 @@ namespace AnotherECS.Core.Remote
 
     public struct StateRequest : ISerialize
     {
-        public uint id;
+        public uint messageId;
         public long playerId;
         public StateSerializationLevel level;
 
         public void Pack(ref WriterContextSerializer writer)
         {
-            writer.Write(id);
+            writer.Write(messageId);
             writer.Write(level);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            id = reader.ReadUInt32();
+            messageId = reader.ReadUInt32();
             level = reader.ReadEnum<StateSerializationLevel>();
         }
     }

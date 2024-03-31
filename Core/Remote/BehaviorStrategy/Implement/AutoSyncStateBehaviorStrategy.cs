@@ -2,13 +2,38 @@
 
 namespace AnotherECS.Core.Remote
 {
-    public class DefaultBehaviorStrategy : IRemoteBehaviorStrategy
+    public class AutoSyncStateBehaviorStrategy : IRemoteBehaviorStrategy
     {
+        public double RequestStateTimeout = 5f;
+
+        private readonly Lazy<State> _initStateForMasterClient;
+
+        public AutoSyncStateBehaviorStrategy()
+            : this(null) { }
+
+        public AutoSyncStateBehaviorStrategy(Lazy<State> initStateForMasterClient)
+        {
+            _initStateForMasterClient = initStateForMasterClient;
+        }
+
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            if (player != context.LocalPlayer && player.Role != ClientRole.Master)
+            if (player.IsLocal)
             {
-                RequestState(context, player);
+                if (player.Role == ClientRole.Master)
+                {
+                    if (_initStateForMasterClient != null)
+                    {
+                        context.ApplyState(_initStateForMasterClient.Value);
+                    }
+                }
+            }
+            else
+            {
+                if (player.Role == ClientRole.Client)
+                {
+                    RequestState(context, player);
+                }
             }
         }
 
@@ -19,8 +44,6 @@ namespace AnotherECS.Core.Remote
             Debug.Logger.ReceiveCorruptedData(error.Exception.Message + " => " + error.Exception.StackTrace);
             throw error.Exception;
         }
-
-        public void OnReceiveState(IBehaviorContext context, Player sender, State state) { }
 
         public void OnRequestState(IBehaviorContext context, Player sender, StateRequest stateRequest)
         {
@@ -33,11 +56,12 @@ namespace AnotherECS.Core.Remote
             throw error.Exception;
         }
 
+        public void OnReceiveState(IBehaviorContext context, Player sender, State state) { }
 
         private void RequestState(IBehaviorContext context, Player player)
         {
             context.RequestState(player, StateSerializationLevel.Data)
-                .Timeout(5f)
+                .Timeout(RequestStateTimeout)
                 .ContinueWith(p =>
                 {
                     if (p.IsFaulted)
