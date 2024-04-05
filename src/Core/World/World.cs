@@ -1,5 +1,6 @@
 ﻿using AnotherECS.Core.Exceptions;
 using AnotherECS.Core.Processing;
+using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
 {
-    public class World : BDisposable, IWorldExtend
+    public class World : BDisposable, IWorldExtend, ISerialize, ISerializeConstructor
     {
         public string Name { get; set; }
         public uint Id { get; private set; }
@@ -61,6 +62,11 @@ namespace AnotherECS.Core
 
             _loopProcessing = new LoopProcessing(systemProcessing);
             _state = state;
+        }
+
+        public World(ref ReaderContextSerializer reader)
+        {
+            Unpack(ref reader);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,6 +242,16 @@ namespace AnotherECS.Core
             => default;
 #endif
 
+        public void Pack(ref WriterContextSerializer writer)
+        {
+
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+
+        }
+
         protected override void OnDispose()
         {
             if (LiveState > LiveState.Inited)
@@ -344,6 +360,5 @@ namespace AnotherECS.Core
 #endif
             _loopProcessing.Wait();
         }
-
     }
 }

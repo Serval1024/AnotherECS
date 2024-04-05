@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
@@ -7,7 +8,15 @@ namespace AnotherECS.Core.Remote
     {
         public Player LocalPlayer => _remote.GetLocalPlayer();
         public Player[] Players => _remote.GetPlayers();
-        
+        public Player[] OtherPlayers
+        {
+            get
+            {
+                var localPlayerId = this.LocalPlayer.Id;
+                return _remote.GetPlayers().Where(p => p.Id != localPlayerId).ToArray();
+            }
+        }
+
         public LiveState WorldLiveState { get; internal set; }
 
 

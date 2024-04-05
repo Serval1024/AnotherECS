@@ -1,0 +1,17 @@
+{
+    "name": "AnotherECS.Gen.Common",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e95cae816c3572d4f860aff8b4579eb0",
+        "GUID:10da87c2b052553459d757eb5f6b4790"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

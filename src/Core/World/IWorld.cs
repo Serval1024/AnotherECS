@@ -32,5 +32,4 @@ namespace AnotherECS.Core
         void SendEvent(IEvent @event);
         void SendEvent(ITickEvent @event);
     }
-
 }

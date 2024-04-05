@@ -82,12 +82,12 @@ namespace AnotherECS.Core.Remote
                     case LiveState.Startup:
                         {
                             UpdateModuleData();
-                            var target = (uint)(Time / DeltaTime);
-                            var delta = target - _world.RequestTick;
+                            var target = (int)(Time / DeltaTime);
+                            var delta = target - (int)_world.RequestTick;
 
                             if (delta > 0)
                             {
-                                _world.Tick(delta);
+                                _world.Tick((uint)delta);
                             }
                             _world.UpdateFromMainThread();
                             break;

@@ -6,6 +6,7 @@ namespace AnotherECS.Core.Remote
     {
         Player LocalPlayer { get; }
         Player[] Players { get; }
+        Player[] OtherPlayers { get; }
         LiveState WorldLiveState { get; }
 
         void SendState(StateRequest stateRequest);

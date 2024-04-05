@@ -274,7 +274,6 @@ namespace AnotherECS.Core
             {
                 _isFirstStartup = true;
 
-                CallConstruct();
                 CallAttach();
             }
         }
