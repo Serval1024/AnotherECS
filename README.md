@@ -16,7 +16,7 @@
 
 ## Installation
 1. Download and place wherever you wish.
-> Ecs detects itself by AnotherECS.Core.asmdef.
+> [Unity] Ecs detects itself by AnotherECS.Core.asmdef.
 2. [Unity] Minimum requirement Unity 2022.2.1f. Add the following packages:
 ### Unity Package Dependencies
 ``` 
@@ -24,6 +24,8 @@
 "com.unity.collections": "2.1.4",
 "com.unity.ui": "1.0.0-preview.18",
 ```
+3. [Unity] Download Unity support https://github.com/Serval1024/AnotherECS-unity.git.
+>  AnotherECS-unity includes jobs, view system, physics, code generation by unity.
 
 ## API
 ### [Unity] Create new codegen State
