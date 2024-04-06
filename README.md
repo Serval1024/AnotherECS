@@ -379,7 +379,7 @@ public struct ClassFeature : Feature          //Feature class instead of IFeatur
 {	
     public override void OnInstall(ref InstallContext context) { }
 }
-// Or
+
 var systems = new SystemGroup()               // Look in [SystemGroup section]
 {
     new ClassFeature().AddConfig(new DamagePowerConfig()),
