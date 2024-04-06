@@ -271,8 +271,8 @@ namespace AnotherECS.Essentials.Physics
                 const int numPhases = 16;
                 NativeArray<SolverSchedulerInfo.SolvePhaseInfo> phaseInfo = new NativeArray<SolverSchedulerInfo.SolvePhaseInfo>(numPhases, Allocator.Temp);
                 CreateDispatchPairPhasesJob.CreateDispatchPairPhasesJobFunction(
-                    default, default, tempPairs, numDynamicBodies, numPhases,
-                    dispatchPairs, out int numActivePhases, out int numWorkItems, ref phaseInfo, false);
+                    default, default, tempPairs.AsArray(), numDynamicBodies, numPhases,
+                    dispatchPairs.AsArray(), out int numActivePhases, out int numWorkItems, ref phaseInfo, false);
 
                 int totalDispatchPairs = 0;
                 for (int i = 0; i < numActivePhases; i++)

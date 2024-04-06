@@ -20,8 +20,8 @@
 2. [Unity] Minimum requirement Unity 2022.2.1f. Add the following packages:
 ### Unity Package Dependencies
 ``` 
-"com.unity.burst": "1.7.4",
-"com.unity.collections": "1.2.4",
+"com.unity.burst": "1.8.12",
+"com.unity.collections": "2.1.4",
 "com.unity.ui": "1.0.0-preview.18",
 ```
 

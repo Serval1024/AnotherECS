@@ -43,7 +43,7 @@ namespace AnotherECS.Essentials.Physics
             var tempTriangleIndices = new NativeArray<int3>(triangles.Length, Allocator.Temp);
             UnsafeUtility.MemCpy(tempTriangleIndices.GetUnsafePtr(), tempIndices.GetUnsafePtr(), tempIndices.Length * UnsafeUtility.SizeOf<int>());
 
-            var connectivity = new MeshConnectivityBuilder(tempTriangleIndices, uniqueVertices);
+            var connectivity = new MeshConnectivityBuilder(tempTriangleIndices, uniqueVertices.AsArray());
             NativeList<MeshConnectivityBuilder.Primitive> primitives = connectivity.EnumerateQuadDominantGeometry(tempTriangleIndices, uniqueVertices);
 
             // Build bounding volume hierarchy

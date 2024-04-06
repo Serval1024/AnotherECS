@@ -86,10 +86,10 @@ namespace AnotherECS.Physics
         internal struct CreateJoints : IJobParallelForBag<BagJoints>
         {
             [ReadOnly] public int NumDynamicBodies;
-            [ReadOnly] public NativeHashMap<EntityId, int> EntityBodyIndexMap;
+            [ReadOnly] public NativeParallelHashMap<EntityId, int> EntityBodyIndexMap;
 
             [NativeDisableParallelForRestriction] public NativeArray<Joint> Joints;
-            [NativeDisableParallelForRestriction] public NativeHashMap<EntityId, int>.ParallelWriter EntityJointIndexMap;
+            [NativeDisableParallelForRestriction] public NativeParallelHashMap<EntityId, int>.ParallelWriter EntityJointIndexMap;
 
             public int DefaultStaticBodyIndex;
 
@@ -148,10 +148,11 @@ namespace AnotherECS.Physics
         {
             [ReadOnly] public int FirstBodyIndex;
             [NativeDisableContainerSafetyRestriction] public NativeArray<RigidBody> bodies;
-            [NativeDisableContainerSafetyRestriction] public NativeHashMap<EntityId, int>.ParallelWriter EntityBodyIndexMap;
+            [NativeDisableContainerSafetyRestriction] public NativeParallelHashMap<EntityId, int>.ParallelWriter EntityBodyIndexMap;
 
             public void Execute(ref Bag bag, int index)
-            {    
+            {
+                
                 int rbIndex = FirstBodyIndex + index;
                 var collider = bag.ReadT0(index);
                 var hasChunkPhysicsColliderType = bag.HasT0(index);
@@ -182,7 +183,7 @@ namespace AnotherECS.Physics
             public int BodyIndex;
 
             [NativeDisableContainerSafetyRestriction]
-            public NativeHashMap<EntityId, int>.ParallelWriter EntityBodyIndexMap;
+            public NativeParallelHashMap<EntityId, int>.ParallelWriter EntityBodyIndexMap;
 
             public void Execute()
             {
@@ -415,10 +416,9 @@ namespace AnotherECS.Physics
                             FirstBodyIndex = bag.Count,
                             EntityBodyIndexMap = this.PhysicsWorld.CollisionWorld.EntityBodyIndexMap.AsParallelWriter(),
                         }.Schedule(bagStatic));
-
                     }
 
-                    var handle = JobHandle.CombineDependencies(jobHandles);
+                    var handle = JobHandle.CombineDependencies(jobHandles.AsArray());
                     jobHandles.Clear();
 
                     if (bagJoints.Count > 0)
@@ -442,7 +442,7 @@ namespace AnotherECS.Physics
                         true);
                     jobHandles.Add(buildBroadphaseHandle);
 
-                    outputDependency = JobHandle.CombineDependencies(jobHandles);
+                    outputDependency = JobHandle.CombineDependencies(jobHandles.AsArray());
                     
                 }
                 

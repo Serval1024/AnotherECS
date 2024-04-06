@@ -72,5 +72,7 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Project specific
-/_gen/
-_gen.meta
+/src/_gen/*.gen.cs
+/src/_gen/Common/*.gen.cs
+/src/_gen/*.meta
+/src/_gen/Common/*.meta
