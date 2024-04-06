@@ -262,7 +262,7 @@ public class MySystem0 : ITickSystem,
     { 
         // ...
         var version0 = state.GetVersion<MyComponent>(entityId);   // Get a tick when a component has been modified. Look in [State Api section]
-        // or
+        // Or
         var version1 = entity.GetVersion<MyComponent>();          // Get a tick when a component has been modified. Look in [State Api section]
     }
 }
@@ -377,7 +377,7 @@ public struct MySystem0 : ICreateSystem
 // Or
 public struct ClassFeature : Feature          //Feature class instead of IFeature interface.
 {	
-    public override void OnInstall(ref InstallContext context){ }
+    public override void OnInstall(ref InstallContext context) { }
 }
 // Or
 var systems = new SystemGroup()               // Look in [SystemGroup section]
@@ -689,7 +689,7 @@ public class MySystem0 : ITickSystem<StateCompile>
         state.Add(entityId, ref component0);                   // Add to entity.
 		
         // 2.0
-        // or
+        // Or
 	// Create and add to entity.
         ref MyComponent component1 = ref state.Add<MyComponent>(entityId);
 		
