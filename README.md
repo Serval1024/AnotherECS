@@ -88,7 +88,7 @@ public class WorldMonoBehaviour : MonoBehaviour
 ```
 
 ### SystemGroup
-SystemGroup contain systems.
+SystemGroup contain systems or features.
 ```csharp
 var systems = new SystemGroup()      // First way to add systems.
 {
