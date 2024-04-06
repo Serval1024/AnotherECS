@@ -321,7 +321,7 @@ public struct MyComponent : IComponent { }
 - CompileFastAccess - Compiles the FastAccess for this component. Look in [State IComponent Component API section]
 - HistoryNonSync - Do not save history for this component and it will not sync between devices. Main code should not depend on non-sync components. But non-sync components can be used in heavy computing and send the result via state.Send(event). For example, you can distribute AI computing to different devices.
 - HistoryByChange - By default. Every time a component is accessed through the get method, the ECS saves the entire storage (all components of this type) to the history buffer. This happens no more than once per tick. For example, with two calls to Get<Health>, the save will happen only once per tick. Dynamic collection is also saved by the get method.
-- HistoryByTick - Save storage (all components of this type) every tick. Always saves storage (all components of this type) every tick. Always saves storage (all components of this type) every tick. read or get methods have the same performance and are faster than HistoryByChange.
+- HistoryByTick - Save storage (all components of this type) every tick. Always saves storage (all components of this type) every tick. Always saves storage (all components of this type) every tick. Read or get methods have the same performance and are faster than HistoryByChange.
 - HistoryByEveryChange - Saves the component to the history buffer each time the get method is called. Unlike HistoryByChange, only this component is saved.
 - Compact
 > [Section not ready, Placeholder]
