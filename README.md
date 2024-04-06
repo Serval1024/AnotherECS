@@ -262,7 +262,7 @@ public class MySystem0 : ITickSystem,
     { 
         // ...
         var version0 = state.GetVersion<MyComponent>(entityId);   // Get a tick when a component has been modified. Look in [State Api section]
-        //or
+        // or
         var version1 = entity.GetVersion<MyComponent>();          // Get a tick when a component has been modified. Look in [State Api section]
     }
 }
