@@ -1,4 +1,7 @@
-﻿using AnotherECS.Core.Threading;
+﻿using AnotherECS.Core.Collection;
+using AnotherECS.Core.Remote;
+using AnotherECS.Core.Threading;
+using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,7 +57,7 @@ namespace AnotherECS.Core.Processing
 
             _attachToStateModuleSystems = CreateTasks<AttachToStateModuleTaskHandler, IAttachToStateModule>(systems);
             _detachToStateModuleSystems = CreateTasks<DetachToStateModuleTaskHandler, IDetachToStateModule>(systems);
-            
+
             _tickStartedSystems = CreateTasks<SystemTickStartTaskHandler, ITickStartedModule>(systems);
             _tickFinishedSystems = CreateTasks<SystemTickFinishedTaskHandler, ITickFinishedModule>(systems);
 
@@ -127,6 +130,11 @@ namespace AnotherECS.Core.Processing
             _threadScheduler.Run(_stateRevertTo);
         }
 
+        public void Run(RunTaskHandler runTaskHandler)
+        {
+            _threadScheduler.Run(CreateTask(runTaskHandler));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsBusy()
             => _threadScheduler.IsBusy();
@@ -195,7 +203,7 @@ namespace AnotherECS.Core.Processing
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Task CreateTask<THandler>(THandler handler)
-            where THandler : struct, ITaskHandler
+            where THandler : ITaskHandler
             => new(
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
                 typeof(THandler).Name,

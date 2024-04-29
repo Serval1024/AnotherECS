@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core.Remote
 {
-    public class LogAndThrowBehaviorStrategy : IRemoteBehaviorStrategy
+    public class LogAndThrowStrategy : IRemoteSyncStrategy
     {
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
@@ -18,14 +18,15 @@
             throw error.Exception;
         }
 
-        public void OnReceiveState(IBehaviorContext context, Player sender, State state)
+        public void OnReceiveState(IBehaviorContext context, Player sender, StateRespond stateRespond)
         {
             Debug.Logger.Send($"Receive state: '{sender.Id}'.");
         }
 
         public void OnRequestState(IBehaviorContext context, Player sender, StateRequest stateRequest)
         {
-            Debug.Logger.Send($"Request state: '{sender.Id}', level '{stateRequest.level}'.");
+            Debug.Logger.Send($"Request state: '{sender.Id}', level '{stateRequest.SerializationLevel}'.");
+            // Empty method is auto reject request.
         }
 
         public void OnRevertFailed(IBehaviorContext context, ErrorReport error)

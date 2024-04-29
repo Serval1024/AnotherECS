@@ -1,14 +1,20 @@
+using System;
 using System.IO;
 
 namespace AnotherECS.Generator
 {
-    public class ElementsInstallerGenerator : IFileGenerator
+    public class ElementInstallerGenerator : IFileGenerator
     {
-        public string SaveFilePostfixName => "ElementsInstaller.gen.cs";
-        public string TemplateFileName => "elementsinstaller.template.txt";
+        public string SaveFilePostfixName => "ElementInstaller.gen.cs";
+        public string TemplateFileName => "elementinstaller.template.txt";
 
         public ContentGenerator[] Compile(GeneratorContext context, bool isForceOverride)
-            => new[] { CompileInternal(context) };
+        {
+            throw new NotSupportedException();
+        }
+
+        public ContentGenerator[] Compile(GeneratorContext context, Type stateType)
+            => new[] { CompileInternal(context, stateType) };
 
         public DeleteContentGenerator GetUnusedFiles(GeneratorContext context)
             => default;
@@ -16,10 +22,10 @@ namespace AnotherECS.Generator
         public string[] GetSaveFileNames(GeneratorContext context)
             => new[] { GetPath(context) };
 
-        private ContentGenerator CompileInternal(GeneratorContext context)
+        private ContentGenerator CompileInternal(GeneratorContext context, Type stateType)
         {
-            var variables = VariablesConfigGenerator.GetElements(context);
-
+            var variables = VariablesConfigGenerator.GetElements(context, stateType);
+            
             return new ContentGenerator(
                 GetPath(context),
                 TemplateParser.Transform(context.GetTemplate(TemplateFileName), variables)

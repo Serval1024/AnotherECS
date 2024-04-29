@@ -344,9 +344,12 @@ namespace AnotherECS.Core.Collection
 #endif
             var lastLength = _data.Length;
 
-            for (uint i = _data.Length - 1; i >= lastLength; --i)
+            if (_data.Length != 0)
             {
-                _elementAllocator->Deallocate(ref _data.GetRef(i));
+                for (uint i = _data.Length - 1; i >= lastLength; --i)
+                {
+                    _elementAllocator->Deallocate(ref _data.GetRef(i));
+                }
             }
 
             _data.Resize(elementCount);
@@ -489,7 +492,7 @@ namespace AnotherECS.Core.Collection
             _data.UnpackBlittable(ref reader);
             var elementAllocatorId = reader.ReadUInt32();
 
-            _elementAllocator = reader.Dependency.Get<WPtr<TElementAllocator>>(elementAllocatorId).Value;
+            _elementAllocator = reader.Dependency.DirectGet<WPtr<TElementAllocator>>(elementAllocatorId).Value;
 
             for (uint i = 0; i < _data.Length; ++i)
             {

@@ -267,6 +267,5 @@ namespace AnotherECS.Serializer
                 return array;
             }
         }
-
     }
 }

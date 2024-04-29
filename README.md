@@ -362,6 +362,8 @@ public struct DamageFeature : IFeature
     // The install is called earlier than any systems interface/events.
     public void Install(ref InstallContext context)
     {
+	  // Add only if does not exist.
+	  // Because the configs could have been obtained from the network.
       context.AddConfig<DamagePowerConfig>(new DamagePowerConfig());
     }
 }
@@ -382,6 +384,8 @@ public struct ClassFeature : Feature          //Feature class instead of IFeatur
 
 var systems = new SystemGroup()               // Look in [SystemGroup section]
 {
+    // Add only if does not exist.
+    // Because the configs could have been obtained from the network.
     new ClassFeature().AddConfig(new DamagePowerConfig()),
 };
 ```
@@ -784,6 +788,7 @@ The feature adds systems and configs. Features can be used for better organizati
 
 > [!TIP]
 > Features can have the same behavior as a system. Implement ICreateSystem, ITickSystem, etc.
+> Install is always a call for each player, unlike OnCreated for systems.
 
 ```csharp
 public struct DamageFeature : IFeature
@@ -800,9 +805,13 @@ public struct DamageFeature : IFeature
         // Determines how to sort systems. Look in [SystemGroup section]
         context.SystemSortOrder = SortOrder.Declaration;			
 
-        // The configuration can be added either inside the feature or in the world.AddConfig(damagePowerConfig).
+        // The configuration can be added either inside the feature or in the world.AddConfig(damagePowerConfig).		
         context.AddConfig<DamagePowerConfig>(_damagePowerConfig);
 
+		// AddConfig & AddSingle are added only if it does not exist.
+		// Because the configs $ components could be obtained from the network.
+		context.AddSingle<ScoreCounter>();
+		
         // Add system to Feature SystemGroup.
         context.AddSystem(new DamageDealerSystem());
     }

@@ -63,9 +63,12 @@ namespace AnotherECS.Core.Collection
             {
                 nlist.Add(default);
 
-                for (uint i = nlist.Count - 1, iMax = index + 1; i >= iMax; --i)
+                if (nlist.Count != 0)
                 {
-                    nlist.GetRef(i) = nlist.GetRef(i - 1);
+                    for (uint i = nlist.Count - 1, iMax = index + 1; i >= iMax; --i)
+                    {
+                        nlist.GetRef(i) = nlist.GetRef(i - 1);
+                    }
                 }
                 nlist.GetRef(index) = element;
             }

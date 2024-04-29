@@ -221,7 +221,7 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.Dependency.Get<WPtr<Dependencies>>().Value;
+            _dependencies = reader.Dependency.DirectGet<WPtr<Dependencies>>().Value;
             
             _set.Unpack(ref reader);
             _temporaries.UnpackBlittable(ref reader);

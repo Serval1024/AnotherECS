@@ -17,18 +17,19 @@ namespace AnotherECS.Core.Remote
             }
         }
 
-        public LiveState WorldLiveState { get; internal set; }
+        public bool IsHasWorldValid { get => _processing.GetWorld() != null; }
+        public LiveState WorldLiveState { get => _processing.GetWorld().LiveState; }
 
 
         private readonly IRemoteProcessing _processing;
         private readonly IRemoteProvider _remote;
-        
+        private bool _isCheckRejectRequestState;
 
         public BehaviorContext(IRemoteProcessing processing, IRemoteProvider remote)
         {
             _processing = processing;
             _remote = remote;
-            WorldLiveState = default;
+            _isCheckRejectRequestState = false;
         }
 
         public void Disconnect()
@@ -38,30 +39,57 @@ namespace AnotherECS.Core.Remote
 
         public void SendState(StateRequest stateRequest)
         {
+            _isCheckRejectRequestState = false;
             _processing.SendState(stateRequest);
         }
 
-        public void SendState(Player player, StateSerializationLevel stateSerializationLevel)
+        public void SendState(Player player, SerializationLevel serializationLevel)
         {
             if (LocalPlayer == player)
             {
                 throw new ArgumentException("Should be 'local player id != player id argument'.");
             }
-            _processing.SendState(player, stateSerializationLevel);
+
+            _isCheckRejectRequestState = false;
+            _processing.SendState(player, serializationLevel);
         }
 
-        public Task<RequestStateResult> RequestState(Player player, StateSerializationLevel stateSerializationLevel)
+        public Task<RequestStateResult> RequestState(Player player, SerializationLevel serializationLevel)
         {
             if (LocalPlayer == player)
             {
                 throw new ArgumentException("Should be 'local player id != player id argument'.");
             }
-            return _processing.RequestState(player, stateSerializationLevel);
+            return _processing.RequestState(player, serializationLevel);
         }
 
-        public void ApplyState(State state)
+        public void ApplyWorldData(WorldData data)
         {
-            _processing.ApplyState(state);
+            if (data.World != null)
+            {
+                _processing.ApplyWorld(data.World);
+            }
+            else if (data.State != null)
+            {
+                _processing.ApplyState(data.State);
+            }
+        }
+
+        public void SendReject(StateRequest stateRequest)
+        {
+            _processing.SendRejectState(stateRequest);
+        }
+
+        internal void BeginCheckRejectRequestState()
+        {
+            _isCheckRejectRequestState = true;
+        }
+
+        internal bool EndCheckRejectRequestState()
+        {
+            var result = _isCheckRejectRequestState;
+            _isCheckRejectRequestState = false;
+            return result;
         }
     }
 }

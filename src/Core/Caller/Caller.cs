@@ -561,7 +561,10 @@ namespace AnotherECS.Core.Caller
         {
             var allocatorId = reader.ReadUInt32();
             _layoutMemoryHandle.Unpack(ref reader);
-            reader.Dependency.Get<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
+
+            var repairMemoryContext = reader.Dependency.DirectGet<RepairMemoryContext>();
+
+            repairMemoryContext.Repair(allocatorId, ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
             default(TSerialize).Unpack(ref reader, _layout);
@@ -669,9 +672,8 @@ namespace AnotherECS.Core.Caller
         {
             repairMemoryContext.Repair(_allocator->GetId(), ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
-
             RepairMemoryCaller.Repair(ref *_layout, ref repairMemoryContext);
-            _attachDetachStorage.RepairMemoryHandle(ref repairMemoryContext);
+            RepairMemoryCaller.Repair(ref _attachDetachStorage, ref repairMemoryContext);
 
             if (default(TRepairMemory).Is)
             {

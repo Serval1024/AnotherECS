@@ -170,7 +170,7 @@ namespace AnotherECS.Core.Collection
             if (memoryHandle.id != 0)
             {
                 uint allocatorId = reader.ReadUInt32();
-                this = new NContainer<TAllocator, T>(reader.Dependency.Get<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
+                this = new NContainer<TAllocator, T>(reader.Dependency.DirectGet<WPtr<TAllocator>>(allocatorId).Value, ref memoryHandle);
 
                 if (typeof(ISerialize).IsAssignableFrom(typeof(T)))
                 {

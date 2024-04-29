@@ -18,6 +18,16 @@ namespace AnotherECS.Core.Exceptions
             }
         }
 
+        public static void ThrowIfWorldRaw(BDisposable disposable, LiveState liveState)
+        {
+            ThrowIfDisposed(disposable);
+
+            if (liveState == LiveState.Raw)
+            {
+                throw new InvalidOperationException($"World not {LiveState.Raw} yet.");
+            }
+        }
+
         public static void ThrowIfDisposed(BDisposable state)
         {
             if (state.IsDisposed)

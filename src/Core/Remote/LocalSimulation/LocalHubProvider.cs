@@ -19,7 +19,7 @@ namespace AnotherECS.Core.Remote.Local
             for (int i = 0; i < childCount; i++)
             {
                 Add(new LocalProvider(
-                    new Player(++playerCounter, i == 0, i == 0 ? ClientRole.Master : ClientRole.Client, -1)
+                    new Player(++playerCounter, false, i == 0 ? ClientRole.Master : ClientRole.Client, -1)
                     ));
             }
         }

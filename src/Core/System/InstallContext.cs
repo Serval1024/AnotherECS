@@ -29,18 +29,27 @@ namespace AnotherECS.Core
         public void AddConfig<T>(T config)
             where T : IConfig
         {
-            _state.AddConfig(config);
+            if (!_state.IsHasConfig<T>())
+            {
+                _state.AddConfig(config);
+            }
         }
 
         public void AddConfig(IConfig config)
         {
-            _state.AddConfig(config);
+            if (!_state.IsHasConfig(config.GetType()))
+            {
+                _state.AddConfig(config);
+            }
         }
 
         public void AddSingle<T>(T single)
             where T : unmanaged, ISingle
         {
-            _state.Add(single);
+            if (!_state.IsHas<T>())
+            {
+                _state.Add(single);
+            }
         }
 
         internal bool IsAny()

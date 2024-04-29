@@ -27,7 +27,7 @@ namespace AnotherECS.Serializer
 
         public byte[] Pack(object data, IEnumerable<DependencySerializer> dependencies = null)
         {
-            var context = new WriterContextSerializer(_impl, 0);
+            var context = new WriterContextSerializer(_impl, 0, dependencies);
             var isCompress = WriteCompressFlag(ref context, data);
             
             _impl.Pack(ref context, data);
@@ -43,7 +43,7 @@ namespace AnotherECS.Serializer
 
             if (IsCompress(data))
             {
-                context = new(_impl, CompressUtils.Decompress(data, COMPRESS_FLAG_SIZE), 0);
+                context = new(_impl, CompressUtils.Decompress(data, COMPRESS_FLAG_SIZE), 0, dependencies);
             }
             else
             {

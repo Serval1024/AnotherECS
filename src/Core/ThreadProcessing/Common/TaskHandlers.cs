@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using AnotherECS.Core.Remote;
+using AnotherECS.Serializer;
+using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Core.Processing
@@ -148,6 +151,21 @@ namespace AnotherECS.Core.Processing
         public void Invoke()
         {
             receivers.Receive(State, events);
+        }
+    }
+
+    public class RunTaskHandler : ITaskHandler
+    {
+        public object Data;
+        public object Result;
+        public Func<object, object> Handler;
+        public Action<RunTaskHandler> Completed;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            Result = Handler.Invoke(Data);
+            Completed?.Invoke(this);
         }
     }
 }

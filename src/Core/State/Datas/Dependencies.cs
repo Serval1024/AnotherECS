@@ -57,5 +57,16 @@ namespace AnotherECS.Core
             componentTypesCount = reader.ReadUInt32();
             stateId = reader.ReadUInt16();
         }
+
+        public static void FillCommon(Dependencies* dependencies, RawAllocator rawAllocator, uint filterCapacity)
+        {
+            dependencies->filters = new Filters(dependencies, filterCapacity);
+
+            dependencies->injectContainer = new InjectContainer(
+              rawAllocator,
+              &dependencies->bAllocator,
+              &dependencies->stage1HAllocator
+              );
+        }
     }
 }

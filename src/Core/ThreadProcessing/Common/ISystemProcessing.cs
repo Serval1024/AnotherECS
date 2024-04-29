@@ -38,6 +38,8 @@ namespace AnotherECS.Core.Processing
         void RevertTo(uint tick);
 
         void TickFullLoop();
+
+        void Run(RunTaskHandler runTaskHandler);
     }
 
     public interface IStatisticProcessing

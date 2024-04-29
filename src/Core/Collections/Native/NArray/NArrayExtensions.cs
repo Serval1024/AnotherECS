@@ -64,10 +64,12 @@ namespace AnotherECS.Core.Collection
             {
                 newArray.ReadRef(i) = array.ReadRef(i);
             }
-
-            for (uint i = array.Length - 1, iMax = index + 1; i >= iMax; --i)
+            if (array.Length != 0)
             {
-                newArray.ReadRef(i) = array.ReadRef(i - 1);
+                for (uint i = array.Length - 1, iMax = index + 1; i >= iMax; --i)
+                {
+                    newArray.ReadRef(i) = array.ReadRef(i - 1);
+                }
             }
             newArray.ReadRef(index) = element;
 

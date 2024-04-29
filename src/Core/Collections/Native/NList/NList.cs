@@ -89,7 +89,7 @@ namespace AnotherECS.Core.Collection
         {
             if (Count == _data.Length)
             {
-                _data.Resize(Count << 1);
+                _data.Resize((Count + 1) << 1);
             }
             _data.GetRef(_count++) = value;
         }

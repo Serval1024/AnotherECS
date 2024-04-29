@@ -2,9 +2,9 @@ using System;
 
 namespace AnotherECS.Core.Remote
 {
-    public static class ExceptionHelper
+    public static class ExceptionExtensions
     {
-        public static Exception ExtractRootException(AggregateException aggregateException)
+        public static Exception GetRoot(this AggregateException aggregateException)
         {
             Exception ex = aggregateException;
             while (ex is AggregateException && ex.InnerException != null)

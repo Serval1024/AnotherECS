@@ -68,12 +68,12 @@ namespace AnotherECS.Core.Remote.Local
 
         public void Connect(Player player)
         {
-            ConnectPlayer?.Invoke(player);
+            ConnectPlayer?.Invoke(TrySimulateAsLocal(player));
         }
 
         public void Disconnect(Player player)
         {
-            DisconnectPlayer?.Invoke(player);
+            DisconnectPlayer?.Invoke(TrySimulateAsLocal(player));
         }
 
         public Player GetLocalPlayer()
@@ -90,6 +90,15 @@ namespace AnotherECS.Core.Remote.Local
             }
 
             return Parent.GetGlobalTime();
+        }
+
+        private Player TrySimulateAsLocal(Player player)
+        {
+            if (Player.Id == player.Id)
+            {
+                player = new Player(player.Id, true, player.Role, -1);
+            }
+            return player;
         }
     }
 }

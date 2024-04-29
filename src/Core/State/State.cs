@@ -1,8 +1,6 @@
 ﻿using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
-using AnotherECS.Core.Exceptions;
-using AnotherECS.Core.Remote;
 using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
@@ -46,6 +44,11 @@ namespace AnotherECS.Core
 
         private ushort _stateId;
         private NeedRefreshByTick _reference;
+
+        #endregion
+
+        #region startup data
+        private bool _isFirstStartup;
         #endregion
 
         #region threading
@@ -64,30 +67,13 @@ namespace AnotherECS.Core
         private Exception _lastError;
         #endregion
 
-        private bool _isFirstStartup;
-
-
         #region construct & destruct
         public State()
             : this(StateConfig.Create()) { }
 
         public State(in StateConfig config)
         {
-            _stateId = StateGlobalRegister.Register(this);
-
-            SystemInit(config);
-
-            _layoutCount = 1;
-            _callers = new ICaller[GetComponentArrayCount()];
-            _configs = new IConfig[GetConfigArrayCount()];
-
-            _events = new Events(config.history.recordTickLength);
-
-            CommonInit();
-             
-            _dependencies->archetype = new Archetype(_dependencies, GetTemporaryIndexes());
-
-            AllocateLayouts();
+            ConstructInternal(config);
         }
 
         public State(ref ReaderContextSerializer reader)
@@ -100,6 +86,25 @@ namespace AnotherECS.Core
         internal void SetOption(StateOption option)
         {
             _option = option;
+        }
+
+        private void ConstructInternal(in StateConfig config)
+        {
+            _stateId = StateGlobalRegister.Register(this);
+
+            SystemInit(config);
+
+            _layoutCount = 1;
+            _callers = new ICaller[GetComponentArrayCount()];
+            _configs = new IConfig[GetConfigArrayCount()];
+
+            _events = new Events(config.history.recordTickLength);
+
+            CommonInit();
+
+            _dependencies->archetype = new Archetype(_dependencies, GetTemporaryIndexes());
+
+            AllocateLayouts();
         }
 
         private Dependencies* CreateDependencies()
@@ -131,13 +136,8 @@ namespace AnotherECS.Core
 
             _dependencies->componentTypesCount = GetComponentCount();
             _dependencies->entities = new Entities(_dependencies);
-            _dependencies->filters = new Filters(_dependencies, 32);
 
-            _dependencies->injectContainer = new InjectContainer(
-                _allocator,
-                &_dependencies->bAllocator,
-                &_dependencies->stage1HAllocator
-                );
+            Dependencies.FillCommon(_dependencies, _allocator, FILTER_INIT_CAPACITY);
 
             _dependencies->stateId = _stateId;
         }
@@ -170,27 +170,29 @@ namespace AnotherECS.Core
         #region serialization
         public void Pack(ref WriterContextSerializer writer)
         {
-            var stateSerializationLevel = writer.Dependency.Get<StateSerializationLevel>(0);
+            var stateSerializationLevel = writer.Dependency.DirectGet<StateSerializationLevel>();
 
-            writer.Dependency.Add(new WPtr<Dependencies>(_dependencies));
-            writer.Dependency.Add(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
-            writer.Dependency.Add(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            writer.Dependency.Add(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
-
-            writer.Write(stateSerializationLevel);
-            writer.Write(_dependencies->bAllocator.GetId());
-            writer.Write(_dependencies->stage0HAllocator.GetId());
-            writer.Write(_dependencies->stage1HAllocator.GetId());
-
-            _dependencies->Pack(ref writer);
-            _events.Pack(ref writer);
-
-            for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
+            if (stateSerializationLevel.HasFlag(StateSerializationLevel.Data))
             {
-                _callers[i].Pack(ref writer);
-            }
+                writer.Dependency.Add(new WPtr<Dependencies>(_dependencies));
+                writer.Dependency.Add(_dependencies->bAllocator.GetId(), new WPtr<BAllocator>(&_dependencies->bAllocator));
+                writer.Dependency.Add(_dependencies->stage0HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+                writer.Dependency.Add(_dependencies->stage1HAllocator.GetId(), new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
 
-            if (stateSerializationLevel == StateSerializationLevel.DataAndConfig)
+                writer.Write(stateSerializationLevel);
+                writer.Write(_dependencies->bAllocator.GetId());
+                writer.Write(_dependencies->stage0HAllocator.GetId());
+                writer.Write(_dependencies->stage1HAllocator.GetId());
+
+                _dependencies->Pack(ref writer);
+                _events.Pack(ref writer);
+
+                for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
+                {
+                    _callers[i].Pack(ref writer);
+                }
+            }
+            if (stateSerializationLevel.HasFlag(StateSerializationLevel.Config))
             {
                 writer.Pack(_configs);
             }
@@ -198,40 +200,54 @@ namespace AnotherECS.Core
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = CreateDependencies();
-
             var stateSerializationLevel = reader.ReadEnum<StateSerializationLevel>();
-            var bAllocatorId = reader.ReadUInt32();
-            var stage0HAllocatorId = reader.ReadUInt32();
-            var stage1HAllocatorId = reader.ReadUInt32();
 
-            reader.Dependency.Add(new WPtr<Dependencies>(_dependencies));
-            reader.Dependency.Add(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
-            reader.Dependency.Add(stage0HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
-            reader.Dependency.Add(stage1HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
-
-            _dependencies->Unpack(ref reader);
-            _dependencies->filters = new Filters(_dependencies, FILTER_INIT_CAPACITY);
-
-            _events.Unpack(ref reader);
-
-            _layoutCount = 1;
-
-            _callers = new ICaller[GetComponentArrayCount()];
-            CommonInit();
-
-            for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
+            if (stateSerializationLevel.HasFlag(StateSerializationLevel.Data))
             {
-                _callers[i].Unpack(ref reader);
+                _dependencies = CreateDependencies();
+
+                var bAllocatorId = reader.ReadUInt32();
+                var stage0HAllocatorId = reader.ReadUInt32();
+                var stage1HAllocatorId = reader.ReadUInt32();
+
+                reader.Dependency.Add(new WPtr<Dependencies>(_dependencies));
+                reader.Dependency.Add(bAllocatorId, new WPtr<BAllocator>(&_dependencies->bAllocator));
+                reader.Dependency.Add(stage0HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage0HAllocator));
+                reader.Dependency.Add(stage1HAllocatorId, new WPtr<HAllocator>(&_dependencies->stage1HAllocator));
+
+                _dependencies->Unpack(ref reader);
+                Dependencies.FillCommon(_dependencies, _allocator, FILTER_INIT_CAPACITY);
+
+                reader.Dependency.Add(RepairMemoryUtils.Create(_dependencies));
+
+                _events.Unpack(ref reader);
+
+                _layoutCount = 1;
+
+                _callers = new ICaller[GetComponentArrayCount()];
+                CommonInit();
+
+                for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
+                {
+                    _callers[i].Unpack(ref reader);
+                }
+            }
+            else
+            {
+                ConstructInternal(StateConfig.Create());
             }
 
-            if (stateSerializationLevel == StateSerializationLevel.DataAndConfig)
+            if (stateSerializationLevel.HasFlag(StateSerializationLevel.Config))
             {
                 _configs = reader.Unpack<IConfig[]>();
             }
+            else
+            {
+                _configs = new IConfig[GetConfigArrayCount()];
+            }
 
-            RepairMemoryHandles();
             CallConstruct();
+            RepairMemoryHandles();
 
             if (_dependencies->stateId != _stateId)
             {
@@ -1028,7 +1044,7 @@ namespace AnotherECS.Core
             {
                 if ((Tick - tick) > _dependencies->config.history.recordTickLength)
                 {
-                    _lastError = new HistoryRevertTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
+                    _lastError = new Exceptions.HistoryRevertTickLimitException(Tick, tick, _dependencies->config.history.recordTickLength);
                     return;
                 }
 
@@ -1162,7 +1178,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RepairMemoryHandles()
         {
-            var repairMemory = RepairMemoryUtils.Create(&_dependencies->bAllocator, &_dependencies->stage0HAllocator, &_dependencies->stage1HAllocator);
+            var repairMemory = RepairMemoryUtils.Create(_dependencies);
 
             for (uint i = CALLER_START_INDEX; i < _layoutCount; ++i)
             {

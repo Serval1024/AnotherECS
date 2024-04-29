@@ -5,7 +5,7 @@ namespace AnotherECS.Core.Remote
 {
     public interface IRemoteProcessing : IDisposable
     {
-        void Construct(IWorldExtend world);
+        void Construct(IWorldComposite world);
         void SendOtherEvent(ITickEvent data);
         void Send(Player target, object data);
 
@@ -13,8 +13,12 @@ namespace AnotherECS.Core.Remote
         Task Disconnect();
 
         void SendState(StateRequest stateRequest);
-        void SendState(Player target, StateSerializationLevel stateSerializationLevel);
-        Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel);
+        void SendState(Player target, SerializationLevel serializationLevel);
+        void SendRejectState(StateRequest stateRequest);
+        Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
+
+        IWorldExtend GetWorld();
+        void ApplyWorld(IWorldExtend world);
         void ApplyState(State state);
 
         Player GetLocalPlayer();

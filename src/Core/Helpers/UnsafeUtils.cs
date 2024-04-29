@@ -37,7 +37,7 @@ namespace AnotherECS.Unsafe
 #if UNITY_5_3_OR_NEWER
             => ref UnsafeUtility.As<U, T>(ref from);
 #else
-            => System.Runtime.CompilerServices.Unsafe.As<U, T>(ref from);
+            => ref System.Runtime.CompilerServices.Unsafe.As<U, T>(ref from);
 #endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

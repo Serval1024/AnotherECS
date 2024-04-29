@@ -5,6 +5,9 @@
         private const uint ALLOCATOR_COUNT = 4;
         private static IRepairMemory[] _repairsTemp = new IRepairMemory[ALLOCATOR_COUNT];
 
+        public unsafe static RepairMemoryContext Create(Dependencies* dependencies)
+            => Create(&dependencies->bAllocator, &dependencies->stage0HAllocator, &dependencies->stage1HAllocator);
+
         public unsafe static RepairMemoryContext Create(BAllocator* bAllocator, HAllocator* hAllocatorStage0, HAllocator* hAllocatorStage1)
         {
             _repairsTemp[bAllocator->GetId()] = bAllocator->GetRepairMemory();

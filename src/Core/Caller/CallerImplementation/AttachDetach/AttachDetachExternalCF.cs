@@ -120,7 +120,9 @@ namespace AnotherECS.Core.Caller
         {
             var allocatorId = reader.ReadUInt32();
             _layoutMemoryHandle.Unpack(ref reader);
-            reader.Dependency.Get<WPtr<TAllocator>>(allocatorId).Value->Repair(ref _layoutMemoryHandle);
+
+            var repairMemoryContext = reader.Dependency.DirectGet<RepairMemoryContext>();
+            repairMemoryContext.Repair(allocatorId, ref _layoutMemoryHandle);
             _layout = GetLayoutPtr();
 
             SerializeActions.UnpackStorageBlittable(ref reader, _layout);

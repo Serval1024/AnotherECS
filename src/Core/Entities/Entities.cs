@@ -147,7 +147,7 @@ namespace AnotherECS.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Unpack(ref ReaderContextSerializer reader)
         {
-            _dependencies = reader.Dependency.Get<WPtr<Dependencies>>().Value;
+            _dependencies = reader.Dependency.DirectGet<WPtr<Dependencies>>().Value;
             _data.Unpack(ref reader);
             _recycle.Unpack(ref reader);
         }

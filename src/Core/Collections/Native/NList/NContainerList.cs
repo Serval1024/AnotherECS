@@ -75,7 +75,7 @@ namespace AnotherECS.Core.Collection
         {
             if (Count == _data.Length)
             {
-                _data.Resize(Count << 1);
+                _data.Resize((Count + 1) << 1);
             }
             _data.GetRef(_count++) = value;
         }
@@ -405,7 +405,7 @@ namespace AnotherECS.Core.Collection
         public void Resize(uint elementCount)
         {
             _data.Resize(elementCount);
-            if (elementCount < Count)
+            if (elementCount < _count)
             {
                 _count = elementCount;
             }

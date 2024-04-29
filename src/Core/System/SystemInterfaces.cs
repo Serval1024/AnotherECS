@@ -2,8 +2,11 @@
 using AnotherECS.Unsafe;
 #endif
 
+using AnotherECS.Serializer;
+
 namespace AnotherECS.Core
 {
+    [Serialize]
     public interface ISystem { }
     public interface ISystem<TState> : ISystem
         where TState : State { }

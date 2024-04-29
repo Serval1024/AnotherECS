@@ -46,7 +46,7 @@ namespace AnotherECS.Generator
 
         private ContentGenerator CompileInternal(GeneratorContext context, Type state, string stateName)
         {
-            var variables = VariablesConfigGenerator.GetState(context, stateName, context.GetComponents(state), context.GetConfigs(state));
+            var variables = VariablesConfigGenerator.GetState(context, state, stateName);
 
             return new ContentGenerator(
                 GetPathByState(context.GetStatePath(stateName), stateName),
@@ -56,6 +56,6 @@ namespace AnotherECS.Generator
         }
 
         [IgnoreCompile]
-        private class MockState : IState { }
+        internal class MockState : IState { }
     }
 }

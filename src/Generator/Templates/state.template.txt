@@ -24,7 +24,7 @@ namespace AnotherECS.Gen.Project
 
         protected override void BindingCodeGenerationStage(in StateConfig config)
         {
-            ComponentInstaller.Install();
+            ElementInstaller.Install();
             SystemInstaller.Install();
 
 <#ARRAY [0..COMPONENT:COUNT]#>
@@ -70,6 +70,6 @@ namespace AnotherECS.Gen.Project
         }
 
 
-<#EMBENED:ComponentInstallerGenerator.cs#>
+<#EMBENED:ElementInstallerGenerator.cs#>
     }
 }

@@ -1,16 +1,28 @@
+using AnotherECS.Serializer;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
-    public class RemoteWorld : IWorldCommunicate, IDisposable
+    public class RemoteWorld : IWorldComposite, IWorldCommunicate, IDisposable, ISerializeConstructor
     {
         public uint Id => _world.Id;
-        public IWorldExtend LocalWorld => _world;
-        public IRemoteProcessing Remote => _removeProvider;
+        public IRemoteProcessing Remote => _remoteProcessing;
+        public IWorldExtend InnerWorld
+        { 
+            get => _world;
+            set 
+            {
+                if (_world != value)
+                {
+                    _world = value;
+                    InitInternal(_remoteProcessing);
+                }
+            }
+        }
 
-        public double Time => _removeProvider.GetGlobalTime();
+        public double Time => _remoteProcessing.GetGlobalTime();
 
         private double _deltaTime = 1.0 / 20.0;
         public double DeltaTime
@@ -29,49 +41,44 @@ namespace AnotherECS.Core.Remote
 
         public State State
         {
-            get => _world.State;
+            get => _world?.State;
             set
             {
                 SetState(value);
             }
         }
 
-        private readonly IWorldExtend _world;
-        private readonly IRemoteProcessing _removeProvider;
+        private IWorldExtend _world;
+        private IRemoteProcessing _remoteProcessing;
 
         private RemoveWorldModuleData _moduleDataThreadDoubleBuffer;
 
-        public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider, IRemoteBehaviorStrategy remoteBehaviorStrategy)
-            : this(world, new RemoteProcessing(remoteProvider, remoteBehaviorStrategy)) { }
+        public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider, IRemoteSyncStrategy remoteSyncStrategy)
+            : this(world, new RemoteProcessing(remoteProvider, remoteSyncStrategy)) { }
 
         public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider)
-            : this(world, remoteProvider, new LogAndThrowBehaviorStrategy()) { }
+            : this(world, remoteProvider, new LogAndThrowStrategy()) { }
 
-        public RemoteWorld(IWorldExtend world, IRemoteProcessing removeProvider)
-        {            
-            _world = world ?? throw new ArgumentNullException(nameof(world));
-            _removeProvider = removeProvider ?? throw new ArgumentNullException(nameof(removeProvider));
+        public RemoteWorld(IRemoteProvider remoteProvider, IRemoteSyncStrategy remoteSyncStrategy)
+           : this(null, remoteProvider, remoteSyncStrategy) { }
 
-            _moduleDataThreadDoubleBuffer = new RemoveWorldModuleData();
+        public RemoteWorld(IWorldExtend world, IRemoteProcessing remoteProcessing)
+        {
+            _world = world;
+            InitInternal(remoteProcessing);
+        }
 
-            _removeProvider.Construct(_world);
-
-            if (world.LiveState == LiveState.Raw)
-            {
-                _world.Init();
-            }
-
-            if (_world.State != null)
-            {
-                SetState(_world.State);
-            }
+        public RemoteWorld(ref ReaderContextSerializer reader)
+        {
+            Unpack(ref reader);
+            InitInternal(reader.Dependency.Resolve<IRemoteProcessing>());
         }
 
         public Task<ConnectResult> Connect()
-            => _removeProvider.Connect();
+            => _remoteProcessing.Connect();
 
         public Task Disconnect()
-            => _removeProvider.Disconnect();
+            => _remoteProcessing.Disconnect();
 
         public void UpdateFromMainThread()
         {
@@ -109,7 +116,7 @@ namespace AnotherECS.Core.Remote
 
         public void SendEvent(ITickEvent @event)
         {
-            _removeProvider.SendOtherEvent(@event);
+            _remoteProcessing.SendOtherEvent(@event);
             _world.SendEvent(@event);
         }
 
@@ -122,8 +129,25 @@ namespace AnotherECS.Core.Remote
 
         public void Dispose()
         {
-            _removeProvider.Dispose();
-            _world.Dispose();
+            _remoteProcessing.Dispose();
+            _world?.Dispose();
+        }
+
+        public void Run(Processing.RunTaskHandler runTaskHandler)
+        {
+            _world.Run(runTaskHandler);
+        }
+
+        public void Pack(ref WriterContextSerializer writer)
+        {
+            writer.Pack(_world);
+            writer.Write(_deltaTime);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            _world = reader.Unpack<IWorldExtend>();
+            _deltaTime = reader.ReadDouble();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -147,7 +171,7 @@ namespace AnotherECS.Core.Remote
             {
                 _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, new RemoveWorldModuleData()
                 {
-                    localPlayer = _removeProvider.GetLocalPlayer(),
+                    localPlayer = _remoteProcessing.GetLocalPlayer(),
                     deltaTime = DeltaTime,
                     time = Time,
                 });
@@ -159,13 +183,36 @@ namespace AnotherECS.Core.Remote
         {
             var data = _world.GetModuleData<RemoveWorldModuleData>(RemoveWorldModuleData.MODULE_DATA_ID);
 
-            _moduleDataThreadDoubleBuffer.localPlayer = _removeProvider.GetLocalPlayer();
+            _moduleDataThreadDoubleBuffer.localPlayer = _remoteProcessing.GetLocalPlayer();
             _moduleDataThreadDoubleBuffer.time = Time;
             _moduleDataThreadDoubleBuffer.deltaTime = DeltaTime;
 
             _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, _moduleDataThreadDoubleBuffer);
 
             _moduleDataThreadDoubleBuffer = data;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void InitInternal(IRemoteProcessing remoteProcessing)
+        {
+            _remoteProcessing = remoteProcessing ?? throw new ArgumentNullException(nameof(remoteProcessing));
+
+            _moduleDataThreadDoubleBuffer ??= new RemoveWorldModuleData();
+
+            _remoteProcessing.Construct(this);
+
+            if (_world != null)
+            {
+                if (_world.LiveState == LiveState.Raw)
+                {
+                    _world.Init();
+                }
+
+                if (_world.State != null)
+                {
+                    SetState(_world.State);
+                }
+            }
         }
     }
 }

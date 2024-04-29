@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
 {
-    public class World : BDisposable, IWorldExtend, ISerialize, ISerializeConstructor
+    public class World : BDisposable, IWorldExtend, IWorldLiveLoop, ISerialize, ISerializeConstructor
     {
         public string Name { get; set; }
         public uint Id { get; private set; }
@@ -17,7 +17,10 @@ namespace AnotherECS.Core
         public uint RequestTick { get; private set; }
         public LiveState LiveState { get; private set; }
 
-        public State State 
+        private readonly bool _isOneGateAutoAttach;
+        private bool _isOneGateCallCreate = true;
+
+        public State State
         { 
             get
             {
@@ -28,7 +31,10 @@ namespace AnotherECS.Core
             }
             set
             {
-                SetState(value);
+                if (_state != value)
+                {
+                    SetState(value);
+                }
             }
         }
 
@@ -36,8 +42,8 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
         private IWorldStatistic _statistic;
 #endif
-        private readonly IGroupSystemInternal _systems;
-        private readonly LoopProcessing _loopProcessing;
+        private IGroupSystemInternal _systems;
+        private LoopProcessing _loopProcessing;
         private State _state;
         private ISystem[] _flatSystemsCache;
 
@@ -58,14 +64,18 @@ namespace AnotherECS.Core
         {
             _systems = new SystemGroup(
                 systems ?? throw new ArgumentNullException(nameof(systems))
-                );
+            );
 
             _loopProcessing = new LoopProcessing(systemProcessing);
+            _isOneGateAutoAttach = true;
             _state = state;
         }
 
         public World(ref ReaderContextSerializer reader)
         {
+            _loopProcessing = new LoopProcessing(reader.Dependency.Resolve<ISystemProcessing>());
+            _isOneGateAutoAttach = false;
+
             Unpack(ref reader);
         }
 
@@ -154,6 +164,12 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldInvalid(this, LiveState);
 #endif
+            if (_isOneGateCallCreate)
+            {
+                _isOneGateCallCreate = false;
+                _loopProcessing.Create();
+            }
+
             if (tickCount != 0)
             {
 #if !ANOTHERECS_HISTORY_DISABLE
@@ -244,17 +260,34 @@ namespace AnotherECS.Core
 
         public void Pack(ref WriterContextSerializer writer)
         {
-
+            writer.Write(_isOneGateCallCreate);
+            writer.Pack(_systems);
+            writer.Pack(Name);
+            writer.Pack(_state);
         }
 
         public void Unpack(ref ReaderContextSerializer reader)
         {
+            _isOneGateCallCreate = reader.ReadBoolean();
+            _systems = reader.Unpack<SystemGroup>();
 
+            Name = reader.Unpack<string>();
+            _state = reader.Unpack<State>();
+
+            LiveState = LiveState.Raw;
+        }
+
+        public void Run(RunTaskHandler runTaskHandler)
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldRaw(this, LiveState);
+#endif
+            _loopProcessing.Run(runTaskHandler);
         }
 
         protected override void OnDispose()
         {
-            if (LiveState > LiveState.Inited)
+            if (LiveState > LiveState.Raw)
             {
                 LiveState = LiveState.Disposing;
 
@@ -272,7 +305,8 @@ namespace AnotherECS.Core
         {
             Id = WorldGlobalRegister.Register(this);
 
-            UnrollSystems();
+            AutoAttachSystems();
+            FlattenSystems();
 
             if (_state != null)
             {
@@ -281,12 +315,19 @@ namespace AnotherECS.Core
             }
         }
 
-        private void UnrollSystems()
+        private void AutoAttachSystems()
         {
-            foreach (var system in SystemAutoAttachGlobalRegister.Gets())
+            if (_isOneGateAutoAttach)
             {
-                _systems.Prepend((ISystem)Activator.CreateInstance(system));
+                foreach (var system in SystemAutoAttachGlobalRegister.Gets())
+                {
+                    _systems.Prepend((ISystem)Activator.CreateInstance(system));
+                }
             }
+        }
+
+        private void FlattenSystems()
+        {
 #if !ANOTHERECS_RELEASE
             var container = new WorldDIContainer(_state);
 #else
@@ -311,7 +352,6 @@ namespace AnotherECS.Core
         private void StartupInternal()
         {
             _state.FirstStartup();
-            _loopProcessing.Create();
         }
 
         private void SetState(State state)

@@ -3,9 +3,11 @@ using AnotherECS.Core;
 using AnotherECS.Core.Inject;
 using AnotherECS.Serializer;
 using System;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using static Fusion.Allocator;
 using ReflectionUtils = AnotherECS.Core.ReflectionUtils;
 
 namespace AnotherECS.Generator
@@ -104,8 +106,11 @@ namespace AnotherECS.Generator
             return variables;
         }
 
-        public static TemplateParser.Variables GetState(GeneratorContext context, string stateGenName, ITypeToUshort components, ITypeToUshort configs)
+        public static TemplateParser.Variables GetState(GeneratorContext context, Type stateType, string stateGenName)
         {
+            ITypeToUshort components = context.GetComponents(stateType);
+            ITypeToUshort configs = context.GetConfigs(stateType);
+
             var fastAccessComponents = new CustomTypeToIdConverter<ushort, IComponent>(
                 components.GetAssociationTable().Values.Where(p => new TypeOptions(p).isCompileFastAccess)
                 );
@@ -128,7 +133,7 @@ namespace AnotherECS.Generator
                     { "COMPONENT:FASTACCESS:NAME", () => ReflectionUtils.GetUnderLineName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
                     { "COMPONENT:FASTACCESS:FULL_NAME", () => ReflectionUtils.GetDotFullName(fastAccessComponents.IdToType(variables.GetIndexAsId(0))) },
 
-                    { "EMBENED:ComponentInstallerGenerator.cs", () => new ElementsInstallerGenerator().Compile(context, false).First().text },
+                    { "EMBENED:ElementInstallerGenerator.cs", () => new ElementInstallerGenerator().Compile(context, stateType).First().text },
                     { "EMBENED:SystemInstallerGenerator.cs", () => new SystemInstallerGenerator().Compile(context, false).First().text },
                 };
             return variables;
@@ -180,39 +185,31 @@ namespace AnotherECS.Generator
             return "null";
         }
 
-        public static TemplateParser.Variables GetElements(GeneratorContext context)
+        public static TemplateParser.Variables GetElements(GeneratorContext context, Type stateType)
         {
-            var states = context.GetStates();
             TemplateParser.Variables variables = null;
             variables = new()
             {
-                { "STATE:COUNT", () => states.Count().ToString() },
-                { "STATE:GEN_NAME", () => states.IdToType(variables.GetIndexAsId(0)).Name },
+                { "STATE_EXISTS", () => stateType != typeof(StateGenerator.MockState) },
+
+                { "STATE:GEN_NAME", () => stateType.Name },
 
                 { "COMPONENT:COUNT", () =>
-                    context.GetComponents(
-                        states.IdToType(variables.GetIndexAsId(0))
-                    ).Count().ToString()
+                    context.GetComponents(stateType).Count().ToString()
                 },
 
                 { "COMPONENT:FULL_NAME", () => ReflectionUtils.GetDotFullName(
-                    context.GetComponents(
-                        states.IdToType(variables.GetIndexAsId(0))
-                        )
-                    .IdToType(variables.GetIndexAsId(1)))
+                    context.GetComponents(stateType)
+                    .IdToType(variables.GetIndexAsId(0)))
                 },
 
-                 { "CONFIG:COUNT", () =>
-                    context.GetConfigs(
-                        states.IdToType(variables.GetIndexAsId(0))
-                    ).Count().ToString()
+                { "CONFIG:COUNT", () =>
+                    context.GetConfigs(stateType).Count().ToString()
                 },
 
                 { "CONFIG:FULL_NAME", () => ReflectionUtils.GetDotFullName(
-                    context.GetConfigs(
-                        states.IdToType(variables.GetIndexAsId(0))
-                        )
-                    .IdToType(variables.GetIndexAsId(1)))
+                    context.GetConfigs(stateType)
+                    .IdToType(variables.GetIndexAsId(0)))
                 },
             };
             return variables;

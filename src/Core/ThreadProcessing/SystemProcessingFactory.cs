@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core.Processing
 {
-    internal static class SystemProcessingFactory
+    public static class SystemProcessingFactory
     {
         public static ISystemProcessing Create(WorldThreadingLevel threadingLevel)
             => (threadingLevel) switch

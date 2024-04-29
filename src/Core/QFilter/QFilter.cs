@@ -31,7 +31,7 @@ namespace AnotherECS.Core
             _caller = (ICaller<TComponent>)caller;
         }
 
-        public void Each<TIterator>(TIterator iterator)
+        public void Each<TIterator>(TIterator iterator = default)
             where TIterator : struct, IIterator<TComponent>
         {
             Each(ref iterator);

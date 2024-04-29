@@ -7,12 +7,13 @@ namespace AnotherECS.Core.Remote
         Player LocalPlayer { get; }
         Player[] Players { get; }
         Player[] OtherPlayers { get; }
+        bool IsHasWorldValid { get; }
         LiveState WorldLiveState { get; }
 
         void SendState(StateRequest stateRequest);
-        void SendState(Player player, StateSerializationLevel stateSerializationLevel);
-        Task<RequestStateResult> RequestState(Player target, StateSerializationLevel stateSerializationLevel);
-        public void ApplyState(State state);
+        void SendState(Player player, SerializationLevel serializationLevel);
+        Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
+        public void ApplyWorldData(WorldData data);
         void Disconnect();
     }
 
@@ -23,9 +24,11 @@ namespace AnotherECS.Core.Remote
         Client,
     }
 
-    public enum StateSerializationLevel : byte
+    public enum SerializationLevel : byte
     {
-        Data,
-        DataAndConfig,
+        None,
+        StateData,
+        StateDataAndConfig,
+        World,
     }
 }

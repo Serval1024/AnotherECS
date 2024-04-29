@@ -5,6 +5,7 @@ namespace AnotherECS.Core
 {
     internal interface IGroupSystemInternal : IGroupSystem, IFeature
     {
+        bool IsHas(Type type);
         void Prepend(ISystem system);
         void Append(ISystem system);
         void Sort();

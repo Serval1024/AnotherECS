@@ -59,7 +59,6 @@ namespace AnotherECS.Core
             _systemProcessing.DetachToStateModule();
         }
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryRevertTo(uint currentTick, uint getNextTickForEvent)
         {
@@ -87,7 +86,15 @@ namespace AnotherECS.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Wait()
-            => _systemProcessing.Wait();
+        {
+            _systemProcessing.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Run(RunTaskHandler runTaskHandler)
+        {
+            _systemProcessing.Run(runTaskHandler);
+        }
 
         public void BreakAndWait()
         {

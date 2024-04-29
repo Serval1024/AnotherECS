@@ -4,18 +4,20 @@ using System.Runtime.CompilerServices;
 
 namespace AnotherECS.Serializer
 {
-    public class Dependencies
+    public struct Dependencies
     {
-        private readonly Dictionary<Type, Dictionary<uint, object>> _dependencies;
+        private readonly Dictionary<Type, Dictionary<uint, object>> _dependencyByType;
+        private readonly List<object> _dependencyList;
 
         public Dependencies(IEnumerable<DependencySerializer> dependencies)
         {
-            _dependencies = new Dictionary<Type, Dictionary<uint, object>>();
+            _dependencyByType = new Dictionary<Type, Dictionary<uint, object>>();
+            _dependencyList = new List<object>();
             if (dependencies != null)
             {
                 foreach (var dependency in dependencies)
                 {
-                    Add(dependency.id, dependency.value);
+                    AddInternal(dependency.value.GetType(), dependency.id, dependency.value);
                 }
             }
         }
@@ -31,24 +33,38 @@ namespace AnotherECS.Serializer
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Get<T>(uint dependencyId)
-          => (T)_dependencies[typeof(T)][dependencyId];
+        public T DirectGet<T>(uint dependencyId)
+          => (T)_dependencyByType[typeof(T)][dependencyId];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Get<T>()
-            => (T)_dependencies[typeof(T)][0];
+        public T DirectGet<T>()
+            => DirectGet<T>(0);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Resolve<T>()
+        {
+            foreach(var dependency in _dependencyList)
+            {
+                if (typeof(T).IsAssignableFrom(dependency.GetType()))
+                {
+                    return (T)dependency;
+                }
+            }
+            throw new ArgumentException("Dependency not found.");
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddInternal(Type type, uint dependencyId, object dependency)
         {
-            if (_dependencies.TryGetValue(type, out var dict))
+            if (_dependencyByType.TryGetValue(type, out var dict))
             {
                 dict.Add(dependencyId, dependency);
             }
             else
             {
-                _dependencies.Add(type, new Dictionary<uint, object>() { { dependencyId, dependency } });
+                _dependencyByType.Add(type, new Dictionary<uint, object>() { { dependencyId, dependency } });
             }
+            _dependencyList.Add(dependency);
         }
     }
 }

@@ -1,4 +1,4 @@
-using AnotherECS.Core.Allocators;
+using AnotherECS.Serializer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ namespace AnotherECS.Core
     public struct SystemGroup :
         IGroupSystemInternal,
         IEnumerable<ISystem>,
-        IDisposable
+        IDisposable, ISerialize
     {
         private bool _isInit;
         private bool _isDisposed;
@@ -65,6 +65,16 @@ namespace AnotherECS.Core
                     throw new ArgumentNullException(nameof(systems));
                 }
             }
+        }
+
+        private SystemGroup(List<ISystem> systems, SortOrder order = SortOrder.Declaration)
+           : this(order)
+        {
+            if (systems == null)
+            {
+                throw new ArgumentNullException(nameof(systems));
+            }
+             _systems = systems;
         }
 
         public SystemGroup Add(ISystem system)
@@ -147,6 +157,23 @@ namespace AnotherECS.Core
             }
         }
 
+        public void Pack(ref WriterContextSerializer writer)
+        {
+#if !ANOTHERECS_RELEASE
+            ThrowIfDisposed();
+#endif
+            writer.Pack(_systems);
+            writer.Write(_order);
+        }
+
+        public void Unpack(ref ReaderContextSerializer reader)
+        {
+            this = new SystemGroup(
+                reader.Unpack<List<ISystem>>(),
+                reader.ReadEnum<SortOrder>()
+                );
+        }
+
         internal IEnumerable<ISystem> GetSystems()
         {
 #if !ANOTHERECS_RELEASE
@@ -226,6 +253,18 @@ namespace AnotherECS.Core
                     }
                 }
             }
+        }
+
+        bool IGroupSystemInternal.IsHas(Type type)
+        {
+            for(int i = 0; i < _systems.Count; ++i)
+            {
+                if (_systems[i].GetType() == type)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void Init()
