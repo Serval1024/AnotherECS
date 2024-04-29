@@ -23,24 +23,32 @@ namespace AnotherECS.Core.Remote
 
         private readonly IRemoteProcessing _processing;
         private readonly IRemoteProvider _remote;
+        private readonly object _locker;
         private bool _isCheckRejectRequestState;
 
         public BehaviorContext(IRemoteProcessing processing, IRemoteProvider remote)
         {
             _processing = processing;
             _remote = remote;
+            _locker = new();
             _isCheckRejectRequestState = false;
         }
 
         public void Disconnect()
         {
-            _processing.Disconnect();
+            lock (_locker)
+            {
+                _processing.Disconnect();
+            }
         }
 
         public void SendState(StateRequest stateRequest)
         {
             _isCheckRejectRequestState = false;
-            _processing.SendState(stateRequest);
+            lock (_locker)
+            {
+                _processing.SendState(stateRequest);
+            }
         }
 
         public void SendState(Player player, SerializationLevel serializationLevel)
@@ -51,7 +59,10 @@ namespace AnotherECS.Core.Remote
             }
 
             _isCheckRejectRequestState = false;
-            _processing.SendState(player, serializationLevel);
+            lock (_locker)
+            {
+                _processing.SendState(player, serializationLevel);
+            }
         }
 
         public Task<RequestStateResult> RequestState(Player player, SerializationLevel serializationLevel)
@@ -60,24 +71,36 @@ namespace AnotherECS.Core.Remote
             {
                 throw new ArgumentException("Should be 'local player id != player id argument'.");
             }
-            return _processing.RequestState(player, serializationLevel);
+            lock (_locker)
+            {
+                return _processing.RequestState(player, serializationLevel);
+            }
         }
 
         public void ApplyWorldData(WorldData data)
         {
             if (data.World != null)
             {
-                _processing.ApplyWorld(data.World);
+                lock (_locker)
+                {
+                    _processing.ApplyWorld(data.World);
+                }
             }
             else if (data.State != null)
             {
-                _processing.ApplyState(data.State);
+                lock (_locker)
+                {
+                    _processing.ApplyState(data.State);
+                }
             }
         }
 
         public void SendReject(StateRequest stateRequest)
         {
-            _processing.SendRejectState(stateRequest);
+            lock (_locker)
+            {
+                _processing.SendRejectState(stateRequest);
+            }
         }
 
         internal void BeginCheckRejectRequestState()

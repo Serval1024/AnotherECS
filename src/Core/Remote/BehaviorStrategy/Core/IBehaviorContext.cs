@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
@@ -19,6 +20,7 @@ namespace AnotherECS.Core.Remote
 
     public enum ClientRole : byte
     {
+        None = 0,
         Unknow,
         Master,
         Client,

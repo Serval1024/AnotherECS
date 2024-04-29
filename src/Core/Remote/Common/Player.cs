@@ -10,6 +10,8 @@ namespace AnotherECS.Core.Remote
         public ClientRole Role { get; }
         public long PerformanceTiming { get; }
 
+        public bool IsValid => Id != 0 && Role != ClientRole.None;
+
         public Player(long id, bool isLocal, ClientRole role, long performanceTiming)
         {
             Id = id;

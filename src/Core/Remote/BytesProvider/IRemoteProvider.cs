@@ -40,6 +40,6 @@ namespace AnotherECS.Core.Remote
         }
     }
 
-    public delegate void ConnectPlayerHandler(Player id);
-    public delegate void DisconnectPlayerHandler(Player id);
+    public delegate void ConnectPlayerHandler(Player player);
+    public delegate void DisconnectPlayerHandler(Player player);
 }

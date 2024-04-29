@@ -4,7 +4,11 @@ namespace AnotherECS.Core.Remote
 {
     public class AutoSyncWorldByMasterStrategy : IRemoteSyncStrategy
     {
+        public event Action WorldReady;
+        public event Action<Exception> WorldObtainFailed;
+
         public double RequestStateTimeout = 5f;
+        public int RequestStateTryCount = 3;
 
         private bool _isOneGateRequestState;
         private readonly Lazy<WorldData> _initStateForMasterClient;
@@ -18,19 +22,28 @@ namespace AnotherECS.Core.Remote
 
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            if (player.IsLocal)
+            if (player.IsLocal)     // If Master create new world.
             {
                 if (context.LocalPlayer.Role == ClientRole.Master)
                 {
                     if (_initStateForMasterClient != null)
                     {
-                        context.ApplyWorldData(_initStateForMasterClient.Value);
+                        try
+                        {
+                            context.ApplyWorldData(_initStateForMasterClient.Value);
+                        }
+                        catch (Exception ex)
+                        {
+                            WorldObtainFailed?.Invoke(ex);
+                            return;
+                        }
+                        WorldReady?.Invoke();
                     }
                 }
             }
-            else
+            else     // If Client request world from Master.
             {
-                if (context.LocalPlayer.Role == ClientRole.Client)
+                if (context.LocalPlayer.Role == ClientRole.Client && player.Role == ClientRole.Master)
                 {
                     RequestState(context, player);
                 }
@@ -71,16 +84,34 @@ namespace AnotherECS.Core.Remote
                         if (p.IsFaulted)
                         {
                             var root = p.Exception.GetRoot();
-                            if (root is TimeoutException || root is RejectRequestStateException)
+                            if (root is TimeoutException || root is RejectRequestStateException)    // Try request world again.
                             {
-                                _isOneGateRequestState = false;
-                                var nextPlayer = context.GetNextOtherPlayer(player);
-                                RequestState(context, nextPlayer);
+                                if (RequestStateTryCount > 0)
+                                {
+                                    --RequestStateTryCount;
+
+                                    _isOneGateRequestState = false;
+                                    var nextPlayer = context.GetNextOtherPlayer(player);
+                                    RequestState(context, nextPlayer);
+                                }
+                                else
+                                {
+                                    WorldObtainFailed?.Invoke(new AttemptsOverObtainStateException());
+                                }
                             }
                         }
                         else
                         {
-                            context.ApplyWorldData(p.Result.data);
+                            try
+                            {
+                                context.ApplyWorldData(p.Result.data);
+                            }
+                            catch (Exception ex)
+                            {
+                                WorldObtainFailed?.Invoke(ex);
+                                return;
+                            }
+                            WorldReady?.Invoke();
                         }
                     }
                     );
