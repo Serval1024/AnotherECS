@@ -4,7 +4,7 @@
     {
         void OnFire(ISignal signal);
         void OnCancel(ISignal signal);
-        void OnHistoryBufferLeave(ISignal signal);
+        void OnLeaveHistoryBuffer(ISignal signal);
     }
 
     public interface ISignalReceiver<TSignal> : ISignalReceiver
@@ -16,11 +16,11 @@
         void ISignalReceiver.OnCancel(ISignal signal)
             => OnCancel((TSignal)signal);
 
-        void ISignalReceiver.OnHistoryBufferLeave(ISignal signal)
-            => OnHistoryBufferLeave((TSignal)signal);
+        void ISignalReceiver.OnLeaveHistoryBuffer(ISignal signal)
+            => OnLeaveHistoryBuffer((TSignal)signal);
 
         void OnFire(TSignal signal);
         void OnCancel(TSignal signal);
-        void OnHistoryBufferLeave(TSignal signal);
+        void OnLeaveHistoryBuffer(TSignal signal);
     }
 }

@@ -220,7 +220,7 @@ namespace AnotherECS.Core
                                 }
                             case SignalCallback.CommandType.LeaveBuffer:
                                 {
-                                    receivers[j].OnHistoryBufferLeave(_signalBuffer[i].Signal);
+                                    receivers[j].OnLeaveHistoryBuffer(_signalBuffer[i].Signal);
                                     break;
                                 }
                         }
