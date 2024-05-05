@@ -1,6 +1,6 @@
 ﻿namespace AnotherECS.Core
 {
-    public struct SignalCallback
+    internal struct SignalCallback
     {
         public CommandType Command;
         public ISignal Signal;

@@ -1,5 +1,4 @@
 ﻿using AnotherECS.Serializer;
-using PlasticGui.Configuration.CloudEdition.Welcome;
 using System;
 using System.Runtime.CompilerServices;
 
