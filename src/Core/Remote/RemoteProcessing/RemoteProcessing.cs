@@ -228,14 +228,10 @@ namespace AnotherECS.Core.Remote
         {
             if (data.Data != null && data.SerializationLevel != SerializationLevel.None)
             {
-                var worldData = new WorldData(data.Data);
-                var result = new RequestStateResult(worldData);
+                var result = new RequestStateResult(new(new WorldData(data.Data), data.SerializationLevel));
                 _taskDataResult.AddOrUpdate(data.MessageId, result, (k, v) => result);
 
-                _remoteSyncStrategy.OnReceiveState(
-                    _context,
-                    sender,
-                    new Remote.StateRespond(worldData, data.SerializationLevel));
+                _remoteSyncStrategy.OnReceiveState(_context, sender, result);
             }
             else
             {

@@ -2,11 +2,11 @@
 {
     public readonly struct RequestStateResult
     {
-        public readonly WorldData data;
+        public readonly StateRespond Respond;
 
-        public RequestStateResult(WorldData data)
+        public RequestStateResult(StateRespond respond)
         {
-            this.data = data;
+            Respond = respond;
         }
     }
 }

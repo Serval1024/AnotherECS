@@ -21,6 +21,8 @@ namespace AnotherECS.Core.Processing
         private StateRevertToTaskHandler _stateRevertToTaskHandler;
         private Task _stateRevertTo;
 
+        private Task _revertFinishedTaskHandler;
+
         private Task[] _attachToStateModuleSystems;
         private Task[] _detachToStateModuleSystems;
         private Task[] _tickStartedSystems;
@@ -54,6 +56,8 @@ namespace AnotherECS.Core.Processing
 
             _stateRevertToTaskHandler = new StateRevertToTaskHandler() { State = _state };
             _stateRevertTo = CreateTask(_stateRevertToTaskHandler);
+
+            _revertFinishedTaskHandler = CreateTask(new RevertFinishedTaskHandler() { State = _state });
 
             _attachToStateModuleSystems = CreateTasks<AttachToStateModuleTaskHandler, IAttachToStateModule>(systems);
             _detachToStateModuleSystems = CreateTasks<DetachToStateModuleTaskHandler, IDetachToStateModule>(systems);
@@ -128,6 +132,11 @@ namespace AnotherECS.Core.Processing
             _stateRevertToTaskHandler.tick = tick;
             _stateRevertTo.handler = _stateRevertToTaskHandler;
             _threadScheduler.Run(_stateRevertTo);
+        }
+
+        public void RevertFinished()
+        {
+            _threadScheduler.Run(_revertFinishedTaskHandler);
         }
 
         public void Run(RunTaskHandler runTaskHandler)

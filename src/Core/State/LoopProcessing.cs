@@ -60,18 +60,26 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TryRevertTo(uint currentTick, uint getNextTickForEvent)
+        public uint TryRevertTo(uint currentTick, uint getNextTickForEvent)
         {
             if (currentTick >= getNextTickForEvent)
             {
                 _systemProcessing.RevertTo(getNextTickForEvent - 1);
+                return currentTick - (getNextTickForEvent - 1);
             }
+            return 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RevertTo(uint tick)
         {
             _systemProcessing.RevertTo(tick);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RevertFinished()
+        {
+            _systemProcessing.RevertFinished();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

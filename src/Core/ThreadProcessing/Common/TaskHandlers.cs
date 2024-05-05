@@ -141,6 +141,17 @@ namespace AnotherECS.Core.Processing
         }
     }
 
+    internal struct RevertFinishedTaskHandler : IStateTaskHandler
+    {
+        public State State { get; set; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            State.TickReachedAfterRevert();
+        }
+    }
+
     internal struct ReceiversTaskHandler : IStateTaskHandler
     {
         public State State { get; set; }

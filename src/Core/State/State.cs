@@ -2,6 +2,7 @@
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
+using Fusion;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -41,6 +42,7 @@ namespace AnotherECS.Core
         
         private StateOption _option;
         private Events _events;
+        private Signals _signals;
 
         private ushort _stateId;
         private NeedRefreshByTick _reference;
@@ -60,6 +62,7 @@ namespace AnotherECS.Core
         private IRepairStateId[] _repairStateIdCallers;
         private ResizableData[] _resizableCallers;
         private List<ITickEvent> _eventsTemp;
+        private List<SignalCallback> _signalsTemp;
         private EntityId[] _entityIdsTemp;
         #endregion
 
@@ -99,6 +102,7 @@ namespace AnotherECS.Core
             _configs = new IConfig[GetConfigArrayCount()];
 
             _events = new Events(config.history.recordTickLength);
+            _signals = new Signals(config.history.recordTickLength);
 
             CommonInit();
 
@@ -186,6 +190,7 @@ namespace AnotherECS.Core
 
                 _dependencies->Pack(ref writer);
                 _events.Pack(ref writer);
+                _signals.Pack(ref writer);
 
                 for (uint i = CALLER_START_INDEX; i < _callers.Length; ++i)
                 {
@@ -221,6 +226,7 @@ namespace AnotherECS.Core
                 reader.Dependency.Add(RepairMemoryUtils.Create(_dependencies));
 
                 _events.Unpack(ref reader);
+                _signals.Unpack(ref reader);
 
                 _layoutCount = 1;
 
@@ -273,7 +279,8 @@ namespace AnotherECS.Core
                 p => p.IsRepairStateId, 
                 (p, i) => new ResizableData() { caller = p, callerIndex = (uint)i + 1u });
 
-            _eventsTemp = new List<ITickEvent>();
+            _eventsTemp = new();
+            _signalsTemp = new();
             _entityIdsTemp = Array.Empty<EntityId>();
             _nextTickForEvent = _events.NextTickForEvent;
 
@@ -823,6 +830,15 @@ namespace AnotherECS.Core
 #endif
             Send(new EventContainer(_dependencies->tickProvider.tick + 1, @event));
         }
+
+        public void SendSignal<TSignal>(TSignal signal = default)
+            where TSignal : ISignal
+        {
+#if !ANOTHERECS_RELEASE
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            _signals.Send(_dependencies->tickProvider.tick, GetSignalIndex<TSignal>(), signal);
+        }
         #endregion
 
         #region Error
@@ -915,6 +931,14 @@ namespace AnotherECS.Core
             _dependencies->stage1HAllocator.TickFinished();
 
             TryDropRepairStateId();
+
+            FlushFireSignals();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void TickReachedAfterRevert()
+        {
+            FlushCancelSignals();
         }
         #endregion
 
@@ -1048,6 +1072,8 @@ namespace AnotherECS.Core
                     return;
                 }
 
+                _signals.RevertTo(tick);
+
                 if (IsNeedCallRevertByStages())
                 {
                     CallRevertStage0();
@@ -1061,8 +1087,8 @@ namespace AnotherECS.Core
 
                     if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
-                        RepairMemoryHandles();
                         CallConstruct();
+                        RepairMemoryHandles();
                         TryRepairStateId(Tick);
                     }
 
@@ -1072,13 +1098,32 @@ namespace AnotherECS.Core
                 {
                     if (_dependencies->stage1HAllocator.RevertTo(tick))
                     {
-                        RepairMemoryHandles();
                         CallConstruct();
+                        RepairMemoryHandles();
                         TryRepairStateId(tick);
                     }
                 }
 
                 Tick = tick;
+            }
+        }
+        #endregion
+
+        #region singals
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void FlushSignalCache(List<SignalCallback> buffer)
+        {
+            buffer.Clear();
+            if (_signalsTemp.Count != 0)
+            {
+                lock (_signalsTemp)
+                {
+                    for (int i = 0; i < _signalsTemp.Count; ++i)
+                    {
+                        buffer.Add(_signalsTemp[i]);
+                    }
+                    _signalsTemp.Clear();
+                }
             }
         }
         #endregion
@@ -1120,6 +1165,54 @@ namespace AnotherECS.Core
         #endregion
 
         #region private
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FlushFireSignals()
+        {
+            var buffer = _signals.GetCurrentTickBuffer();
+
+            if (!buffer.IsEmpty)
+            {
+                lock (_signalsTemp)
+                {
+                    for (int i = 0; i < buffer.Length; ++i)
+                    {
+                        switch(buffer[i].Command)
+                        {
+                            case Signals.SignalEvent.CommandType.Fire:
+                                {
+                                    _signalsTemp.Add(new(SignalCallback.CommandType.Fire, buffer[i].Signal));
+                                    break;
+                                }
+                            case Signals.SignalEvent.CommandType.LeaveBuffer:
+                                {
+                                    _signalsTemp.Add(new(SignalCallback.CommandType.LeaveBuffer, buffer[i].Signal));
+                                    break;
+                                }
+                        }
+                    }
+                }
+            }
+
+            _signals.ClearCurrentTickBuffer();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void FlushCancelSignals()
+        {
+            if (_signals.IsDiffBuffer())
+            {
+                var buffer = _signals.GetDiffBuffer();
+
+                lock (_signalsTemp)
+                {
+                    for (int i = 0; i < buffer.Length; ++i)
+                    {
+                        _signalsTemp.Add(new(SignalCallback.CommandType.Cancel, buffer[i].Signal));
+                    }
+                }
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CallAttach()
         {
@@ -1222,10 +1315,12 @@ namespace AnotherECS.Core
             
             return list.ToNArray();
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint GetComponentArrayCount()
             => GetComponentCount() + 1;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private uint GetConfigArrayCount()
             => GetConfigCount() + 1;
 
@@ -1319,6 +1414,8 @@ namespace AnotherECS.Core
         protected abstract ushort GetConfigIndex<T>()
             where T : IConfig;
         protected abstract ushort GetConfigIndex(Type type);
+        protected abstract ushort GetSignalIndex<T>()
+            where T : ISignal;
         #endregion
 
         #region declarations

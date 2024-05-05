@@ -4,8 +4,7 @@ namespace AnotherECS.Core.Remote
 {
     public class AutoSyncWorldByMasterStrategy : IRemoteSyncStrategy
     {
-        public event Action WorldReady;
-        public event Action<Exception> WorldObtainFailed;
+        public event Action<StatusReport> WorldInitialized;
 
         public double RequestStateTimeout = 5f;
         public int RequestStateTryCount = 3;
@@ -34,10 +33,10 @@ namespace AnotherECS.Core.Remote
                         }
                         catch (Exception ex)
                         {
-                            WorldObtainFailed?.Invoke(ex);
+                            WorldInitialized?.Invoke(new StatusReport(null, new ErrorReport(ex)));
                             return;
                         }
-                        WorldReady?.Invoke();
+                        WorldInitialized?.Invoke(new StatusReport(context.World));
                     }
                 }
             }
@@ -69,14 +68,16 @@ namespace AnotherECS.Core.Remote
             throw error.Exception;
         }
 
-        public void OnReceiveState(IBehaviorContext context, Player sender, StateRespond stateRespond) { }
+        public void OnReceiveState(IBehaviorContext context, Player sender, RequestStateResult requestStateResult)
+        { 
+        }
 
         private void RequestState(IBehaviorContext context, Player player)
         {
             if (!_isOneGateRequestState && !context.IsHasWorldValid)
             {
                 _isOneGateRequestState = true;
-
+                
                 context.RequestState(player, _serializationLevel)
                     .Timeout(RequestStateTimeout)
                     .ContinueWith(p =>
@@ -96,7 +97,9 @@ namespace AnotherECS.Core.Remote
                                 }
                                 else
                                 {
-                                    WorldObtainFailed?.Invoke(new AttemptsOverObtainStateException());
+                                    WorldInitialized?.Invoke(
+                                        new StatusReport(null, new(new AttemptsOverObtainStateException()))
+                                        );
                                 }
                             }
                         }
@@ -104,14 +107,14 @@ namespace AnotherECS.Core.Remote
                         {
                             try
                             {
-                                context.ApplyWorldData(p.Result.data);
+                                context.ApplyWorldData(p.Result.Respond.Data);
                             }
                             catch (Exception ex)
                             {
-                                WorldObtainFailed?.Invoke(ex);
+                                WorldInitialized?.Invoke(new StatusReport(null, new ErrorReport(ex)));
                                 return;
                             }
-                            WorldReady?.Invoke();
+                            WorldInitialized?.Invoke(new StatusReport(context.World));
                         }
                     }
                     );

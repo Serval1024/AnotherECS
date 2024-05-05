@@ -17,8 +17,9 @@ namespace AnotherECS.Core.Remote
             }
         }
 
-        public bool IsHasWorldValid { get => _processing.GetWorld() != null; }
-        public LiveState WorldLiveState { get => _processing.GetWorld().LiveState; }
+        public bool IsHasWorldValid { get => World != null; }
+        public IWorldExtend World { get => _processing.GetWorld(); }
+        public LiveState WorldLiveState { get => World.LiveState; }
 
 
         private readonly IRemoteProcessing _processing;

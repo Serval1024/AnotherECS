@@ -36,6 +36,7 @@ namespace AnotherECS.Core.Processing
         void Receive();
 
         void RevertTo(uint tick);
+        void RevertFinished();
 
         void TickFullLoop();
 

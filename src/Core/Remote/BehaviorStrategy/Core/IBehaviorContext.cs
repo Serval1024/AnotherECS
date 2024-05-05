@@ -9,12 +9,14 @@ namespace AnotherECS.Core.Remote
         Player[] Players { get; }
         Player[] OtherPlayers { get; }
         bool IsHasWorldValid { get; }
+
+        IWorldExtend World { get; }
         LiveState WorldLiveState { get; }
 
         void SendState(StateRequest stateRequest);
         void SendState(Player player, SerializationLevel serializationLevel);
         Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
-        public void ApplyWorldData(WorldData data);
+        void ApplyWorldData(WorldData data);
         void Disconnect();
     }
 

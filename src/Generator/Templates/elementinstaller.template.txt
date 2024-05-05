@@ -25,6 +25,10 @@ private static class ElementInstaller
 ---<#ARRAY [0..CONFIG:COUNT]#>
         GlobalRegister<<#STATE:GEN_NAME#>, IConfig>.Install<<#CONFIG:FULL_NAME#>>();
 ---<#END#>
+
+---<#ARRAY [0..SIGNAL:COUNT]#>
+        GlobalRegister<<#STATE:GEN_NAME#>, ISignal>.Install<<#SIGNAL:FULL_NAME#>>();
+---<#END#>
 <#END#>
     }
 }

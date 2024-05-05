@@ -18,7 +18,7 @@
             throw error.Exception;
         }
 
-        public void OnReceiveState(IBehaviorContext context, Player sender, StateRespond stateRespond)
+        public void OnReceiveState(IBehaviorContext context, Player sender, RequestStateResult requestStateResult)
         {
             Debug.Logger.Send($"Receive state: '{sender.Id}'.");
         }

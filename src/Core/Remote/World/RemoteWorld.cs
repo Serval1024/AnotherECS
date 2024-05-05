@@ -1,6 +1,8 @@
+using AnotherECS.Core.Remote.Exceptions;
 using AnotherECS.Serializer;
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
@@ -44,10 +46,13 @@ namespace AnotherECS.Core.Remote
             get => _world?.State;
             set
             {
+                ExceptionHelper.ThrowIfWorldInvalid(this);
+
                 SetState(value);
             }
         }
 
+        private bool _isUpdate;
         private IWorldExtend _world;
         private IRemoteProcessing _remoteProcessing;
 
@@ -82,7 +87,7 @@ namespace AnotherECS.Core.Remote
 
         public void UpdateFromMainThread()
         {
-            if (State != null)
+            if (_isUpdate)
             {
                 switch (_world.LiveState)
                 {
@@ -92,10 +97,7 @@ namespace AnotherECS.Core.Remote
                             var target = (int)(Time / DeltaTime);
                             var delta = target - (int)_world.RequestTick;
 
-                            if (delta > 0)
-                            {
-                                _world.Tick((uint)delta);
-                            }
+                            _world.Tick((uint)delta);                            
                             _world.UpdateFromMainThread();
                             break;
                         }
@@ -106,6 +108,8 @@ namespace AnotherECS.Core.Remote
                             break;
                         }
                 }
+                
+                _world.DispatchSignals();
             }
         }
 
@@ -116,8 +120,26 @@ namespace AnotherECS.Core.Remote
 
         public void SendEvent(ITickEvent @event)
         {
+            ExceptionHelper.ThrowIfWorldInvalid(this);
+
             _remoteProcessing.SendOtherEvent(@event);
             _world.SendEvent(@event);
+        }
+
+        public void AddSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+            where TSignal : ISignal
+        {
+            ExceptionHelper.ThrowIfWorldInvalid(this);
+
+            _world.AddSignal(receiver);
+        }
+
+        public void RemoveSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+            where TSignal : ISignal
+        {
+            ExceptionHelper.ThrowIfWorldInvalid(this);
+
+            _world.RemoveSignal(receiver);
         }
 
         public async void DestroyAndDispose()
@@ -135,6 +157,8 @@ namespace AnotherECS.Core.Remote
 
         public void Run(Processing.RunTaskHandler runTaskHandler)
         {
+            ExceptionHelper.ThrowIfWorldInvalid(this);
+
             _world.Run(runTaskHandler);
         }
 
@@ -176,6 +200,9 @@ namespace AnotherECS.Core.Remote
                     time = Time,
                 });
             }
+
+            Thread.MemoryBarrier();
+            _isUpdate = value != null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

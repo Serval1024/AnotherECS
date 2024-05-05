@@ -18,6 +18,8 @@ namespace AnotherECS.Core
         public LiveState LiveState { get; private set; }
 
         private readonly bool _isOneGateAutoAttach;
+        private readonly List<SignalCallback> _signalBuffer = new();
+        private readonly Dictionary<Type, List<ISignalReceiver>> _signalReceivers = new();
         private bool _isOneGateCallCreate = true;
 
         public State State
@@ -43,7 +45,7 @@ namespace AnotherECS.Core
         private IWorldStatistic _statistic;
 #endif
         private IGroupSystemInternal _systems;
-        private LoopProcessing _loopProcessing;
+        private readonly LoopProcessing _loopProcessing;
         private State _state;
         private ISystem[] _flatSystemsCache;
 
@@ -170,16 +172,59 @@ namespace AnotherECS.Core
                 _loopProcessing.Create();
             }
 
+#if !ANOTHERECS_HISTORY_DISABLE
+            uint revertTick = _loopProcessing.TryRevertTo(RequestTick, _state.GetNextTickForEvent());
+#else 
+            const uint revertTick = 0;
+#endif
+            if (revertTick != 0)
+            {
+                for (int i = 0; i < revertTick; ++i)
+                {
+                    _loopProcessing.Tick();
+                }
+                _loopProcessing.RevertFinished();
+            }
+
             if (tickCount != 0)
             {
-#if !ANOTHERECS_HISTORY_DISABLE
-                _loopProcessing.TryRevertTo(RequestTick, _state.GetNextTickForEvent());
-#endif
                 RequestTick += tickCount;
 
                 for (int i = 0; i < tickCount; ++i)
                 {
-                    _loopProcessing.Tick();   
+                    _loopProcessing.Tick();
+                }
+            }
+        }
+
+        public void DispatchSignals()
+        {
+            _state.FlushSignalCache(_signalBuffer);
+            for(int i = 0; i < _signalBuffer.Count; ++i)
+            {
+                if (_signalReceivers.TryGetValue(_signalBuffer[i].Signal.GetType(), out var receivers))
+                {
+                    for(int j = 0; j < receivers.Count; ++j)
+                    {
+                        switch (_signalBuffer[i].Command)
+                        {
+                            case SignalCallback.CommandType.Fire:
+                                {
+                                    receivers[j].OnFire(_signalBuffer[i].Signal);
+                                    break;
+                                }
+                            case SignalCallback.CommandType.Cancel:
+                                {
+                                    receivers[j].OnCancel(_signalBuffer[i].Signal);
+                                    break;
+                                }
+                            case SignalCallback.CommandType.LeaveBuffer:
+                                {
+                                    receivers[j].OnHistoryBufferLeaved(_signalBuffer[i].Signal);
+                                    break;
+                                }
+                        }
+                    }
                 }
             }
         }
@@ -223,6 +268,34 @@ namespace AnotherECS.Core
             ExceptionHelper.ThrowIfWorldInvalid(this, LiveState);
 #endif
             _state.Send(@event);
+        }
+
+        public void AddSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+            where TSignal : ISignal
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldRaw(this, LiveState);
+#endif
+            if (_signalReceivers.TryGetValue(typeof(TSignal), out List<ISignalReceiver> signalReceivers))
+            {
+                signalReceivers.Add(receiver);
+            }
+            else
+            {
+                _signalReceivers[typeof(TSignal)] = new() { receiver };
+            }
+        }
+
+        public void RemoveSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+           where TSignal : ISignal
+        {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfWorldRaw(this, LiveState);
+#endif
+            if (_signalReceivers.TryGetValue(typeof(TSignal), out List<ISignalReceiver> signalReceivers))
+            {
+                signalReceivers.Remove(receiver);
+            }
         }
 
         public bool IsBusy()

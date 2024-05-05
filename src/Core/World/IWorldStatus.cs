@@ -17,6 +17,7 @@ namespace AnotherECS.Core
         void Startup();
         void Tick(uint tickCount);
         void Destroy();
+        void DispatchSignals();
         void UpdateFromMainThread();
     }
 
@@ -46,5 +47,9 @@ namespace AnotherECS.Core
     {
         void SendEvent(IEvent @event);
         void SendEvent(ITickEvent @event);
+        void AddSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+            where TSignal : ISignal;
+        void RemoveSignal<TSignal>(ISignalReceiver<TSignal> receiver)
+            where TSignal : ISignal;
     }
 }

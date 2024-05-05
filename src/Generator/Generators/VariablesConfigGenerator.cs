@@ -211,6 +211,15 @@ namespace AnotherECS.Generator
                     context.GetConfigs(stateType)
                     .IdToType(variables.GetIndexAsId(0)))
                 },
+
+                { "SIGNAL:COUNT", () =>
+                    context.GetSignals(stateType).Count().ToString()
+                },
+
+                { "SIGNAL:FULL_NAME", () => ReflectionUtils.GetDotFullName(
+                    context.GetSignals(stateType)
+                    .IdToType(variables.GetIndexAsId(0)))
+                },
             };
             return variables;
         }
