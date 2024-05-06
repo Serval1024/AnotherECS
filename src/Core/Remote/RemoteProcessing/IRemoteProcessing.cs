@@ -23,5 +23,6 @@ namespace AnotherECS.Core.Remote
 
         Player GetLocalPlayer();
         double GetGlobalTime();
+        uint GetEventTickСorrection(uint tick);
     }
 }

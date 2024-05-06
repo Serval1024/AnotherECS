@@ -8,6 +8,8 @@ namespace AnotherECS.Core.Remote
         Player LocalPlayer { get; }
         Player[] Players { get; }
         Player[] OtherPlayers { get; }
+        double Ping { get; }
+
         bool IsHasWorldValid { get; }
 
         IWorldExtend World { get; }

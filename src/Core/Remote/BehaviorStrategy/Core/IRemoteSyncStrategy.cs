@@ -8,5 +8,6 @@
         public void OnRequestState(IBehaviorContext context, Player sender, StateRequest stateRequest);
         public void OnReceiveCorruptedData(IBehaviorContext context, ErrorReport error);
         public void OnRevertFailed(IBehaviorContext context, ErrorReport error);
+        public uint OnGetEventTickСorrection(uint tick);
     }
 }

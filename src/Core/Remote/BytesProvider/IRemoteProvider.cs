@@ -12,6 +12,7 @@ namespace AnotherECS.Core.Remote
 
         Player GetLocalPlayer();
         Player[] GetPlayers();
+        double GetPing();
         double GetGlobalTime();
         Player GetPlayer(long id)
         {

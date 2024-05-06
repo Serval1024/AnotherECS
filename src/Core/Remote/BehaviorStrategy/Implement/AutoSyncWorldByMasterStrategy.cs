@@ -68,9 +68,10 @@ namespace AnotherECS.Core.Remote
             throw error.Exception;
         }
 
-        public void OnReceiveState(IBehaviorContext context, Player sender, RequestStateResult requestStateResult)
-        { 
-        }
+        public void OnReceiveState(IBehaviorContext context, Player sender, RequestStateResult requestStateResult) { }
+
+        public uint OnGetEventTickСorrection(uint tick)
+            => tick;
 
         private void RequestState(IBehaviorContext context, Player player)
         {

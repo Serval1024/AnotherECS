@@ -34,5 +34,8 @@
             Debug.Logger.RevertStateFail(error.Exception.Message);
             throw error.Exception;
         }
+
+        public uint OnGetEventTickСorrection(uint tick)
+            => tick;
     }
 }

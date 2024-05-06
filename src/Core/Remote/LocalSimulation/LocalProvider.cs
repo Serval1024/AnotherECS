@@ -82,6 +82,9 @@ namespace AnotherECS.Core.Remote.Local
         public Player[] GetPlayers()
             => Parent?.GetPlayers();
 
+        public double GetPing()
+            => 0.0;
+
         public double GetGlobalTime()
         {
             if (Parent == null)

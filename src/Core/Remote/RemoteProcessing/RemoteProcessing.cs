@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
-    public class RemoteProcessing : IRemoteProcessing, IDisposable
+    public sealed class RemoteProcessing : IRemoteProcessing, IDisposable
     {
         private readonly IRemoteProvider _remoteProvider;
         private readonly ISerializer _serializer;
@@ -171,7 +171,10 @@ namespace AnotherECS.Core.Remote
         public IWorldExtend GetWorld()
             => _world.InnerWorld;
 
-        public virtual void Dispose()
+        public uint GetEventTickСorrection(uint tick)
+            => _remoteSyncStrategy.OnGetEventTickСorrection(tick);
+
+        public void Dispose()
         {
             _remoteProvider.ReceiveBytes -= OnReceiveOtherBytes;
             _remoteProvider.ConnectPlayer -= OnConnectPlayer;
@@ -270,7 +273,6 @@ namespace AnotherECS.Core.Remote
             Receive(sender, bytes);
         }
 
-     
         private struct StateRespond : ISerialize
         {
             public uint MessageId;

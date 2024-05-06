@@ -12,14 +12,15 @@ namespace AnotherECS.Core.Remote
         {
             get
             {
-                var localPlayerId = this.LocalPlayer.Id;
+                var localPlayerId = LocalPlayer.Id;
                 return _remote.GetPlayers().Where(p => p.Id != localPlayerId).ToArray();
             }
         }
 
-        public bool IsHasWorldValid { get => World != null; }
-        public IWorldExtend World { get => _processing.GetWorld(); }
-        public LiveState WorldLiveState { get => World.LiveState; }
+        public double Ping => _remote.GetPing();
+        public bool IsHasWorldValid => World != null;
+        public IWorldExtend World => _processing.GetWorld();
+        public LiveState WorldLiveState => World.LiveState;
 
 
         private readonly IRemoteProcessing _processing;

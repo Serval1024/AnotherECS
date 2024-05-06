@@ -185,7 +185,7 @@ namespace AnotherECS.Core.Remote
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private EventContainer ToITickEvent(IEvent @event)
-            => new(_world.State.Tick + 1, @event);
+            => new(_remoteProcessing.GetEventTick—orrection(_world.State.Tick + 1), @event);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetState(State value)
