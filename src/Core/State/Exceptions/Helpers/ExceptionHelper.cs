@@ -8,23 +8,23 @@ namespace AnotherECS.Core.Exceptions
 {
     internal static class ExceptionHelper
     {
-        public static void ThrowIfWorldInvalid(BDisposable disposable, LiveState liveState)
+        public static void ThrowIfWorldInvalid(World world, bool isInit, bool isStartup)
         {
-            ThrowIfDisposed(disposable);
+            ThrowIfDisposed(world);
 
-            if (liveState != LiveState.Startup)
+            if (!isInit || !isStartup)
             {
-                throw new InvalidOperationException($"World not {LiveState.Startup} yet.");
+                throw new InvalidOperationException($"World not init or startup yet.");
             }
         }
 
-        public static void ThrowIfWorldRaw(BDisposable disposable, LiveState liveState)
+        public static void ThrowIfWorldRaw(World world, bool isInit)
         {
-            ThrowIfDisposed(disposable);
+            ThrowIfDisposed(world);
 
-            if (liveState == LiveState.Raw)
+            if (!isInit)
             {
-                throw new InvalidOperationException($"World not {LiveState.Raw} yet.");
+                throw new InvalidOperationException($"World not init yet.");
             }
         }
 

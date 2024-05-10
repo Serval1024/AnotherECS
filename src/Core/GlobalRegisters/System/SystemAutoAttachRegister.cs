@@ -4,11 +4,11 @@ using System.Linq;
 
 namespace AnotherECS.Core
 {
-    public static class SystemAutoAttachGlobalRegister
+    public class SystemAutoAttachRegister : ISystemAutoAttachRegister
     {
-        private static readonly HashSet<Type> _data = new();
+        private readonly HashSet<Type> _data = new();
 
-        public static void Install<T>()
+        public void Install<T>()
             where T : ISystem
         {
             lock (_data)
@@ -20,7 +20,7 @@ namespace AnotherECS.Core
             }
         }
 
-        public static Type[] Gets()
+        public Type[] Gets()
         {
             lock (_data)
             {

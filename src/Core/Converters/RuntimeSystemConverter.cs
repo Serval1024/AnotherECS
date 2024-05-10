@@ -1,9 +1,9 @@
-using AnotherECS.Core;
+using AnotherECS.Converter;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AnotherECS.Converter
+namespace AnotherECS.Core.Converter
 {
     public class RuntimeSystemConverter : IgnoresTypeToIdConverter<ushort, ISystem>, ITypeToUshort
     {

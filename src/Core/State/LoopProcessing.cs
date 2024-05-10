@@ -30,6 +30,12 @@ namespace AnotherECS.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void StateStartup()
+        {
+            _systemProcessing.StateStartup();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Create()
         {
             _systemProcessing.Create();

@@ -48,15 +48,19 @@ namespace AnotherECS.Core.Remote
             {
                 ExceptionHelper.ThrowIfWorldInvalid(this);
 
-                SetState(value);
+                if (_world?.State != value)
+                {
+                    _world.State = value;
+                    ApplyState();
+                }
             }
         }
 
         private bool _isUpdate;
+        private bool _isOneGateInit;
         private IWorldExtend _world;
         private IRemoteProcessing _remoteProcessing;
 
-        private RemoveWorldModuleData _moduleDataThreadDoubleBuffer;
 
         public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider, IRemoteSyncStrategy remoteSyncStrategy)
             : this(world, new RemoteProcessing(remoteProvider, remoteSyncStrategy)) { }
@@ -89,26 +93,20 @@ namespace AnotherECS.Core.Remote
         {
             if (_isUpdate)
             {
-                switch (_world.LiveState)
+                if (_isOneGateInit)
                 {
-                    case LiveState.Startup:
-                        {
-                            UpdateModuleData();
-                            var target = (int)(Time / DeltaTime);
-                            var delta = target - (int)_world.RequestTick;
+                    _isOneGateInit = false;
 
-                            _world.Tick((uint)delta);                            
-                            _world.UpdateFromMainThread();
-                            break;
-                        }
-                    case LiveState.Inited:
-                        {
-                            UpdateModuleData();
-                            _world.Startup();
-                            break;
-                        }
+                    _world.Init();
+                    _world.Startup();
                 }
-                
+
+                var target = (int)(Time / DeltaTime);
+                var delta = target - (int)_world.RequestTick;
+                _world.Tick((uint)delta);
+
+                _world.UpdateFromMainThread();
+
                 _world.DispatchSignals();
             }
         }
@@ -177,10 +175,7 @@ namespace AnotherECS.Core.Remote
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Destroy()
         {
-            if (_world.LiveState == LiveState.Startup)
-            {
-                _world.Destroy();
-            }
+            _world.Destroy();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,58 +183,33 @@ namespace AnotherECS.Core.Remote
             => new(_remoteProcessing.GetEventTick—orrection(_world.State.Tick + 1), @event);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetState(State value)
+        private void ApplyState()
         {
-            _world.State = value;
-            if (value != null)
+            if (_world != null)
             {
-                _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, new RemoveWorldModuleData()
+                _world.Wait();
+
+                if (_world.State != null)
                 {
-                    localPlayer = _remoteProcessing.GetLocalPlayer(),
-                    deltaTime = DeltaTime,
-                    time = Time,
-                });
+                    _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, new RemoveWorldModuleData()
+                    {
+                        localPlayer = _remoteProcessing.GetLocalPlayer(),
+                    });
+                }
             }
 
             Thread.MemoryBarrier();
-            _isUpdate = value != null;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateModuleData()
-        {
-            var data = _world.GetModuleData<RemoveWorldModuleData>(RemoveWorldModuleData.MODULE_DATA_ID);
-
-            _moduleDataThreadDoubleBuffer.localPlayer = _remoteProcessing.GetLocalPlayer();
-            _moduleDataThreadDoubleBuffer.time = Time;
-            _moduleDataThreadDoubleBuffer.deltaTime = DeltaTime;
-
-            _world.SetModuleData(RemoveWorldModuleData.MODULE_DATA_ID, _moduleDataThreadDoubleBuffer);
-
-            _moduleDataThreadDoubleBuffer = data;
+            _isUpdate = _world?.State != null;
+            _isOneGateInit = _isUpdate;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InitInternal(IRemoteProcessing remoteProcessing)
         {
             _remoteProcessing = remoteProcessing ?? throw new ArgumentNullException(nameof(remoteProcessing));
-
-            _moduleDataThreadDoubleBuffer ??= new RemoveWorldModuleData();
-
             _remoteProcessing.Construct(this);
 
-            if (_world != null)
-            {
-                if (_world.LiveState == LiveState.Raw)
-                {
-                    _world.Init();
-                }
-
-                if (_world.State != null)
-                {
-                    SetState(_world.State);
-                }
-            }
+            ApplyState();
         }
     }
 }

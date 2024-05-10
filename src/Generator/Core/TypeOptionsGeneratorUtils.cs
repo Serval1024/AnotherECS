@@ -1,5 +1,4 @@
 using AnotherECS.Core;
-using AnotherECS.Core.Allocators;
 using AnotherECS.Core.Caller;
 using System;
 using System.Text;
@@ -17,6 +16,57 @@ namespace AnotherECS.Generator
                 result.Append("Simple");
             }
             return result.ToString();
+        }
+
+        public static string GetCallerInterfaces(in TypeOptions option)
+        {
+            var result = new StringBuilder();
+            if (option.isAttachExternal)
+            {
+                result.Append(", ");
+                result.Append(nameof(IAttachExternal));
+            }
+            if (option.isDetachExternal)
+            {
+                result.Append(", ");
+                result.Append(nameof(IDetachExternal));
+            }
+            if (option.isSingle)
+            {
+                result.Append(", ");
+                result.Append(nameof(ISingle));
+            }
+            if (option.isDefault)
+            {
+                result.Append(", ");
+                result.Append(nameof(IDefault));
+            }
+            if (option.isVersion)
+            {
+                result.Append(", ");
+                result.Append(nameof(IVersion));
+            }
+
+            return result.ToString();
+        }
+
+        public static StringBuilder DeclarationToString(in GenericDeclaration declaration)
+        {
+            var result = new StringBuilder();
+            DeclarationToString(declaration, 0, true, 0, result);
+            return result;
+        }
+        
+        public static StringBuilder GetCallerDeclaration(TypeOptions option)
+        {
+            option.type = typeof(TComponent);   // Swap to generic TComponent
+            return DeclarationToString(CallerDeclaration.GetCallerDeclaration(option));
+        }
+
+        public static (string TAllocator, string TSparse, string TDenseIndex) GetLayoutDeclaration(in TypeOptions option)
+        {
+            var (TAllocator, TSparse, TDenseIndex) = CallerDeclaration.GetLayoutDeclaration(option);
+            return (TAllocator.Type.Name, TSparse.Type.Name, TDenseIndex.Type.Name);
         }
 
         private static StringBuilder GetDefaultStorageFlags(in TypeOptions option)
@@ -82,336 +132,44 @@ namespace AnotherECS.Generator
             {
                 result.Append("R");
             }
-            
-            return result;
-        }
-
-        public static string GetCallerInterfaces(in TypeOptions option)
-        {
-            var result = new StringBuilder();
-            if (option.isAttachExternal)
-            {
-                result.Append(", ");
-                result.Append(nameof(IAttachExternal));
-            }
-            if (option.isDetachExternal)
-            {
-                result.Append(", ");
-                result.Append(nameof(IDetachExternal));
-            }
-            if (option.isSingle)
-            {
-                result.Append(", ");
-                result.Append(nameof(ISingle));
-            }
-            if (option.isDefault)
-            {
-                result.Append(", ");
-                result.Append(nameof(IDefault));
-            }
-            if (option.isVersion)
-            {
-                result.Append(", ");
-                result.Append(nameof(IVersion));
-            }
-
-            return result.ToString();
-        }
-
-        public static StringBuilder GetCallerDeclaration(in TypeOptions option)
-        {
-            var (TAllocator, TSparse, TDenseIndex) = GetLayoutDeclaration(option);
-            var layoutASCD = $"{TAllocator}, {TSparse}, TComponent, {TDenseIndex}";
-            var layoutASC = $"{TAllocator}, {TSparse}, TComponent";
-            var layoutAC = $"{TAllocator}, TComponent";
-            var layoutC = $"TComponent";
-            var layoutS = $"{TSparse}";
-
-            var extraSpace = new string('\t', 4);
-
-            var nothingSCDTC = $"{typeof(Nothing<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
-            var singleFeature = $"{typeof(SingleCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>";
-
-
-            var result = new StringBuilder();
-            result.Append("Caller<");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            result.Append(layoutASCD);
-            result.Append(", ");
-
-            result.Append(Environment.NewLine);
-            result.Append("#if ANOTHERECS_HISTORY_DISABLE");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            result.Append(nameof(NoHistoryAllocatorCF));
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append("#else");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isHistory)
-            {
-                result.Append(nameof(HistoryAllocatorCF));
-            }
-            else
-            {
-                result.Append(nameof(NoHistoryAllocatorCF));
-            }
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append("#endif");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-
-            if (option.isSingle || (option.isMarker && option.isEmpty))
-            {
-                result.Append(nameof(UintNumber));
-            }
-            else
-            { 
-                result.Append(nameof(UshortNumber));
-            }
-
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isInject)
-            {
-                result.Append($"{typeof(InjectCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isUseRecycle)
-            {
-                result.Append($"{typeof(RecycleStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else if (option.isSingle)
-            {
-                result.Append($"{typeof(SingleStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                result.Append($"{typeof(IncrementStorageCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isDefault)
-            {
-                result.Append($"{typeof(DefaultCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isAttachExternal || option.isDetachExternal)
-            {
-                result.Append($"{typeof(AttachDetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isAttachExternal)
-            {
-                result.Append($"{typeof(AttachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isDetachExternal)
-            {
-                result.Append($"{typeof(DetachExternalCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-
-            if (option.isSingle)
-            {
-                result.Append($"{typeof(SingleSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
-            }
-            else
-            {
-                if (option.sparseMode == TypeOptions.SparseMode.Bool || option.isEmpty)
-                {
-                    if (option.isMarker)
-                    {
-                        result.Append($"{typeof(NonSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
-                    }
-                    else
-                    {
-                        result.Append($"{typeof(BoolSparseCF<,>).GetNameWithoutGeneric()}<{layoutAC}>");
-                    }
-                }
-                else if (option.sparseMode == TypeOptions.SparseMode.Ushort)
-                {   
-                    result.Append($"{typeof(UshortSparseCF<,>).GetNameWithoutGeneric()} < {layoutAC}>");
-                }
-            }
-            
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isEmpty)
-            {
-                result.Append($"{typeof(EmptyCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            }
-            else
-            {
-                if (option.isSingle)
-                {
-                    result.Append(singleFeature);
-                }
-                else
-                {
-                    result.Append($"{typeof(UshortDenseCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
-                }
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isBindToEntity)
-            {
-                if (option.isMarker)
-                {
-                    result.Append(nameof(TempBinderToFiltersCF));
-                }
-                else
-                {
-                    result.Append(nameof(BinderToFiltersCF));
-                }
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isVersion)
-            {
-                if (option.isSingle)
-                {
-                    result.Append($"{typeof(UintVersionCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
-                }
-                else
-                {
-                    result.Append($"{typeof(UshortVersionCF<,,>).GetNameWithoutGeneric()}<{layoutASC}>");
-                }
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-            result.Append(",");
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            result.Append($"{typeof(BSerializeCF<,,,>).GetNameWithoutGeneric()}<{layoutASCD}>");
-            
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isRepairMemory)
-            {
-                result.Append($"{typeof(RepairMemoryCF<>).GetNameWithoutGeneric()}<{layoutC}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-
-            result.Append(",");
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            if (option.isRepairStateId)
-            {
-                result.Append($"{typeof(RepairStateIdCF<>).GetNameWithoutGeneric()}<{layoutC}>");
-            }
-            else
-            {
-                result.Append(nothingSCDTC);
-            }
-
-            result.Append(Environment.NewLine);
-            result.Append(extraSpace);
-            result.Append(">");
 
             return result;
         }
 
-        public static (string TAllocator, string TSparse, string TDenseIndex) GetLayoutDeclaration(in TypeOptions option)
+        private static void DeclarationToString(in GenericDeclaration declaration, int newLineDeep, bool isEnd, int deep, StringBuilder result)
         {
-            string TAllocator = string.Empty;
-            string TSparse = string.Empty;
-            string TDenseIndex = string.Empty;
-
-
-            switch (option.sparseMode)
+            result.Append(ReflectionUtils.GetNameWithoutGeneric(declaration.Type));
+            if (declaration.Generic.Count != 0)
             {
-                case TypeOptions.SparseMode.Bool:
+                result.Append('<');
+                if (deep <= newLineDeep)
+                {
+                    result.Append(Environment.NewLine);
+                }
+
+                for (int i = 0; i < declaration.Generic.Count; ++i)
+                {
+                    DeclarationToString(
+                        declaration.Generic[i],
+                        newLineDeep,
+                        i == declaration.Generic.Count - 1,
+                        deep + 1,
+                        result);
+
+                    if (deep <= newLineDeep)
                     {
-                        TSparse = "bool";
-                        if (option.isSingle || (option.isMarker && option.isEmpty))
-                        {
-                            TDenseIndex = "uint";
-                        }
-                        else
-                        {
-                            TDenseIndex = "ushort";
-                        }
-                        break;
+                        result.Append(Environment.NewLine);
                     }
-                case TypeOptions.SparseMode.Ushort:
-                    {
-                        TSparse = "ushort";
-                        TDenseIndex = "ushort";
-                        break;
-                    }
+                }
+                result.Append('>');
             }
 
-            if (option.isHistory)
+            if (!isEnd)
             {
-                TAllocator = nameof(HAllocator);
+                result.Append(',');
             }
-            else
-            {
-                TAllocator = nameof(BAllocator);
-            }
-
-            return (TAllocator, TSparse, TDenseIndex);
         }
+
+        private struct TComponent { }
     }
-
 }

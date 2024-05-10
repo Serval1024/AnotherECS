@@ -6,7 +6,6 @@ namespace AnotherECS.Core
     public interface IWorldStatus : IDisposable
     {
         uint Id { get; }
-        LiveState LiveState { get; }
         public uint CurrentTick { get; }
         public uint RequestTick { get; }
     }
@@ -19,6 +18,7 @@ namespace AnotherECS.Core
         void Destroy();
         void DispatchSignals();
         void UpdateFromMainThread();
+        void Wait();
     }
 
     public interface IWorldExtend : IWorldStatus, IWorldLiveLoop, IWorldCommunicate, IWorldExecute

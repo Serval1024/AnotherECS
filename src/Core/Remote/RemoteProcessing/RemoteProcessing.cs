@@ -125,7 +125,7 @@ namespace AnotherECS.Core.Remote
         {
             while (true)
             {
-                await Task.Delay(15);
+                await Task.Delay(30);
 
                 if (_taskDataResult.TryGetValue((uint)id, out var result))
                 {

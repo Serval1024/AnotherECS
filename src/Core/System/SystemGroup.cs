@@ -230,7 +230,7 @@ namespace AnotherECS.Core
             _systems.Insert(0, system);
         }
 
-        void IGroupSystemInternal.Sort()
+        void IGroupSystemInternal.Sort(ISystemRegister systemRegister)
         {
 #if !ANOTHERECS_RELEASE
             ThrowIfDisposed();
@@ -239,7 +239,7 @@ namespace AnotherECS.Core
             {
                 Init();
 
-                var order = SystemGlobalRegister.GetOrders();
+                var order = systemRegister.GetOrders();
                 _systems.Sort((p0, p1) =>
                      (order.TryGetValue(p0.GetType(), out var v0) && order.TryGetValue(p1.GetType(), out var v1))
                      ? (v0 - v1)
@@ -249,7 +249,7 @@ namespace AnotherECS.Core
                 {
                     if (_systems[i] is IGroupSystemInternal group)
                     {
-                        group.Sort();
+                        group.Sort(systemRegister);
                     }
                 }
             }

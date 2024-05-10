@@ -1,10 +1,9 @@
-﻿using AnotherECS.Core;
-using AnotherECS.Core.Allocators;
-using AnotherECS.Generator.Exceptions;
+﻿using AnotherECS.Core.Allocators;
+using AnotherECS.Core.Exceptions;
 using System;
 using System.Linq;
 
-namespace AnotherECS.Generator
+namespace AnotherECS.Core
 {
     internal struct TypeOptions
     {
@@ -47,6 +46,8 @@ namespace AnotherECS.Generator
         public bool isBindToEntity;
         public bool isDispose;
         public bool isConfig;
+
+        public bool IsUseComponentFunction => isInject || isRepairMemory || isRepairStateId;
 
         public TypeOptions(Type type)
         {

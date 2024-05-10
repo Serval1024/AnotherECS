@@ -20,7 +20,6 @@ namespace AnotherECS.Core.Remote
         public double Ping => _remote.GetPing();
         public bool IsHasWorldValid => World != null;
         public IWorldExtend World => _processing.GetWorld();
-        public LiveState WorldLiveState => World.LiveState;
 
 
         private readonly IRemoteProcessing _processing;

@@ -23,6 +23,16 @@ namespace AnotherECS.Core.Processing
         ISystem ISystemTaskHandler.AsSystem { get => System; }
     }
 
+    internal struct StateStartupTaskHandler : IStateTaskHandler
+    {
+        public State State { get; set; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            State.FirstStartup();
+        }
+    }
 
     internal struct StateTickStartTaskHandler : IStateTaskHandler
     {

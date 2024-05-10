@@ -8,7 +8,7 @@ namespace AnotherECS.Core
         bool IsHas(Type type);
         void Prepend(ISystem system);
         void Append(ISystem system);
-        void Sort();
+        void Sort(ISystemRegister systemRegister);
     }
 
     public interface IGroupSystem : IDisposable, ISystem, IEnumerable<ISystem>

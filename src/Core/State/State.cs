@@ -2,7 +2,6 @@
 using AnotherECS.Core.Caller;
 using AnotherECS.Core.Collection;
 using AnotherECS.Serializer;
-using Fusion;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -24,6 +23,10 @@ namespace AnotherECS.Core
         private const uint BASIC_ALLOCATOR_ID = 1;
         private const uint HISTORY_ALLOCATOR_STAGE0_ID = 2;
         private const uint HISTORY_ALLOCATOR_STAGE1_ID = 3;
+        #endregion
+
+        #region internal
+        internal bool IsCalledStartup => _isFirstStartup;
         #endregion
 
         #region data
@@ -296,7 +299,6 @@ namespace AnotherECS.Core
             if (!_isFirstStartup)
             {
                 _isFirstStartup = true;
-
                 CallAttach();
             }
         }
@@ -974,29 +976,35 @@ namespace AnotherECS.Core
         internal TModuleData GetModuleData<TModuleData>(uint id)
             where TModuleData : IModuleData
         {
-#if !ANOTHERECS_RELEASE
-            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
-            if (id >= _moduleDatas.Length || _moduleDatas[id] is not TModuleData)
+            lock (_moduleDatas)
             {
-                throw new ArgumentException(nameof(id));
-            }
+#if !ANOTHERECS_RELEASE
+                Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+                if (id >= _moduleDatas.Length || _moduleDatas[id] is not TModuleData)
+                {
+                    throw new ArgumentException(nameof(id));
+                }
 #endif
-            return (TModuleData)_moduleDatas[id];
+                return (TModuleData)_moduleDatas[id];
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SetModuleData<TModuleData>(uint id, TModuleData data)
             where TModuleData : IModuleData
         {
-#if !ANOTHERECS_RELEASE
-            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
-#endif
-            if (id >= _moduleDatas.Length)
+            lock (_moduleDatas)
             {
-                Array.Resize(ref _moduleDatas, (int)id + 1);
-            }
+#if !ANOTHERECS_RELEASE
+                Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+#endif
+                if (id >= _moduleDatas.Length)
+                {
+                    Array.Resize(ref _moduleDatas, (int)id + 1);
+                }
 
-            _moduleDatas[id] = data;
+                _moduleDatas[id] = data;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1155,12 +1163,21 @@ namespace AnotherECS.Core
             => _dependencies;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public uint GetEntityIdMax()
+        internal uint GetEntityIdMax()
         {
 #if !ANOTHERECS_RELEASE
             Exceptions.ExceptionHelper.ThrowIfDisposed(this);
 #endif
                 return _dependencies->entities.GetAllocated();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal SystemRegisters GetSystemData()
+        {
+#if !ANOTHERECS_RELEASE
+            Exceptions.ExceptionHelper.ThrowIfDisposed(this);
+#endif
+            return GetSystemRegisters();
         }
         #endregion
 
@@ -1347,7 +1364,15 @@ namespace AnotherECS.Core
             => _callerByType[type];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AddLayout<UCaller, TDense>(ComponentFunction<TDense> componentFunction = default)
+        internal void AddLayout<UCaller, TDense>()
+            where UCaller : struct, ICallerReference
+            where TDense : unmanaged
+        {
+            AddLayout<UCaller, TDense>(default);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AddLayout<UCaller, TDense>(ComponentFunction<TDense> componentFunction)
             where UCaller : struct, ICallerReference
             where TDense : unmanaged
         {
@@ -1416,9 +1441,16 @@ namespace AnotherECS.Core
         protected abstract ushort GetConfigIndex(Type type);
         protected abstract ushort GetSignalIndex<T>()
             where T : ISignal;
+        protected abstract SystemRegisters GetSystemRegisters();
         #endregion
 
         #region declarations
+        public struct SystemRegisters
+        {
+            public ISystemRegister register;
+            public ISystemAutoAttachRegister autoAttachRegister;
+        }
+
         private struct ResizableData
         {
             public uint callerIndex;

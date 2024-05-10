@@ -21,6 +21,8 @@ namespace AnotherECS.Core.Processing
     {
         void Prepare(State state, IEnumerable<ISystem> systemGroup);
 
+        void StateStartup();
+
         void StateTickStart();
         void StateTickFinished();
 

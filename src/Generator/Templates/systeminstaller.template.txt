@@ -21,11 +21,13 @@ namespace AnotherECS.Gen.Project
 
         private static void InstallInternal()
         {
+            var register = SystemGlobalRegister.Instance;
 <#ARRAY [0..SYSTEM:COUNT]#>
-            SystemGlobalRegister.Install<<#SYSTEM:NAME#>>(<#INDEX0#>, <#SYSTEM:INJECT_ATTRIBUTES#>);
+            register.Install<<#SYSTEM:NAME#>>(<#INDEX0#>, <#SYSTEM:INJECT_ATTRIBUTES#>);
 <#END#>
+            var autoRegister = SystemAutoAttachGlobalRegister.Instance;
 <#ARRAY [0..SYSTEM:AUTO_ATTACH:COUNT]#>
-            SystemAutoAttachGlobalRegister.Install<<#SYSTEM:AUTO_ATTACH:NAME#>>();
+            autoRegister.Install<<#SYSTEM:AUTO_ATTACH:NAME#>>();
 <#END#>
         }
     }

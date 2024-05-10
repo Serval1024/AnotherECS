@@ -15,6 +15,8 @@ namespace AnotherECS.Core.Processing
         private State _state;
         private TThreadScheduler _threadScheduler;
 
+        private Task _stateStartup;
+
         private Task _stateTickStart;
         private Task _stateTickFinished;
 
@@ -51,6 +53,8 @@ namespace AnotherECS.Core.Processing
             var systems = flatSystems.ToArray();
             _state = state;
 
+            _stateStartup = CreateTask(new StateStartupTaskHandler() { State = _state });
+
             _stateTickStart = CreateTask(new StateTickStartTaskHandler() { State = _state });
             _stateTickFinished = CreateTask(new StateTickFinishedTaskHandler() { State = _state });
 
@@ -75,6 +79,11 @@ namespace AnotherECS.Core.Processing
                 receivers = ProcessingUtils.ToReceivers(Filter<IReceiverSystem>(systems)),
                 events = _state?.GetEventCache(),
             });
+        }
+
+        public void StateStartup()
+        {
+            _threadScheduler.Run(_stateStartup);
         }
 
         public void StateTickStart()

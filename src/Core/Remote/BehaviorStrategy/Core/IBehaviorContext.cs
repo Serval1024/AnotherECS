@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
@@ -13,8 +12,7 @@ namespace AnotherECS.Core.Remote
         bool IsHasWorldValid { get; }
 
         IWorldExtend World { get; }
-        LiveState WorldLiveState { get; }
-
+        
         void SendState(StateRequest stateRequest);
         void SendState(Player player, SerializationLevel serializationLevel);
         Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);

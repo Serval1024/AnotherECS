@@ -3,20 +3,12 @@ using System.Collections.Generic;
 
 namespace AnotherECS.Core
 {
-    public static class SystemGlobalRegister
+    public class SystemRegister : ISystemRegister
     {
-        private static readonly Dictionary<Type, int> _orders = new();
-        private static readonly Dictionary<Type, InjectData> _injects = new();
+        private readonly Dictionary<Type, int> _orders = new();
+        private readonly Dictionary<Type, InjectData> _injects = new();
 
-#if UNITY_EDITOR
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ReloadDomainOptimizationHack()
-        {
-            _injects.Clear();
-        }
-#endif
-
-        public static void Install<T>(int order, string[] memberNameInjectAttributes = null)
+        public void Install<T>(int order, string[] memberNameInjectAttributes = null)
             where T : ISystem
         {
             lock (_orders)
@@ -35,14 +27,14 @@ namespace AnotherECS.Core
             }
         }
 
-        public static Dictionary<Type, int> GetOrders()
+        public Dictionary<Type, int> GetOrders()
         {
             lock (_orders)
             {
                 return _orders;
             }
         }
-        public static Dictionary<Type, InjectData> GetInjects()
+        public Dictionary<Type, InjectData> GetInjects()
         {
             lock (_injects)
             {

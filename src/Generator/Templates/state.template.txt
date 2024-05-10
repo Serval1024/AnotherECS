@@ -51,10 +51,17 @@ namespace AnotherECS.Gen.Project
             => CompileConfigIdProvider<<#STATE:GEN_NAME#>, T>.ID;
 
         protected override ushort GetConfigIndex(Type type)
-            => CompileConfigIdStaticProvider<<#STATE:GEN_NAME#>>.converter.TypeToId(type);
+            => CompileConfigIdStaticProvider<<#STATE:GEN_NAME#>>.Instance.TypeToId(type);
 
         protected override ushort GetSignalIndex<T>()
             => CompileSignalIdProvider<StateCompile, T>.ID;
+
+        internal override SystemRegisters GetSystemRegisters()
+            => new() 
+            {
+                register = SystemGlobalRegister.Instance, 
+                autoAttachRegister = SystemAutoAttachGlobalRegister.Instance,
+            };
 
         public struct FastAccess
         {
