@@ -311,6 +311,9 @@ namespace AnotherECS.Core
 
         public void Wait()
         {
+#if !ANOTHERECS_RELEASE
+            ExceptionHelper.ThrowIfDisposed(this);
+#endif
             if (!_isInit || _state == null)
             {
                 return;
