@@ -311,9 +311,11 @@ namespace AnotherECS.Core
 
         public void Wait()
         {
-#if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfWorldInvalid(this, _isInit, IsStartup);
-#endif
+            if (!_isInit || _state == null)
+            {
+                return;
+            }
+
             _loopProcessing.Wait();
         }
 
