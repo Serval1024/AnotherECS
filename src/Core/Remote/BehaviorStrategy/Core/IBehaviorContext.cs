@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using AnotherECS.SyncTask;
 
 namespace AnotherECS.Core.Remote
 {
@@ -15,7 +15,7 @@ namespace AnotherECS.Core.Remote
         
         void SendState(StateRequest stateRequest);
         void SendState(Player player, SerializationLevel serializationLevel);
-        Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
+        STask<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
         void ApplyWorldData(WorldData data);
         void Disconnect();
     }
@@ -30,9 +30,9 @@ namespace AnotherECS.Core.Remote
 
     public enum SerializationLevel : byte
     {
-        None,
-        StateData,
-        StateDataAndConfig,
-        World,
+        None = 0,
+        Data,
+        DataAndConfig,
+        DataAndConfigAndSystems,
     }
 }

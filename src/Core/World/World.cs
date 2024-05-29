@@ -1,20 +1,18 @@
 ﻿using AnotherECS.Core.Exceptions;
 using AnotherECS.Core.Processing;
-using AnotherECS.Serializer;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AnotherECS.Unity.Debug.Diagnostic")]
 namespace AnotherECS.Core
 {
-    public class World : BDisposable, IWorldExtend, IWorldLiveLoop, ISerialize, ISerializeConstructor
+    public class World : BDisposable, IWorldExtend, IWorldLiveLoop
     {
         public string Name { get; set; }
         public uint Id { get; private set; }
-        public uint CurrentTick => _state == null ? 0 : _state.Tick;
         public uint RequestTick { get; private set; }
+        public uint CurrentTick => _worldData.CurrentTick;
 
         public State State
         { 
@@ -23,37 +21,67 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
                 ExceptionHelper.ThrowIfDisposed(this);
 #endif
-                return _state;
+                return _worldData.State;
             }
             set
             {
 #if !ANOTHERECS_RELEASE
                 ExceptionHelper.ThrowIfDisposed(this);
 #endif
-                if (_state != value)
+                if (_worldData.State != value)
                 {
-                    SetState(value);
+                    TryDisposeState();
+                    _worldData.State = value;
+                    TryApplyState();
                 }
             }
         }
 
-        private readonly bool _isOneGateAutoAttach;
-        private bool _isOneGateCallCreate = true;
-        private bool _isOneGateCallDestroy = true;
+        public WorldData WorldData
+        {
+            get
+            {
+#if !ANOTHERECS_RELEASE
+                ExceptionHelper.ThrowIfDisposed(this);
+#endif
+                return _worldData;
+            }
+            set
+            {
+#if !ANOTHERECS_RELEASE
+                ExceptionHelper.ThrowIfDisposed(this);
+#endif
+                if (_worldData != value)
+                {
+                    TryDisposeWorldData();
+                    _worldData = value;
 
-        private readonly List<SignalCallback> _signalBuffer = new();
-        private readonly Dictionary<Type, List<ISignalReceiver>> _signalReceivers = new();
+                    if (_isInit)
+                    {
+                        TryApplyWorldData();
+                    }
+                }
+            }
+        }
 
-        private IGroupSystemInternal _systems;
-        private readonly LoopProcessing _loopProcessing;
-        private State _state;
-        private ISystem[] _flatSystemsCache;
+
         private bool _isInit;
-        private bool IsStartup => _state != null && _state.IsCalledStartup;
+
+        
+
+        private WorldData _worldData;
+        private ISystem[] _flatSystemsCache;
+        private readonly LoopProcessing _loopProcessing;
+        private readonly WorldSignals _signals;
+
+        private bool IsStartup => _worldData.State != null && _worldData.State.IsCalledStartup;
 
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
         private IWorldStatistic _statistic;
 #endif
+
+        public World(WorldThreadingLevel threadingLevel = WorldThreadingLevel.MainThreadOnly)
+            : this(new SystemGroup(), null, SystemProcessingFactory.Create(threadingLevel)) { }
 
         public World(ISystem system, WorldThreadingLevel threadingLevel = WorldThreadingLevel.MainThreadOnly)
             : this(new SystemGroup(system), null, SystemProcessingFactory.Create(threadingLevel)) { }
@@ -69,21 +97,9 @@ namespace AnotherECS.Core
 
         public World(IEnumerable<ISystem> systems, State state, ISystemProcessing systemProcessing = default)
         {
-            _systems = new SystemGroup(
-                systems ?? throw new ArgumentNullException(nameof(systems))
-            );
-
+            _worldData = new WorldData(systems, state);
             _loopProcessing = new LoopProcessing(systemProcessing);
-            _isOneGateAutoAttach = true;
-            _state = state;
-        }
-
-        public World(ref ReaderContextSerializer reader)
-        {
-            _loopProcessing = new LoopProcessing(reader.Dependency.Resolve<ISystemProcessing>());
-            _isOneGateAutoAttach = false;
-
-            Unpack(ref reader);
+            _signals = WorldSignals.Create();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,12 +108,12 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
-            if (_state == null)
+            if (_worldData.IsEmpty)
             {
                 throw new NullReferenceException($"Set state first.");
             }
 #endif
-            return _state.IsHasConfig<T>();
+            return _worldData.State.IsHasConfig<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -106,12 +122,12 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
-            if (_state == null)
+            if (_worldData.IsEmpty)
             {
                 throw new NullReferenceException($"Set state first.");
             }
 #endif
-            _state.AddConfig(data);
+            _worldData.State.AddConfig(data);
             return this;
         }
 
@@ -121,12 +137,12 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
-            if (_state == null)
+            if (_worldData.IsEmpty)
             {
                 throw new NullReferenceException($"Set state first.");
             }
 #endif
-            _state.SetOrAddConfig(data);
+            _worldData.State.SetOrAddConfig(data);
             return this;
         }
 
@@ -139,7 +155,7 @@ namespace AnotherECS.Core
                 throw new InvalidOperationException($"The world has already been initialized.");
             }
 
-            if (_state == null)
+            if (_worldData.IsEmpty)
             {
                 throw new InvalidOperationException($"The state is not assigned.");
             }
@@ -150,7 +166,7 @@ namespace AnotherECS.Core
         public void Startup()
         {
             ExceptionHelper.ThrowIfWorldRaw(this, _isInit);
-            if (_state == null)
+            if (_worldData.IsEmpty)
             {
                 throw new InvalidOperationException($"The state not assigned.");
             }
@@ -168,14 +184,14 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldInvalid(this, _isInit, IsStartup);
 #endif
-            if (_isOneGateCallCreate)
+            if (_worldData.IsOneGateCallCreate)
             {
-                _isOneGateCallCreate = false;
+                _worldData.IsOneGateCallCreate = false;
                 _loopProcessing.Create();
             }
 
 #if !ANOTHERECS_HISTORY_DISABLE
-            uint revertTick = _loopProcessing.TryRevertTo(RequestTick, _state.GetNextTickForEvent());
+            uint revertTick = _loopProcessing.TryRevertTo(RequestTick, _worldData.State.GetNextTickForEvent());
 #else 
             const uint revertTick = 0;
 #endif
@@ -201,34 +217,7 @@ namespace AnotherECS.Core
 
         public void DispatchSignals()
         {
-            _state.FlushSignalCache(_signalBuffer);
-            for(int i = 0; i < _signalBuffer.Count; ++i)
-            {
-                if (_signalReceivers.TryGetValue(_signalBuffer[i].Signal.GetType(), out var receivers))
-                {
-                    for(int j = 0; j < receivers.Count; ++j)
-                    {
-                        switch (_signalBuffer[i].Command)
-                        {
-                            case SignalCallback.CommandType.Fire:
-                                {
-                                    receivers[j].OnFire(_signalBuffer[i].Signal);
-                                    break;
-                                }
-                            case SignalCallback.CommandType.Cancel:
-                                {
-                                    receivers[j].OnCancel(_signalBuffer[i].Signal);
-                                    break;
-                                }
-                            case SignalCallback.CommandType.LeaveBuffer:
-                                {
-                                    receivers[j].OnLeaveHistoryBuffer(_signalBuffer[i].Signal);
-                                    break;
-                                }
-                        }
-                    }
-                }
-            }
+            _signals.DispatchSignals(ref _worldData);
         }
 
         public void RevertTo(uint tick)
@@ -240,12 +229,12 @@ namespace AnotherECS.Core
         {
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldInvalid(this, _isInit, IsStartup);
-            if (!_isOneGateCallDestroy)
+            if (!_worldData.IsOneGateCallDestroy)
             {
                 throw new InvalidOperationException($"The world has already been destroy.");
             }
 #endif
-            _isOneGateCallDestroy = false;
+            _worldData.IsOneGateCallDestroy = false;
             _loopProcessing.Destroy();
         }
 
@@ -262,7 +251,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldInvalid(this, _isInit, IsStartup);
 #endif
-            _state.Send(@event);
+            _worldData.State.Send(@event);
         }
 
         public void SendEvent(ITickEvent @event)
@@ -270,7 +259,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfWorldInvalid(this, _isInit, IsStartup);
 #endif
-            _state.Send(@event);
+            _worldData.State.Send(@event);
         }
 
         public void AddSignal<TSignal>(ISignalReceiver<TSignal> receiver)
@@ -279,14 +268,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (_signalReceivers.TryGetValue(typeof(TSignal), out List<ISignalReceiver> signalReceivers))
-            {
-                signalReceivers.Add(receiver);
-            }
-            else
-            {
-                _signalReceivers[typeof(TSignal)] = new() { receiver };
-            }
+            _signals.AddSignal(receiver);
         }
 
         public void RemoveSignal<TSignal>(ISignalReceiver<TSignal> receiver)
@@ -295,10 +277,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (_signalReceivers.TryGetValue(typeof(TSignal), out List<ISignalReceiver> signalReceivers))
-            {
-                signalReceivers.Remove(receiver);
-            }
+            _signals.RemoveSignal(receiver);
         }
 
         public bool IsBusy()
@@ -314,7 +293,7 @@ namespace AnotherECS.Core
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfDisposed(this);
 #endif
-            if (!_isInit || _state == null)
+            if (!_isInit || _worldData.IsEmpty)
             {
                 return;
             }
@@ -324,12 +303,12 @@ namespace AnotherECS.Core
 
         public TModuleData GetModuleData<TModuleData>(uint id)
             where TModuleData : IModuleData
-            => _state.GetModuleData<TModuleData>(id);
+            => _worldData.State.GetModuleData<TModuleData>(id);
 
         public void SetModuleData<TModuleData>(uint id, TModuleData data)
             where TModuleData : IModuleData
         {
-            _state.SetModuleData(id, data);
+            _worldData.State.SetModuleData(id, data);
         }
 
         public WorldStatisticData GetStatistic()
@@ -339,30 +318,10 @@ namespace AnotherECS.Core
             => default;
 #endif
 
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            writer.Write(_isOneGateCallCreate);
-            writer.Write(_isOneGateCallDestroy);
-
-            writer.Pack(_systems);
-            writer.Pack(Name);
-            writer.Pack(_state);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            _isOneGateCallCreate = reader.ReadBoolean();
-            _isOneGateCallDestroy = reader.ReadBoolean();
-
-            _systems = reader.Unpack<SystemGroup>();
-            Name = reader.Unpack<string>();
-            _state = reader.Unpack<State>();
-        }
-
         public void Run(RunTaskHandler runTaskHandler)
         {
 #if !ANOTHERECS_RELEASE
-            ExceptionHelper.ThrowIfWorldRaw(this, _isInit);
+            ExceptionHelper.ThrowIfDisposed(this);
 #endif
             _loopProcessing.Run(runTaskHandler);
         }
@@ -372,11 +331,9 @@ namespace AnotherECS.Core
             if (_isInit)
             {
                 _loopProcessing.Dispose();  //with waiting work threads.
-
-                _systems.Dispose();
-                _state.Dispose();
+                _worldData.Dispose();
+                
                 WorldGlobalRegister.Unregister((ushort)Id);
-
             }
         }
 
@@ -384,81 +341,60 @@ namespace AnotherECS.Core
         {
             Id = WorldGlobalRegister.Register(this);
 
+            TryApplyWorldData();
+            _isInit = true;
+        }
+
+        private void TryDisposeWorldData()
+        {
+            TryDisposeState();
+        }
+
+        private void TryApplyWorldData()
+        {
             AutoAttachSystems();
             FlattenSystems();
 
-            ApplyState();
+            TryApplyState();
             RequestTick = CurrentTick;
-
-            _isInit = true;
         }
 
         private void AutoAttachSystems()
         {
-            if (_isOneGateAutoAttach)
-            {
-                foreach (var system in State.GetSystemData().autoAttachRegister.Gets())
-                {
-                    _systems.Prepend((ISystem)Activator.CreateInstance(system));
-                }
-            }
+            WorldHelper.AutoAttachSystems(ref _worldData);
         }
 
         private void FlattenSystems()
         {
-#if !ANOTHERECS_RELEASE
-            var container = new WorldDIContainer(_state);
-#else
-            var container = new WorldDIContainer(_state, SystemGlobalRegister.GetInjects());
-#endif
-            var systemRegister = State.GetSystemData().register;
-
-            _systems.Sort(systemRegister);
-            var context = new InstallContext(this);
-            container.Inject(_systems.GetSystemsAll());
-
-            _systems.Install(ref context);
-            if (context.IsAny())
-            {
-                _systems.Append(context.GetSystemGroup());
-                _systems.Sort(systemRegister);
-            }
-            var systems = _systems.GetSystemsAll().ToArray();
-            container.Inject(systems);
-
-            _flatSystemsCache = systems;
+            _flatSystemsCache = WorldHelper.FlattenSystems(this);
         }
 
-        private void SetState(State state)
+        private void TryDisposeState()
         {
-            if (_state != null)
+            if (!_worldData.IsEmpty)
             {
                 _loopProcessing.BreakAndWait();
                 _loopProcessing.DetachToStateModule();
                 _loopProcessing.Wait();
 
-                _state.Dispose();
-                _state = null;
+                _worldData.State.Dispose();
+                _worldData.State = null;
             }
-
-            _state = state;
-
-            ApplyState();
         }
 
-        private void ApplyState()
+        private void TryApplyState()
         {
-            if (_state != null)
+            if (!_worldData.IsEmpty)
             {
                 _loopProcessing.Wait();
 
 #if !ANOTHERECS_RELEASE || ANOTHERECS_STATISTIC
                 _statistic = new Debug.Diagnostic.WorldStatistic();
                 _statistic.Construct(this);
-                _statistic.UpdateSystemGraph(_systems);
+                _statistic.UpdateSystemGraph(_worldData.Systems);
                 _loopProcessing.SystemProcessing.SetStatistic(_statistic);
 #endif
-                _loopProcessing.Prepare(_state, _flatSystemsCache);
+                _loopProcessing.Prepare(_worldData.State, _flatSystemsCache);
                 _loopProcessing.AttachToStateModule();
             }
         }

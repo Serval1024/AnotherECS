@@ -4,7 +4,7 @@ namespace AnotherECS.Core
 {
     internal struct ParameterData
     {
-        private const char _RULE_SEPARATOR = '=';
+        private const char RULE_SEPARATOR = '=';
 
         public Type type;
         public InjectMapAttribute[] maps;
@@ -28,7 +28,7 @@ namespace AnotherECS.Core
                 return true;
             }
 
-            var split = map.Rule.Split(_RULE_SEPARATOR);
+            var split = map.Rule.Split(RULE_SEPARATOR);
             if (context.variables.TryGetValue(split[0].Trim(), out object value))
             {
                 return split[1].Trim() == value.ToString();

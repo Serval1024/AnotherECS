@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AnotherECS.SyncTask;
+using System;
 
 namespace AnotherECS.Core.Remote
 {
@@ -13,7 +14,10 @@ namespace AnotherECS.Core.Remote
         private readonly Lazy<WorldData> _initStateForMasterClient;
         private readonly SerializationLevel _serializationLevel;
 
-        public AutoSyncWorldByMasterStrategy(Lazy<WorldData> initStateForMasterClient = null, SerializationLevel serializationLevel = SerializationLevel.World)
+        public AutoSyncWorldByMasterStrategy(Func<WorldData> initStateForMasterClient = null, SerializationLevel serializationLevel = SerializationLevel.DataAndConfigAndSystems)
+            : this(new Lazy<WorldData>(initStateForMasterClient), serializationLevel) { }
+
+        public AutoSyncWorldByMasterStrategy(Lazy<WorldData> initStateForMasterClient = null, SerializationLevel serializationLevel = SerializationLevel.DataAndConfigAndSystems)
         {
             _initStateForMasterClient = initStateForMasterClient;
             _serializationLevel = serializationLevel;
@@ -21,7 +25,7 @@ namespace AnotherECS.Core.Remote
 
         public void OnPlayerConnected(IBehaviorContext context, Player player)
         {
-            if (player.IsLocal)     // If Master create new world.
+            if (player.IsLocal)     // If Master => create new world.
             {
                 if (context.LocalPlayer.Role == ClientRole.Master)
                 {
@@ -40,7 +44,7 @@ namespace AnotherECS.Core.Remote
                     }
                 }
             }
-            else     // If Client request world from Master.
+            else     // If Client => request world from Master.
             {
                 if (context.LocalPlayer.Role == ClientRole.Client && player.Role == ClientRole.Master)
                 {
@@ -80,8 +84,8 @@ namespace AnotherECS.Core.Remote
                 _isOneGateRequestState = true;
                 
                 context.RequestState(player, _serializationLevel)
-                    .Timeout(RequestStateTimeout)
-                    .ContinueWith(p =>
+                    //.Timeout(RequestStateTimeout)
+                    .ContinueWithMainThread(p =>
                     {
                         if (p.IsFaulted)
                         {

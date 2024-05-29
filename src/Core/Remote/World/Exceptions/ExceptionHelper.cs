@@ -4,7 +4,7 @@ namespace AnotherECS.Core.Remote.Exceptions
 {
     internal static class ExceptionHelper
     {
-        public static void ThrowIfWorldInvalid(IWorldComposite world)
+        public static void ThrowIfWorldInvalid(IWorldInner world)
         {
             if (world == null || world.InnerWorld == null)
             {

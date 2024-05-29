@@ -50,7 +50,7 @@ namespace AnotherECS.Serializer
                     return (T)dependency;
                 }
             }
-            throw new ArgumentException("Dependency not found.");
+            throw new ArgumentException($"Dependency not found: '{typeof(T)}'.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

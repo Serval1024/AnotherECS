@@ -128,7 +128,9 @@ namespace AnotherECS.Serializer
                 if (typeof(ISerializeConstructor).IsAssignableFrom(type))
                 {
                     var args = _typeArrayPool.Get(reader, constructArgs);
-                    return Activator.CreateInstance(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, args, null) as ISerialize;
+                    var inst = Activator.CreateInstance(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, args, null) as ISerialize;
+                    reader = (ReaderContextSerializer)args[0];
+                    return inst;
                 }
                 else
                 {

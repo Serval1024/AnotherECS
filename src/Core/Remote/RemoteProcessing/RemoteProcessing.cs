@@ -1,10 +1,9 @@
 ﻿using AnotherECS.Core.Exceptions;
 using AnotherECS.Core.Remote.Exceptions;
 using AnotherECS.Serializer;
+using AnotherECS.SyncTask;
 using System;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
@@ -14,11 +13,10 @@ namespace AnotherECS.Core.Remote
         private readonly ISerializer _serializer;
         private readonly IRemoteSyncStrategy _remoteSyncStrategy;
 
-        private IWorldComposite _world;
-        private BehaviorContext _context;
+        private IWorldInner _world;
+        private readonly BehaviorContext _context;
 
-        private uint _idCounter;
-        private readonly ConcurrentDictionary<uint, object> _taskDataResult = new();
+        private readonly RemoteMessageManager _requestTaskManager;
 
         public RemoteProcessing(IRemoteProvider remoteProvider, IRemoteSyncStrategy remoteSyncStrategy)
             : this(remoteProvider, remoteSyncStrategy, new DefaultSerializer()) { }
@@ -30,22 +28,39 @@ namespace AnotherECS.Core.Remote
             _remoteSyncStrategy = remoteSyncStrategy;
 
             _context = new BehaviorContext(this, _remoteProvider);
+            _requestTaskManager = new(OnProcessingMessage);
+
 
             remoteProvider.ReceiveBytes += OnReceiveOtherBytes;
             remoteProvider.ConnectPlayer += OnConnectPlayer;
             remoteProvider.DisconnectPlayer += OnDisconnectPlayer;
         }
 
-        public void Construct(IWorldComposite world)
+        private object OnProcessingMessage(object result)
+        {
+            return result switch
+            {
+                RequestStateResult requestStaterResult => requestStaterResult,
+                RejectRequestStateResult => throw new RejectRequestStateException(),
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        public void Construct(IWorldInner world)
         {
             _world = world;
         }
 
-        public Task<ConnectResult> Connect()
-            => _remoteProvider.Connect();
+        public void Update()
+        {
+            _requestTaskManager.Update();
+        }
 
-        public Task Disconnect()
-            => _remoteProvider.Disconnect();
+        public STask<ConnectResult> Connect()
+            => _requestTaskManager.ToSTask(_remoteProvider.Connect());
+
+        public STask Disconnect()
+            => _requestTaskManager.ToSTask(_remoteProvider.Disconnect());
 
         public void SendOtherEvent(ITickEvent data)
         {
@@ -57,97 +72,84 @@ namespace AnotherECS.Core.Remote
             var player = _remoteProvider.GetPlayer(stateRequest.PlayerId);
             if (player != default)
             {
-                SendState(player, _world.State, stateRequest.MessageId, stateRequest.SerializationLevel);
+                SendState(player, GetWorldState(stateRequest.SerializationLevel), stateRequest.MessageId, stateRequest.SerializationLevel);
             }
         }
 
         public void SendState(Player target, SerializationLevel serializationLevel)
         {
-            if (serializationLevel == SerializationLevel.World)
-            {
-                SendState(target, _world.State, 0, serializationLevel);
-            }
-            else
-            {
-                SendState(target, _world, 0, serializationLevel);
-            }
+            SendState(target, GetWorldState(serializationLevel), 0, serializationLevel);
         }
 
-        private void SendState(Player target, object data, uint messageId, SerializationLevel serializationLevel)
+        private WorldData GetWorldState(SerializationLevel serializationLevel)
+            => (serializationLevel == SerializationLevel.DataAndConfigAndSystems)
+                ? new WorldData(_world.InnerWorld.WorldData.Systems, _world.InnerWorld.WorldData.State)
+                : new WorldData(null, _world.InnerWorld.WorldData.State);
+
+        private void SendState(Player target, WorldData data, uint messageId, SerializationLevel serializationLevel)
         {
             _world.Run(new Processing.RunTaskHandler()
             {
                 Data = data,
-                Handler = p => _serializer.Pack(new StateRespond(messageId, p, serializationLevel), RemoteProcessingHelper.GetDependencySerializer(serializationLevel)),
-                Completed = p => OnPackCompleted(p, target)
+                Handler = p => _serializer.Pack(new StateRespond(messageId, (WorldData)p, serializationLevel), RemoteProcessingHelper.GetDependencySerializer(serializationLevel)),
+                Completed = p => OnPackCompleted((byte[])p.Result, target)
             });
         }
 
         public void SendRejectState(StateRequest stateRequest)
         {
-            var bytes = _serializer.Pack(new StateRespond(stateRequest.MessageId, null, SerializationLevel.None));
-
-            _remoteProvider.Send(_remoteProvider.GetPlayer(stateRequest.PlayerId), bytes);
-        }
-
-
-        private void OnPackCompleted(Processing.RunTaskHandler runTaskHandler, Player target)
-        {
-            _remoteProvider.Send(target, (byte[])runTaskHandler.Result);
+            _remoteProvider.Send(
+                _remoteProvider.GetPlayer(stateRequest.PlayerId),
+                _serializer.Pack(new StateRespond(stateRequest.MessageId, default, SerializationLevel.None))
+                );
         }
 
         public void Send(Player target, object data)
         {
-            var bytes = _serializer.Pack(data);
-            _remoteProvider.Send(target, bytes);
+            _remoteProvider.Send(
+                target,
+                _serializer.Pack(data)
+                );
         }
 
         public void SendOther(object data)
         {
-            var bytes = _serializer.Pack(data);
-            _remoteProvider.SendOther(bytes);
+            _remoteProvider.SendOther(_serializer.Pack(data));
         }
 
-        public Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel)
+        public STask<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel)
         {
-            var id = unchecked(++_idCounter);
+            var messageToken = _requestTaskManager.BeginMessage<RequestStateResult>();
+
             Send(target, new StateRequest()
             {
                 PlayerId = _remoteProvider.GetLocalPlayer().Id,
-                MessageId = id,
+                MessageId = messageToken.id,
                 SerializationLevel = serializationLevel
             });
 
-            return TaskExtensions.Run(RequestStateResultTask, id);
-        }
-
-        private async Task<RequestStateResult> RequestStateResultTask(object id)
-        {
-            while (true)
-            {
-                await Task.Delay(30);
-
-                if (_taskDataResult.TryGetValue((uint)id, out var result))
-                {
-                    return result switch
-                    {
-                        RequestStateResult requestStaterResult => requestStaterResult,
-                        RejectRequestStateResult => throw new RejectRequestStateException(),
-                        _ => throw new InvalidOperationException(),
-                    };
-                }
-            }
-            throw new InvalidOperationException();
+            return messageToken.task;
         }
 
         public void ApplyState(State state)
         {
-            _world.State = state;
+            var wd = _world.InnerWorld.WorldData;
+            wd.State = state;
+            _world.InnerWorld.WorldData = wd;
         }
 
-        public void ApplyWorld(IWorldExtend world)
+        public void ApplyWorldData(WorldData worldData)
         {
-            _world.InnerWorld = world;
+            if (worldData.Type == WorldData.DataType.SystemAndState)
+            {
+                _world.InnerWorld.WorldData = new Core.WorldData(worldData.Systems, worldData.State);
+            }
+            else
+            {
+                var wd = _world.InnerWorld.WorldData;
+                wd.State = worldData.State;
+                _world.InnerWorld.WorldData = wd;
+            }
         }
 
         public void Receive(Player sender, byte[] bytes)
@@ -172,13 +174,23 @@ namespace AnotherECS.Core.Remote
             => _world.InnerWorld;
 
         public uint GetEventTickСorrection(uint tick)
-            => _remoteSyncStrategy.OnGetEventTickСorrection(tick);
+        {
+            var correctionTick = _remoteSyncStrategy.OnGetEventTickСorrection(tick);
+            return correctionTick < 1 ? 1 : correctionTick;
+        }
 
         public void Dispose()
         {
+            _requestTaskManager.Dispose();
+
             _remoteProvider.ReceiveBytes -= OnReceiveOtherBytes;
             _remoteProvider.ConnectPlayer -= OnConnectPlayer;
             _remoteProvider.DisconnectPlayer -= OnDisconnectPlayer;
+        }
+
+        private void OnPackCompleted(byte[] bytes, Player target)
+        {
+            _remoteProvider.Send(target, bytes);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -229,19 +241,15 @@ namespace AnotherECS.Core.Remote
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReceiveState(Player sender, StateRespond data)
         {
-            if (data.Data != null && data.SerializationLevel != SerializationLevel.None)
+            if (data.Data.State != null && data.SerializationLevel != SerializationLevel.None)
             {
-                var result = new RequestStateResult(new(new WorldData(data.Data), data.SerializationLevel));
-                _taskDataResult.AddOrUpdate(data.MessageId, result, (k, v) => result);
-
+                var result = new RequestStateResult(new(data.Data, data.SerializationLevel));
+                _requestTaskManager.EndMessage(data.MessageId, result);
                 _remoteSyncStrategy.OnReceiveState(_context, sender, result);
             }
             else
             {
-                _taskDataResult.AddOrUpdate(
-                    data.MessageId, 
-                    new RejectRequestStateResult(),
-                    (k, v) => new RejectRequestStateResult());
+                _requestTaskManager.EndMessage(data.MessageId, new RejectRequestStateResult());
             }
         }
 
@@ -273,13 +281,15 @@ namespace AnotherECS.Core.Remote
             Receive(sender, bytes);
         }
 
+   
         private struct StateRespond : ISerialize
         {
             public uint MessageId;
-            public object Data;
+
+            public WorldData Data;
             public SerializationLevel SerializationLevel;
 
-            public StateRespond(uint messageId, object data, SerializationLevel serializationLevel)
+            public StateRespond(uint messageId, WorldData data, SerializationLevel serializationLevel)
             {
                 MessageId = messageId;
                 Data = data;
@@ -290,37 +300,15 @@ namespace AnotherECS.Core.Remote
             {
                 writer.Write(MessageId);
                 writer.Write(SerializationLevel);
-                writer.Pack(Data);
+                Data.Pack(ref writer);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
                 MessageId = reader.ReadUInt32();
                 SerializationLevel = reader.ReadEnum<SerializationLevel>();
-                Data = reader.Unpack<State>();
+                Data.Unpack(ref reader);
             }
-        }
-    }
-
-    public struct StateRequest : ISerialize
-    {
-        public long PlayerId;
-        public SerializationLevel SerializationLevel;
-
-        internal uint MessageId;
-
-        public void Pack(ref WriterContextSerializer writer)
-        {
-            writer.Write(MessageId);
-            writer.Write(PlayerId);
-            writer.Write(SerializationLevel);
-        }
-
-        public void Unpack(ref ReaderContextSerializer reader)
-        {
-            MessageId = reader.ReadUInt32();
-            PlayerId = reader.ReadInt64();
-            SerializationLevel = reader.ReadEnum<SerializationLevel>();
         }
     }
 }

@@ -1,25 +1,26 @@
 ﻿using System;
-using System.Threading.Tasks;
+using AnotherECS.SyncTask;
 
 namespace AnotherECS.Core.Remote
 {
     public interface IRemoteProcessing : IDisposable
     {
-        void Construct(IWorldComposite world);
+        void Construct(IWorldInner world);
+        void Update();
+
         void SendOtherEvent(ITickEvent data);
         void Send(Player target, object data);
 
-        Task<ConnectResult> Connect();
-        Task Disconnect();
+        STask<ConnectResult> Connect();
+        STask Disconnect();
 
         void SendState(StateRequest stateRequest);
         void SendState(Player target, SerializationLevel serializationLevel);
         void SendRejectState(StateRequest stateRequest);
-        Task<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
+        STask<RequestStateResult> RequestState(Player target, SerializationLevel serializationLevel);
 
         IWorldExtend GetWorld();
-        void ApplyWorld(IWorldExtend world);
-        void ApplyState(State state);
+        void ApplyWorldData(WorldData worldData);
 
         Player GetLocalPlayer();
         double GetGlobalTime();

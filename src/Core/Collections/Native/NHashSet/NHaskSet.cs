@@ -17,8 +17,8 @@ namespace AnotherECS.Core.Collection
         where TValue : unmanaged, IEquatable<TValue>
         where THashProvider : struct, IHashProvider<TValue, uint>
     {
-        private const uint _EMPTY = 0x8000_0000;
-        private const uint _MASK = 0x7FFFFFFF;
+        private const uint EMPTY = 0x8000_0000;
+        private const uint MASK = 0x7FFFFFFF;
 
         private NArray<TAllocator, int> _buckets;
         private NArray<TAllocator, Slot> _slots;
@@ -112,7 +112,7 @@ namespace AnotherECS.Core.Collection
 #if !ANOTHERECS_RELEASE
             ExceptionHelper.ThrowIfBroken(this);
 #endif
-            var hashCode = _hashProvider.GetHash(ref item) & _MASK;
+            var hashCode = _hashProvider.GetHash(ref item) & MASK;
             
             for (int i = _buckets.Read(hashCode % _buckets.Length) - 1; i >= 0; i = _slots.ReadRef(i).next)
             {
@@ -137,7 +137,7 @@ namespace AnotherECS.Core.Collection
             _slots.Dirty();
             _buckets.Dirty();
 
-            var hashCode = _hashProvider.GetHash(ref item) & _MASK;
+            var hashCode = _hashProvider.GetHash(ref item) & MASK;
             uint bucketId = hashCode % _buckets.Length;
 
             int index;
@@ -189,7 +189,7 @@ namespace AnotherECS.Core.Collection
                         _slots.ReadRef(lastId).next = _slots.ReadRef(i).next;
                     }
                     ref var slot = ref _slots.ReadRef(i);
-                    slot.hashCode = _EMPTY;
+                    slot.hashCode = EMPTY;
                     slot.item = default;
                     slot.next = _freeList;
 
@@ -315,7 +315,7 @@ namespace AnotherECS.Core.Collection
             int counterIndex = 0;
             while (counterIndex < _lastIndex)
             {
-                if (_slots.ReadRef(counterIndex).hashCode < _EMPTY)
+                if (_slots.ReadRef(counterIndex).hashCode < EMPTY)
                 {
                     if (counterIndex == index)
                     {
@@ -340,7 +340,7 @@ namespace AnotherECS.Core.Collection
             int counterIndex = 0;
             while (counterIndex < _lastIndex)
             {
-                if (_slots.ReadRef(counterIndex).hashCode < _EMPTY)
+                if (_slots.ReadRef(counterIndex).hashCode < EMPTY)
                 {
                     if (counterIndex == index)
                     {
@@ -364,7 +364,7 @@ namespace AnotherECS.Core.Collection
             int index = 0;
             while (index < _lastIndex)
             {
-                if (_slots.ReadRef(index).hashCode < _EMPTY)
+                if (_slots.ReadRef(index).hashCode < EMPTY)
                 {
                     iterator.Each(ref _slots.ReadRef(index).item);
                 }
@@ -465,7 +465,7 @@ namespace AnotherECS.Core.Collection
             {
                 while (_index < _data._lastIndex)
                 {
-                    if (_data._slots.ReadRef(_index).hashCode < _EMPTY)
+                    if (_data._slots.ReadRef(_index).hashCode < EMPTY)
                     {
                         _current = _data._slots.ReadRef(_index).item;
                         ++_index;

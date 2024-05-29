@@ -92,7 +92,7 @@ namespace AnotherECS.Core.Remote.Local
         public double GetGlobalTime()
             => _time;
 
-        public Player[] GetPlayers()
+        public IEnumerable<Player> GetPlayers()
             => _children
             .Select(p => p.Player)
             .ToArray();

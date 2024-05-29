@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote.Local
@@ -32,7 +33,7 @@ namespace AnotherECS.Core.Remote.Local
                 Parent = null;
                 ReceiveBytes = null;
             }
-
+            
             return Task.CompletedTask;
         }
 
@@ -77,10 +78,13 @@ namespace AnotherECS.Core.Remote.Local
         }
 
         public Player GetLocalPlayer()
-            => Player;
+            => TrySimulateAsLocal(Player);
 
         public Player[] GetPlayers()
-            => Parent?.GetPlayers();
+            => Parent
+                .GetPlayers()
+                .Select(TrySimulateAsLocal)
+                .ToArray();
 
         public double GetPing()
             => 0.0;
@@ -99,7 +103,7 @@ namespace AnotherECS.Core.Remote.Local
         {
             if (Player.Id == player.Id)
             {
-                player = new Player(player.Id, true, player.Role, -1);
+                player = new Player(player.Id, true, player.Role, player.PerformanceTiming);
             }
             return player;
         }

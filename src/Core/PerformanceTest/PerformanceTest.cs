@@ -10,7 +10,7 @@ namespace AnotherECS.Core
 
     public class PerformanceTesterImpl
     {
-        private const int _ITERATION = 10000;
+        private const int ITERATION = 10000;
 
         internal uint count = 0;
         internal long lastResult = -1;
@@ -34,7 +34,7 @@ namespace AnotherECS.Core
             count = 0;
 
             var timer = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; i < _ITERATION; i++)
+            for (int i = 0; i < ITERATION; i++)
             {
                 ++count;
             }

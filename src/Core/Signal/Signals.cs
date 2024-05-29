@@ -270,15 +270,15 @@ namespace AnotherECS.Core
             public void Pack(ref WriterContextSerializer writer)
             {
                 writer.Write(Tick);
+                writer.Write(HashCode);
                 writer.Pack(Signal);
-                writer.Pack(HashCode);
             }
 
             public void Unpack(ref ReaderContextSerializer reader)
             {
                 Tick = reader.ReadUInt32();
-                Signal = reader.Unpack<ISignal>();
                 HashCode = reader.ReadUInt64();
+                Signal = reader.Unpack<ISignal>();
             }
         }
 

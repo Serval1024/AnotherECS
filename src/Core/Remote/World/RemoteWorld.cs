@@ -2,12 +2,11 @@ using AnotherECS.Core.Remote.Exceptions;
 using AnotherECS.Serializer;
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AnotherECS.Core.Remote
 {
-    public class RemoteWorld : IWorldComposite, IWorldCommunicate, IDisposable, ISerializeConstructor
+    public class RemoteWorld : IWorldInner, IWorldCommunicate, IDisposable, ISerializeConstructor
     {
         public uint Id => _world.Id;
         public IRemoteProcessing Remote => _remoteProcessing;
@@ -19,6 +18,7 @@ namespace AnotherECS.Core.Remote
                 if (_world != value)
                 {
                     _world = value;
+                    _isOneGateStartup = true;
                     InitInternal(_remoteProcessing);
                 }
             }
@@ -51,13 +51,14 @@ namespace AnotherECS.Core.Remote
                 if (_world?.State != value)
                 {
                     _world.State = value;
-                    ApplyState();
+                    TryApplyState();
                 }
             }
         }
 
         private bool _isUpdate;
         private bool _isOneGateInit;
+        private bool _isOneGateStartup;
         private IWorldExtend _world;
         private IRemoteProcessing _remoteProcessing;
 
@@ -68,12 +69,9 @@ namespace AnotherECS.Core.Remote
         public RemoteWorld(IWorldExtend world, IRemoteProvider remoteProvider)
             : this(world, remoteProvider, new LogAndThrowStrategy()) { }
 
-        public RemoteWorld(IRemoteProvider remoteProvider, IRemoteSyncStrategy remoteSyncStrategy)
-           : this(null, remoteProvider, remoteSyncStrategy) { }
-
         public RemoteWorld(IWorldExtend world, IRemoteProcessing remoteProcessing)
         {
-            _world = world;
+            _world = world ?? throw new NullReferenceException(nameof(world));
             InitInternal(remoteProcessing);
         }
 
@@ -89,17 +87,21 @@ namespace AnotherECS.Core.Remote
         public Task Disconnect()
             => _remoteProcessing.Disconnect();
 
+        public void TryStartupInnerWorld()
+        {
+            if (_isOneGateStartup && _isUpdate)
+            {
+                _isOneGateStartup = false;
+
+                _world.Startup();
+            }
+        }
+
         public void UpdateFromMainThread()
         {
             if (_isUpdate)
             {
-                if (_isOneGateInit)
-                {
-                    _isOneGateInit = false;
-
-                    _world.Init();
-                    _world.Startup();
-                }
+                TryStartupInnerWorld();
 
                 var target = (int)(Time / DeltaTime);
                 var delta = target - (int)_world.RequestTick;
@@ -109,6 +111,13 @@ namespace AnotherECS.Core.Remote
 
                 _world.DispatchSignals();
             }
+
+            _remoteProcessing.Update();
+        }
+
+        public void Wait()
+        {
+            _world.Wait();
         }
 
         public void SendEvent(IEvent @event)
@@ -179,11 +188,22 @@ namespace AnotherECS.Core.Remote
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void TryInitInnerWorld()
+        {
+            if (_isOneGateInit && _isUpdate)
+            {
+                _isOneGateInit = false;
+
+                _world.Init();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private EventContainer ToITickEvent(IEvent @event)
             => new(_remoteProcessing.GetEventTick—orrection(_world.State.Tick + 1), @event);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ApplyState()
+        private void TryApplyState()
         {
             if (_world != null)
             {
@@ -198,9 +218,8 @@ namespace AnotherECS.Core.Remote
                 }
             }
 
-            Thread.MemoryBarrier();
             _isUpdate = _world?.State != null;
-            _isOneGateInit = _isUpdate;
+            _isOneGateStartup = _isUpdate;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,8 +227,8 @@ namespace AnotherECS.Core.Remote
         {
             _remoteProcessing = remoteProcessing ?? throw new ArgumentNullException(nameof(remoteProcessing));
             _remoteProcessing.Construct(this);
-
-            ApplyState();
+            TryInitInnerWorld();
+            TryApplyState();
         }
     }
 }

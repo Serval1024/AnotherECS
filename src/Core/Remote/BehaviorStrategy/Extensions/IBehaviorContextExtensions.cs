@@ -46,7 +46,7 @@
                 {
                     startIndex = (startIndex + 1) % players.Length;
                 }
-                while (players[startIndex] != context.LocalPlayer);
+                while (players[startIndex] == context.LocalPlayer);
 
                 return players[startIndex];
             }

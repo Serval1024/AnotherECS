@@ -7,9 +7,9 @@ namespace AnotherECS.Core.Remote
         public static DependencySerializer[] GetDependencySerializer(SerializationLevel level)
             => level switch
             {
-                SerializationLevel.StateData => _dependencyStateSerializationLevel0Cache,
-                SerializationLevel.StateDataAndConfig => _dependencyStateSerializationLevel1Cache,
-                SerializationLevel.World => _dependencyStateSerializationLevel1Cache,
+                SerializationLevel.Data => _dependencyStateSerializationLevel0Cache,
+                SerializationLevel.DataAndConfig => _dependencyStateSerializationLevel1Cache,
+                SerializationLevel.DataAndConfigAndSystems => _dependencyStateSerializationLevel1Cache,
                 _ => throw new System.NotImplementedException(),
             };
 

@@ -5,7 +5,7 @@ namespace AnotherECS.Debug
 {
     public static class Logger
     {
-        private static bool _isCallGate = true;
+        private static bool _isOneGate = true;
         private static ILogger _impl;
         private static readonly object _locker = new();
 
@@ -15,9 +15,10 @@ namespace AnotherECS.Debug
             {
                 lock (_locker)
                 {
-                    if (_isCallGate)
+                    if (_isOneGate)
                     {
-                        _isCallGate = false;
+                        _isOneGate = false;
+
                         var type = TypeUtils.GetRuntimeTypes<ILogger>().FirstOrDefault();
                         if (type != null)
                         {
@@ -31,12 +32,12 @@ namespace AnotherECS.Debug
 
         public static void Send(string message)
         {
-            Impl.Send($"{DebugConst.TAG}{message}");
+            Impl?.Send($"{DebugConst.TAG}{message}");
         }
 
         public static void Error(string message)
         {
-            Impl.Error($"{DebugConst.TAG}{message}");
+            Impl?.Error($"{DebugConst.TAG}{message}");
         }
 
         public static void RevertStateFail(string error)
